@@ -69,4 +69,9 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return await _context.Usuarios.AnyAsync(u => u.Email == email && u.Activo);
     }
+
+    public async Task<bool> ExistsByRolIdAsync(Guid rolId)
+    {
+        return await _context.Roles.AnyAsync(r => r.Id == rolId && r.Activo);
+    }
 } 

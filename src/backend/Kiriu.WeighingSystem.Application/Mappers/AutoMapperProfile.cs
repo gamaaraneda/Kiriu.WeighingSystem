@@ -11,5 +11,8 @@ public class AutoMapperProfile : Profile
         CreateMap<Usuario, UsuarioDto>()
             .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol.Nombre))
             .ForMember(dest => dest.Permisos, opt => opt.Ignore()); // Se llenará manualmente
+
+        CreateMap<Usuario, CreateUsuarioResponse>()
+            .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol.Nombre));
     }
 } 

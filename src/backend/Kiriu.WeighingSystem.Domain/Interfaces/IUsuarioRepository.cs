@@ -12,4 +12,5 @@ public interface IUsuarioRepository
     Task DeleteAsync(Guid id);
     Task<bool> ExistsAsync(Guid id);
     Task<bool> ExistsByEmailAsync(string email);
+    Task<bool> ExistsByRolIdAsync(Guid rolId);
 } 
