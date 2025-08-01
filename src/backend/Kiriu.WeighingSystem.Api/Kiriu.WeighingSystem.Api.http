@@ -1,0 +1,6 @@
+@Kiriu.WeighingSystem.Api_HostAddress = http://localhost:5269
+
+GET {{Kiriu.WeighingSystem.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
