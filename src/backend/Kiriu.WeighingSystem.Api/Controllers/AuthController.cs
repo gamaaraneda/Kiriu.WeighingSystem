@@ -1,5 +1,5 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Mapster;
 using Kiriu.WeighingSystem.Application.DTOs;
 using Kiriu.WeighingSystem.Application.DTOs.Auth;
 using Kiriu.WeighingSystem.Application.DTOs.Users;
@@ -14,7 +14,6 @@ public class AuthController : ControllerBase
 {
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IAuthService _authService;
-    private readonly IMapper _mapper;
     private readonly ILogger<AuthController> _logger;
 
     // Almacenamiento en memoria para refresh tokens (NO localStorage)
@@ -23,12 +22,10 @@ public class AuthController : ControllerBase
     public AuthController(
         IUsuarioRepository usuarioRepository,
         IAuthService authService,
-        IMapper mapper,
         ILogger<AuthController> logger)
     {
         _usuarioRepository = usuarioRepository;
         _authService = authService;
-        _mapper = mapper;
         _logger = logger;
     }
 
@@ -71,7 +68,7 @@ public class AuthController : ControllerBase
             _refreshTokens[refreshToken] = usuario.Id.ToString();
 
             // Mapear usuario a DTO
-            var usuarioDto = _mapper.Map<UsuarioDto>(usuario);
+            var usuarioDto = usuario.Adapt<UsuarioDto>();
             var permissions = await _authService.GetUserPermissionsAsync(usuario.Id);
             usuarioDto.Permisos = permissions.ToList();
 
@@ -147,7 +144,7 @@ public class AuthController : ControllerBase
             _refreshTokens[newRefreshToken] = usuario.Id.ToString();
 
             // Mapear usuario a DTO
-            var usuarioDto = _mapper.Map<UsuarioDto>(usuario);
+            var usuarioDto = usuario.Adapt<UsuarioDto>();
             var permissions = await _authService.GetUserPermissionsAsync(usuario.Id);
             usuarioDto.Permisos = permissions.ToList();
 
