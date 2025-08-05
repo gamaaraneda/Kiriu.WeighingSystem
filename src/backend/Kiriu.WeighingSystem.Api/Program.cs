@@ -11,6 +11,8 @@ using Mapster;
 using Kiriu.WeighingSystem.Api.Middleware;
 using Kiriu.WeighingSystem.Application.Mappers;
 using Kiriu.WeighingSystem.Application.Validators;
+using Kiriu.WeighingSystem.Application.Interfaces;
+using Kiriu.WeighingSystem.Application.Services;
 using Kiriu.WeighingSystem.Domain.Interfaces;
 using Kiriu.WeighingSystem.Infrastructure.Data;
 using Kiriu.WeighingSystem.Infrastructure.Repositories;
@@ -117,6 +119,12 @@ builder.Services.AddControllers();
 // Dependency Injection
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+
+// Application Services
+builder.Services.AddScoped<IUsuarioApplicationService, UsuarioApplicationService>();
+builder.Services.AddScoped<IAuthApplicationService, AuthApplicationService>();
+builder.Services.AddScoped<IHealthCheckApplicationService, HealthCheckApplicationService>();
 
 var app = builder.Build();
 

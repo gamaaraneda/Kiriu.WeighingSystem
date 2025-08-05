@@ -1,9 +1,7 @@
-using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Kiriu.WeighingSystem.Application.DTOs;
 using Kiriu.WeighingSystem.Application.DTOs.Users;
-using Kiriu.WeighingSystem.Domain.Entities;
-using Kiriu.WeighingSystem.Domain.Interfaces;
+using Kiriu.WeighingSystem.Application.Interfaces;
 
 namespace Kiriu.WeighingSystem.Api.Controllers;
 
@@ -11,17 +9,14 @@ namespace Kiriu.WeighingSystem.Api.Controllers;
 [Route("api/[controller]")]
 public class UsuariosController : ControllerBase
 {
-    private readonly IUsuarioRepository _usuarioRepository;
-    private readonly IAuthService _authService;
+    private readonly IUsuarioApplicationService _usuarioApplicationService;
     private readonly ILogger<UsuariosController> _logger;
 
     public UsuariosController(
-        IUsuarioRepository usuarioRepository,
-        IAuthService authService,
+        IUsuarioApplicationService usuarioApplicationService,
         ILogger<UsuariosController> logger)
     {
-        _usuarioRepository = usuarioRepository;
-        _authService = authService;
+        _usuarioApplicationService = usuarioApplicationService;
         _logger = logger;
     }
 
@@ -30,66 +25,22 @@ public class UsuariosController : ControllerBase
     {
         try
         {
-            // Validar que el email no exista
-            if (await _usuarioRepository.ExistsByEmailAsync(request.Email))
-            {
-                return BadRequest(new ApiResponse<CreateUsuarioResponse>
-                {
-                    Success = false,
-                    Message = "El email ya está registrado",
-                    Errors = new List<string> { "Ya existe un usuario con este email" }
-                });
-            }
-
-            // Validar que el rol existe
-            if (!await _usuarioRepository.ExistsByRolIdAsync(request.RolId))
-            {
-                return BadRequest(new ApiResponse<CreateUsuarioResponse>
-                {
-                    Success = false,
-                    Message = "El rol especificado no existe",
-                    Errors = new List<string> { "El ID del rol proporcionado no es válido" }
-                });
-            }
-
-            // Crear el usuario
-            var usuario = new Usuario
-            {
-                Id = Guid.NewGuid(),
-                Nombre = request.Nombre,
-                Apellidos = request.Apellidos,
-                Email = request.Email,
-                PasswordHash = await _authService.HashPasswordAsync(request.Password),
-                RolId = request.RolId,
-                FechaCreacion = DateTime.UtcNow,
-                Activo = true
-            };
-
-            // Guardar en la base de datos
-            var usuarioCreado = await _usuarioRepository.AddAsync(usuario);
-
-            // Obtener el rol para la respuesta
-            var usuarioCompleto = await _usuarioRepository.GetByIdAsync(usuarioCreado.Id);
-            if (usuarioCompleto == null)
-            {
-                return StatusCode(500, new ApiResponse<CreateUsuarioResponse>
-                {
-                    Success = false,
-                    Message = "Error al recuperar el usuario creado",
-                    Errors = new List<string> { "No se pudo recuperar la información del usuario" }
-                });
-            }
-
-                    // Mapear a DTO de respuesta usando Mapster
-        var response = usuarioCompleto.Adapt<CreateUsuarioResponse>();
-
-            _logger.LogInformation("Usuario creado exitosamente: {Email}", request.Email);
+            var response = await _usuarioApplicationService.CreateUsuarioAsync(request);
 
             return CreatedAtAction(nameof(GetById), new { id = response.Id }, new ApiResponse<CreateUsuarioResponse>
             {
                 Success = true,
                 Data = response,
                 Message = "Usuario creado exitosamente"
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new ApiResponse<CreateUsuarioResponse>
+            {
+                Success = false,
+                Message = "Error de validación",
+                Errors = new List<string> { ex.Message }
             });
         }
         catch (Exception ex)
@@ -109,27 +60,22 @@ public class UsuariosController : ControllerBase
     {
         try
         {
-            var usuario = await _usuarioRepository.GetByIdAsync(id);
-            if (usuario == null || !usuario.Activo)
-            {
-                return NotFound(new ApiResponse<UsuarioDto>
-                {
-                    Success = false,
-                    Message = "Usuario no encontrado",
-                    Errors = new List<string> { "El usuario especificado no existe o está inactivo" }
-                });
-            }
-
-            // Mapear a DTO usando Mapster
-            var usuarioDto = usuario.Adapt<UsuarioDto>();
-            var permissions = await _authService.GetUserPermissionsAsync(usuario.Id);
-            usuarioDto.Permisos = permissions.ToList();
+            var usuarioDto = await _usuarioApplicationService.GetUsuarioByIdAsync(id);
 
             return Ok(new ApiResponse<UsuarioDto>
             {
                 Success = true,
                 Data = usuarioDto,
                 Message = "Usuario encontrado"
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new ApiResponse<UsuarioDto>
+            {
+                Success = false,
+                Message = "Usuario no encontrado",
+                Errors = new List<string> { ex.Message }
             });
         }
         catch (Exception ex)
@@ -149,16 +95,7 @@ public class UsuariosController : ControllerBase
     {
         try
         {
-            var usuarios = await _usuarioRepository.GetAllAsync();
-            var usuariosDto = new List<UsuarioDto>();
-
-                    foreach (var usuario in usuarios)
-        {
-            var usuarioDto = usuario.Adapt<UsuarioDto>();
-            var permissions = await _authService.GetUserPermissionsAsync(usuario.Id);
-            usuarioDto.Permisos = permissions.ToList();
-            usuariosDto.Add(usuarioDto);
-        }
+            var usuariosDto = await _usuarioApplicationService.GetAllUsuariosAsync();
 
             return Ok(new ApiResponse<IEnumerable<UsuarioDto>>
             {
