@@ -18,9 +18,16 @@ public class WeighingDbContext : DbContext
     public DbSet<RolePermiso> RolePermisos { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-{
-    base.OnConfiguring(optionsBuilder);
-}
+    {
+        // Configurar SQL Server para usar cultura invariante
+        optionsBuilder.UseSqlServer(options => 
+        {
+            options.EnableRetryOnFailure();
+            options.CommandTimeout(30);
+        });
+        
+        base.OnConfiguring(optionsBuilder);
+    }
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
