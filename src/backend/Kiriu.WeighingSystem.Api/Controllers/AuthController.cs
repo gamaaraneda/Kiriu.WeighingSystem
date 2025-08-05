@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Kiriu.WeighingSystem.Application.DTOs;
 using Kiriu.WeighingSystem.Application.DTOs.Auth;
 using Kiriu.WeighingSystem.Application.Interfaces;
+using Kiriu.WeighingSystem.Application.Exceptions;
 
 namespace Kiriu.WeighingSystem.Api.Controllers;
 
@@ -34,7 +35,7 @@ public class AuthController : ControllerBase
                 Message = "Login exitoso"
             });
         }
-        catch (InvalidOperationException ex)
+        catch (UnauthorizedException ex)
         {
             return BadRequest(new ApiResponse<LoginResponse>
             {
@@ -69,7 +70,7 @@ public class AuthController : ControllerBase
                 Message = "Token renovado exitosamente"
             });
         }
-        catch (InvalidOperationException ex)
+        catch (UnauthorizedException ex)
         {
             return BadRequest(new ApiResponse<LoginResponse>
             {

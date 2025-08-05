@@ -1,5 +1,6 @@
 using FluentValidation;
 using Kiriu.WeighingSystem.Application.DTOs.Users;
+using Kiriu.WeighingSystem.Application.Constants;
 
 namespace Kiriu.WeighingSystem.Application.Validators;
 
@@ -9,23 +10,23 @@ public class CreateUsuarioRequestValidator : AbstractValidator<CreateUsuarioRequ
     {
         RuleFor(x => x.Nombre)
             .NotEmpty().WithMessage("El nombre es requerido")
-            .MaximumLength(100).WithMessage("El nombre no puede exceder 100 caracteres")
-            .MinimumLength(2).WithMessage("El nombre debe tener al menos 2 caracteres");
+            .MaximumLength(ValidationConstants.Usuario.NombreMaxLength).WithMessage($"El nombre no puede exceder {ValidationConstants.Usuario.NombreMaxLength} caracteres")
+            .MinimumLength(ValidationConstants.Usuario.NombreMinLength).WithMessage($"El nombre debe tener al menos {ValidationConstants.Usuario.NombreMinLength} caracteres");
 
         RuleFor(x => x.Apellidos)
-            .MaximumLength(100).WithMessage("Los apellidos no pueden exceder 100 caracteres")
+            .MaximumLength(ValidationConstants.Usuario.ApellidosMaxLength).WithMessage($"Los apellidos no pueden exceder {ValidationConstants.Usuario.ApellidosMaxLength} caracteres")
             .When(x => !string.IsNullOrEmpty(x.Apellidos));
 
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("El email es requerido")
             .EmailAddress().WithMessage("El formato del email no es válido")
-            .MaximumLength(255).WithMessage("El email no puede exceder 255 caracteres");
+            .MaximumLength(ValidationConstants.Usuario.EmailMaxLength).WithMessage($"El email no puede exceder {ValidationConstants.Usuario.EmailMaxLength} caracteres");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("La contraseña es requerida")
-            .MinimumLength(8).WithMessage("La contraseña debe tener al menos 8 caracteres")
-            .MaximumLength(100).WithMessage("La contraseña no puede exceder 100 caracteres")
-            .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]")
+            .MinimumLength(ValidationConstants.Usuario.PasswordMinLength).WithMessage($"La contraseña debe tener al menos {ValidationConstants.Usuario.PasswordMinLength} caracteres")
+            .MaximumLength(ValidationConstants.Usuario.PasswordMaxLength).WithMessage($"La contraseña no puede exceder {ValidationConstants.Usuario.PasswordMaxLength} caracteres")
+            .Matches(ValidationConstants.Usuario.PasswordRegex)
             .WithMessage("La contraseña debe contener al menos una letra mayúscula, una minúscula, un número y un carácter especial");
 
         RuleFor(x => x.RolId)

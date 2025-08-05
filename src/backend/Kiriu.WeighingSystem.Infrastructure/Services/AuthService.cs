@@ -12,7 +12,7 @@ using Kiriu.WeighingSystem.Infrastructure.Data;
 
 namespace Kiriu.WeighingSystem.Infrastructure.Services;
 
-public class AuthService : IAuthService
+public class AuthService : IAuthService, IPasswordService
 {
     private readonly IConfiguration _configuration;
     private readonly WeighingDbContext _context;

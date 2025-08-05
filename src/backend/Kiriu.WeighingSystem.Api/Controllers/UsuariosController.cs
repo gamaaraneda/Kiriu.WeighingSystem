@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Kiriu.WeighingSystem.Application.DTOs;
 using Kiriu.WeighingSystem.Application.DTOs.Users;
 using Kiriu.WeighingSystem.Application.Interfaces;
+using Kiriu.WeighingSystem.Application.Exceptions;
 
 namespace Kiriu.WeighingSystem.Api.Controllers;
 
@@ -34,12 +35,21 @@ public class UsuariosController : ControllerBase
                 Message = "Usuario creado exitosamente"
             });
         }
-        catch (InvalidOperationException ex)
+        catch (ValidationException ex)
         {
             return BadRequest(new ApiResponse<CreateUsuarioResponse>
             {
                 Success = false,
                 Message = "Error de validación",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+        catch (ConflictException ex)
+        {
+            return BadRequest(new ApiResponse<CreateUsuarioResponse>
+            {
+                Success = false,
+                Message = "Conflicto de datos",
                 Errors = new List<string> { ex.Message }
             });
         }
@@ -69,7 +79,7 @@ public class UsuariosController : ControllerBase
                 Message = "Usuario encontrado"
             });
         }
-        catch (InvalidOperationException ex)
+        catch (NotFoundException ex)
         {
             return NotFound(new ApiResponse<UsuarioDto>
             {

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Kiriu.WeighingSystem.Application.DTOs.Auth;
 using Kiriu.WeighingSystem.Application.DTOs.Users;
 using Kiriu.WeighingSystem.Application.Interfaces;
+using Kiriu.WeighingSystem.Application.Exceptions;
 using Kiriu.WeighingSystem.Domain.Entities;
 using Kiriu.WeighingSystem.Domain.Interfaces;
 
@@ -32,13 +33,13 @@ public class AuthApplicationService : IAuthApplicationService
         var usuario = await _usuarioRepository.GetByEmailAsync(request.Email);
         if (usuario == null)
         {
-            throw new InvalidOperationException("Email o contraseña incorrectos");
+            throw new UnauthorizedException("Email o contraseña incorrectos");
         }
 
         var isValidPassword = await _authService.ValidatePasswordAsync(request.Password, usuario.PasswordHash);
         if (!isValidPassword)
         {
-            throw new InvalidOperationException("Email o contraseña incorrectos");
+            throw new UnauthorizedException("Email o contraseña incorrectos");
         }
 
         // Actualizar último acceso
@@ -70,18 +71,18 @@ public class AuthApplicationService : IAuthApplicationService
     {
         if (!_refreshTokens.TryGetValue(request.RefreshToken, out var userIdStr))
         {
-            throw new InvalidOperationException("El refresh token no es válido o ha expirado");
+            throw new UnauthorizedException("El refresh token no es válido o ha expirado");
         }
 
         if (!Guid.TryParse(userIdStr, out var userId))
         {
-            throw new InvalidOperationException("El refresh token no es válido");
+            throw new UnauthorizedException("El refresh token no es válido");
         }
 
         var usuario = await _usuarioRepository.GetByIdAsync(userId);
         if (usuario == null || !usuario.Activo)
         {
-            throw new InvalidOperationException("El usuario no existe o está inactivo");
+            throw new UnauthorizedException("El usuario no existe o está inactivo");
         }
 
         // Generar nuevos tokens

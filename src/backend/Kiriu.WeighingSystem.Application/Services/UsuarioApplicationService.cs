@@ -2,6 +2,7 @@ using Mapster;
 using Microsoft.Extensions.Logging;
 using Kiriu.WeighingSystem.Application.DTOs.Users;
 using Kiriu.WeighingSystem.Application.Interfaces;
+using Kiriu.WeighingSystem.Application.Exceptions;
 using Kiriu.WeighingSystem.Domain.Entities;
 using Kiriu.WeighingSystem.Domain.Interfaces;
 
@@ -10,16 +11,16 @@ namespace Kiriu.WeighingSystem.Application.Services;
 public class UsuarioApplicationService : IUsuarioApplicationService
 {
     private readonly IUsuarioRepository _usuarioRepository;
-    private readonly IAuthService _authService;
+    private readonly IPasswordService _passwordService;
     private readonly ILogger<UsuarioApplicationService> _logger;
 
     public UsuarioApplicationService(
         IUsuarioRepository usuarioRepository,
-        IAuthService authService,
+        IPasswordService passwordService,
         ILogger<UsuarioApplicationService> logger)
     {
         _usuarioRepository = usuarioRepository;
-        _authService = authService;
+        _passwordService = passwordService;
         _logger = logger;
     }
 
@@ -28,13 +29,13 @@ public class UsuarioApplicationService : IUsuarioApplicationService
         // Validar que el email no exista
         if (await _usuarioRepository.ExistsByEmailAsync(request.Email))
         {
-            throw new InvalidOperationException("Ya existe un usuario con este email");
+            throw new ConflictException("Ya existe un usuario con este email");
         }
 
         // Validar que el rol existe
         if (!await _usuarioRepository.ExistsByRolIdAsync(request.RolId))
         {
-            throw new InvalidOperationException("El ID del rol proporcionado no es válido");
+            throw new ValidationException("El ID del rol proporcionado no es válido");
         }
 
         // Crear el usuario
@@ -44,7 +45,7 @@ public class UsuarioApplicationService : IUsuarioApplicationService
             Nombre = request.Nombre,
             Apellidos = request.Apellidos,
             Email = request.Email,
-            PasswordHash = await _authService.HashPasswordAsync(request.Password),
+            PasswordHash = await _passwordService.HashPasswordAsync(request.Password),
             RolId = request.RolId,
             FechaCreacion = DateTime.UtcNow,
             Activo = true
@@ -57,7 +58,7 @@ public class UsuarioApplicationService : IUsuarioApplicationService
         var usuarioCompleto = await _usuarioRepository.GetByIdAsync(usuarioCreado.Id);
         if (usuarioCompleto == null)
         {
-            throw new InvalidOperationException("No se pudo recuperar la información del usuario");
+            throw new NotFoundException("No se pudo recuperar la información del usuario");
         }
 
         // Mapear a DTO de respuesta
@@ -73,7 +74,7 @@ public class UsuarioApplicationService : IUsuarioApplicationService
         var usuario = await _usuarioRepository.GetByIdAsync(id);
         if (usuario == null)
         {
-            throw new InvalidOperationException("Usuario no encontrado");
+            throw new NotFoundException("Usuario no encontrado");
         }
 
         return usuario.Adapt<UsuarioDto>();

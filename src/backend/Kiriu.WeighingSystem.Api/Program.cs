@@ -119,6 +119,7 @@ builder.Services.AddControllers();
 // Dependency Injection
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPasswordService, AuthService>(); // AuthService implementa IPasswordService
 builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
 
 // Application Services
