@@ -1,0 +1,99 @@
+.card-selector {
+  cursor: pointer;
+  text-align: center;
+  min-height: 280px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .card-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 32px;
+    color: #ffffff;
+    transition: all 0.2s ease;
+
+    &.icon-client {
+      background-color: #398df1;
+
+      &:hover {
+        background-color: #005bb5;
+        transform: scale(1.1);
+      }
+    }
+
+    &.icon-provider {
+      background-color: #1ee733;
+
+      &:hover {
+        background-color: #14ae24;
+        transform: scale(1.1);
+      }
+    }
+
+    .icon-text {
+      font-size: 32px;
+    }
+  }
+
+  .card-title {
+    color: #398df1;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .card-subtitle {
+    color: #545454;
+    font-size: 16px;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .card-description {
+    color: #000000;
+    font-size: 14px;
+    margin-bottom: 32px;
+    line-height: 1.5;
+    opacity: 0.8;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 767px) {
+  .card-selector {
+    min-height: 240px;
+
+    .card-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      margin-bottom: 16px;
+
+      .icon-text {
+        font-size: 24px;
+      }
+    }
+
+    .card-title {
+      font-size: 18px;
+    }
+
+    .card-description {
+      margin-bottom: 24px;
+    }
+  }
+}

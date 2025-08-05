@@ -1,0 +1,43 @@
+// Colores Kiriu (uso exacto)
+$kiriu-blue: #398df1;
+$kiriu-white: #ffffff;
+$kiriu-black: #000000;
+$kiriu-orange: #ff914d;
+$kiriu-red: #f70000;
+$kiriu-green: #1ee733;
+$kiriu-gray: #545454;
+
+// Hover states
+$kiriu-blue-hover: #005bb5;
+$kiriu-green-hover: #14ae24;
+$kiriu-red-hover: #ca0000;
+
+// Border radius suaves
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-pill: 50px;
+
+// Spacing
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-xxl: 48px;
+
+// Typography
+$font-size-sm: 14px;
+$font-size-base: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 24px;
+$font-size-xxl: 32px;
+
+// Shadows
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+
+// Transitions
+$transition-fast: 0.2s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;

@@ -1,0 +1,213 @@
+@import "variables";
+@import "mixins";
+
+// Global styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: $kiriu-black;
+  background-color: #f8f9fa;
+}
+
+// Button styles
+.btn {
+  @include button-primary;
+
+  &.btn-secondary {
+    @include button-secondary;
+  }
+
+  &.btn-danger {
+    @include button-danger;
+  }
+
+  &.btn-success {
+    @include button-success;
+  }
+
+  &.btn-loading {
+    position: relative;
+    color: transparent;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid $kiriu-white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+// Input styles
+.form-input {
+  @include input-base;
+
+  &.error {
+    border-color: $kiriu-red;
+    box-shadow: 0 0 0 3px rgba(247, 0, 0, 0.1);
+  }
+}
+
+// Card styles
+.card {
+  @include card;
+
+  &.card-selector {
+    cursor: pointer;
+    text-align: center;
+    min-height: 200px;
+
+    .card-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      @include flex-center;
+      margin: 0 auto $spacing-md;
+      font-size: 24px;
+      color: $kiriu-white;
+
+      &.icon-client {
+        background-color: $kiriu-blue;
+      }
+
+      &.icon-provider {
+        background-color: $kiriu-green;
+      }
+    }
+
+    .card-title {
+      color: $kiriu-blue;
+      font-size: $font-size-xl;
+      font-weight: 600;
+      margin-bottom: $spacing-sm;
+    }
+
+    .card-subtitle {
+      color: $kiriu-gray;
+      font-size: $font-size-base;
+      margin-bottom: $spacing-md;
+    }
+
+    .card-description {
+      color: $kiriu-black;
+      font-size: $font-size-sm;
+      margin-bottom: $spacing-lg;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Loading spinner
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(57, 141, 241, 0.1);
+  border-top: 4px solid $kiriu-blue;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+// Animations
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+// Utility classes
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+
+.mb-1 {
+  margin-bottom: $spacing-sm;
+}
+.mb-2 {
+  margin-bottom: $spacing-md;
+}
+.mb-3 {
+  margin-bottom: $spacing-lg;
+}
+.mb-4 {
+  margin-bottom: $spacing-xl;
+}
+
+.mt-1 {
+  margin-top: $spacing-sm;
+}
+.mt-2 {
+  margin-top: $spacing-md;
+}
+.mt-3 {
+  margin-top: $spacing-lg;
+}
+.mt-4 {
+  margin-top: $spacing-xl;
+}
+
+.p-1 {
+  padding: $spacing-sm;
+}
+.p-2 {
+  padding: $spacing-md;
+}
+.p-3 {
+  padding: $spacing-lg;
+}
+.p-4 {
+  padding: $spacing-xl;
+}
+
+.d-none {
+  display: none;
+}
+.d-block {
+  display: block;
+}
+.d-flex {
+  display: flex;
+}
+
+.w-100 {
+  width: 100%;
+}
+.h-100 {
+  height: 100%;
+}

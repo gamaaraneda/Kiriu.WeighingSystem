@@ -1,0 +1,13 @@
+<div class="card card-selector" (click)="onCardClick()">
+  <div class="card-icon" [class]="card.iconClass">
+    <span class="icon-text">{{ card.icon }}</span>
+  </div>
+
+  <h3 class="card-title">{{ card.title }}</h3>
+  <p class="card-subtitle">{{ card.subtitle }}</p>
+  <p class="card-description">{{ card.description }}</p>
+
+  <button class="btn" [class]="card.buttonClass">
+    {{ card.buttonText }}
+  </button>
+</div>

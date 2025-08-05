@@ -1,0 +1,30 @@
+<header class="header">
+  <div class="header-content">
+    <!-- Logo y título -->
+    <div class="header-brand">
+      <div class="logo">
+        <span class="logo-text">KIRIU</span>
+      </div>
+      <h1 class="header-title">Sistema de Pesaje</h1>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="header-actions">
+      <button
+        *ngIf="showQueriesButton"
+        class="btn btn-secondary"
+        (click)="onQueriesClick()"
+      >
+        Consultas
+      </button>
+
+      <button
+        *ngIf="showLogoutButton"
+        class="btn btn-danger"
+        (click)="onLogoutClick()"
+      >
+        Salir
+      </button>
+    </div>
+  </div>
+</header>
