@@ -1,0 +1,74 @@
+<div class="login-container">
+  <div class="login-card fade-in">
+    <!-- Logo y título -->
+    <div class="login-header">
+      <div class="logo">
+        <span class="logo-text">KIRIU</span>
+      </div>
+      <h1 class="login-title">Sistema de Pesaje</h1>
+      <p class="login-subtitle">Ingresa tus credenciales para acceder al sistema</p>
+    </div>
+
+    <!-- Formulario de login -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Campo Email -->
+      <div class="form-group">
+        <label for="email" class="form-label">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-input"
+          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          placeholder="Ingresa tu email"
+          autocomplete="email"
+          [disabled]="isLoading"
+        />
+        <div *ngIf="getFieldError('email')" class="error-message">
+          {{ getFieldError('email') }}
+        </div>
+      </div>
+
+      <!-- Campo Contraseña -->
+      <div class="form-group">
+        <label for="password" class="form-label">Contraseña</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-input"
+          [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          placeholder="Ingresa tu contraseña"
+          autocomplete="current-password"
+          [disabled]="isLoading"
+        />
+        <div *ngIf="getFieldError('password')" class="error-message">
+          {{ getFieldError('password') }}
+        </div>
+      </div>
+
+      <!-- Mensaje de error general -->
+      <div *ngIf="errorMessage" class="error-message-general">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Botón de login -->
+      <button
+        type="submit"
+        class="btn w-100"
+        [class.btn-loading]="isLoading"
+        [disabled]="isLoading || loginForm.invalid"
+      >
+        <span *ngIf="!isLoading">Iniciar sesión</span>
+        <span *ngIf="isLoading">Iniciando sesión...</span>
+      </button>
+    </form>
+
+    <!-- Texto de ayuda -->
+    <div class="help-text">
+      <p><strong>Credenciales de prueba:</strong></p>
+      <p>Email: <strong>gama@kiriu.com</strong></p>
+      <p>Contraseña: <strong>Sistemas1.</strong></p>
+    </div>
+  </div>
+</div> 
