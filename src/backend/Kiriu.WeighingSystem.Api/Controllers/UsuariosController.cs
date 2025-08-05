@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Kiriu.WeighingSystem.Application.DTOs;
 using Kiriu.WeighingSystem.Application.DTOs.Users;
 using Kiriu.WeighingSystem.Application.Interfaces;
@@ -8,6 +9,7 @@ namespace Kiriu.WeighingSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // Requerir autenticación para todos los endpoints de usuarios
 public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioApplicationService _usuarioApplicationService;
@@ -105,18 +107,18 @@ public class UsuariosController : ControllerBase
     {
         try
         {
-            var usuariosDto = await _usuarioApplicationService.GetAllUsuariosAsync();
+            var usuarios = await _usuarioApplicationService.GetAllUsuariosAsync();
 
             return Ok(new ApiResponse<IEnumerable<UsuarioDto>>
             {
                 Success = true,
-                Data = usuariosDto,
+                Data = usuarios,
                 Message = "Usuarios obtenidos exitosamente"
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener usuarios");
+            _logger.LogError(ex, "Error al obtener todos los usuarios");
             return StatusCode(500, new ApiResponse<IEnumerable<UsuarioDto>>
             {
                 Success = false,

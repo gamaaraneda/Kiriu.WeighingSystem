@@ -10,8 +10,8 @@ public static class ApplicationBuilderExtensions
         // Global Exception Handler
         app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
         
-        // CORS
-        app.UseCors("AllowAngular");
+        // CORS - Usar política más permisiva para desarrollo
+        app.UseCors("AllowAll");
         
         // Authentication & Authorization
         app.UseAuthentication();

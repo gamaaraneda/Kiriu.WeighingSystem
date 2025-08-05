@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Kiriu.WeighingSystem.Application.DTOs;
 using Kiriu.WeighingSystem.Application.Interfaces;
 
@@ -6,6 +7,7 @@ namespace Kiriu.WeighingSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[AllowAnonymous] // Permitir acceso sin autenticación para health checks
 public class HealthCheckController : ControllerBase
 {
     private readonly IHealthCheckApplicationService _healthCheckApplicationService;

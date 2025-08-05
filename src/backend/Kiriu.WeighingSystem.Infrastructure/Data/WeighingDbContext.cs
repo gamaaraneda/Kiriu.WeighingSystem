@@ -38,7 +38,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Apellidos).HasMaxLength(100);
             entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
-            entity.Property(e => e.PasswordHash).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.PasswordHash).HasMaxLength(500).IsRequired();
             entity.Property(e => e.FechaCreacion).HasColumnType("DATETIME").IsRequired();
             entity.Property(e => e.UltimoAcceso).HasColumnType("DATETIME");
             entity.Property(e => e.Activo).HasColumnType("bit").IsRequired();
