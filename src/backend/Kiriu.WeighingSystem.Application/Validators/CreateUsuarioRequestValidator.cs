@@ -12,6 +12,10 @@ public class CreateUsuarioRequestValidator : AbstractValidator<CreateUsuarioRequ
             .MaximumLength(100).WithMessage("El nombre no puede exceder 100 caracteres")
             .MinimumLength(2).WithMessage("El nombre debe tener al menos 2 caracteres");
 
+        RuleFor(x => x.Apellidos)
+            .MaximumLength(100).WithMessage("Los apellidos no pueden exceder 100 caracteres")
+            .When(x => !string.IsNullOrEmpty(x.Apellidos));
+
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("El email es requerido")
             .EmailAddress().WithMessage("El formato del email no es válido")

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using Kiriu.WeighingSystem.Domain.Entities;
 
 namespace Kiriu.WeighingSystem.Infrastructure.Data;
@@ -6,8 +7,8 @@ namespace Kiriu.WeighingSystem.Infrastructure.Data;
 public class WeighingDbContext : DbContext
 {
     public WeighingDbContext(DbContextOptions<WeighingDbContext> options) : base(options)
-    {
-    }
+{
+}
 
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Rol> Roles { get; set; }
@@ -16,13 +17,19 @@ public class WeighingDbContext : DbContext
     public DbSet<ModuloPermiso> ModuloPermisos { get; set; }
     public DbSet<RolePermiso> RolePermisos { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+{
+    base.OnConfiguring(optionsBuilder);
+}
+
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
         modelBuilder.Entity<Usuario>(entity =>
         {
             entity.ToTable("Usuarios", "defutlt");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Apellidos).HasMaxLength(100);
             entity.Property(e => e.Email).HasMaxLength(255).IsRequired();
             entity.Property(e => e.PasswordHash).HasMaxLength(255).IsRequired();
             entity.Property(e => e.FechaCreacion).HasColumnType("DATETIME").IsRequired();

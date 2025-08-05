@@ -10,6 +10,9 @@ public class Usuario
     [MaxLength(100)]
     public string Nombre { get; set; } = string.Empty;
     
+    [MaxLength(100)]
+    public string? Apellidos { get; set; }
+    
     [Required]
     [MaxLength(255)]
     public string Email { get; set; } = string.Empty;

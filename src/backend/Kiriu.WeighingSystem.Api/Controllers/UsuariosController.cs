@@ -1,4 +1,4 @@
-using AutoMapper;
+using Mapster;
 using Microsoft.AspNetCore.Mvc;
 using Kiriu.WeighingSystem.Application.DTOs;
 using Kiriu.WeighingSystem.Application.DTOs.Users;
@@ -13,18 +13,15 @@ public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IAuthService _authService;
-    private readonly IMapper _mapper;
     private readonly ILogger<UsuariosController> _logger;
 
     public UsuariosController(
         IUsuarioRepository usuarioRepository,
         IAuthService authService,
-        IMapper mapper,
         ILogger<UsuariosController> logger)
     {
         _usuarioRepository = usuarioRepository;
         _authService = authService;
-        _mapper = mapper;
         _logger = logger;
     }
 
@@ -60,6 +57,7 @@ public class UsuariosController : ControllerBase
             {
                 Id = Guid.NewGuid(),
                 Nombre = request.Nombre,
+                Apellidos = request.Apellidos,
                 Email = request.Email,
                 PasswordHash = await _authService.HashPasswordAsync(request.Password),
                 RolId = request.RolId,
@@ -82,15 +80,8 @@ public class UsuariosController : ControllerBase
                 });
             }
 
-            // Mapear a DTO de respuesta
-            var response = new CreateUsuarioResponse
-            {
-                Id = usuarioCompleto.Id,
-                Nombre = usuarioCompleto.Nombre,
-                Email = usuarioCompleto.Email,
-                Rol = usuarioCompleto.Rol.Nombre,
-                FechaCreacion = usuarioCompleto.FechaCreacion
-            };
+                    // Mapear a DTO de respuesta usando Mapster
+        var response = usuarioCompleto.Adapt<CreateUsuarioResponse>();
 
             _logger.LogInformation("Usuario creado exitosamente: {Email}", request.Email);
 
@@ -129,8 +120,8 @@ public class UsuariosController : ControllerBase
                 });
             }
 
-            // Mapear a DTO
-            var usuarioDto = _mapper.Map<UsuarioDto>(usuario);
+            // Mapear a DTO usando Mapster
+            var usuarioDto = usuario.Adapt<UsuarioDto>();
             var permissions = await _authService.GetUserPermissionsAsync(usuario.Id);
             usuarioDto.Permisos = permissions.ToList();
 
@@ -161,13 +152,13 @@ public class UsuariosController : ControllerBase
             var usuarios = await _usuarioRepository.GetAllAsync();
             var usuariosDto = new List<UsuarioDto>();
 
-            foreach (var usuario in usuarios)
-            {
-                var usuarioDto = _mapper.Map<UsuarioDto>(usuario);
-                var permissions = await _authService.GetUserPermissionsAsync(usuario.Id);
-                usuarioDto.Permisos = permissions.ToList();
-                usuariosDto.Add(usuarioDto);
-            }
+                    foreach (var usuario in usuarios)
+        {
+            var usuarioDto = usuario.Adapt<UsuarioDto>();
+            var permissions = await _authService.GetUserPermissionsAsync(usuario.Id);
+            usuarioDto.Permisos = permissions.ToList();
+            usuariosDto.Add(usuarioDto);
+        }
 
             return Ok(new ApiResponse<IEnumerable<UsuarioDto>>
             {

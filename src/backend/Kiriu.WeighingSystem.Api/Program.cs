@@ -1,10 +1,13 @@
 using System.Text;
+using System.Globalization;
+using System.Threading;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using FluentValidation.AspNetCore;
 using Serilog;
+using Mapster;
 using Kiriu.WeighingSystem.Api.Middleware;
 using Kiriu.WeighingSystem.Application.Mappers;
 using Kiriu.WeighingSystem.Application.Validators;
@@ -13,11 +16,27 @@ using Kiriu.WeighingSystem.Infrastructure.Data;
 using Kiriu.WeighingSystem.Infrastructure.Repositories;
 using Kiriu.WeighingSystem.Infrastructure.Services;
 
+// Configuración definitiva de cultura para México
+// Forzar cultura invariante a nivel de aplicación
+AppContext.SetData("System.Globalization.Invariant", true);
+
+// Configurar cultura invariante para todos los hilos
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Entity Framework
+// Entity Framework - Configuración simplificada para evitar problemas de cultura
 builder.Services.AddDbContext<WeighingDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    
+    // Configurar SQL Server para usar configuración básica sin cultura específica
+    options.ConfigureWarnings(warnings => warnings.Ignore(
+        Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored));
+});
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -36,11 +55,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// AutoMapper - Comentado temporalmente
-// builder.Services.AddAutoMapper();
+// Mapster
+MapsterConfig.ConfigureMappings();
 
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
+FluentValidation.ValidatorOptions.Global.LanguageManager.Culture = CultureInfo.InvariantCulture;
 
 // CORS
 builder.Services.AddCors(options =>
