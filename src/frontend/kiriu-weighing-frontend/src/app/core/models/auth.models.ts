@@ -37,4 +37,4 @@ export interface RefreshTokenRequest {
 
 export interface LogoutRequest {
   refreshToken: string;
-} 
+}

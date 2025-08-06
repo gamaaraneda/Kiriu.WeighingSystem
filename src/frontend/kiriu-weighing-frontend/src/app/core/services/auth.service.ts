@@ -1,27 +1,49 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Observable, of } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import {
+  BehaviorSubject,
+  Observable,
+  throwError,
+  timer,
+  Subscription,
+} from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  success: boolean;
-  token?: string;
-  message?: string;
-}
+import { environment } from '../../../environments/environment';
+import {
+  LoginRequest,
+  LoginResponse,
+  UserInfo,
+  RefreshTokenRequest,
+} from '../models/auth.models';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
+
   private readonly tokenKey = 'kiriu-token';
-  private router = inject(Router);
-  private platformId = inject(PLATFORM_ID);
+  private readonly refreshTokenKey = 'kiriu-refresh-token';
+  private readonly userKey = 'kiriu-user';
+
+  private currentUserSubject = new BehaviorSubject<UserInfo | null>(
+    this.getUserFromStorage()
+  );
+  public currentUser$ = this.currentUserSubject.asObservable();
+
+  private refreshTokenTimer?: Subscription;
+
+  constructor() {
+    // Configurar auto-refresh del token solo en el navegador
+    if (this.isBrowser) {
+      this.setupTokenRefresh();
+      this.checkTokenExpiration();
+    }
+  }
 
   /**
    * Verifica si estamos en el navegador
@@ -30,55 +52,127 @@ export class AuthService {
     return isPlatformBrowser(this.platformId);
   }
 
-  /**
-   * Realiza el login del usuario
-   * @param username - Nombre de usuario
-   * @param password - Contraseña
-   * @returns Observable con el resultado del login
-   */
-  login(username: string, password: string): Observable<LoginResponse> {
-    // Mock login - acepta admin/admin123
-    const success = username === 'admin' && password === 'admin123';
+  login(email: string, password: string): Observable<LoginResponse> {
+    const loginRequest: LoginRequest = { email, password };
 
-    return of({
-      success,
-      token: success ? 'mock-token-' + Date.now() : undefined,
-      message: success ? 'Login exitoso' : 'Credenciales inválidas',
-    }).pipe(
-      delay(1000), // Simular llamada API
-      tap((response) => {
-        if (response.success && response.token && this.isBrowser) {
-          localStorage.setItem(this.tokenKey, response.token);
-        }
-      })
-    );
+    console.log('🌐 AuthService: Haciendo llamada al backend real', {
+      url: `${environment.apiUrl}/Auth/login`,
+      request: { email, password: '***' },
+    });
+
+    return this.http
+      .post<LoginResponse>(`${environment.apiUrl}/Auth/login`, loginRequest)
+      .pipe(
+        tap((loginResponse) => {
+          console.log('💾 AuthService: Guardando sesión en localStorage', {
+            hasToken: !!loginResponse.token,
+            hasRefreshToken: !!loginResponse.refreshToken,
+            user: loginResponse.user?.nombre,
+          });
+
+          this.setSession(loginResponse);
+          if (this.isBrowser) {
+            this.setupTokenRefresh();
+          }
+        }),
+        catchError(this.handleError)
+      );
   }
 
-  /**
-   * Cierra la sesión del usuario
-   */
-  logout(): void {
-    if (this.isBrowser) {
-      localStorage.removeItem(this.tokenKey);
+  refreshToken(): Observable<LoginResponse> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      console.warn('⚠️ No hay refresh token disponible');
+      return throwError(() => new Error('No refresh token available'));
     }
-    this.router.navigate(['/login']);
+
+    const refreshRequest: RefreshTokenRequest = { refreshToken };
+
+    console.log('🔄 AuthService: Renovando token JWT...');
+
+    return this.http
+      .post<LoginResponse>(
+        `${environment.apiUrl}/Auth/refresh-token`,
+        refreshRequest
+      )
+      .pipe(
+        tap((loginResponse) => {
+          console.log('✅ AuthService: Token renovado exitosamente', {
+            hasNewToken: !!loginResponse.token,
+            hasNewRefreshToken: !!loginResponse.refreshToken,
+            user: loginResponse.user?.nombre,
+            expiresAt: loginResponse.expiresAt,
+          });
+
+          this.setSession(loginResponse);
+          if (this.isBrowser) {
+            this.setupTokenRefresh();
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ AuthService: Error al renovar token:', error);
+          console.log('🚪 AuthService: Forzando logout por error en refresh');
+          this.logout().subscribe();
+          return throwError(() => error);
+        })
+      );
   }
 
-  /**
-   * Verifica si el usuario está autenticado
-   * @returns true si el usuario está autenticado
-   */
+  logout(): Observable<boolean> {
+    const refreshToken = this.getRefreshToken();
+
+    console.log('🚪 AuthService: Iniciando logout...', {
+      hasRefreshToken: !!refreshToken,
+      isBrowser: this.isBrowser,
+    });
+
+    if (refreshToken && this.isBrowser) {
+      const logoutRequest = { refreshToken };
+
+      return this.http
+        .post<boolean>(`${environment.apiUrl}/Auth/logout`, logoutRequest)
+        .pipe(
+          tap(() => {
+            console.log('✅ AuthService: Logout exitoso en backend');
+            this.clearSession();
+          }),
+          catchError((error) => {
+            console.error(
+              '❌ AuthService: Error en logout del backend:',
+              error
+            );
+            console.log(
+              '🧹 AuthService: Limpiando sesión local de todas formas'
+            );
+            this.clearSession(); // Limpiar sesión incluso si el logout falla
+            return [true];
+          })
+        );
+    } else {
+      console.log('🧹 AuthService: Limpiando sesión local (sin refresh token)');
+      this.clearSession();
+      return new Observable((observer) => {
+        observer.next(true);
+        observer.complete();
+      });
+    }
+  }
+
   isAuthenticated(): boolean {
     if (!this.isBrowser) {
       return false; // En el servidor, siempre retornar false
     }
-    return !!localStorage.getItem(this.tokenKey);
+
+    const token = this.getToken();
+    if (!token) return false;
+
+    // Verificar si el token no ha expirado
+    const user = this.getCurrentUser();
+    if (!user) return false;
+
+    return !this.isTokenExpired();
   }
 
-  /**
-   * Obtiene el token de autenticación
-   * @returns El token almacenado o null
-   */
   getToken(): string | null {
     if (!this.isBrowser) {
       return null;
@@ -86,15 +180,180 @@ export class AuthService {
     return localStorage.getItem(this.tokenKey);
   }
 
-  /**
-   * Verifica si el token ha expirado (mock - siempre válido)
-   * @returns true si el token es válido
-   */
-  isTokenValid(): boolean {
+  getRefreshToken(): string | null {
     if (!this.isBrowser) {
-      return false;
+      return null;
     }
-    const token = this.getToken();
-    return !!token;
+    return localStorage.getItem(this.refreshTokenKey);
   }
+
+  getCurrentUser(): UserInfo | null {
+    return this.currentUserSubject.value;
+  }
+
+  hasPermission(permission: string): boolean {
+    const user = this.getCurrentUser();
+    return user?.permisos?.includes(permission) || false;
+  }
+
+  hasAnyPermission(permissions: string[]): boolean {
+    return permissions.some((permission) => this.hasPermission(permission));
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.getCurrentUser();
+    return user?.rol === role;
+  }
+
+  /**
+   * Fuerza la renovación del token (útil para testing o casos especiales)
+   */
+  forceTokenRefresh(): Observable<LoginResponse> {
+    console.log('🔄 AuthService: Forzando renovación del token...');
+    return this.refreshToken();
+  }
+
+  /**
+   * Verifica si el token necesita renovación (útil para interceptores)
+   */
+  needsTokenRefresh(): boolean {
+    if (!this.isBrowser) return false;
+
+    const expiresAt = localStorage.getItem('token-expires-at');
+    if (!expiresAt) return true;
+
+    const expirationTime = new Date(expiresAt).getTime();
+    const currentTime = new Date().getTime();
+    const timeUntilExpiry = expirationTime - currentTime;
+
+    // Considerar que necesita refresh si expira en menos de 5 minutos
+    return timeUntilExpiry <= 5 * 60 * 1000;
+  }
+
+  private setSession(authResult: LoginResponse): void {
+    if (!this.isBrowser) return;
+
+    localStorage.setItem(this.tokenKey, authResult.token);
+    localStorage.setItem(this.refreshTokenKey, authResult.refreshToken);
+    localStorage.setItem(this.userKey, JSON.stringify(authResult.user));
+    localStorage.setItem('token-expires-at', authResult.expiresAt);
+
+    this.currentUserSubject.next(authResult.user);
+  }
+
+  private clearSession(): void {
+    if (!this.isBrowser) return;
+
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.refreshTokenKey);
+    localStorage.removeItem(this.userKey);
+    localStorage.removeItem('token-expires-at');
+
+    this.currentUserSubject.next(null);
+    this.clearTokenRefresh();
+    this.router.navigate(['/login']);
+  }
+
+  private getUserFromStorage(): UserInfo | null {
+    if (!this.isBrowser) return null;
+
+    const userJson = localStorage.getItem(this.userKey);
+    return userJson ? JSON.parse(userJson) : null;
+  }
+
+  private isTokenExpired(): boolean {
+    if (!this.isBrowser) return true;
+
+    const expiresAt = localStorage.getItem('token-expires-at');
+    if (!expiresAt) return true;
+
+    return new Date(expiresAt).getTime() <= new Date().getTime();
+  }
+
+  private checkTokenExpiration(): void {
+    if (this.isTokenExpired()) {
+      this.clearSession();
+    }
+  }
+
+  private setupTokenRefresh(): void {
+    if (!this.isBrowser) return;
+
+    const expiresAt = localStorage.getItem('token-expires-at');
+    if (!expiresAt) {
+      console.warn('⚠️ AuthService: No hay fecha de expiración configurada');
+      return;
+    }
+
+    const expirationTime = new Date(expiresAt).getTime();
+    const currentTime = new Date().getTime();
+    const timeUntilExpiry = expirationTime - currentTime;
+
+    // Renovar el token 5 minutos antes de que expire
+    const refreshTime = timeUntilExpiry - 5 * 60 * 1000;
+
+    console.log('⏰ AuthService: Configurando refresh automático', {
+      expiresAt: new Date(expiresAt).toLocaleString(),
+      timeUntilExpiry: Math.round(timeUntilExpiry / 1000 / 60) + ' minutos',
+      refreshIn: Math.round(refreshTime / 1000 / 60) + ' minutos',
+    });
+
+    if (refreshTime > 0) {
+      this.clearTokenRefresh();
+      this.refreshTokenTimer = timer(refreshTime).subscribe(() => {
+        console.log('🔄 AuthService: Ejecutando refresh automático del token');
+        this.refreshToken().subscribe({
+          next: () => {
+            console.log('✅ AuthService: Refresh automático exitoso');
+          },
+          error: (error) => {
+            console.error(
+              '❌ AuthService: Error en refresh automático:',
+              error
+            );
+            // El logout se maneja automáticamente en refreshToken()
+          },
+        });
+      });
+    } else {
+      console.warn(
+        '⚠️ AuthService: Token expira muy pronto, no se puede configurar refresh automático'
+      );
+      // Si el token expira en menos de 5 minutos, verificar si ya expiró
+      if (timeUntilExpiry <= 0) {
+        console.log('🚪 AuthService: Token ya expiró, forzando logout');
+        this.clearSession();
+      }
+    }
+  }
+
+  private clearTokenRefresh(): void {
+    if (this.refreshTokenTimer) {
+      this.refreshTokenTimer.unsubscribe();
+      this.refreshTokenTimer = undefined;
+    }
+  }
+
+  private handleError = (error: HttpErrorResponse) => {
+    let errorMessage = 'Error desconocido';
+
+    if (error.error instanceof ErrorEvent) {
+      // Error del cliente
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // Error del servidor
+      if (error.error && typeof error.error === 'object') {
+        const apiError = error.error as Record<string, unknown>;
+        if (apiError['message'] && typeof apiError['message'] === 'string') {
+          errorMessage = apiError['message'];
+        } else if (apiError['errors'] && Array.isArray(apiError['errors'])) {
+          errorMessage = (apiError['errors'] as string[]).join(', ');
+        }
+      } else {
+        errorMessage = `Error ${error.status}: ${error.message}`;
+      }
+    }
+
+    return throwError(() => new Error(errorMessage));
+  };
 }

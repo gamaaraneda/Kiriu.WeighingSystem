@@ -1,14 +1,13 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
-  ReactiveFormsModule,
   Validators,
+  ReactiveFormsModule,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth.service';
-import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-login',
@@ -17,63 +16,57 @@ import { finalize } from 'rxjs/operators';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+export class LoginComponent {
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
-  loginForm!: FormGroup;
+  loginForm: FormGroup;
   isLoading = false;
   errorMessage = '';
 
-  ngOnInit(): void {
-    this.initForm();
-  }
-
-  /**
-   * Inicializa el formulario de login
-   */
-  private initForm(): void {
+  constructor() {
     this.loginForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
+      email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
 
-  /**
-   * Maneja el envío del formulario de login
-   */
   onSubmit(): void {
-    if (this.loginForm.valid) {
+    if (this.loginForm.valid && !this.isLoading) {
       this.isLoading = true;
       this.errorMessage = '';
 
-      const { username, password } = this.loginForm.value;
+      const { email, password } = this.loginForm.value;
 
-      this.authService
-        .login(username, password)
-        .pipe(finalize(() => (this.isLoading = false)))
-        .subscribe({
-          next: (response) => {
-            if (response.success) {
-              this.router.navigate(['/dashboard']);
-            } else {
-              this.errorMessage = response.message || 'Error en el login';
-            }
-          },
-          error: (error) => {
-            this.errorMessage = 'Error de conexión. Intente nuevamente.';
-            console.error('Login error:', error);
-          },
-        });
+      console.log('🔄 Iniciando login con backend real...', { email });
+
+      this.authService.login(email, password).subscribe({
+        next: (response) => {
+          console.log('✅ Login exitoso con backend real:', {
+            user: response.user,
+            token: response.token ? 'Token recibido' : 'Sin token',
+            expiresAt: response.expiresAt,
+          });
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          console.error('❌ Error en login con backend:', error);
+          this.errorMessage =
+            error.message || 'Error en el login. Verifique sus credenciales.';
+          this.isLoading = false;
+        },
+        complete: () => {
+          console.log('🏁 Login completado');
+          this.isLoading = false;
+        },
+      });
     } else {
+      console.log('⚠️ Formulario inválido o ya cargando');
       this.markFormGroupTouched();
     }
   }
 
-  /**
-   * Marca todos los campos del formulario como touched para mostrar errores
-   */
   private markFormGroupTouched(): void {
     Object.keys(this.loginForm.controls).forEach((key) => {
       const control = this.loginForm.get(key);
@@ -81,33 +74,19 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  /**
-   * Verifica si un campo tiene errores
-   * @param fieldName - Nombre del campo
-   * @returns true si el campo tiene errores
-   */
-  hasError(fieldName: string): boolean {
+  getFieldError(fieldName: string): string {
     const field = this.loginForm.get(fieldName);
-    return !!(field?.invalid && field?.touched);
-  }
-
-  /**
-   * Obtiene el mensaje de error para un campo
-   * @param fieldName - Nombre del campo
-   * @returns Mensaje de error
-   */
-  getErrorMessage(fieldName: string): string {
-    const field = this.loginForm.get(fieldName);
-
-    if (field?.hasError('required')) {
-      return 'Este campo es requerido';
+    if (field?.errors && field.touched) {
+      if (field.errors['required']) {
+        return `${fieldName === 'email' ? 'Email' : 'Contraseña'} es requerido`;
+      }
+      if (field.errors['email']) {
+        return 'Email debe tener un formato válido';
+      }
+      if (field.errors['minlength']) {
+        return 'Contraseña debe tener al menos 6 caracteres';
+      }
     }
-
-    if (field?.hasError('minlength')) {
-      const requiredLength = field.getError('minlength').requiredLength;
-      return `Mínimo ${requiredLength} caracteres`;
-    }
-
     return '';
   }
 }

@@ -67,7 +67,17 @@ export class DashboardComponent {
    * Maneja el logout del usuario
    */
   onLogout(): void {
-    this.authService.logout();
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('Logout exitoso');
+        // La redirección se maneja automáticamente en clearSession()
+      },
+      error: (error) => {
+        console.error('Error en logout:', error);
+        // Aún así navegar al login si hay error
+        this.router.navigate(['/login']);
+      },
+    });
   }
 
   /**
