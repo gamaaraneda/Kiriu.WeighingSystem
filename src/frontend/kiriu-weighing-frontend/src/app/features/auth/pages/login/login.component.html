@@ -13,20 +13,23 @@
 
     <!-- Formulario de login -->
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-      <!-- Campo Usuario -->
+      <!-- Campo Email -->
       <div class="form-group">
-        <label for="username" class="form-label">Usuario</label>
+        <label for="email" class="form-label">Email</label>
         <input
-          type="text"
-          id="username"
-          formControlName="username"
+          type="email"
+          id="email"
+          formControlName="email"
           class="form-input"
-          [class.error]="hasError('username')"
-          placeholder="Ingresa tu usuario"
+          [class.error]="
+            loginForm.get('email')?.invalid && loginForm.get('email')?.touched
+          "
+          placeholder="Ingresa tu email"
+          autocomplete="email"
           [disabled]="isLoading"
         />
-        <div *ngIf="hasError('username')" class="error-message">
-          {{ getErrorMessage("username") }}
+        <div *ngIf="getFieldError('email')" class="error-message">
+          {{ getFieldError("email") }}
         </div>
       </div>
 
@@ -38,12 +41,16 @@
           id="password"
           formControlName="password"
           class="form-input"
-          [class.error]="hasError('password')"
+          [class.error]="
+            loginForm.get('password')?.invalid &&
+            loginForm.get('password')?.touched
+          "
           placeholder="Ingresa tu contraseña"
+          autocomplete="current-password"
           [disabled]="isLoading"
         />
-        <div *ngIf="hasError('password')" class="error-message">
-          {{ getErrorMessage("password") }}
+        <div *ngIf="getFieldError('password')" class="error-message">
+          {{ getFieldError("password") }}
         </div>
       </div>
 
@@ -63,13 +70,5 @@
         <span *ngIf="isLoading">Iniciando sesión...</span>
       </button>
     </form>
-
-    <!-- Texto de ayuda -->
-    <div class="help-text">
-      <p>
-        Usuario de prueba: <strong>admin</strong> | Contraseña:
-        <strong>admin123</strong>
-      </p>
-    </div>
   </div>
 </div>
