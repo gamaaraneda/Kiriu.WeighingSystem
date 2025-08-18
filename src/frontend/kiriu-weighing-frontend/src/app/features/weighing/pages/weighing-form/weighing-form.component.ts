@@ -12,6 +12,8 @@ import {
   WeighingService,
   WeighingOperation,
 } from '../../services/weighing.service';
+import { WeighingFlowService } from '../../services/weighing-flow.service';
+import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 
 export interface VehicleData {
   trailerPlate: string;
@@ -45,7 +47,12 @@ export interface PhotoData {
 @Component({
   selector: 'app-weighing-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HeaderComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    HeaderComponent,
+    BreadcrumbComponent,
+  ],
   templateUrl: './weighing-form.component.html',
   styleUrls: ['./weighing-form.component.scss'],
 })
@@ -54,6 +61,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private weighingService = inject(WeighingService);
+  private weighingFlowService = inject(WeighingFlowService);
 
   unitType: string = '';
   operationType: string = '';
@@ -102,6 +110,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.initializeForm();
       this.startWeightUpdates();
       this.loadExistingData();
+
+      // Validar que el flujo sea correcto
+      this.validateFlow();
     });
   }
 
@@ -348,6 +359,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   onGoBack(): void {
     this.router.navigate(['/operation-selection', this.unitType]);
+  }
+
+  private validateFlow(): void {
+    const flowValidation = this.weighingFlowService.validateFlow();
+    if (!flowValidation.isValid) {
+      console.warn('Flujo inválido:', flowValidation.missingSteps);
+      // Redirigir al dashboard si el flujo no es válido
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   onQueries(): void {

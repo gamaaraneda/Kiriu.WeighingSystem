@@ -1,9 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { CardSelectorComponent } from '../../../../shared/components/card-selector/card-selector.component';
+import { WeighingFlowService } from '../../../weighing/services/weighing-flow.service';
+import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 
 export interface UnitType {
   id: string;
@@ -19,13 +21,19 @@ export interface UnitType {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, CardSelectorComponent],
+  imports: [
+    CommonModule,
+    HeaderComponent,
+    CardSelectorComponent,
+    BreadcrumbComponent,
+  ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private weighingFlowService = inject(WeighingFlowService);
 
   unitTypes: UnitType[] = [
     {
@@ -52,12 +60,21 @@ export class DashboardComponent {
     },
   ];
 
+  ngOnInit(): void {
+    // Resetear el flujo cuando se llega al dashboard
+    this.weighingFlowService.resetFlow();
+  }
+
   /**
    * Maneja la selección de un tipo de unidad
    * @param unitType - Tipo de unidad seleccionado
    */
   onUnitTypeSelected(unitType: UnitType): void {
     console.log('Tipo de unidad seleccionado:', unitType);
+
+    // Actualizar el estado del flujo
+    this.weighingFlowService.setUnitType(unitType.id as 'client' | 'provider');
+
     // Navegar a la pantalla de selección de operación
     this.router.navigate(['/operation-selection', unitType.id]);
   }

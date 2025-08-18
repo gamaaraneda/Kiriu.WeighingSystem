@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, loginGuard } from './core/guards/auth.guard';
+import { weighingFlowGuard } from './features/weighing/guards/weighing-flow.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -25,7 +26,7 @@ export const routes: Routes = [
       import(
         './features/weighing/pages/operation-selection/operation-selection.component'
       ).then((m) => m.OperationSelectionComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, weighingFlowGuard],
   },
   {
     path: 'weighing/:unitType/:operationType',
@@ -33,7 +34,7 @@ export const routes: Routes = [
       import(
         './features/weighing/pages/weighing-form/weighing-form.component'
       ).then((m) => m.WeighingFormComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, weighingFlowGuard],
   },
   { path: '**', redirectTo: '/login' },
 ];

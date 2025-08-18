@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { WeighingService } from '../../services/weighing.service';
+import { WeighingFlowService } from '../../services/weighing-flow.service';
+import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 
 export interface OperationType {
   id: 'entry' | 'exit';
@@ -18,7 +20,7 @@ export interface OperationType {
 @Component({
   selector: 'app-operation-selection',
   standalone: true,
-  imports: [CommonModule, HeaderComponent],
+  imports: [CommonModule, HeaderComponent, BreadcrumbComponent],
   templateUrl: './operation-selection.component.html',
   styleUrls: ['./operation-selection.component.scss'],
 })
@@ -26,6 +28,7 @@ export class OperationSelectionComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private weighingService = inject(WeighingService);
+  private weighingFlowService = inject(WeighingFlowService);
 
   unitType = '';
   unitTypeTitle = '';
@@ -58,6 +61,9 @@ export class OperationSelectionComponent implements OnInit {
       this.unitType = params['unitType'];
       this.updateOperationDescriptions();
       this.validateExitOperation();
+
+      // Validar que el flujo sea correcto
+      this.validateFlow();
     });
   }
 
@@ -91,7 +97,21 @@ export class OperationSelectionComponent implements OnInit {
     }
 
     console.log('Operación seleccionada:', operation);
+
+    // Actualizar el estado del flujo
+    this.weighingFlowService.setOperationType(operation.id);
+
+    // Navegar al formulario de pesaje
     this.router.navigate(['/weighing', this.unitType, operation.id]);
+  }
+
+  private validateFlow(): void {
+    const flowValidation = this.weighingFlowService.validateFlow();
+    if (!flowValidation.isValid) {
+      console.warn('Flujo inválido:', flowValidation.missingSteps);
+      // Redirigir al dashboard si el flujo no es válido
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   onGoBack(): void {

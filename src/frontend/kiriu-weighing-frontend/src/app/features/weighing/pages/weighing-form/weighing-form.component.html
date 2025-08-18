@@ -9,17 +9,7 @@
   <main class="weighing-form-content">
     <div class="container">
       <!-- Breadcrumb -->
-      <nav class="breadcrumb">
-        <a (click)="onGoBack()" class="breadcrumb-link">Inicio</a>
-        <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-current">{{ unitTypeTitle }}</span>
-        <span class="breadcrumb-separator">></span>
-        <a (click)="onGoBack()" class="breadcrumb-link"
-          >Seleccionar Operación</a
-        >
-        <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-current">{{ operationTitle }}</span>
-      </nav>
+      <app-breadcrumb></app-breadcrumb>
 
       <!-- Título principal -->
       <div class="form-header">

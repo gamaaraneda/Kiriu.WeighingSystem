@@ -1,0 +1,22 @@
+<nav class="breadcrumb" *ngIf="breadcrumbItems.length > 0">
+  <ng-container *ngFor="let item of breadcrumbItems; let last = last">
+    <a
+      *ngIf="item.isClickable"
+      (click)="onBreadcrumbClick(item)"
+      class="breadcrumb-link"
+      [class.current]="item.isCurrent"
+    >
+      {{ item.label }}
+    </a>
+
+    <span
+      *ngIf="!item.isClickable"
+      class="breadcrumb-current"
+      [class.current]="item.isCurrent"
+    >
+      {{ item.label }}
+    </span>
+
+    <span *ngIf="!last" class="breadcrumb-separator"> > </span>
+  </ng-container>
+</nav>
