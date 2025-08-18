@@ -10,7 +10,7 @@ export interface WeighingOperation {
   trailerPlate2?: string;
   product: string;
   clientProviderName: string;
-  clientProviderRfc: string;
+  clientProviderRfc?: string;
   entryWeight?: number;
   exitWeight?: number;
   netWeight?: number;

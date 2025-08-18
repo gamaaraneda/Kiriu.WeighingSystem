@@ -85,23 +85,6 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   isLoading = false;
   weightUpdateInterval: any;
 
-  // Opciones de productos (mock - se puede cargar desde configuración)
-  products = [
-    'Material de construcción',
-    'Granos',
-    'Minerales',
-    'Productos químicos',
-    'Otros',
-  ];
-
-  // Observaciones predefinidas
-  predefinedObservations = [
-    'Vehículo en buen estado',
-    'Carga bien asegurada',
-    'Documentación completa',
-    'Requiere revisión',
-  ];
-
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       this.unitType = params['unitType'];
@@ -154,11 +137,6 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Cliente/Proveedor
       clientProviderId: [''],
       clientProviderName: ['', Validators.required],
-      clientProviderRfc: ['', Validators.required],
-      isNewClientProvider: [false],
-
-      // Observaciones
-      observations: [''],
     });
 
     // Suscribirse a cambios en los checkboxes
@@ -217,12 +195,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         Validators.required,
         Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
       ]);
-      if (this.weighingForm.get('doubleTrailer')?.value) {
-        trailerPlate2Control?.setValidators([
-          Validators.required,
-          Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
-        ]);
-      }
+      // La placa del remolque siempre es obligatoria si no es solo contenedor
+      trailerPlate2Control?.setValidators([
+        Validators.required,
+        Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
+      ]);
     }
 
     trailerPlateControl?.updateValueAndValidity();
@@ -230,18 +207,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   private onDoubleTrailerChange(doubleTrailer: boolean): void {
-    const trailerPlate2Control = this.weighingForm.get('trailerPlate2');
-
-    if (doubleTrailer) {
-      trailerPlate2Control?.setValidators([
-        Validators.required,
-        Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
-      ]);
-    } else {
-      trailerPlate2Control?.clearValidators();
-    }
-
-    trailerPlate2Control?.updateValueAndValidity();
+    // La placa del remolque siempre es obligatoria, no depende del checkbox de doble remolque
+    // Solo se puede deshabilitar si es "solo contenedor"
+    console.log('Doble remolque cambiado:', doubleTrailer);
   }
 
   onCaptureWeight(): void {
@@ -265,15 +233,6 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     }
   }
 
-  onAddObservation(observation: string): void {
-    const currentObservations =
-      this.weighingForm.get('observations')?.value || '';
-    const newObservations = currentObservations
-      ? `${currentObservations}; ${observation}`
-      : observation;
-    this.weighingForm.patchValue({ observations: newObservations });
-  }
-
   onSave(): void {
     if (this.weighingForm.valid && this.weightData.capturedWeight) {
       this.isLoading = true;
@@ -290,7 +249,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             trailerPlate2: formData.trailerPlate2 || undefined,
             product: formData.product,
             clientProviderName: formData.clientProviderName,
-            clientProviderRfc: formData.clientProviderRfc,
+
             entryWeight: this.weightData.capturedWeight,
           })
           .subscribe({
@@ -400,6 +359,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.weighingForm.valid &&
       this.weightData.capturedWeight !== undefined &&
       !!this.photoData.trailerPlate &&
+      !!this.photoData.trailerPlate2 &&
       !!this.photoData.cargo
     );
   }

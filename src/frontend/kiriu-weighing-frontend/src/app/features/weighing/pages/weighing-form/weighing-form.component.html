@@ -54,7 +54,7 @@
 
               <div class="form-group">
                 <label for="trailerPlate2" class="form-label"
-                  >Placa Remolque</label
+                  >Placa Remolque *</label
                 >
                 <input
                   type="text"
@@ -63,10 +63,7 @@
                   class="form-input"
                   [class.error]="getFieldError('trailerPlate2')"
                   placeholder="ABC-123-XY"
-                  [disabled]="
-                    !weighingForm.get('doubleTrailer')?.value ||
-                    weighingForm.get('containerOnly')?.value
-                  "
+                  [disabled]="weighingForm.get('containerOnly')?.value"
                 />
                 <div
                   *ngIf="getFieldError('trailerPlate2')"
@@ -94,16 +91,13 @@
                 <label for="product" class="form-label"
                   >Producto/Material *</label
                 >
-                <select
+                <input
+                  type="text"
                   id="product"
                   formControlName="product"
-                  class="form-select"
-                >
-                  <option value="">Selecciona un producto</option>
-                  <option *ngFor="let product of products" [value]="product">
-                    {{ product }}
-                  </option>
-                </select>
+                  class="form-input"
+                  placeholder="Ingresa el nombre del producto o material"
+                />
                 <div *ngIf="getFieldError('product')" class="error-message">
                   {{ getFieldError("product") }}
                 </div>
@@ -131,67 +125,6 @@
                   class="error-message"
                 >
                   {{ getFieldError("clientProviderName") }}
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="clientProviderRfc" class="form-label">RFC *</label>
-                <input
-                  type="text"
-                  id="clientProviderRfc"
-                  formControlName="clientProviderRfc"
-                  class="form-input"
-                  [class.error]="getFieldError('clientProviderRfc')"
-                  placeholder="RFC del cliente/proveedor"
-                />
-                <div
-                  *ngIf="getFieldError('clientProviderRfc')"
-                  class="error-message"
-                >
-                  {{ getFieldError("clientProviderRfc") }}
-                </div>
-              </div>
-
-              <div class="checkbox-group">
-                <label class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    formControlName="isNewClientProvider"
-                  />
-                  <span class="checkmark"></span>
-                  Nuevo {{ unitTypeTitle.toLowerCase() }}
-                </label>
-              </div>
-            </div>
-
-            <!-- Sección: Observaciones -->
-            <div class="form-section">
-              <h2 class="section-title">Observaciones</h2>
-
-              <div class="form-group">
-                <label for="observations" class="form-label"
-                  >Observaciones adicionales</label
-                >
-                <textarea
-                  id="observations"
-                  formControlName="observations"
-                  class="form-textarea"
-                  rows="3"
-                  placeholder="Agregar observaciones adicionales..."
-                ></textarea>
-              </div>
-
-              <div class="predefined-observations">
-                <p class="observations-label">Observaciones rápidas:</p>
-                <div class="observation-tags">
-                  <button
-                    *ngFor="let observation of predefinedObservations"
-                    type="button"
-                    class="observation-tag"
-                    (click)="onAddObservation(observation)"
-                  >
-                    {{ observation }}
-                  </button>
                 </div>
               </div>
             </div>
@@ -265,21 +198,6 @@
               <strong>Peso capturado:</strong>
               {{ weightData.capturedWeight | number : "1.0-0" }} kg
             </div>
-
-            <!-- Historial de peso -->
-            <div class="weight-history">
-              <h4>Historial de lecturas</h4>
-              <div class="history-items">
-                <div
-                  *ngFor="
-                    let weight of weightData.weightHistory.slice().reverse()
-                  "
-                  class="history-item"
-                >
-                  {{ weight | number : "1.0-0" }} kg
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- Sección de Fotos -->
@@ -312,13 +230,7 @@
                 </button>
               </div>
 
-              <div
-                class="photo-item"
-                *ngIf="
-                  weighingForm.get('doubleTrailer')?.value &&
-                  !weighingForm.get('containerOnly')?.value
-                "
-              >
+              <div class="photo-item">
                 <h4>Placa Remolque *</h4>
                 <div
                   class="photo-preview"
