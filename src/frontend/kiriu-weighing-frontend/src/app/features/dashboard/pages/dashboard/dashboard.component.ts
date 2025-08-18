@@ -58,9 +58,8 @@ export class DashboardComponent {
    */
   onUnitTypeSelected(unitType: UnitType): void {
     console.log('Tipo de unidad seleccionado:', unitType);
-    // Aquí se puede navegar a la página correspondiente o mostrar un modal
-    // Por ahora solo mostramos un mensaje en consola
-    alert(`Has seleccionado: ${unitType.title}`);
+    // Navegar a la pantalla de selección de operación
+    this.router.navigate(['/operation-selection', unitType.id]);
   }
 
   /**

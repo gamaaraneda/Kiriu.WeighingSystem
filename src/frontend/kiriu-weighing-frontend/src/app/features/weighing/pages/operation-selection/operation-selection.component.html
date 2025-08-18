@@ -1,0 +1,66 @@
+<div class="operation-selection-container">
+  <!-- Header -->
+  <app-header
+    (queriesClick)="onQueries()"
+    (logoutClick)="onLogout()"
+  ></app-header>
+
+  <!-- Contenido principal -->
+  <main class="operation-selection-content">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a (click)="onGoBack()" class="breadcrumb-link">Inicio</a>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-current">{{ unitTypeTitle }}</span>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-current">Seleccionar Operación</span>
+      </nav>
+
+      <!-- Título y subtítulo -->
+      <div class="operation-selection-header">
+        <h1 class="operation-selection-title">
+          ¿Qué operación vas a registrar?
+        </h1>
+        <p class="operation-selection-subtitle">
+          Selecciona el tipo de operación para continuar con el registro de
+          {{ unitTypeTitle.toLowerCase() }}
+        </p>
+      </div>
+
+      <!-- Tarjetas de operación -->
+      <div class="operations-container">
+        <div class="grid grid-2">
+          <div
+            *ngFor="let operation of operations"
+            class="operation-card"
+            [class.disabled]="!operation.isEnabled"
+          >
+            <div class="operation-icon" [class]="operation.iconClass">
+              <span class="icon">{{ operation.icon }}</span>
+            </div>
+
+            <div class="operation-content">
+              <h3 class="operation-title">{{ operation.title }}</h3>
+              <p class="operation-description">{{ operation.description }}</p>
+
+              <button
+                [class]="operation.buttonClass"
+                [disabled]="!operation.isEnabled"
+                (click)="onOperationSelected(operation)"
+                class="operation-button"
+              >
+                {{ operation.buttonText }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón regresar -->
+      <div class="back-button-container">
+        <button class="btn btn-outline" (click)="onGoBack()">← Regresar</button>
+      </div>
+    </div>
+  </main>
+</div>

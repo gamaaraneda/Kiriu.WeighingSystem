@@ -19,5 +19,21 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard],
   },
+  {
+    path: 'operation-selection/:unitType',
+    loadComponent: () =>
+      import(
+        './features/weighing/pages/operation-selection/operation-selection.component'
+      ).then((m) => m.OperationSelectionComponent),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'weighing/:unitType/:operationType',
+    loadComponent: () =>
+      import(
+        './features/weighing/pages/weighing-form/weighing-form.component'
+      ).then((m) => m.WeighingFormComponent),
+    canActivate: [authGuard],
+  },
   { path: '**', redirectTo: '/login' },
 ];

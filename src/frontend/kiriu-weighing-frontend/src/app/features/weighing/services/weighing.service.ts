@@ -1,0 +1,164 @@
+import { Injectable } from '@angular/core';
+import { Observable, of, timer } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+export interface WeighingOperation {
+  id: string;
+  unitType: 'client' | 'provider';
+  operationType: 'entry' | 'exit';
+  trailerPlate: string;
+  trailerPlate2?: string;
+  product: string;
+  clientProviderName: string;
+  clientProviderRfc: string;
+  entryWeight?: number;
+  exitWeight?: number;
+  netWeight?: number;
+  status: 'ENTRADA_REGISTRADA' | 'SALIDA_REGISTRADA';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WeightReading {
+  weight: number;
+  isStable: boolean;
+  isConnected: boolean;
+  timestamp: Date;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
+export class WeighingService {
+  private operations: WeighingOperation[] = [];
+  private currentWeight = 0;
+  private isConnected = true;
+
+  constructor() {
+    // Mock data inicial
+    this.initializeMockData();
+  }
+
+  private initializeMockData(): void {
+    this.operations = [
+      {
+        id: '1',
+        unitType: 'client',
+        operationType: 'entry',
+        trailerPlate: 'ABC-123-XY',
+        product: 'Material de construcción',
+        clientProviderName: 'Constructora ABC',
+        clientProviderRfc: 'ABC123456789',
+        entryWeight: 25000,
+        status: 'ENTRADA_REGISTRADA',
+        createdAt: new Date('2024-01-15T10:00:00'),
+        updatedAt: new Date('2024-01-15T10:00:00'),
+      },
+      {
+        id: '2',
+        unitType: 'provider',
+        operationType: 'entry',
+        trailerPlate: 'XYZ-789-AB',
+        product: 'Granos',
+        clientProviderName: 'Proveedor XYZ',
+        clientProviderRfc: 'XYZ987654321',
+        entryWeight: 30000,
+        status: 'ENTRADA_REGISTRADA',
+        createdAt: new Date('2024-01-15T11:00:00'),
+        updatedAt: new Date('2024-01-15T11:00:00'),
+      },
+    ];
+  }
+
+  // Obtener operaciones existentes
+  getOperations(): Observable<WeighingOperation[]> {
+    return of(this.operations);
+  }
+
+  // Obtener operación por placa para validar entrada previa
+  getOperationByPlate(
+    trailerPlate: string
+  ): Observable<WeighingOperation | null> {
+    const operation = this.operations.find(
+      (op) =>
+        op.trailerPlate === trailerPlate && op.status === 'ENTRADA_REGISTRADA'
+    );
+    return of(operation || null);
+  }
+
+  // Crear nueva operación de entrada
+  createEntryOperation(
+    operation: Omit<
+      WeighingOperation,
+      'id' | 'status' | 'createdAt' | 'updatedAt'
+    >
+  ): Observable<WeighingOperation> {
+    const newOperation: WeighingOperation = {
+      ...operation,
+      id: Date.now().toString(),
+      status: 'ENTRADA_REGISTRADA',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.operations.push(newOperation);
+    return of(newOperation);
+  }
+
+  // Actualizar operación para salida
+  updateOperationForExit(
+    operationId: string,
+    exitWeight: number
+  ): Observable<WeighingOperation> {
+    const operation = this.operations.find((op) => op.id === operationId);
+    if (!operation) {
+      throw new Error('Operación no encontrada');
+    }
+
+    operation.exitWeight = exitWeight;
+    operation.netWeight = (operation.entryWeight || 0) - exitWeight;
+    operation.status = 'SALIDA_REGISTRADA';
+    operation.updatedAt = new Date();
+
+    return of(operation);
+  }
+
+  // Simular lectura de peso en tiempo real
+  getWeightReadings(): Observable<WeightReading> {
+    return timer(0, 1000).pipe(
+      map(() => {
+        // Simular variaciones de peso
+        const variation =
+          Math.random() > 0.7 ? (Math.random() - 0.5) * 1000 : 0;
+        this.currentWeight = Math.max(0, this.currentWeight + variation);
+
+        return {
+          weight: Math.round(this.currentWeight),
+          isStable: Math.random() > 0.3, // 70% del tiempo estable
+          isConnected: this.isConnected,
+          timestamp: new Date(),
+        };
+      })
+    );
+  }
+
+  // Simular conexión/desconexión de báscula
+  toggleConnection(): void {
+    this.isConnected = !this.isConnected;
+  }
+
+  // Validar si se puede registrar una salida
+  canRegisterExit(trailerPlate: string): Observable<boolean> {
+    return this.getOperationByPlate(trailerPlate).pipe(
+      map((operation) => operation !== null)
+    );
+  }
+
+  // Generar folio único
+  generateFolio(unitType: string, operationType: string): string {
+    const timestamp = Date.now().toString().slice(-6);
+    const prefix = unitType === 'client' ? 'CLI' : 'PRO';
+    const opPrefix = operationType === 'entry' ? 'ENT' : 'SAL';
+    return `${prefix}-${opPrefix}-${timestamp}`;
+  }
+}

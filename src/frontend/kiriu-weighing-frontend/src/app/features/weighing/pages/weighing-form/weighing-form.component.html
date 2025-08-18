@@ -1,0 +1,380 @@
+<div class="weighing-form-container">
+  <!-- Header -->
+  <app-header
+    (queriesClick)="onQueries()"
+    (logoutClick)="onLogout()"
+  ></app-header>
+
+  <!-- Contenido principal -->
+  <main class="weighing-form-content">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a (click)="onGoBack()" class="breadcrumb-link">Inicio</a>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-current">{{ unitTypeTitle }}</span>
+        <span class="breadcrumb-separator">></span>
+        <a (click)="onGoBack()" class="breadcrumb-link"
+          >Seleccionar Operación</a
+        >
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-current">{{ operationTitle }}</span>
+      </nav>
+
+      <!-- Título principal -->
+      <div class="form-header">
+        <h1 class="form-title">
+          Registro de {{ operationTitle.toLowerCase() }} - {{ unitTypeTitle }}
+        </h1>
+        <p class="form-subtitle">
+          Completa la información del vehículo y captura el peso para registrar
+          la {{ operationTitle.toLowerCase() }}
+        </p>
+      </div>
+
+      <!-- Layout de dos columnas -->
+      <div class="form-layout">
+        <!-- Columna izquierda: Formulario -->
+        <div class="form-column">
+          <form [formGroup]="weighingForm" class="weighing-form">
+            <!-- Sección: Datos del Vehículo -->
+            <div class="form-section">
+              <h2 class="section-title">Datos del Vehículo</h2>
+
+              <div class="form-group">
+                <label for="trailerPlate" class="form-label"
+                  >Placa Tráiler *</label
+                >
+                <input
+                  type="text"
+                  id="trailerPlate"
+                  formControlName="trailerPlate"
+                  class="form-input"
+                  [class.error]="getFieldError('trailerPlate')"
+                  placeholder="ABC-123-XY"
+                  [disabled]="weighingForm.get('containerOnly')?.value"
+                />
+                <div
+                  *ngIf="getFieldError('trailerPlate')"
+                  class="error-message"
+                >
+                  {{ getFieldError("trailerPlate") }}
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="trailerPlate2" class="form-label"
+                  >Placa Remolque</label
+                >
+                <input
+                  type="text"
+                  id="trailerPlate2"
+                  formControlName="trailerPlate2"
+                  class="form-input"
+                  [class.error]="getFieldError('trailerPlate2')"
+                  placeholder="ABC-123-XY"
+                  [disabled]="
+                    !weighingForm.get('doubleTrailer')?.value ||
+                    weighingForm.get('containerOnly')?.value
+                  "
+                />
+                <div
+                  *ngIf="getFieldError('trailerPlate2')"
+                  class="error-message"
+                >
+                  {{ getFieldError("trailerPlate2") }}
+                </div>
+              </div>
+
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="containerOnly" />
+                  <span class="checkmark"></span>
+                  Solo contenedor
+                </label>
+
+                <label class="checkbox-label">
+                  <input type="checkbox" formControlName="doubleTrailer" />
+                  <span class="checkmark"></span>
+                  Unidad con doble remolque
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label for="product" class="form-label"
+                  >Producto/Material *</label
+                >
+                <select
+                  id="product"
+                  formControlName="product"
+                  class="form-select"
+                >
+                  <option value="">Selecciona un producto</option>
+                  <option *ngFor="let product of products" [value]="product">
+                    {{ product }}
+                  </option>
+                </select>
+                <div *ngIf="getFieldError('product')" class="error-message">
+                  {{ getFieldError("product") }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección: Cliente/Proveedor -->
+            <div class="form-section">
+              <h2 class="section-title">Información del {{ unitTypeTitle }}</h2>
+
+              <div class="form-group">
+                <label for="clientProviderName" class="form-label"
+                  >Nombre/Razón Social *</label
+                >
+                <input
+                  type="text"
+                  id="clientProviderName"
+                  formControlName="clientProviderName"
+                  class="form-input"
+                  [class.error]="getFieldError('clientProviderName')"
+                  placeholder="Buscar por nombre..."
+                />
+                <div
+                  *ngIf="getFieldError('clientProviderName')"
+                  class="error-message"
+                >
+                  {{ getFieldError("clientProviderName") }}
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="clientProviderRfc" class="form-label">RFC *</label>
+                <input
+                  type="text"
+                  id="clientProviderRfc"
+                  formControlName="clientProviderRfc"
+                  class="form-input"
+                  [class.error]="getFieldError('clientProviderRfc')"
+                  placeholder="RFC del cliente/proveedor"
+                />
+                <div
+                  *ngIf="getFieldError('clientProviderRfc')"
+                  class="error-message"
+                >
+                  {{ getFieldError("clientProviderRfc") }}
+                </div>
+              </div>
+
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    formControlName="isNewClientProvider"
+                  />
+                  <span class="checkmark"></span>
+                  Nuevo {{ unitTypeTitle.toLowerCase() }}
+                </label>
+              </div>
+            </div>
+
+            <!-- Sección: Observaciones -->
+            <div class="form-section">
+              <h2 class="section-title">Observaciones</h2>
+
+              <div class="form-group">
+                <label for="observations" class="form-label"
+                  >Observaciones adicionales</label
+                >
+                <textarea
+                  id="observations"
+                  formControlName="observations"
+                  class="form-textarea"
+                  rows="3"
+                  placeholder="Agregar observaciones adicionales..."
+                ></textarea>
+              </div>
+
+              <div class="predefined-observations">
+                <p class="observations-label">Observaciones rápidas:</p>
+                <div class="observation-tags">
+                  <button
+                    *ngFor="let observation of predefinedObservations"
+                    type="button"
+                    class="observation-tag"
+                    (click)="onAddObservation(observation)"
+                  >
+                    {{ observation }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+              <button type="button" class="btn btn-outline" (click)="onClear()">
+                Limpiar
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline"
+                (click)="onGoBack()"
+              >
+                Regresar
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="!isFormValid || isLoading"
+                (click)="onSave()"
+              >
+                <span *ngIf="!isLoading">Guardar {{ operationTitle }}</span>
+                <span *ngIf="isLoading">Guardando...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Columna derecha: Peso y Fotos -->
+        <div class="side-column">
+          <!-- Sección de Peso -->
+          <div class="weight-section">
+            <h2 class="section-title">Peso en Tiempo Real</h2>
+
+            <div
+              class="weight-display"
+              [class.stable]="weightData.isStable"
+              [class.unstable]="!weightData.isStable"
+            >
+              <div class="weight-value">
+                {{ weightData.currentWeight | number : "1.0-0" }} kg
+              </div>
+              <div class="weight-status">
+                <span
+                  class="status-indicator"
+                  [class]="weightData.isStable ? 'stable' : 'unstable'"
+                >
+                  {{ weightData.isStable ? "Estable" : "Inestable" }}
+                </span>
+                <span
+                  class="connection-status"
+                  [class]="
+                    weightData.isConnected ? 'connected' : 'disconnected'
+                  "
+                >
+                  {{ weightData.isConnected ? "Conectado" : "Desconectado" }}
+                </span>
+              </div>
+            </div>
+
+            <button
+              class="btn btn-success capture-weight-btn"
+              [disabled]="!weightData.isStable || !weightData.isConnected"
+              (click)="onCaptureWeight()"
+            >
+              Capturar Peso
+            </button>
+
+            <div *ngIf="weightData.capturedWeight" class="captured-weight">
+              <strong>Peso capturado:</strong>
+              {{ weightData.capturedWeight | number : "1.0-0" }} kg
+            </div>
+
+            <!-- Historial de peso -->
+            <div class="weight-history">
+              <h4>Historial de lecturas</h4>
+              <div class="history-items">
+                <div
+                  *ngFor="
+                    let weight of weightData.weightHistory.slice().reverse()
+                  "
+                  class="history-item"
+                >
+                  {{ weight | number : "1.0-0" }} kg
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección de Fotos -->
+          <div class="photo-section">
+            <h2 class="section-title">Fotografías</h2>
+
+            <div class="photo-grid">
+              <div class="photo-item">
+                <h4>Placa Tráiler *</h4>
+                <div
+                  class="photo-preview"
+                  [class.has-photo]="photoData.trailerPlate"
+                >
+                  <span
+                    *ngIf="!photoData.trailerPlate"
+                    class="photo-placeholder"
+                  >
+                    📷
+                  </span>
+                  <span *ngIf="photoData.trailerPlate" class="photo-captured">
+                    ✅ {{ photoData.trailerPlate }}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-outline photo-btn"
+                  (click)="onPhotoCapture('trailerPlate')"
+                >
+                  Capturar Foto
+                </button>
+              </div>
+
+              <div
+                class="photo-item"
+                *ngIf="
+                  weighingForm.get('doubleTrailer')?.value &&
+                  !weighingForm.get('containerOnly')?.value
+                "
+              >
+                <h4>Placa Remolque *</h4>
+                <div
+                  class="photo-preview"
+                  [class.has-photo]="photoData.trailerPlate2"
+                >
+                  <span
+                    *ngIf="!photoData.trailerPlate2"
+                    class="photo-placeholder"
+                  >
+                    📷
+                  </span>
+                  <span *ngIf="photoData.trailerPlate2" class="photo-captured">
+                    ✅ {{ photoData.trailerPlate2 }}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-outline photo-btn"
+                  (click)="onPhotoCapture('trailerPlate2')"
+                >
+                  Capturar Foto
+                </button>
+              </div>
+
+              <div class="photo-item">
+                <h4>Carga/Material *</h4>
+                <div class="photo-preview" [class.has-photo]="photoData.cargo">
+                  <span *ngIf="!photoData.cargo" class="photo-placeholder">
+                    📷
+                  </span>
+                  <span *ngIf="photoData.cargo" class="photo-captured">
+                    ✅ {{ photoData.cargo }}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-outline photo-btn"
+                  (click)="onPhotoCapture('cargo')"
+                >
+                  Capturar Foto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

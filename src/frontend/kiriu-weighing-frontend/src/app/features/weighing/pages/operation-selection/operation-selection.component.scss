@@ -1,0 +1,239 @@
+.operation-selection-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.operation-selection-content {
+  padding-top: 80px; // Espacio para el header fijo
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+// Breadcrumb
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32px;
+  font-size: 14px;
+  color: #545454;
+
+  .breadcrumb-link {
+    color: #398df1;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #005bb5;
+      text-decoration: underline;
+    }
+  }
+
+  .breadcrumb-separator {
+    margin: 0 8px;
+    color: #545454;
+  }
+
+  .breadcrumb-current {
+    color: #545454;
+    font-weight: 500;
+  }
+}
+
+// Header de la página
+.operation-selection-header {
+  text-align: center;
+  margin-bottom: 48px;
+
+  .operation-selection-title {
+    color: #398df1;
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .operation-selection-subtitle {
+    color: #545454;
+    font-size: 18px;
+    margin: 0;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+}
+
+// Contenedor de operaciones
+.operations-container {
+  margin-bottom: 48px;
+
+  .grid {
+    display: grid;
+    gap: 32px;
+    margin-bottom: 32px;
+
+    &.grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
+  }
+}
+
+// Tarjeta de operación
+.operation-card {
+  background: #ffffff;
+  border: 2px solid #e9ecef;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &:hover:not(.disabled) {
+    border-color: #398df1;
+    box-shadow: 0 8px 24px rgba(57, 141, 241, 0.15);
+    transform: translateY(-4px);
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .operation-icon {
+    margin-bottom: 24px;
+
+    .icon {
+      font-size: 48px;
+      display: block;
+    }
+
+    &.icon-entry {
+      color: #1ee733;
+    }
+
+    &.icon-exit {
+      color: #398df1;
+    }
+  }
+
+  .operation-content {
+    .operation-title {
+      color: #398df1;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .operation-description {
+      color: #545454;
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 32px;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .operation-button {
+      width: 100%;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Botón regresar
+.back-button-container {
+  text-align: center;
+
+  .btn-outline {
+    background: transparent;
+    color: #398df1;
+    border: 2px solid #398df1;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #398df1;
+      color: #ffffff;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .operation-selection-header {
+    .operation-selection-title {
+      font-size: 24px;
+    }
+
+    .operation-selection-subtitle {
+      font-size: 16px;
+    }
+  }
+
+  .operations-container {
+    .grid.grid-2 {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+  }
+
+  .operation-card {
+    padding: 24px;
+
+    .operation-icon .icon {
+      font-size: 36px;
+    }
+
+    .operation-content {
+      .operation-title {
+        font-size: 20px;
+      }
+
+      .operation-description {
+        font-size: 14px;
+        min-height: 40px;
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .breadcrumb {
+    font-size: 12px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .operation-selection-header {
+    .operation-selection-title {
+      font-size: 20px;
+    }
+  }
+
+  .operation-card {
+    padding: 20px;
+  }
+}
