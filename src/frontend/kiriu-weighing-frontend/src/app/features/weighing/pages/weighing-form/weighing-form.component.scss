@@ -152,11 +152,12 @@
       color: #6c757d;
       cursor: not-allowed;
     }
-  }
 
-  .form-textarea {
-    resize: vertical;
-    min-height: 80px;
+    &[readonly] {
+      background-color: #f8f9fa;
+      color: #495057;
+      cursor: default;
+    }
   }
 
   .error-message {
@@ -164,6 +165,60 @@
     font-size: 14px;
     margin-top: 4px;
     text-align: left;
+  }
+
+  // Grupo de entrada de producto con botón de foto
+  .product-input-group {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+
+    .product-input {
+      flex: 1;
+    }
+
+    .photo-capture-btn {
+      padding: 16px 20px;
+      border: 2px solid #398df1;
+      background-color: #ffffff;
+      color: #398df1;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      min-width: 60px;
+
+      &:hover {
+        background-color: #398df1;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(57, 141, 241, 0.3);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  // Texto de ayuda
+  .form-help-text {
+    margin-top: 8px;
+
+    .help-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #6c757d;
+      font-size: 14px;
+      font-style: italic;
+
+      .info-icon {
+        font-style: normal;
+        font-size: 16px;
+      }
+    }
   }
 }
 
@@ -286,65 +341,72 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
   .weight-display {
+    position: relative;
     text-align: center;
     margin-bottom: 20px;
     padding: 20px;
     border-radius: 12px;
-    border: 2px solid #e9ecef;
+    border: 2px solid #ff9500;
+    background: rgba(255, 149, 0, 0.05);
     transition: all 0.3s ease;
-
-    &.stable {
-      border-color: #1ee733;
-      background: rgba(30, 231, 51, 0.05);
-    }
-
-    &.unstable {
-      border-color: #ff9500;
-      background: rgba(255, 149, 0, 0.05);
-    }
 
     .weight-value {
       font-size: 32px;
       font-weight: 700;
-      color: #398df1;
+      color: #ff9500;
       margin-bottom: 12px;
     }
 
-    .weight-status {
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
+    .connection-indicator {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
 
-      .status-indicator {
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-weight: 500;
-
-        &.stable {
-          background: #1ee733;
-          color: #ffffff;
-        }
-
-        &.unstable {
-          background: #ff9500;
-          color: #ffffff;
-        }
+      .connection-dot {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 0 0 8px currentColor;
       }
 
-      .connection-status {
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-weight: 500;
+      &.connected {
+        color: #1ee733;
+        animation: pulse 2s infinite;
+      }
 
-        &.connected {
-          background: #1ee733;
-          color: #ffffff;
-        }
+      &.disconnected {
+        color: #f70000;
+        animation: blink 1.5s infinite;
+      }
+    }
 
-        &.disconnected {
-          background: #f70000;
-          color: #ffffff;
-        }
+    // Animaciones para el indicador de conexión
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(30, 231, 51, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(30, 231, 51, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(30, 231, 51, 0);
+      }
+    }
+
+    @keyframes blink {
+      0%,
+      50% {
+        opacity: 1;
+      }
+      51%,
+      100% {
+        opacity: 0.3;
       }
     }
   }
@@ -356,11 +418,46 @@
 
   .captured-weight {
     text-align: center;
-    padding: 12px;
-    background: #e9ecef;
-    border-radius: 8px;
+    padding: 20px;
+    background: rgba(30, 231, 51, 0.05);
+    border-radius: 16px;
     margin-bottom: 20px;
-    color: #545454;
+    color: #1ee733;
+    border: 2px solid #1ee733;
+    position: relative;
+    transition: all 0.3s ease;
+
+    .captured-weight-header {
+      text-align: center;
+      margin-bottom: 12px;
+
+      .captured-label {
+        font-size: 16px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #1ee733;
+      }
+    }
+
+    .captured-weight-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #1ee733;
+    }
+
+    .captured-weight-timestamp {
+      font-size: 12px;
+      color: #6c757d;
+      font-style: italic;
+    }
+
+    &:hover {
+      background: rgba(30, 231, 51, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(30, 231, 51, 0.2);
+    }
   }
 
   .weight-history {
@@ -429,6 +526,26 @@
         .photo-captured {
           color: #1ee733;
           font-weight: 500;
+        }
+      }
+
+      // Texto de ayuda para fotos
+      .photo-help-text {
+        margin-top: 8px;
+
+        .help-text {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          color: #6c757d;
+          font-size: 13px;
+          font-style: italic;
+
+          .info-icon {
+            font-style: normal;
+            font-size: 14px;
+          }
         }
       }
 

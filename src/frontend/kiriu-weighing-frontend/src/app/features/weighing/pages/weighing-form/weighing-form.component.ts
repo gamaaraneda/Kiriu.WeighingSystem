@@ -36,6 +36,7 @@ export interface WeightData {
   isConnected: boolean;
   weightHistory: number[];
   capturedWeight?: number;
+  capturedAt?: Date;
 }
 
 export interface PhotoData {
@@ -80,6 +81,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     trailerPlate: '',
     trailerPlate2: '',
     cargo: '',
+  };
+
+  // Control de edición manual de placas
+  manualEditEnabled = {
+    trailerPlate: false,
+    trailerPlate2: false,
   };
 
   isLoading = false;
@@ -215,22 +222,39 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   onCaptureWeight(): void {
     if (this.weightData.isStable && this.weightData.isConnected) {
       this.weightData.capturedWeight = this.weightData.currentWeight;
+      this.weightData.capturedAt = new Date();
       console.log('Peso capturado:', this.weightData.capturedWeight);
     }
   }
 
+  getCurrentTime(): Date {
+    return this.weightData.capturedAt || new Date();
+  }
+
   onPhotoCapture(photoType: keyof PhotoData): void {
-    // TODO: Implementar captura de fotos con cámara
+    // TODO: Implementar captura de fotos con cámara real
     console.log('Capturando foto:', photoType);
 
-    // Mock: simular captura de foto
+    // Mock: simular captura de foto y detección automática de placa
     if (photoType === 'trailerPlate') {
       this.photoData.trailerPlate = 'Foto capturada';
+      // Simular detección automática de placa (OCR)
+      this.weighingForm.patchValue({ trailerPlate: 'ABC-123-XY' });
+      console.log('Placa detectada automáticamente: ABC-123-XY');
     } else if (photoType === 'trailerPlate2') {
       this.photoData.trailerPlate2 = 'Foto capturada';
+      // Simular detección automática de placa (OCR)
+      this.weighingForm.patchValue({ trailerPlate2: 'XYZ-789-AB' });
+      console.log('Placa detectada automáticamente: XYZ-789-AB');
     } else if (photoType === 'cargo') {
       this.photoData.cargo = 'Foto capturada';
     }
+  }
+
+  onEnableManualEdit(plateType: 'trailerPlate' | 'trailerPlate2'): void {
+    // Habilitar edición manual del campo de placa
+    this.manualEditEnabled[plateType] = true;
+    console.log(`Edición manual habilitada para: ${plateType}`);
   }
 
   onSave(): void {

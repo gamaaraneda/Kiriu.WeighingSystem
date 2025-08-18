@@ -584,3 +584,53 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: $kiriu-blue-hover;
 }
+
+// ============================================================================
+// ESTILOS PARA GRUPOS DE ENTRADA DE PLACAS
+// ============================================================================
+
+.plate-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  .photo-capture-btn,
+  .edit-plate-btn {
+    flex-shrink: 0;
+    padding: 12px;
+    font-size: 18px;
+    min-width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  .plate-input {
+    flex: 1;
+  }
+}
+
+// Responsive para grupos de entrada de placas
+@media (max-width: 768px) {
+  .plate-input-group {
+    flex-direction: column;
+    gap: 8px;
+
+    .photo-capture-btn,
+    .edit-plate-btn {
+      width: 100%;
+    }
+  }
+}

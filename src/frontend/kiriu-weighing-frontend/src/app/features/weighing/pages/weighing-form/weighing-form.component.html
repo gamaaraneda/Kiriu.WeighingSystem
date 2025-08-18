@@ -35,15 +35,36 @@
                 <label for="trailerPlate" class="form-label"
                   >Placa Tráiler *</label
                 >
-                <input
-                  type="text"
-                  id="trailerPlate"
-                  formControlName="trailerPlate"
-                  class="form-input"
-                  [class.error]="getFieldError('trailerPlate')"
-                  placeholder="ABC-123-XY"
-                  [disabled]="weighingForm.get('containerOnly')?.value"
-                />
+                <div class="plate-input-group">
+                  <button
+                    type="button"
+                    class="btn btn-outline photo-capture-btn"
+                    (click)="onPhotoCapture('trailerPlate')"
+                    [disabled]="weighingForm.get('containerOnly')?.value"
+                    title="Capturar foto de la placa del tráiler para detección automática"
+                  >
+                    📷
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    (click)="onEnableManualEdit('trailerPlate')"
+                    [disabled]="weighingForm.get('containerOnly')?.value"
+                    title="Habilitar edición manual de la placa del tráiler"
+                  >
+                    ✏️
+                  </button>
+                  <input
+                    type="text"
+                    id="trailerPlate"
+                    formControlName="trailerPlate"
+                    class="form-input plate-input"
+                    [class.error]="getFieldError('trailerPlate')"
+                    placeholder="La placa se detectará automáticamente de la foto"
+                    [readonly]="!manualEditEnabled.trailerPlate"
+                    [disabled]="weighingForm.get('containerOnly')?.value"
+                  />
+                </div>
                 <div
                   *ngIf="getFieldError('trailerPlate')"
                   class="error-message"
@@ -56,15 +77,36 @@
                 <label for="trailerPlate2" class="form-label"
                   >Placa Remolque *</label
                 >
-                <input
-                  type="text"
-                  id="trailerPlate2"
-                  formControlName="trailerPlate2"
-                  class="form-input"
-                  [class.error]="getFieldError('trailerPlate2')"
-                  placeholder="ABC-123-XY"
-                  [disabled]="weighingForm.get('containerOnly')?.value"
-                />
+                <div class="plate-input-group">
+                  <button
+                    type="button"
+                    class="btn btn-outline photo-capture-btn"
+                    (click)="onPhotoCapture('trailerPlate2')"
+                    [disabled]="weighingForm.get('containerOnly')?.value"
+                    title="Capturar foto de la placa del remolque para detección automática"
+                  >
+                    📷
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    (click)="onEnableManualEdit('trailerPlate2')"
+                    [disabled]="weighingForm.get('containerOnly')?.value"
+                    title="Habilitar edición manual de la placa del remolque"
+                  >
+                    ✏️
+                  </button>
+                  <input
+                    type="text"
+                    id="trailerPlate2"
+                    formControlName="trailerPlate2"
+                    class="form-input plate-input"
+                    [class.error]="getFieldError('trailerPlate2')"
+                    placeholder="La placa se detectará automáticamente de la foto"
+                    [readonly]="!manualEditEnabled.trailerPlate2"
+                    [disabled]="weighingForm.get('containerOnly')?.value"
+                  />
+                </div>
                 <div
                   *ngIf="getFieldError('trailerPlate2')"
                   class="error-message"
@@ -91,13 +133,30 @@
                 <label for="product" class="form-label"
                   >Producto/Material *</label
                 >
-                <input
-                  type="text"
-                  id="product"
-                  formControlName="product"
-                  class="form-input"
-                  placeholder="Ingresa el nombre del producto o material"
-                />
+                <div class="product-input-group">
+                  <input
+                    type="text"
+                    id="product"
+                    formControlName="product"
+                    class="form-input product-input"
+                    placeholder="Ingresa el nombre del producto o material"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline photo-capture-btn"
+                    (click)="onPhotoCapture('cargo')"
+                    title="Capturar foto de la carga para documentación"
+                  >
+                    📷
+                  </button>
+                </div>
+                <div class="form-help-text">
+                  <small class="help-text">
+                    <i class="info-icon">ℹ️</i>
+                    Es necesario tomar fotos de la carga para documentar el
+                    estado del material
+                  </small>
+                </div>
                 <div *ngIf="getFieldError('product')" class="error-message">
                   {{ getFieldError("product") }}
                 </div>
@@ -160,29 +219,20 @@
           <div class="weight-section">
             <h2 class="section-title">Peso en Tiempo Real</h2>
 
-            <div
-              class="weight-display"
-              [class.stable]="weightData.isStable"
-              [class.unstable]="!weightData.isStable"
-            >
+            <div class="weight-display">
               <div class="weight-value">
                 {{ weightData.currentWeight | number : "1.0-0" }} kg
               </div>
-              <div class="weight-status">
-                <span
-                  class="status-indicator"
-                  [class]="weightData.isStable ? 'stable' : 'unstable'"
-                >
-                  {{ weightData.isStable ? "Estable" : "Inestable" }}
-                </span>
-                <span
-                  class="connection-status"
-                  [class]="
-                    weightData.isConnected ? 'connected' : 'disconnected'
-                  "
-                >
-                  {{ weightData.isConnected ? "Conectado" : "Desconectado" }}
-                </span>
+              <div
+                class="connection-indicator"
+                [class]="weightData.isConnected ? 'connected' : 'disconnected'"
+                [title]="
+                  weightData.isConnected
+                    ? 'Sistema conectado'
+                    : 'Sistema desconectado'
+                "
+              >
+                <span class="connection-dot"></span>
               </div>
             </div>
 
@@ -195,8 +245,15 @@
             </button>
 
             <div *ngIf="weightData.capturedWeight" class="captured-weight">
-              <strong>Peso capturado:</strong>
-              {{ weightData.capturedWeight | number : "1.0-0" }} kg
+              <div class="captured-weight-header">
+                <span class="captured-label">Peso Capturado</span>
+              </div>
+              <div class="captured-weight-value">
+                {{ weightData.capturedWeight | number : "1.0-0" }} kg
+              </div>
+              <div class="captured-weight-timestamp">
+                Capturado el {{ getCurrentTime() | date : "dd/MM/yyyy HH:mm" }}
+              </div>
             </div>
           </div>
 
@@ -221,13 +278,6 @@
                     ✅ {{ photoData.trailerPlate }}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-outline photo-btn"
-                  (click)="onPhotoCapture('trailerPlate')"
-                >
-                  Capturar Foto
-                </button>
               </div>
 
               <div class="photo-item">
@@ -246,13 +296,6 @@
                     ✅ {{ photoData.trailerPlate2 }}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-outline photo-btn"
-                  (click)="onPhotoCapture('trailerPlate2')"
-                >
-                  Capturar Foto
-                </button>
               </div>
 
               <div class="photo-item">
@@ -265,13 +308,12 @@
                     ✅ {{ photoData.cargo }}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-outline photo-btn"
-                  (click)="onPhotoCapture('cargo')"
-                >
-                  Capturar Foto
-                </button>
+                <div class="photo-help-text">
+                  <small class="help-text">
+                    <i class="info-icon">ℹ️</i>
+                    Foto capturada desde el campo Producto
+                  </small>
+                </div>
               </div>
             </div>
           </div>
