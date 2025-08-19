@@ -26,6 +26,37 @@ export interface WeightReading {
   timestamp: Date;
 }
 
+// Interfaces para el flujo de doble remolque
+export interface RemolqueData {
+  numero: number; // 1 o 2
+  placa: string;
+  pesoBruto: number;
+  fotos: string[]; // rutas o base64
+  pesoCapturado?: boolean;
+  fotosCapturadas?: boolean;
+  fotoCargaCapturada?: boolean; // Nueva propiedad para rastrear foto de carga
+}
+
+export interface EntradaConDobleRemolque {
+  folio: string;
+  trailerPlaca: string;
+  remolques: [RemolqueData, RemolqueData];
+  pesoBrutoTotal: number;
+  fechaHoraEntrada: string;
+  unitType: 'client' | 'provider';
+  product: string;
+  clientProviderName: string;
+}
+
+export interface DoubleTrailerWeighingState {
+  currentStep: 'trailer' | 'remolque1' | 'remolque2' | 'complete';
+  trailerPlaca: string;
+  remolque1: Partial<RemolqueData>;
+  remolque2: Partial<RemolqueData>;
+  pesoBrutoTotal: number;
+  isComplete: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -33,6 +64,14 @@ export class WeighingService {
   private operations: WeighingOperation[] = [];
   private currentWeight = 0;
   private isConnected = true;
+  private doubleTrailerState: DoubleTrailerWeighingState = {
+    currentStep: 'trailer',
+    trailerPlaca: '',
+    remolque1: { numero: 1, placa: '', pesoBruto: 0, fotos: [] },
+    remolque2: { numero: 2, placa: '', pesoBruto: 0, fotos: [] },
+    pesoBrutoTotal: 0,
+    isComplete: false,
+  };
 
   constructor() {
     // Mock data inicial
@@ -160,5 +199,115 @@ export class WeighingService {
     const prefix = unitType === 'client' ? 'CLI' : 'PRO';
     const opPrefix = operationType === 'entry' ? 'ENT' : 'SAL';
     return `${prefix}-${opPrefix}-${timestamp}`;
+  }
+
+  // Métodos para el flujo de doble remolque
+  getDoubleTrailerState(): Observable<DoubleTrailerWeighingState> {
+    return of(this.doubleTrailerState);
+  }
+
+  updateDoubleTrailerState(updates: Partial<DoubleTrailerWeighingState>): void {
+    this.doubleTrailerState = { ...this.doubleTrailerState, ...updates };
+  }
+
+  setTrailerPlaca(placa: string): void {
+    this.doubleTrailerState.trailerPlaca = placa;
+    this.doubleTrailerState.currentStep = 'remolque1';
+  }
+
+  captureRemolque1Data(placa: string, peso: number, fotos: string[]): void {
+    this.doubleTrailerState.remolque1 = {
+      numero: 1,
+      placa,
+      pesoBruto: peso,
+      fotos,
+      pesoCapturado: true,
+      fotosCapturadas: true,
+    };
+    this.doubleTrailerState.currentStep = 'remolque2';
+  }
+
+  captureRemolque2Data(placa: string, peso: number, fotos: string[]): void {
+    this.doubleTrailerState.remolque2 = {
+      numero: 2,
+      placa,
+      pesoBruto: peso,
+      fotos,
+      pesoCapturado: true,
+      fotosCapturadas: true,
+    };
+
+    // Calcular peso total
+    this.doubleTrailerState.pesoBrutoTotal =
+      (this.doubleTrailerState.remolque1.pesoBruto || 0) +
+      (this.doubleTrailerState.remolque2.pesoBruto || 0);
+
+    this.doubleTrailerState.currentStep = 'complete';
+    this.doubleTrailerState.isComplete = true;
+  }
+
+  createDoubleTrailerEntry(
+    operation: Omit<EntradaConDobleRemolque, 'folio' | 'fechaHoraEntrada'>
+  ): Observable<EntradaConDobleRemolque> {
+    const folio = this.generateFolio(operation.unitType, 'entry');
+    const fechaHoraEntrada = new Date().toISOString();
+
+    const entrada: EntradaConDobleRemolque = {
+      ...operation,
+      folio,
+      fechaHoraEntrada,
+    };
+
+    // Crear operación de entrada estándar también
+    const weighingOperation: WeighingOperation = {
+      id: Date.now().toString(),
+      unitType: operation.unitType,
+      operationType: 'entry',
+      trailerPlate: operation.trailerPlaca,
+      trailerPlate2: `${operation.remolques[0].placa} + ${operation.remolques[1].placa}`,
+      product: operation.product,
+      clientProviderName: operation.clientProviderName,
+      entryWeight: operation.pesoBrutoTotal,
+      status: 'ENTRADA_REGISTRADA',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.operations.push(weighingOperation);
+
+    // Resetear el estado
+    this.resetDoubleTrailerState();
+
+    return of(entrada);
+  }
+
+  resetDoubleTrailerState(): void {
+    this.doubleTrailerState = {
+      currentStep: 'trailer',
+      trailerPlaca: '',
+      remolque1: { numero: 1, placa: '', pesoBruto: 0, fotos: [] },
+      remolque2: { numero: 2, placa: '', pesoBruto: 0, fotos: [] },
+      pesoBrutoTotal: 0,
+      isComplete: false,
+    };
+  }
+
+  canProceedToNextStep(): boolean {
+    switch (this.doubleTrailerState.currentStep) {
+      case 'trailer':
+        return !!this.doubleTrailerState.trailerPlaca;
+      case 'remolque1':
+        return !!(
+          this.doubleTrailerState.remolque1.pesoCapturado &&
+          this.doubleTrailerState.remolque1.fotosCapturadas
+        );
+      case 'remolque2':
+        return !!(
+          this.doubleTrailerState.remolque2.pesoCapturado &&
+          this.doubleTrailerState.remolque2.fotosCapturadas
+        );
+      default:
+        return false;
+    }
   }
 }

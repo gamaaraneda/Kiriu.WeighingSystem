@@ -98,6 +98,106 @@
     margin-bottom: 0;
   }
 
+  // Estilos específicos para secciones de remolque
+  &.remolque-section {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 24px;
+    background: #ffffff;
+    transition: all 0.3s ease;
+
+    &.disabled {
+      border-color: #dee2e6;
+      background: #f8f9fa;
+      opacity: 0.7;
+      pointer-events: none;
+
+      .form-group {
+        opacity: 0.5;
+      }
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      color: #398df1;
+      font-size: 20px;
+      font-weight: 600;
+
+      .remolque-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: #398df1;
+        color: white;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 16px;
+      }
+
+      .disabled-badge {
+        background: #dc3545;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-left: auto;
+      }
+    }
+  }
+
+  // Estilos para la sección de resumen
+  &.summary-section {
+    background: #d4edda;
+    border: 2px solid #c3e6cb;
+    border-radius: 12px;
+    padding: 24px;
+
+    .section-title {
+      color: #155724;
+      margin-bottom: 20px;
+    }
+
+    .summary-content {
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #c3e6cb;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &.total {
+          font-weight: 700;
+          font-size: 18px;
+          color: #155724;
+          border-top: 2px solid #c3e6cb;
+          border-bottom: none;
+          padding-top: 16px;
+          margin-top: 8px;
+        }
+
+        .label {
+          font-weight: 500;
+          color: #155724;
+        }
+
+        .value {
+          font-weight: 600;
+          color: #155724;
+        }
+      }
+    }
+  }
+
   .section-title {
     color: #398df1;
     font-size: 20px;
@@ -732,5 +832,311 @@
   .weight-section,
   .photo-section {
     padding: 16px;
+  }
+}
+
+// Estilos para doble remolque
+.double-trailer-instructions,
+.double-trailer-summary {
+  margin: 1rem 0;
+
+  .info-box {
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid;
+
+    &.double-trailer {
+      background-color: #e3f2fd;
+      border-color: #2196f3;
+
+      .step-title {
+        color: #1976d2;
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .step-instructions {
+        .step-detail {
+          margin-bottom: 0.5rem;
+
+          p {
+            margin: 0.25rem 0;
+            color: #424242;
+
+            strong {
+              color: #1976d2;
+            }
+          }
+        }
+      }
+    }
+
+    &.success {
+      background-color: #e8f5e8;
+      border-color: #4caf50;
+
+      .summary-title {
+        color: #2e7d32;
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+
+      .summary-details {
+        .summary-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.5rem;
+          padding: 0.25rem 0;
+
+          .label {
+            font-weight: 600;
+            color: #424242;
+          }
+
+          .value {
+            color: #2e7d32;
+            font-weight: 500;
+          }
+
+          &.total {
+            border-top: 1px solid #c8e6c9;
+            padding-top: 0.5rem;
+            margin-top: 0.5rem;
+
+            .label,
+            .value {
+              font-weight: 700;
+              font-size: 1.1rem;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Mejoras en la sección de peso para doble remolque
+.weight-section {
+  .double-trailer-status {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: #f5f5f5;
+    border-radius: 6px;
+    border-left: 3px solid #2196f3;
+
+    .status-title {
+      font-weight: 600;
+      color: #1976d2;
+      margin-bottom: 0.5rem;
+    }
+
+    .status-details {
+      font-size: 0.9rem;
+      color: #666;
+
+      .status-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.25rem;
+
+        .label {
+          font-weight: 500;
+        }
+
+        .value {
+          color: #1976d2;
+        }
+      }
+    }
+  }
+
+  // Información de requisitos para capturar peso
+  .weight-capture-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    
+    .info-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      
+      .info-message {
+        display: flex;
+        align-items: center;
+        color: #856404;
+        font-weight: 500;
+        flex: 1;
+        
+        .info-icon {
+          margin-right: 0.5rem;
+          font-size: 1.1rem;
+        }
+      }
+      
+      .close-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        min-width: auto;
+        margin-left: 0.5rem;
+        color: #856404;
+        border-color: #ffeaa7;
+        
+        &:hover {
+          background-color: #ffeaa7;
+          color: #856404;
+        }
+      }
+    }
+    
+    .requirements-list {
+      .requirement-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding: 0.25rem 0;
+        
+        .requirement-icon {
+          margin-right: 0.5rem;
+          font-size: 1rem;
+          min-width: 20px;
+        }
+        
+        .requirement-text {
+          color: #856404;
+          font-size: 0.9rem;
+        }
+        
+        &.completed {
+          .requirement-text {
+            color: #155724;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive para doble remolque
+@media (max-width: 768px) {
+  .double-trailer-instructions,
+  .double-trailer-summary {
+    .info-box {
+      padding: 0.75rem;
+
+      .step-title,
+      .summary-title {
+        font-size: 1rem;
+      }
+
+      .step-instructions .step-detail p,
+      .summary-details .summary-item {
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+// Mensajes informativos para doble remolque
+.remolque2-blocked-message,
+.remolque2-unlocked-message {
+  margin-bottom: 20px;
+
+  .info-box {
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid;
+
+    &.warning {
+      background: #fff3cd;
+      border-color: #ffc107;
+      color: #856404;
+
+      .info-icon {
+        color: #ffc107;
+      }
+    }
+
+    &.success {
+      background: #d4edda;
+      border-color: #28a745;
+      color: #155724;
+
+      .info-icon {
+        color: #28a745;
+      }
+    }
+
+    .info-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 500;
+
+      .info-icon {
+        font-size: 20px;
+      }
+    }
+  }
+}
+
+// Grupos de peso
+.weight-display-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+
+  .weight-value-display {
+    font-size: 18px;
+    font-weight: 600;
+    color: #398df1;
+
+    .no-weight-text {
+      color: #6c757d;
+      font-style: italic;
+    }
+  }
+
+  .weight-status {
+    .weight-captured {
+      color: #28a745;
+      font-weight: 500;
+    }
+
+    .weight-pending {
+      color: #ffc107;
+      font-weight: 500;
+    }
+  }
+}
+
+// Grupos de captura de fotos
+.photo-capture-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  .photo-status {
+    .photo-captured {
+      color: #28a745;
+      font-weight: 500;
+    }
+
+    .photo-pending {
+      color: #ffc107;
+      font-weight: 500;
+    }
   }
 }
