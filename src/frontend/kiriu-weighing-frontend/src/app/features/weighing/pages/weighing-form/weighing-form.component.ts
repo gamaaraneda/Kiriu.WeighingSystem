@@ -190,35 +190,6 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     console.log('Validando entrada previa para salida...');
   }
 
-  private onContainerOnlyChange(containerOnly: boolean): void {
-    const trailerPlateControl = this.weighingForm.get('trailerPlate');
-    const trailerPlate2Control = this.weighingForm.get('trailerPlate2');
-
-    if (containerOnly) {
-      trailerPlateControl?.clearValidators();
-      trailerPlate2Control?.clearValidators();
-    } else {
-      trailerPlateControl?.setValidators([
-        Validators.required,
-        Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
-      ]);
-      // La placa del remolque siempre es obligatoria si no es solo contenedor
-      trailerPlate2Control?.setValidators([
-        Validators.required,
-        Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
-      ]);
-    }
-
-    trailerPlateControl?.updateValueAndValidity();
-    trailerPlate2Control?.updateValueAndValidity();
-  }
-
-  private onDoubleTrailerChange(doubleTrailer: boolean): void {
-    // La placa del remolque siempre es obligatoria, no depende del checkbox de doble remolque
-    // Solo se puede deshabilitar si es "solo contenedor"
-    console.log('Doble remolque cambiado:', doubleTrailer);
-  }
-
   onCaptureWeight(): void {
     if (this.weightData.isStable && this.weightData.isConnected) {
       this.weightData.capturedWeight = this.weightData.currentWeight;
@@ -229,6 +200,24 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   getCurrentTime(): Date {
     return this.weightData.capturedAt || new Date();
+  }
+
+  onContainerOnlyChange(event: any): void {
+    const isChecked = event.target.checked;
+
+    if (isChecked) {
+      // Si se selecciona "Solo contenedor", desmarcar "Doble remolque"
+      this.weighingForm.patchValue({ doubleTrailer: false });
+    }
+  }
+
+  onDoubleTrailerChange(event: any): void {
+    const isChecked = event.target.checked;
+
+    if (isChecked) {
+      // Si se selecciona "Doble remolque", desmarcar "Solo contenedor"
+      this.weighingForm.patchValue({ containerOnly: false });
+    }
   }
 
   onPhotoCapture(photoType: keyof PhotoData): void {
@@ -379,6 +368,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   get isFormValid(): boolean {
+    const isContainerOnly = this.weighingForm.get('containerOnly')?.value;
+
+    // Si es solo contenedor, las placas son opcionales
+    if (isContainerOnly) {
+      return (
+        this.weighingForm.valid &&
+        this.weightData.capturedWeight !== undefined &&
+        !!this.photoData.cargo
+      );
+    }
+
+    // Si no es solo contenedor, todas las placas son obligatorias
     return (
       this.weighingForm.valid &&
       this.weightData.capturedWeight !== undefined &&

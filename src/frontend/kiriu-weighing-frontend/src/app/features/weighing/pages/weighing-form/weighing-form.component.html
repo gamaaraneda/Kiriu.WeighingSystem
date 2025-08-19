@@ -33,14 +33,20 @@
 
               <div class="form-group">
                 <label for="trailerPlate" class="form-label"
-                  >Placa Tráiler *</label
+                  >Placa Tráiler
+                  <span *ngIf="!weighingForm.get('containerOnly')?.value"
+                    >*</span
+                  ><span
+                    *ngIf="weighingForm.get('containerOnly')?.value"
+                    class="optional-label"
+                    >(Opcional)</span
+                  ></label
                 >
                 <div class="plate-input-group">
                   <button
                     type="button"
                     class="btn btn-outline photo-capture-btn"
                     (click)="onPhotoCapture('trailerPlate')"
-                    [disabled]="weighingForm.get('containerOnly')?.value"
                     title="Capturar foto de la placa del tráiler para detección automática"
                   >
                     📷
@@ -49,7 +55,6 @@
                     type="button"
                     class="btn btn-outline edit-plate-btn"
                     (click)="onEnableManualEdit('trailerPlate')"
-                    [disabled]="weighingForm.get('containerOnly')?.value"
                     title="Habilitar edición manual de la placa del tráiler"
                   >
                     ✏️
@@ -75,14 +80,20 @@
 
               <div class="form-group">
                 <label for="trailerPlate2" class="form-label"
-                  >Placa Remolque *</label
+                  >Placa Remolque
+                  <span *ngIf="!weighingForm.get('containerOnly')?.value"
+                    >*</span
+                  ><span
+                    *ngIf="weighingForm.get('containerOnly')?.value"
+                    class="optional-label"
+                    >(Opcional)</span
+                  ></label
                 >
                 <div class="plate-input-group">
                   <button
                     type="button"
                     class="btn btn-outline photo-capture-btn"
                     (click)="onPhotoCapture('trailerPlate2')"
-                    [disabled]="weighingForm.get('containerOnly')?.value"
                     title="Capturar foto de la placa del remolque para detección automática"
                   >
                     📷
@@ -91,7 +102,6 @@
                     type="button"
                     class="btn btn-outline edit-plate-btn"
                     (click)="onEnableManualEdit('trailerPlate2')"
-                    [disabled]="weighingForm.get('containerOnly')?.value"
                     title="Habilitar edición manual de la placa del remolque"
                   >
                     ✏️
@@ -117,16 +127,40 @@
 
               <div class="checkbox-group">
                 <label class="checkbox-label">
-                  <input type="checkbox" formControlName="containerOnly" />
+                  <input
+                    type="checkbox"
+                    formControlName="containerOnly"
+                    [disabled]="weighingForm.get('doubleTrailer')?.value"
+                    (change)="onContainerOnlyChange($event)"
+                  />
                   <span class="checkmark"></span>
                   Solo contenedor
                 </label>
 
                 <label class="checkbox-label">
-                  <input type="checkbox" formControlName="doubleTrailer" />
+                  <input
+                    type="checkbox"
+                    formControlName="doubleTrailer"
+                    [disabled]="weighingForm.get('containerOnly')?.value"
+                    (change)="onDoubleTrailerChange($event)"
+                  />
                   <span class="checkmark"></span>
                   Unidad con doble remolque
                 </label>
+              </div>
+
+              <div
+                *ngIf="weighingForm.get('containerOnly')?.value"
+                class="container-only-info"
+              >
+                <div class="info-box">
+                  <div class="info-content">
+                    <span class="info-text"
+                      ><strong>Modo Solo Contenedor:</strong> las placas son
+                      opcionales y solo se requiere una foto de la carga</span
+                    >
+                  </div>
+                </div>
               </div>
 
               <div class="form-group">
