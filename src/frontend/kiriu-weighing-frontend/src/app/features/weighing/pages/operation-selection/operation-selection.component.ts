@@ -101,8 +101,12 @@ export class OperationSelectionComponent implements OnInit {
     // Actualizar el estado del flujo
     this.weighingFlowService.setOperationType(operation.id);
 
-    // Navegar al formulario de pesaje
-    this.router.navigate(['/weighing', this.unitType, operation.id]);
+    // Navegar al formulario correspondiente según la operación
+    if (operation.id === 'exit') {
+      this.router.navigate(['/weighing-exit', this.unitType]);
+    } else {
+      this.router.navigate(['/weighing', this.unitType, operation.id]);
+    }
   }
 
   private validateFlow(): void {

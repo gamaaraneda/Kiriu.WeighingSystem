@@ -1,0 +1,353 @@
+<div class="weighing-exit-form-container">
+  <!-- Toast para notificaciones -->
+  <p-toast key="top-right" position="top-right"></p-toast>
+
+  <!-- Header -->
+  <app-header
+    (queriesClick)="onQueries()"
+    (logoutClick)="onLogout()"
+  ></app-header>
+
+  <!-- Contenido principal -->
+  <main class="weighing-exit-form-content">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <app-breadcrumb></app-breadcrumb>
+
+      <!-- Título principal -->
+      <div class="form-header">
+        <h1 class="form-title">{{ operationTitle }} - {{ unitTypeTitle }}</h1>
+        <p class="form-subtitle">
+          Busque la entrada por placa del tráiler y registre la salida del
+          vehículo
+        </p>
+      </div>
+
+      <!-- Layout de dos columnas -->
+      <div class="form-layout">
+        <!-- Columna izquierda: Formulario -->
+        <div class="form-column">
+          <form [formGroup]="exitForm" class="weighing-exit-form">
+            <!-- Sección: Búsqueda de Entrada -->
+            <div class="form-section">
+              <h2 class="section-title">Búsqueda de Entrada</h2>
+
+              <div class="form-group">
+                <label for="trailerPlate" class="form-label"
+                  >Placa del Tráiler *</label
+                >
+                <div class="search-input-group">
+                  <input
+                    type="text"
+                    id="trailerPlate"
+                    formControlName="trailerPlate"
+                    class="form-input search-input"
+                    placeholder="Ingrese la placa del tráiler para buscar la entrada"
+                    [readonly]="isEntryFound"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-primary search-btn"
+                    [disabled]="isSearching || isEntryFound"
+                    (click)="onSearchEntry()"
+                  >
+                    <span *ngIf="!isSearching">🔍 Buscar</span>
+                    <span *ngIf="isSearching">⏳ Buscando...</span>
+                  </button>
+                </div>
+                <div
+                  *ngIf="getFieldError('trailerPlate')"
+                  class="error-message"
+                >
+                  {{ getFieldError("trailerPlate") }}
+                </div>
+              </div>
+
+              <!-- Resultado de la búsqueda -->
+              <div
+                *ngIf="isEntryFound && entryData"
+                class="entry-found-section"
+              >
+                <div class="info-box success">
+                  <div class="info-content">
+                    <i class="info-icon">✅</i>
+                    <span><strong>Entrada encontrada</strong></span>
+                  </div>
+                </div>
+
+                <div class="entry-details">
+                  <div class="detail-item">
+                    <span class="label">Folio:</span>
+                    <span class="value">{{ entryData.id }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Fecha de Entrada:</span>
+                    <span class="value">{{
+                      entryData.createdAt | date : "dd/MM/yyyy HH:mm"
+                    }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">{{ unitTypeTitle }}:</span>
+                    <span class="value">{{
+                      entryData.clientProviderName
+                    }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Producto:</span>
+                    <span class="value">{{ entryData.product }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Peso Bruto (Entrada):</span>
+                    <span class="value"
+                      >{{ entryData.entryWeight | number : "1.0-0" }} kg</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección: Datos del Vehículo (solo visible si se encontró la entrada) -->
+            <div *ngIf="isEntryFound && entryData" class="form-section">
+              <h2 class="section-title">Datos del Vehículo</h2>
+
+              <div class="form-group">
+                <label for="trailerPlate2" class="form-label"
+                  >Placa del Remolque</label
+                >
+                <div class="plate-input-group">
+                  <button
+                    type="button"
+                    class="btn btn-outline photo-capture-btn"
+                    (click)="onPhotoCapture('trailerPlate2')"
+                    title="Capturar foto de la placa del remolque"
+                  >
+                    📷
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    (click)="onEnableManualEdit('trailerPlate2')"
+                    title="Habilitar edición manual de la placa del remolque"
+                  >
+                    ✏️
+                  </button>
+                  <input
+                    type="text"
+                    id="trailerPlate2"
+                    formControlName="trailerPlate2"
+                    class="form-input plate-input"
+                    [class.error]="getFieldError('trailerPlate2')"
+                    placeholder="Placa del remolque (si aplica)"
+                    [readonly]="!manualEditEnabled.trailerPlate2"
+                  />
+                </div>
+                <div
+                  *ngIf="getFieldError('trailerPlate2')"
+                  class="error-message"
+                >
+                  {{ getFieldError("trailerPlate2") }}
+                </div>
+
+                <!-- Foto de placa del remolque -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.trailerPlate2"
+                  >
+                    <span
+                      *ngIf="!photoData.trailerPlate2"
+                      class="photo-placeholder"
+                    >
+                      📷
+                    </span>
+                    <span
+                      *ngIf="photoData.trailerPlate2"
+                      class="photo-captured"
+                    >
+                      ✅
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Foto del estado de carga -->
+              <div class="form-group">
+                <label class="form-label">Estado de Carga *</label>
+                <div class="photo-capture-group">
+                  <button
+                    type="button"
+                    class="btn btn-outline photo-capture-btn"
+                    (click)="onPhotoCapture('cargoState')"
+                    title="Capturar foto del estado de carga o vacío"
+                  >
+                    📷 Capturar Estado
+                  </button>
+                  <div class="photo-status">
+                    <span *ngIf="photoData.cargoState" class="photo-captured">
+                      ✅
+                    </span>
+                    <span *ngIf="!photoData.cargoState" class="photo-pending">
+                      ⏳
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Foto del estado de carga -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.cargoState"
+                  >
+                    <span
+                      *ngIf="!photoData.cargoState"
+                      class="photo-placeholder"
+                    >
+                      📷
+                    </span>
+                    <span *ngIf="photoData.cargoState" class="photo-captured">
+                      ✅
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección: Pesos (solo visible si se encontró la entrada) -->
+            <div *ngIf="isEntryFound && entryData" class="form-section">
+              <h2 class="section-title">Pesos</h2>
+
+              <div class="form-group">
+                <label class="form-label">Peso Bruto (Entrada)</label>
+                <div class="weight-display readonly">
+                  <span class="weight-value"
+                    >{{ entryData.entryWeight | number : "1.0-0" }} kg</span
+                  >
+                  <span class="weight-label">Solo lectura</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="exitWeight" class="form-label"
+                  >Peso Tara (Salida) *</label
+                >
+                <div class="weight-input-group">
+                  <input
+                    type="number"
+                    id="exitWeight"
+                    formControlName="exitWeight"
+                    class="form-input weight-input"
+                    placeholder="Peso de salida desde la báscula"
+                    [readonly]="true"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-success capture-weight-btn"
+                    [disabled]="
+                      !canCaptureWeight() ||
+                      !weightData.isStable ||
+                      !weightData.isConnected
+                    "
+                    (click)="onCaptureWeight()"
+                  >
+                    ⚖️ Capturar
+                  </button>
+                </div>
+                <div *ngIf="getFieldError('exitWeight')" class="error-message">
+                  {{ getFieldError("exitWeight") }}
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="netWeight" class="form-label">Peso Neto</label>
+                <div class="weight-display calculated">
+                  <span class="weight-value"
+                    >{{
+                      exitForm.get("netWeight")?.value | number : "1.0-0"
+                    }}
+                    kg</span
+                  >
+                  <span class="weight-label">Calculado automáticamente</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="form-actions">
+              <button type="button" class="btn btn-outline" (click)="onClear()">
+                Limpiar
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline"
+                (click)="onGoBack()"
+              >
+                Regresar
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="!isFormValid || isLoading"
+                (click)="onSave()"
+              >
+                <span *ngIf="!isLoading">Registrar Salida</span>
+                <span *ngIf="isLoading">Registrando...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Columna derecha: Peso en Tiempo Real -->
+        <div class="side-column">
+          <!-- Sección de Peso en Tiempo Real -->
+          <div class="weight-section">
+            <h2 class="section-title">Peso en Tiempo Real</h2>
+
+            <div class="weight-display">
+              <div class="weight-value">
+                {{ weightData.currentWeight | number : "1.0-0" }} kg
+              </div>
+              <div
+                class="connection-indicator"
+                [class]="weightData.isConnected ? 'connected' : 'disconnected'"
+                [title]="
+                  weightData.isConnected
+                    ? 'Sistema conectado'
+                    : 'Sistema desconectado'
+                "
+              >
+                <span class="connection-dot"></span>
+              </div>
+            </div>
+
+            <div class="weight-status">
+              <div class="status-item">
+                <span class="status-label">Conexión:</span>
+                <span
+                  class="status-value"
+                  [class]="
+                    weightData.isConnected ? 'connected' : 'disconnected'
+                  "
+                >
+                  {{ weightData.isConnected ? "Conectado" : "Desconectado" }}
+                </span>
+              </div>
+            </div>
+
+            <div *ngIf="weightData.capturedWeight" class="captured-weight">
+              <div class="captured-weight-header">
+                <span class="captured-label">Peso de Salida Capturado</span>
+              </div>
+              <div class="captured-weight-value">
+                {{ weightData.capturedWeight | number : "1.0-0" }} kg
+              </div>
+              <div class="captured-weight-timestamp">
+                Capturado el
+                {{ weightData.capturedAt | date : "dd/MM/yyyy HH:mm" }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

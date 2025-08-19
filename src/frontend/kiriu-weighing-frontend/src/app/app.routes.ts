@@ -36,5 +36,13 @@ export const routes: Routes = [
       ).then((m) => m.WeighingFormComponent),
     canActivate: [authGuard, weighingFlowGuard],
   },
+  {
+    path: 'weighing-exit/:unitType',
+    loadComponent: () =>
+      import(
+        './features/weighing/pages/weighing-exit-form/weighing-exit-form.component'
+      ).then((m) => m.WeighingExitFormComponent),
+    canActivate: [authGuard, weighingFlowGuard],
+  },
   { path: '**', redirectTo: '/login' },
 ];
