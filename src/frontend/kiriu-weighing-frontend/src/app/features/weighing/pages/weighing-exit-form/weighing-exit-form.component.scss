@@ -187,14 +187,14 @@
 
   .info-box.success {
     margin-bottom: 16px;
-    
+
     .info-content {
       display: flex;
       align-items: center;
       gap: 8px;
       color: #1ee733;
       font-weight: 500;
-      
+
       .info-icon {
         font-size: 18px;
       }
@@ -304,7 +304,7 @@
 // Grupo de visualización de fotos integrado en el formulario
 .photo-display-group {
   margin-top: 12px;
-  
+
   .photo-preview {
     width: 100%;
     height: 60px;
@@ -420,7 +420,7 @@
 
   @media (max-width: 768px) {
     flex-direction: column;
-    
+
     .btn {
       width: 100%;
     }
@@ -488,6 +488,13 @@
 
 // Columna lateral
 .side-column {
+  position: sticky;
+  top: 100px;
+
+  @media (max-width: 1024px) {
+    position: static;
+  }
+
   .weight-section {
     background: #ffffff;
     border-radius: 16px;
@@ -624,10 +631,41 @@
   .plate-input-group,
   .weight-input-group {
     flex-direction: column;
-    
+
     .search-btn,
     .capture-weight-btn {
       width: 100%;
+    }
+  }
+}
+
+// Mejoras para el comportamiento sticky
+@media (min-width: 1025px) {
+  .side-column {
+    // Asegurar que el sticky funcione correctamente en desktop
+    align-self: start;
+
+    .weight-section {
+      // Mantener la sección visible durante el scroll
+      transition: box-shadow 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      }
+    }
+  }
+}
+
+// Ajustes para dispositivos móviles
+@media (max-width: 1024px) {
+  .side-column {
+    // En móviles, la columna se comporta como bloque normal
+    margin-top: 24px;
+
+    .weight-section {
+      // Asegurar que no haya problemas de superposición
+      position: relative;
+      z-index: 1;
     }
   }
 }
