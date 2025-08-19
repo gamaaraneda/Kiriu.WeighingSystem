@@ -1,0 +1,297 @@
+<div class="message-demo">
+  <div class="container">
+    <h1 class="text-center mb-4">Demostración del Sistema de Mensajes</h1>
+
+    <!-- Formulario de demostración -->
+    <div class="demo-sections">
+      <!-- Sección 1: Operaciones del Sistema de Pesaje -->
+      <p-card header="Sistema de Pesaje - Operaciones" class="mb-4">
+        <div class="form-section">
+          <div class="form-group">
+            <label for="plateNumber">Número de Placa:</label>
+            <p-inputText
+              id="plateNumber"
+              placeholder="Ej: ABC-123"
+              [(ngModel)]="plateNumber"
+              class="w-100"
+            >
+            </p-inputText>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Operación:</label>
+            <div class="radio-group">
+              <p-radioButton
+                name="operationType"
+                value="entry"
+                [(ngModel)]="operationType"
+                label="Entrada"
+              >
+              </p-radioButton>
+              <p-radioButton
+                name="operationType"
+                value="exit"
+                [(ngModel)]="operationType"
+                label="Salida"
+              >
+              </p-radioButton>
+            </div>
+          </div>
+
+          <div class="operation-buttons">
+            <p-button
+              label="Simular Entrada"
+              icon="pi pi-sign-in"
+              severity="success"
+              (onClick)="simulateEntryOperation()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Simular Salida"
+              icon="pi pi-sign-out"
+              severity="info"
+              (onClick)="simulateExitOperation()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Limpiar Formulario"
+              icon="pi pi-refresh"
+              severity="secondary"
+              (onClick)="clearForm()"
+            >
+            </p-button>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Sección 2: Mensajes Personalizados -->
+      <p-card header="Mensajes Personalizados" class="mb-4">
+        <div class="form-section">
+          <div class="grid grid-2 gap-3">
+            <div class="form-group">
+              <label for="customTitle">Título (opcional):</label>
+              <p-inputText
+                id="customTitle"
+                placeholder="Título del mensaje"
+                [(ngModel)]="customTitle"
+                class="w-100"
+              >
+              </p-inputText>
+            </div>
+
+            <div class="form-group">
+              <label for="messageDuration">Duración (ms):</label>
+              <p-inputNumber
+                id="messageDuration"
+                [(ngModel)]="messageDuration"
+                [min]="1000"
+                [max]="10000"
+                [step]="500"
+                class="w-100"
+              >
+              </p-inputNumber>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="customMessage">Mensaje:</label>
+            <textarea
+              pInputTextarea
+              id="customMessage"
+              [(ngModel)]="customMessage"
+              rows="3"
+              class="w-100"
+              placeholder="Ingrese su mensaje personalizado"
+            >
+            </textarea>
+          </div>
+
+          <div class="message-buttons">
+            <p-button
+              label="Mensaje de Éxito"
+              icon="pi pi-check"
+              severity="success"
+              (onClick)="showCustomSuccess()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Mensaje de Error"
+              icon="pi pi-times"
+              severity="danger"
+              (onClick)="showCustomError()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Advertencia"
+              icon="pi pi-exclamation-triangle"
+              severity="warn"
+              (onClick)="showWarning()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Información"
+              icon="pi pi-info-circle"
+              severity="info"
+              (onClick)="showInfo()"
+            >
+            </p-button>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Sección 3: Mensajes Predefinidos del Sistema -->
+      <p-card header="Mensajes Predefinidos del Sistema" class="mb-4">
+        <div class="form-section">
+          <p class="description">
+            Estos mensajes simulan las notificaciones automáticas del sistema de
+            pesaje.
+          </p>
+
+          <div class="predefined-buttons">
+            <p-button
+              label="Mostrar Mensajes del Sistema"
+              icon="pi pi-play"
+              severity="primary"
+              (onClick)="showPredefinedMessages()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Mensaje de Entrada"
+              icon="pi pi-sign-in"
+              severity="success"
+              (onClick)="showEntrySuccess()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Mensaje de Salida"
+              icon="pi pi-sign-out"
+              severity="info"
+              (onClick)="showExitSuccess()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Error de Entrada"
+              icon="pi pi-exclamation-triangle"
+              severity="danger"
+              (onClick)="showEntryError()"
+            >
+            </p-button>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Sección 4: Toasts -->
+      <p-card header="Toasts (Notificaciones Emergentes)" class="mb-4">
+        <div class="form-section">
+          <p class="description">
+            Los toasts son notificaciones que aparecen en la esquina superior
+            derecha.
+          </p>
+
+          <div class="toast-buttons">
+            <p-button
+              label="Toast de Éxito"
+              icon="pi pi-check-circle"
+              severity="success"
+              (onClick)="showSuccessToast()"
+              class="me-2"
+            >
+            </p-button>
+
+            <p-button
+              label="Toast de Error"
+              icon="pi pi-times-circle"
+              severity="danger"
+              (onClick)="showErrorToast()"
+            >
+            </p-button>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Sección 5: Información del Sistema -->
+      <p-card header="Información del Sistema" class="mb-4">
+        <div class="info-section">
+          <div class="info-item">
+            <h4>🎯 Características del Servicio de Mensajes</h4>
+            <ul>
+              <li>
+                <strong>Mensajes Automáticos:</strong> Para entradas y salidas
+                del sistema de pesaje
+              </li>
+              <li>
+                <strong>Mensajes Personalizados:</strong> Con título, mensaje y
+                duración configurables
+              </li>
+              <li>
+                <strong>Múltiples Tipos:</strong> Éxito, Error, Advertencia,
+                Información
+              </li>
+              <li>
+                <strong>Toasts:</strong> Notificaciones emergentes en diferentes
+                posiciones
+              </li>
+              <li>
+                <strong>Duración Configurable:</strong> Desde 1 segundo hasta 10
+                segundos
+              </li>
+              <li>
+                <strong>Responsive:</strong> Adaptable a diferentes tamaños de
+                pantalla
+              </li>
+            </ul>
+          </div>
+
+          <div class="info-item">
+            <h4>🚀 Cómo Usar en tu Aplicación</h4>
+            <div class="code-example">
+              <p><strong>1. Importar el servicio:</strong></p>
+              <pre><code>import &#123; MessageService &#125; from './shared/services/message.service';</code></pre>
+
+              <p><strong>2. Inyectar en el constructor:</strong></p>
+              <pre><code>constructor(private messageService: MessageService) &#123;&#125;</code></pre>
+
+              <p><strong>3. Usar en tu componente:</strong></p>
+              <pre><code>// Mensaje de éxito para entrada
+this.messageService.showEntrySuccess('ABC-123');
+
+// Mensaje de error personalizado
+this.messageService.showError(&#123;
+  title: 'Error de Validación',
+  message: 'Por favor complete todos los campos.',
+  duration: 3000
+&#125;);</code></pre>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <h4>📱 Componente de Visualización</h4>
+            <p>
+              El componente <code>app-message-display</code> debe estar incluido
+              en tu aplicación principal (por ejemplo, en
+              <code>app.component.html</code>) para que los mensajes se muestren
+              correctamente.
+            </p>
+            <pre><code>&lt;app-message-display&gt;&lt;/app-message-display&gt;</code></pre>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+</div>

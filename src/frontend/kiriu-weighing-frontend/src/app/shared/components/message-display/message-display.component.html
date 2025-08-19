@@ -1,0 +1,63 @@
+<div class="message-display">
+  <!-- Componente de toast de PrimeNG -->
+  <p-toast 
+    key="top-right" 
+    position="top-right" 
+    [baseZIndex]="1001"
+    [autoZIndex]="true"
+    [preventDuplicates]="true"
+    [showTransformOptions]="'translateY'"
+    [hideTransformOptions]="'translateY'"
+    [showTransitionOptions]="'300ms ease-out'"
+    [hideTransitionOptions]="'250ms ease-in'">
+  </p-toast>
+
+  <!-- Botones de control para limpiar mensajes (opcional, para desarrollo) -->
+  <div class="message-controls" *ngIf="showControls">
+    <div class="control-buttons">
+      <p-button 
+        label="Limpiar Éxitos" 
+        icon="pi pi-check-circle" 
+        size="small" 
+        severity="success"
+        (onClick)="clearSuccessMessages()"
+        class="me-2">
+      </p-button>
+      
+      <p-button 
+        label="Limpiar Errores" 
+        icon="pi pi-times-circle" 
+        size="small" 
+        severity="danger"
+        (onClick)="clearErrorMessages()"
+        class="me-2">
+      </p-button>
+      
+      <p-button 
+        label="Limpiar Advertencias" 
+        icon="pi pi-exclamation-triangle" 
+        size="small" 
+        severity="warn"
+        (onClick)="clearWarningMessages()"
+        class="me-2">
+      </p-button>
+      
+      <p-button 
+        label="Limpiar Info" 
+        icon="pi pi-info-circle" 
+        size="small" 
+        severity="info"
+        (onClick)="clearInfoMessages()"
+        class="me-2">
+      </p-button>
+      
+      <p-button 
+        label="Limpiar Todo" 
+        icon="pi pi-trash" 
+        size="small" 
+        severity="secondary"
+        (onClick)="clearAllMessages()">
+      </p-button>
+    </div>
+  </div>
+</div>

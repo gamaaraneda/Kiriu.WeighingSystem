@@ -1,0 +1,388 @@
+.message-demo {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    color: #398df1;
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+  }
+
+  // Secciones de demostración
+  .demo-sections {
+    .form-section {
+      .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 500;
+          color: #333;
+          font-size: 0.9rem;
+        }
+
+        .radio-group {
+          display: flex;
+          gap: 1rem;
+          margin-top: 0.5rem;
+        }
+      }
+
+      .description {
+        color: #666;
+        font-style: italic;
+        margin-bottom: 1rem;
+        padding: 12px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #398df1;
+      }
+
+      // Botones de operación
+      .operation-buttons,
+      .message-buttons,
+      .predefined-buttons,
+      .toast-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        justify-content: flex-start;
+        align-items: center;
+
+        .p-button {
+          min-width: 140px;
+          font-size: 0.875rem;
+          padding: 10px 16px;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          }
+
+          .p-button-icon {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+
+    // Sección de información
+    .info-section {
+      .info-item {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+
+        h4 {
+          color: #398df1;
+          margin-bottom: 1rem;
+          font-size: 1.1rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        ul {
+          margin: 0;
+          padding-left: 1.5rem;
+
+          li {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+            color: #555;
+
+            strong {
+              color: #333;
+            }
+          }
+        }
+
+        .code-example {
+          background-color: #2d3748;
+          border-radius: 8px;
+          padding: 1rem;
+          margin-top: 1rem;
+          overflow-x: auto;
+
+          p {
+            color: #e2e8f0;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+
+            strong {
+              color: #81e6d9;
+            }
+          }
+
+          pre {
+            margin: 0;
+            padding: 0.75rem;
+            background-color: #1a202c;
+            border-radius: 6px;
+            overflow-x: auto;
+
+            code {
+              color: #e2e8f0;
+              font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+              font-size: 0.8rem;
+              line-height: 1.4;
+            }
+          }
+        }
+
+        p {
+          color: #555;
+          line-height: 1.6;
+          margin-bottom: 0.5rem;
+
+          code {
+            background-color: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            color: #2d3748;
+          }
+        }
+      }
+    }
+  }
+
+  // Grid utilities
+  .grid {
+    display: grid;
+    gap: 1rem;
+
+    &.grid-2 {
+      grid-template-columns: repeat(2, 1fr);
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+
+  // Spacing utilities
+  .mb-4 {
+    margin-bottom: 2rem;
+  }
+
+  .me-2 {
+    margin-right: 0.5rem;
+  }
+
+  // Text utilities
+  .text-center {
+    text-align: center;
+  }
+
+  // Width utilities
+  .w-100 {
+    width: 100%;
+  }
+
+  // Responsive design
+  @media (max-width: 768px) {
+    padding: 10px;
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    .demo-sections {
+      .form-section {
+        .operation-buttons,
+        .message-buttons,
+        .predefined-buttons,
+        .toast-buttons {
+          flex-direction: column;
+          align-items: stretch;
+
+          .p-button {
+            width: 100%;
+            min-width: auto;
+          }
+        }
+      }
+    }
+
+    .info-section {
+      .info-item {
+        padding: 1rem;
+
+        .code-example {
+          pre {
+            font-size: 0.75rem;
+          }
+        }
+      }
+    }
+  }
+
+  // Personalización de PrimeNG
+  :host ::ng-deep {
+    // Personalizar campos de entrada
+    .p-inputtext,
+    .p-inputnumber-input,
+    .p-inputtextarea {
+      border-radius: 8px;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+
+      &:focus {
+        border-color: #398df1;
+        box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.1);
+      }
+
+      &::placeholder {
+        color: #999;
+        font-size: 0.85rem;
+      }
+    }
+
+    // Personalizar radio buttons
+    .p-radiobutton {
+      .p-radiobutton-box {
+        border-radius: 50%;
+        border: 2px solid #ccc;
+        transition: all 0.2s ease;
+
+        &:hover {
+          border-color: #398df1;
+        }
+
+        &.p-highlight {
+          border-color: #398df1;
+
+          .p-radiobutton-icon {
+            background-color: #398df1;
+          }
+        }
+      }
+
+      .p-radiobutton-label {
+        margin-left: 0.5rem;
+        font-size: 0.9rem;
+        color: #555;
+        cursor: pointer;
+      }
+    }
+
+    // Personalizar tarjetas
+    .p-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+      }
+
+      .p-card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        color: #398df1;
+        font-size: 1.1rem;
+      }
+
+      .p-card-body {
+        padding: 1.5rem;
+      }
+    }
+
+    // Personalizar botones
+    .p-button {
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .p-button-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+
+  // Tema Kiriu personalizado
+  :host ::ng-deep {
+    .p-button {
+      &.p-button-success {
+        background-color: #1ee733;
+        border-color: #1ee733;
+
+        &:hover {
+          background-color: #14ae24;
+          border-color: #14ae24;
+        }
+      }
+
+      &.p-button-danger {
+        background-color: #f70000;
+        border-color: #f70000;
+
+        &:hover {
+          background-color: #ca0000;
+          border-color: #ca0000;
+        }
+      }
+
+      &.p-button-warn {
+        background-color: #ff914d;
+        border-color: #ff914d;
+
+        &:hover {
+          background-color: #ff7a1a;
+          border-color: #ff7a1a;
+        }
+      }
+
+      &.p-button-info {
+        background-color: #398df1;
+        border-color: #398df1;
+
+        &:hover {
+          background-color: #005bb5;
+          border-color: #005bb5;
+        }
+      }
+    }
+
+    .p-inputtext:focus,
+    .p-inputnumber-input:focus,
+    .p-inputtextarea:focus {
+      border-color: #398df1;
+      box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.1);
+    }
+
+    .p-radiobutton-box.p-highlight {
+      border-color: #398df1;
+
+      .p-radiobutton-icon {
+        background-color: #398df1;
+      }
+    }
+  }
+}

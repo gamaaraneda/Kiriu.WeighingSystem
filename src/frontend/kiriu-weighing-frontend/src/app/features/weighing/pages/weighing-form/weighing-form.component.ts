@@ -14,6 +14,8 @@ import {
 } from '../../services/weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
+import { MessageService } from '../../../../shared/services/message.service';
+import { ToastModule } from 'primeng/toast';
 
 export interface VehicleData {
   trailerPlate: string;
@@ -53,6 +55,7 @@ export interface PhotoData {
     ReactiveFormsModule,
     HeaderComponent,
     BreadcrumbComponent,
+    ToastModule,
   ],
   templateUrl: './weighing-form.component.html',
   styleUrls: ['./weighing-form.component.scss'],
@@ -63,6 +66,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private weighingService = inject(WeighingService);
   private weighingFlowService = inject(WeighingFlowService);
+  private messageService = inject(MessageService);
 
   unitType: string = '';
   operationType: string = '';
@@ -269,12 +273,33 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             next: (operation) => {
               this.isLoading = false;
               console.log('Entrada registrada:', operation);
-              this.showSuccessMessage();
+              console.log('🔔 Intentando mostrar mensaje de éxito...');
+
+                             try {
+                 this.messageService.showSuccessToast({
+                   title: 'Entrada registrada',
+                   message: 'La operación se realizó correctamente.',
+                   position: 'top-right'
+                 });
+                 console.log('✅ Toast de éxito enviado al MessageService');
+               } catch (error) {
+                 console.error('❌ Error al mostrar toast:', error);
+               }
+
+              // Esperar 3 segundos para que el usuario vea el mensaje antes de redirigir
+              setTimeout(() => {
+                console.log('🔄 Redirigiendo después de mostrar mensaje...');
+                this.onGoBack();
+              }, 3000);
             },
             error: (error) => {
               this.isLoading = false;
               console.error('Error al registrar entrada:', error);
-              alert('Error al registrar la entrada. Inténtalo de nuevo.');
+              this.messageService.showErrorToast({
+                title: 'Error al registrar',
+                message: 'No se pudo completar la operación.',
+                position: 'top-right'
+              });
             },
           });
       } else if (this.operationType === 'exit') {
@@ -288,9 +313,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
               this.generateTicket();
             } else {
               this.isLoading = false;
-              alert(
-                'No se encontró una entrada previa para esta placa. Debe registrar una entrada antes de registrar una salida.'
-              );
+              this.messageService.showErrorToast({
+                title: 'Error al registrar',
+                message:
+                  'No se encontró una entrada previa para esta placa. Debe registrar una entrada antes de registrar una salida.',
+                position: 'top-right'
+              });
             }
           });
       }
@@ -306,10 +334,24 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   private showSuccessMessage(): void {
-    alert(
-      `Operación de ${this.operationTitle.toLowerCase()} registrada exitosamente`
-    );
-    this.onGoBack();
+    console.log('🔔 showSuccessMessage llamado...');
+
+         try {
+       this.messageService.showSuccessToast({
+         title: 'Operación registrada',
+         message: `Operación de ${this.operationTitle.toLowerCase()} registrada exitosamente`,
+         position: 'top-right'
+       });
+       console.log('✅ Toast de éxito enviado desde showSuccessMessage');
+     } catch (error) {
+       console.error('❌ Error en showSuccessMessage:', error);
+     }
+
+    // Esperar 3 segundos para que el usuario vea el mensaje antes de redirigir
+    setTimeout(() => {
+      console.log('🔄 Redirigiendo desde showSuccessMessage...');
+      this.onGoBack();
+    }, 3000);
   }
 
   private markFormGroupTouched(): void {
@@ -345,7 +387,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   onQueries(): void {
     console.log('Navegando a consultas...');
     // TODO: Implementar navegación a consultas
-    alert('Funcionalidad de consultas en desarrollo');
+    this.messageService.showInfoToast({
+      title: 'Funcionalidad en desarrollo',
+      message: 'Funcionalidad de consultas en desarrollo',
+      position: 'top-right'
+    });
   }
 
   onLogout(): void {
