@@ -133,6 +133,117 @@
     margin-top: 4px;
     text-align: left;
   }
+
+  // Validación de placas
+  .plate-validation-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background-color: rgba(247, 0, 0, 0.1);
+    border: 1px solid #f70000;
+    border-radius: 6px;
+
+    .error-icon {
+      font-size: 16px;
+      color: #f70000;
+    }
+
+    .error-message {
+      flex: 1;
+      color: #f70000;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .edit-plate-btn {
+      padding: 4px 8px;
+      font-size: 12px;
+      min-width: auto;
+      white-space: nowrap;
+    }
+  }
+
+  // Indicador de salida exitosa
+  .exit-success-indicator {
+    margin-top: 24px;
+
+    .success-box {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      border: 2px solid #28a745;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(40, 167, 69, 0.15);
+
+      .success-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+
+        .success-icon {
+          font-size: 48px;
+          color: #28a745;
+          flex-shrink: 0;
+        }
+
+        .success-text {
+          flex: 1;
+
+          h3 {
+            color: #155724;
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            font-weight: 600;
+          }
+
+          p {
+            color: #155724;
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            line-height: 1.5;
+          }
+
+          .exit-details {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            padding: 16px;
+
+            .detail-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 8px;
+
+              &:last-child {
+                margin-bottom: 0;
+              }
+
+              .label {
+                font-weight: 600;
+                color: #155724;
+              }
+
+              .value {
+                color: #155724;
+
+                &.success-status {
+                  background: #28a745;
+                  color: white;
+                  padding: 4px 8px;
+                  border-radius: 4px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 // Grupo de búsqueda

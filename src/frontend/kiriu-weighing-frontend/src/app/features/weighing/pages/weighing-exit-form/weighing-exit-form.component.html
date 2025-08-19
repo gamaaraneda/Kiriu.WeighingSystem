@@ -110,6 +110,81 @@
             <div *ngIf="isEntryFound && entryData" class="form-section">
               <h2 class="section-title">Datos del Vehículo</h2>
 
+              <!-- Placa del tráiler (solo para remolque único) -->
+              <div *ngIf="shouldShowTrailerFields()" class="form-group">
+                <label for="trailerPlate" class="form-label"
+                  >Placa del Tráiler *</label
+                >
+                <div class="plate-input-group">
+                  <button
+                    type="button"
+                    class="btn btn-outline photo-capture-btn"
+                    (click)="onPhotoCaptureWithOCR('trailerPlate')"
+                    title="Capturar foto de la placa del tráiler con OCR"
+                  >
+                    📷
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    (click)="onEnableManualEdit('trailerPlate')"
+                    title="Habilitar edición manual de la placa del tráiler"
+                  >
+                    ✏️
+                  </button>
+                  <input
+                    type="text"
+                    id="trailerPlate"
+                    formControlName="trailerPlate"
+                    class="form-input plate-input"
+                    [class.error]="
+                      getFieldError('trailerPlate') ||
+                      !plateValidations.trailerPlate.isValid
+                    "
+                    placeholder="Placa del tráiler"
+                    [readonly]="!manualEditEnabled.trailerPlate"
+                    (blur)="onPlateManualEdit('trailerPlate')"
+                  />
+                </div>
+
+                <!-- Error de validación del formulario -->
+                <div
+                  *ngIf="getFieldError('trailerPlate')"
+                  class="error-message"
+                >
+                  {{ getFieldError("trailerPlate") }}
+                </div>
+
+                <!-- Validación de coincidencia de placa -->
+                <div
+                  *ngIf="!plateValidations.trailerPlate.isValid"
+                  class="plate-validation-error"
+                >
+                  <span class="error-icon">❌</span>
+                  <span class="error-message">{{
+                    plateValidations.trailerPlate.errorMessage
+                  }}</span>
+                </div>
+
+                <!-- Foto de placa del tráiler -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.trailerPlate"
+                  >
+                    <span
+                      *ngIf="!photoData.trailerPlate"
+                      class="photo-placeholder"
+                    >
+                      📷
+                    </span>
+                    <span *ngIf="photoData.trailerPlate" class="photo-captured">
+                      ✅
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div class="form-group">
                 <label for="trailerPlate2" class="form-label"
                   >Placa del Remolque</label
@@ -118,8 +193,8 @@
                   <button
                     type="button"
                     class="btn btn-outline photo-capture-btn"
-                    (click)="onPhotoCapture('trailerPlate2')"
-                    title="Capturar foto de la placa del remolque"
+                    (click)="onPhotoCaptureWithOCR('trailerPlate2')"
+                    title="Capturar foto de la placa del remolque con OCR"
                   >
                     📷
                   </button>
@@ -136,16 +211,33 @@
                     id="trailerPlate2"
                     formControlName="trailerPlate2"
                     class="form-input plate-input"
-                    [class.error]="getFieldError('trailerPlate2')"
+                    [class.error]="
+                      getFieldError('trailerPlate2') ||
+                      !plateValidations.trailerPlate2.isValid
+                    "
                     placeholder="Placa del remolque (si aplica)"
                     [readonly]="!manualEditEnabled.trailerPlate2"
+                    (blur)="onPlateManualEdit('trailerPlate2')"
                   />
                 </div>
+
+                <!-- Error de validación del formulario -->
                 <div
                   *ngIf="getFieldError('trailerPlate2')"
                   class="error-message"
                 >
                   {{ getFieldError("trailerPlate2") }}
+                </div>
+
+                <!-- Validación de coincidencia de placa -->
+                <div
+                  *ngIf="!plateValidations.trailerPlate2.isValid"
+                  class="plate-validation-error"
+                >
+                  <span class="error-icon">❌</span>
+                  <span class="error-message">{{
+                    plateValidations.trailerPlate2.errorMessage
+                  }}</span>
                 </div>
 
                 <!-- Foto de placa del remolque -->
@@ -177,7 +269,7 @@
                   <button
                     type="button"
                     class="btn btn-outline photo-capture-btn"
-                    (click)="onPhotoCapture('cargoState')"
+                    (click)="onPhotoCaptureWithOCR('cargoState')"
                     title="Capturar foto del estado de carga o vacío"
                   >
                     📷 Capturar Estado
@@ -286,12 +378,40 @@
               <button
                 type="button"
                 class="btn btn-primary"
-                [disabled]="!isFormValid || isLoading"
+                [disabled]="!isFormValid || isLoading || isExitRegistered"
                 (click)="onSave()"
               >
-                <span *ngIf="!isLoading">Registrar Salida</span>
+                <span *ngIf="!isLoading && !isExitRegistered">Registrar Salida</span>
                 <span *ngIf="isLoading">Registrando...</span>
+                <span *ngIf="isExitRegistered">✅ Salida Registrada</span>
               </button>
+            </div>
+
+            <!-- Indicador de salida registrada -->
+            <div *ngIf="isExitRegistered" class="exit-success-indicator">
+              <div class="success-box">
+                <div class="success-content">
+                  <i class="success-icon">✅</i>
+                  <div class="success-text">
+                    <h3>Salida Registrada Exitosamente</h3>
+                    <p>La salida ha sido registrada en el sistema. El registro está completo.</p>
+                    <div class="exit-details">
+                      <div class="detail-item">
+                        <span class="label">Folio:</span>
+                        <span class="value">{{ entryData?.id }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Peso Neto:</span>
+                        <span class="value">{{ exitForm.get('netWeight')?.value | number:'1.0-0' }} kg</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Estado:</span>
+                        <span class="value success-status">SALIDA_REGISTRADA</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </form>
         </div>

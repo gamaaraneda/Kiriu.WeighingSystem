@@ -22,7 +22,15 @@ import {
   ExitPhotoData,
   WeightData,
 } from '../../types/weighing.types';
-import { EntrySearchMockService, EntrySearchResponse } from '../../services/entry-search-mock.service';
+import {
+  EntrySearchMockService,
+  EntrySearchResponse,
+} from '../../services/entry-search-mock.service';
+import {
+  ExitRegistrationService,
+  ExitRegistrationRequest,
+  ExitRegistrationResponse,
+} from '../../services/exit-registration.service';
 
 @Component({
   selector: 'app-weighing-exit-form',
@@ -45,6 +53,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private messageService = inject(MessageService);
   private notificationService = inject(NotificationService);
   private entrySearchMockService = inject(EntrySearchMockService);
+  private exitRegistrationService = inject(ExitRegistrationService);
 
   unitType = '';
   unitTypeTitle = '';
@@ -64,12 +73,30 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     cargoState: '',
   };
 
+  // Datos de placas detectadas por OCR
+  detectedPlates: {
+    trailerPlate: string;
+    trailerPlate2: string;
+  } = {
+    trailerPlate: '',
+    trailerPlate2: '',
+  };
+
+  // Validaciones de placas
+  plateValidations: {
+    trailerPlate: { isValid: boolean; errorMessage: string };
+    trailerPlate2: { isValid: boolean; errorMessage: string };
+  } = {
+    trailerPlate: { isValid: true, errorMessage: '' },
+    trailerPlate2: { isValid: true, errorMessage: '' },
+  };
+
   // Datos de la entrada encontrada
   entryData: WeighingOperation | null = null;
   isSearching = false;
   isEntryFound = false;
   isLoading = false;
-  
+
   // Tipo de unidad para adaptar la UI
   unitFlowType: 'remolque' | 'contenedor' | 'doble-remolque' | null = null;
 
@@ -78,6 +105,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     trailerPlate: false,
     trailerPlate2: false,
   };
+
+  // Estado del registro de salida
+  isExitRegistered = false;
 
   weightUpdateInterval: Subscription | undefined;
 
@@ -139,7 +169,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     }
 
     this.isSearching = true;
-    
+
     // Usar el servicio mock para buscar entradas
     this.entrySearchMockService.searchEntryByPlate(trailerPlate).subscribe({
       next: (response: EntrySearchResponse) => {
@@ -147,14 +177,15 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         if (response.success && response.data) {
           // Guardar el tipo de unidad para adaptar la UI
           this.unitFlowType = response.data.tipoUnidad;
-          
+
           // Convertir la respuesta mock a WeighingOperation
           const mockOperation: WeighingOperation = {
             id: response.data.folio,
             unitType: 'client', // Por defecto cliente para el mock
             operationType: 'entry',
             trailerPlate: response.data.placaTrailer || '',
-            trailerPlate2: response.data.placaRemolque || response.data.placaRemolque1 || '',
+            trailerPlate2:
+              response.data.placaRemolque || response.data.placaRemolque1 || '',
             product: response.data.producto,
             clientProviderName: response.data.cliente,
             entryWeight: response.data.pesoBruto,
@@ -162,14 +193,18 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
             createdAt: new Date(response.data.fechaEntrada),
             updatedAt: new Date(response.data.fechaEntrada),
           };
-          
+
           this.entryData = mockOperation;
           this.isEntryFound = true;
           this.populateFormWithEntryData(mockOperation);
-          
+
           this.messageService.showSuccessToast({
             title: 'Entrada Encontrada',
-            message: `Se encontró la entrada con folio: ${response.data.folio} - Tipo: ${this.getUnitFlowTypeDisplayName(response.data.tipoUnidad)}`,
+            message: `Se encontró la entrada con folio: ${
+              response.data.folio
+            } - Tipo: ${this.getUnitFlowTypeDisplayName(
+              response.data.tipoUnidad
+            )}`,
             position: 'top-right',
           });
         } else {
@@ -179,7 +214,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
             title: 'Entrada No Encontrada',
             message: 'No se encontró una entrada previa para esta placa.',
             position: 'top-right',
-        });
+          });
         }
       },
       error: (error) => {
@@ -195,11 +230,23 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   private populateFormWithEntryData(operation: WeighingOperation): void {
-    // Los campos de entrada no son editables, solo se muestran para verificación
+    // Prellenar campos con datos de entrada
     this.exitForm.patchValue({
       trailerPlate: operation.trailerPlate,
       trailerPlate2: operation.trailerPlate2 || '',
     });
+
+    // Inicializar placas detectadas con los valores de entrada
+    this.detectedPlates = {
+      trailerPlate: operation.trailerPlate,
+      trailerPlate2: operation.trailerPlate2 || '',
+    };
+
+    // Inicializar validaciones como válidas
+    this.plateValidations = {
+      trailerPlate: { isValid: true, errorMessage: '' },
+      trailerPlate2: { isValid: true, errorMessage: '' },
+    };
 
     // Calcular peso neto inicial (será 0 hasta que se capture el peso de salida)
     this.updateNetWeight();
@@ -223,11 +270,6 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       message: 'Foto capturada exitosamente',
       position: 'top-right',
     });
-  }
-
-  onEnableManualEdit(plateType: 'trailerPlate' | 'trailerPlate2'): void {
-    this.manualEditEnabled[plateType] = true;
-    console.log(`Edición manual habilitada para: ${plateType}`);
   }
 
   onCaptureWeight(): void {
@@ -271,7 +313,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       const entryWeight = this.entryData.entryWeight;
       const exitWeight = this.exitForm.get('exitWeight')?.value;
       const netWeight = entryWeight - exitWeight;
-      
+
       this.exitForm.patchValue({
         netWeight: netWeight,
       });
@@ -298,7 +340,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    * Verifica si debe mostrar campos de remolque
    */
   shouldShowTrailerFields(): boolean {
-    return this.unitFlowType === 'remolque' || this.unitFlowType === 'doble-remolque';
+    return (
+      this.unitFlowType === 'remolque' || this.unitFlowType === 'doble-remolque'
+    );
   }
 
   /**
@@ -315,16 +359,144 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     return this.unitFlowType === 'contenedor';
   }
 
+  /**
+   * Valida que las placas detectadas coincidan con las registradas en entrada
+   */
+  validatePlates(): void {
+    if (!this.entryData) return;
+
+    // Validar placa del tráiler
+    if (this.detectedPlates.trailerPlate && this.entryData.trailerPlate) {
+      const isValid =
+        this.detectedPlates.trailerPlate === this.entryData.trailerPlate;
+      this.plateValidations.trailerPlate = {
+        isValid,
+        errorMessage: isValid
+          ? ''
+          : `La placa detectada no coincide con la registrada en la entrada: ${this.entryData.trailerPlate}`,
+      };
+    }
+
+    // Validar placa del remolque (solo si existe en entrada)
+    if (this.entryData.trailerPlate2 && this.detectedPlates.trailerPlate2) {
+      const isValid =
+        this.detectedPlates.trailerPlate2 === this.entryData.trailerPlate2;
+      this.plateValidations.trailerPlate2 = {
+        isValid,
+        errorMessage: isValid
+          ? ''
+          : `La placa detectada no coincide con la registrada en la entrada: ${this.entryData.trailerPlate2}`,
+      };
+    }
+  }
+
+  /**
+   * Simula la captura de foto con OCR (mock temporal)
+   */
+  onPhotoCaptureWithOCR(photoType: keyof ExitPhotoData): void {
+    // TODO: Implementar captura real con cámara y OCR
+    console.log('Capturando foto con OCR:', photoType);
+
+    // Mock: simular OCR detectando placas
+    if (photoType === 'trailerPlate') {
+      // Simular OCR detectando placa del tráiler
+      // Para testing: a veces detecta placa incorrecta para probar validaciones
+      const shouldDetectIncorrect = Math.random() > 0.7; // 30% de probabilidad de error
+      this.detectedPlates.trailerPlate = shouldDetectIncorrect
+        ? 'INCORRECT-123'
+        : this.entryData?.trailerPlate || 'ABC-123';
+
+      this.photoData.trailerPlate = 'Foto capturada';
+
+      // Validar placa
+      this.validatePlates();
+
+      // Actualizar formulario con placa detectada
+      this.exitForm.patchValue({
+        trailerPlate: this.detectedPlates.trailerPlate,
+      });
+    } else if (photoType === 'trailerPlate2') {
+      // Simular OCR detectando placa del remolque
+      // Para testing: a veces detecta placa incorrecta para probar validaciones
+      const shouldDetectIncorrect = Math.random() > 0.7; // 30% de probabilidad de error
+      this.detectedPlates.trailerPlate2 = shouldDetectIncorrect
+        ? 'INCORRECT-789'
+        : this.entryData?.trailerPlate2 || 'XYZ-789';
+
+      this.photoData.trailerPlate2 = 'Foto capturada';
+
+      // Validar placa
+      this.validatePlates();
+
+      // Actualizar formulario con placa detectada
+      this.exitForm.patchValue({
+        trailerPlate2: this.detectedPlates.trailerPlate2,
+      });
+    } else if (photoType === 'cargoState') {
+      this.photoData.cargoState = 'Foto capturada';
+    }
+
+    this.messageService.showSuccessToast({
+      title: 'Foto Capturada',
+      message: 'Foto capturada exitosamente con OCR',
+      position: 'top-right',
+    });
+  }
+
+  /**
+   * Habilita la edición manual de una placa
+   */
+  onEnableManualEdit(plateType: 'trailerPlate' | 'trailerPlate2'): void {
+    this.manualEditEnabled[plateType] = true;
+
+    // Limpiar validación al habilitar edición manual
+    this.plateValidations[plateType] = { isValid: true, errorMessage: '' };
+
+    console.log(`Edición manual habilitada para: ${plateType}`);
+  }
+
+  /**
+   * Valida la placa después de edición manual
+   */
+  onPlateManualEdit(plateType: 'trailerPlate' | 'trailerPlate2'): void {
+    if (!this.entryData) return;
+
+    const currentValue = this.exitForm.get(plateType)?.value;
+    let expectedValue = '';
+
+    if (plateType === 'trailerPlate') {
+      expectedValue = this.entryData.trailerPlate;
+    } else if (plateType === 'trailerPlate2') {
+      expectedValue = this.entryData.trailerPlate2 || '';
+    }
+
+    // Validar coincidencia
+    if (expectedValue && currentValue !== expectedValue) {
+      this.plateValidations[plateType] = {
+        isValid: false,
+        errorMessage: `La placa ingresada no coincide con la registrada en la entrada: ${expectedValue}`,
+      };
+    } else {
+      this.plateValidations[plateType] = { isValid: true, errorMessage: '' };
+    }
+
+    // Actualizar datos detectados
+    this.detectedPlates[plateType] = currentValue;
+  }
+
   onSave(): void {
+    // Validar que se haya encontrado una entrada
     if (!this.entryData) {
       this.messageService.showErrorToast({
         title: 'Error de Validación',
-        message: 'Debe buscar y encontrar una entrada antes de registrar la salida.',
+        message:
+          'Debe buscar y encontrar una entrada antes de registrar la salida.',
         position: 'top-right',
       });
       return;
     }
 
+    // Validar formulario
     if (!this.exitForm.valid) {
       this.markFormGroupTouched();
       this.messageService.showErrorToast({
@@ -335,6 +507,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Validar peso capturado
     if (!this.weightData.capturedWeight) {
       this.messageService.showErrorToast({
         title: 'Error de Validación',
@@ -344,30 +517,122 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Validar que las placas sean válidas
+    if (!this.plateValidations.trailerPlate.isValid) {
+      this.messageService.showErrorToast({
+        title: 'Error de Validación',
+        message: 'La placa del tráiler no coincide con la registrada en la entrada.',
+        position: 'top-right',
+      });
+      return;
+    }
+
+    if (this.entryData.trailerPlate2 && !this.plateValidations.trailerPlate2.isValid) {
+      this.messageService.showErrorToast({
+        title: 'Error de Validación',
+        message: 'La placa del remolque no coincide con la registrada en la entrada.',
+        position: 'top-right',
+      });
+      return;
+    }
+
+    // Validar que se hayan capturado las fotos requeridas
+    if (!this.photoData.trailerPlate) {
+      this.messageService.showErrorToast({
+        title: 'Error de Validación',
+        message: 'Debe capturar la foto de la placa del tráiler.',
+        position: 'top-right',
+      });
+      return;
+    }
+
+    if (!this.photoData.cargoState) {
+      this.messageService.showErrorToast({
+        title: 'Error de Validación',
+        message: 'Debe capturar la foto del estado de carga.',
+        position: 'top-right',
+      });
+      return;
+    }
+
     this.isLoading = true;
 
+    // Preparar datos para el registro
+    const exitRequest: ExitRegistrationRequest = {
+      folio: this.entryData.id,
+      pesoBruto: this.entryData.entryWeight || 0,
+      pesoTara: this.weightData.capturedWeight,
+      pesoNeto: this.exitForm.get('netWeight')?.value || 0,
+      placaTrailer: this.exitForm.get('trailerPlate')?.value || '',
+      placaRemolque: this.exitForm.get('trailerPlate2')?.value || undefined,
+      fotos: {
+        trailerPlate: this.photoData.trailerPlate,
+        trailerPlate2: this.photoData.trailerPlate2,
+        cargoState: this.photoData.cargoState,
+      },
+      estado: 'SALIDA_REGISTRADA',
+      fechaSalida: new Date().toISOString(),
+      tipoUnidad: this.unitFlowType || 'remolque',
+    };
+
+    // Validar request antes de enviar
+    const validation = this.exitRegistrationService.validateExitRequest(exitRequest);
+    if (!validation.isValid) {
+      this.isLoading = false;
+      this.messageService.showErrorToast({
+        title: 'Error de Validación',
+        message: `Campos inválidos: ${validation.errors.join(', ')}`,
+        position: 'top-right',
+      });
+      return;
+    }
+
     // Registrar la salida
-    this.weighingService
-      .updateOperationForExit(this.entryData.id, this.weightData.capturedWeight)
-      .subscribe({
-        next: (updatedOperation) => {
-          this.isLoading = false;
-          this.messageService.showExitSuccess(updatedOperation.trailerPlate);
+    this.exitRegistrationService.registerExit(exitRequest).subscribe({
+      next: (response: ExitRegistrationResponse) => {
+        this.isLoading = false;
+        
+        if (response.success && response.data) {
+          // Registro exitoso
+          this.isExitRegistered = true;
           
-          // Generar ticket o redirigir
+          this.messageService.showSuccessToast({
+            title: '✅ Salida Registrada',
+            message: 'Salida registrada correctamente',
+            position: 'top-right',
+          });
+
+          // Actualizar estado local
+          if (this.entryData) {
+            this.entryData.status = 'SALIDA_REGISTRADA';
+            this.entryData.exitWeight = this.weightData.capturedWeight;
+            this.entryData.netWeight = this.exitForm.get('netWeight')?.value || 0;
+            this.entryData.updatedAt = new Date();
+          }
+
+          // Opcional: redirigir después de un delay
           setTimeout(() => {
             this.onGoBack();
-          }, 2000);
-        },
-        error: (error) => {
-          this.isLoading = false;
-          this.messageService.showExitError(
-            this.entryData?.trailerPlate || '',
-            'Error al registrar la salida. Intente nuevamente.'
-          );
-          console.error('Error registering exit:', error);
-        },
-      });
+          }, 3000);
+        } else {
+          // Error en la respuesta
+          this.messageService.showErrorToast({
+            title: '❌ Error en el Servidor',
+            message: response.message || 'Ocurrió un error inesperado al registrar la salida.',
+            position: 'top-right',
+          });
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.messageService.showErrorToast({
+          title: '❌ Error de Conexión',
+          message: 'Ocurrió un error al registrar la salida. Intenta nuevamente.',
+          position: 'top-right',
+        });
+        console.error('Error registering exit:', error);
+      },
+    });
   }
 
   onClear(): void {
@@ -380,8 +645,17 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       trailerPlate2: '',
       cargoState: '',
     };
+    this.detectedPlates = {
+      trailerPlate: '',
+      trailerPlate2: '',
+    };
+    this.plateValidations = {
+      trailerPlate: { isValid: true, errorMessage: '' },
+      trailerPlate2: { isValid: true, errorMessage: '' },
+    };
     this.weightData.capturedWeight = undefined;
     this.weightData.capturedAt = undefined;
+    this.isExitRegistered = false;
   }
 
   onGoBack(): void {
@@ -417,7 +691,11 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   get isFormValid(): boolean {
-    return this.exitForm.valid && this.isEntryFound && !!this.weightData.capturedWeight;
+    return (
+      this.exitForm.valid &&
+      this.isEntryFound &&
+      !!this.weightData.capturedWeight
+    );
   }
 
   onQueries(): void {
