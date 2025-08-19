@@ -14,6 +14,7 @@ import {
   DoubleTrailerWeighingState,
   RemolqueData,
   EntradaConDobleRemolque,
+  WeighingOperation,
 } from '../../services/weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
@@ -52,6 +53,17 @@ export interface PhotoData {
   remolque1Plate?: string;
   remolque2Plate?: string;
   cargoRemolque2?: string;
+}
+
+export interface TicketOperation {
+  folio?: string;
+  type?: string;
+  plate?: string;
+}
+
+export interface ExitOperation {
+  type: string;
+  plate: string;
 }
 
 @Component({
@@ -590,7 +602,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             if (canExit) {
               // TODO: Implementar actualización de operación para salida
               this.isLoading = false;
-              this.generateTicket();
+              this.generateTicket('exit', {
+                type: 'exit',
+                plate: formData.trailerPlate,
+              });
             } else {
               this.isLoading = false;
               this.messageService.showErrorToast({
@@ -645,10 +660,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           position: 'top-right',
         });
 
-        // Esperar 3 segundos para que el usuario vea el mensaje antes de redirigir
-        setTimeout(() => {
-          this.onGoBack();
-        }, 3000);
+        // Generar ticket para entrada con doble remolque
+        this.generateTicket('double', entrada);
       },
       error: (error) => {
         this.isLoading = false;
@@ -678,24 +691,16 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         next: (operation) => {
           this.isLoading = false;
           console.log('Entrada registrada:', operation);
-          console.log('🔔 Intentando mostrar mensaje de éxito...');
 
-          try {
-            this.messageService.showSuccessToast({
-              title: 'Entrada registrada',
-              message: 'La operación se realizó correctamente.',
-              position: 'top-right',
-            });
-            console.log('✅ Toast de éxito enviado al MessageService');
-          } catch (error) {
-            console.error('❌ Error al mostrar toast:', error);
-          }
+          // Mostrar mensaje de éxito con folio (homologado como doble remolque)
+          this.messageService.showSuccessToast({
+            title: 'Entrada registrada',
+            message: `Entrada normal registrada exitosamente. Folio: ${operation.id}`,
+            position: 'top-right',
+          });
 
-          // Esperar 3 segundos para que el usuario vea el mensaje antes de redirigir
-          setTimeout(() => {
-            console.log('🔄 Redirigiendo después de mostrar mensaje...');
-            this.onGoBack();
-          }, 3000);
+          // Generar ticket para entrada normal
+          this.generateTicket('normal', operation);
         },
         error: (error) => {
           this.isLoading = false;
@@ -709,10 +714,45 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       });
   }
 
-  private generateTicket(): void {
+  private generateTicket(
+    type: 'double' | 'normal' | 'exit',
+    operation: WeighingOperation | EntradaConDobleRemolque | ExitOperation
+  ): void {
     // TODO: Implementar generación de ticket PDF con QR
-    console.log('Generando ticket...');
-    this.showSuccessMessage();
+    console.log(`Generando ticket para operación tipo: ${type}`, operation);
+
+    // Mostrar mensaje de éxito según el tipo de operación
+    let message = '';
+    switch (type) {
+      case 'double':
+        message = `Entrada con doble remolque registrada exitosamente. Folio: ${
+          (operation as EntradaConDobleRemolque)?.folio || 'N/A'
+        }`;
+        break;
+      case 'normal':
+        message = `Entrada normal registrada exitosamente. Folio: ${
+          (operation as WeighingOperation)?.id || 'N/A'
+        }`;
+        break;
+      case 'exit':
+        message = `Salida registrada exitosamente para placa: ${
+          (operation as ExitOperation)?.plate || 'N/A'
+        }`;
+        break;
+    }
+
+    // Mostrar mensaje de éxito
+    this.messageService.showSuccessToast({
+      title: 'Operación registrada',
+      message: message,
+      position: 'top-right',
+    });
+
+    // Esperar 3 segundos para que el usuario vea el mensaje antes de redirigir
+    setTimeout(() => {
+      console.log('🔄 Redirigiendo después de generar ticket...');
+      this.onGoBack();
+    }, 3000);
   }
 
   private showSuccessMessage(): void {

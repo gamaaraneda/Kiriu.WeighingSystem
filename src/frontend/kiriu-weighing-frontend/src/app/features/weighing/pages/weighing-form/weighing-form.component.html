@@ -445,6 +445,21 @@
               </div>
             </div>
 
+            <!-- Mensaje del Modo Solo Contenedor -->
+            <div
+              *ngIf="weighingForm.get('containerOnly')?.value"
+              class="container-only-info"
+            >
+              <div class="info-box">
+                <div class="info-content">
+                  <span class="info-text"
+                    ><strong>Modo Solo Contenedor:</strong> las placas son
+                    opcionales y solo se requiere una foto de la carga</span
+                  >
+                </div>
+              </div>
+            </div>
+
             <!-- Sección: Datos del Vehículo (para flujo normal) -->
             <div
               *ngIf="!weighingForm.get('doubleTrailer')?.value"
@@ -543,20 +558,6 @@
                   class="error-message"
                 >
                   {{ getFieldError("trailerPlate2") }}
-                </div>
-              </div>
-
-              <div
-                *ngIf="weighingForm.get('containerOnly')?.value"
-                class="container-only-info"
-              >
-                <div class="info-box">
-                  <div class="info-content">
-                    <span class="info-text"
-                      ><strong>Modo Solo Contenedor:</strong> las placas son
-                      opcionales y solo se requiere una foto de la carga</span
-                    >
-                  </div>
                 </div>
               </div>
 
