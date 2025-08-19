@@ -8,6 +8,9 @@ export interface WeighingOperation {
   operationType: 'entry' | 'exit';
   trailerPlate: string;
   trailerPlate2?: string;
+  // Nuevos campos para contenedor
+  trailerPlateContenedor?: string;
+  remolquePlateContenedor?: string;
   product: string;
   clientProviderName: string;
   clientProviderRfc?: string;

@@ -110,10 +110,10 @@
             <div *ngIf="isEntryFound && entryData" class="form-section">
               <h2 class="section-title">Datos del Vehículo</h2>
 
-              <!-- Placa del tráiler (solo para remolque único) -->
-              <div *ngIf="shouldShowTrailerFields()" class="form-group">
+              <!-- Placa del tráiler (para todos los tipos) -->
+              <div class="form-group">
                 <label for="trailerPlate" class="form-label"
-                  >Placa del Tráiler *</label
+                  >Placa del Tráiler<span *ngIf="shouldShowTrailerFields()" class="required-asterisk"> *</span></label
                 >
                 <div class="plate-input-group">
                   <button
@@ -185,9 +185,10 @@
                 </div>
               </div>
 
+              <!-- Placa del remolque (para todos los tipos) -->
               <div class="form-group">
                 <label for="trailerPlate2" class="form-label"
-                  >Placa del Remolque</label
+                  >Placa del Remolque<span *ngIf="shouldShowTrailerFields()" class="required-asterisk"> *</span></label
                 >
                 <div class="plate-input-group">
                   <button
@@ -262,7 +263,7 @@
                 </div>
               </div>
 
-              <!-- Foto del estado de carga -->
+              <!-- Estado de carga (para todos los tipos) -->
               <div class="form-group">
                 <label class="form-label">Estado de Carga *</label>
                 <div class="photo-capture-group">
@@ -303,6 +304,8 @@
                 </div>
               </div>
             </div>
+
+
 
             <!-- Sección: Pesos (solo visible si se encontró la entrada) -->
             <div *ngIf="isEntryFound && entryData" class="form-section">
@@ -381,7 +384,9 @@
                 [disabled]="!isFormValid || isLoading || isExitRegistered"
                 (click)="onSave()"
               >
-                <span *ngIf="!isLoading && !isExitRegistered">Registrar Salida</span>
+                <span *ngIf="!isLoading && !isExitRegistered"
+                  >Registrar Salida</span
+                >
                 <span *ngIf="isLoading">Registrando...</span>
                 <span *ngIf="isExitRegistered">✅ Salida Registrada</span>
               </button>
@@ -394,7 +399,10 @@
                   <i class="success-icon">✅</i>
                   <div class="success-text">
                     <h3>Salida Registrada Exitosamente</h3>
-                    <p>La salida ha sido registrada en el sistema. El registro está completo.</p>
+                    <p>
+                      La salida ha sido registrada en el sistema. El registro
+                      está completo.
+                    </p>
                     <div class="exit-details">
                       <div class="detail-item">
                         <span class="label">Folio:</span>
@@ -402,11 +410,18 @@
                       </div>
                       <div class="detail-item">
                         <span class="label">Peso Neto:</span>
-                        <span class="value">{{ exitForm.get('netWeight')?.value | number:'1.0-0' }} kg</span>
+                        <span class="value"
+                          >{{
+                            exitForm.get("netWeight")?.value | number : "1.0-0"
+                          }}
+                          kg</span
+                        >
                       </div>
                       <div class="detail-item">
                         <span class="label">Estado:</span>
-                        <span class="value success-status">SALIDA_REGISTRADA</span>
+                        <span class="value success-status"
+                          >SALIDA_REGISTRADA</span
+                        >
                       </div>
                     </div>
                   </div>

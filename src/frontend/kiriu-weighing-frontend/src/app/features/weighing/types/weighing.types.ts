@@ -42,6 +42,7 @@ export interface ExitPhotoData {
   trailerPlate: string;
   trailerPlate2?: string;
   cargoState: string;
+  containerPlate?: string;
 }
 
 export interface TicketOperation {

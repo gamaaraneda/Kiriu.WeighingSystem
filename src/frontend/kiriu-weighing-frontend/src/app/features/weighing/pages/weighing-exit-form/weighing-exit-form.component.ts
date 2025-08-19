@@ -71,24 +71,29 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     trailerPlate: '',
     trailerPlate2: '',
     cargoState: '',
+    containerPlate: '',
   };
 
   // Datos de placas detectadas por OCR
   detectedPlates: {
     trailerPlate: string;
     trailerPlate2: string;
+    containerPlate: string;
   } = {
     trailerPlate: '',
     trailerPlate2: '',
+    containerPlate: '',
   };
 
   // Validaciones de placas
   plateValidations: {
     trailerPlate: { isValid: boolean; errorMessage: string };
     trailerPlate2: { isValid: boolean; errorMessage: string };
+    containerPlate: { isValid: boolean; errorMessage: string };
   } = {
     trailerPlate: { isValid: true, errorMessage: '' },
     trailerPlate2: { isValid: true, errorMessage: '' },
+    containerPlate: { isValid: true, errorMessage: '' },
   };
 
   // Datos de la entrada encontrada
@@ -104,6 +109,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   manualEditEnabled = {
     trailerPlate: false,
     trailerPlate2: false,
+    containerPlate: false,
   };
 
   // Estado del registro de salida
@@ -136,8 +142,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
 
   private initializeForm(): void {
     this.exitForm = this.fb.group({
-      trailerPlate: ['', [Validators.required]],
+      trailerPlate: [''],
       trailerPlate2: [''],
+      containerPlate: [''],
       exitWeight: [0, [Validators.required, Validators.min(0)]],
       netWeight: [{ value: 0, disabled: true }],
     });
@@ -186,6 +193,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
             trailerPlate: response.data.placaTrailer || '',
             trailerPlate2:
               response.data.placaRemolque || response.data.placaRemolque1 || '',
+            // Mapear nuevos campos del contenedor
+            trailerPlateContenedor: response.data.placaTrailerContenedor,
+            remolquePlateContenedor: response.data.placaRemolqueContenedor,
             product: response.data.producto,
             clientProviderName: response.data.cliente,
             entryWeight: response.data.pesoBruto,
@@ -230,26 +240,74 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   private populateFormWithEntryData(operation: WeighingOperation): void {
-    // Prellenar campos con datos de entrada
-    this.exitForm.patchValue({
-      trailerPlate: operation.trailerPlate,
-      trailerPlate2: operation.trailerPlate2 || '',
-    });
+    // Prellenar campos con datos de entrada según el tipo de unidad
+    if (this.unitFlowType === 'contenedor') {
+      // Para contenedores, prellenar con datos del contenedor si están disponibles
+      this.exitForm.patchValue({
+        trailerPlate: operation.trailerPlateContenedor || '',
+        trailerPlate2: operation.remolquePlateContenedor || '',
+        containerPlate: '', // Ya no se usa para contenedores
+      });
 
-    // Inicializar placas detectadas con los valores de entrada
-    this.detectedPlates = {
-      trailerPlate: operation.trailerPlate,
-      trailerPlate2: operation.trailerPlate2 || '',
-    };
+      // Inicializar placas detectadas con los valores de entrada
+      this.detectedPlates = {
+        trailerPlate: operation.trailerPlateContenedor || '',
+        trailerPlate2: operation.remolquePlateContenedor || '',
+        containerPlate: '',
+      };
 
-    // Inicializar validaciones como válidas
-    this.plateValidations = {
-      trailerPlate: { isValid: true, errorMessage: '' },
-      trailerPlate2: { isValid: true, errorMessage: '' },
-    };
+      // Para contenedores, no validar placas contra entrada (son opcionales)
+      this.plateValidations = {
+        trailerPlate: { isValid: true, errorMessage: '' },
+        trailerPlate2: { isValid: true, errorMessage: '' },
+        containerPlate: { isValid: true, errorMessage: '' },
+      };
+    } else {
+      // Para remolques
+      this.exitForm.patchValue({
+        trailerPlate: operation.trailerPlate,
+        trailerPlate2: operation.trailerPlate2 || '',
+      });
+
+      // Inicializar placas detectadas con los valores de entrada
+      this.detectedPlates = {
+        trailerPlate: operation.trailerPlate,
+        trailerPlate2: operation.trailerPlate2 || '',
+        containerPlate: '',
+      };
+
+      // Para remolques, las placas son obligatorias - deben capturarse con fotos
+      if (
+        this.unitFlowType === 'remolque' ||
+        this.unitFlowType === 'doble-remolque'
+      ) {
+        // Inicializar como inválidas porque se requieren fotos
+        this.plateValidations = {
+          trailerPlate: {
+            isValid: false,
+            errorMessage: 'Debe capturar la placa del tráiler',
+          },
+          trailerPlate2: {
+            isValid: false,
+            errorMessage: 'Debe capturar la placa del remolque',
+          },
+          containerPlate: { isValid: true, errorMessage: '' },
+        };
+      } else {
+        // Para otros tipos, inicializar como válidas
+        this.plateValidations = {
+          trailerPlate: { isValid: true, errorMessage: '' },
+          trailerPlate2: { isValid: true, errorMessage: '' },
+          containerPlate: { isValid: true, errorMessage: '' },
+        };
+      }
+    }
 
     // Calcular peso neto inicial (será 0 hasta que se capture el peso de salida)
     this.updateNetWeight();
+
+    // Ejecutar validaciones iniciales según el tipo de unidad
+    this.validatePlates();
   }
 
   onPhotoCapture(photoType: keyof ExitPhotoData): void {
@@ -365,28 +423,125 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   validatePlates(): void {
     if (!this.entryData) return;
 
-    // Validar placa del tráiler
-    if (this.detectedPlates.trailerPlate && this.entryData.trailerPlate) {
-      const isValid =
-        this.detectedPlates.trailerPlate === this.entryData.trailerPlate;
-      this.plateValidations.trailerPlate = {
-        isValid,
-        errorMessage: isValid
-          ? ''
-          : `La placa detectada no coincide con la registrada en la entrada: ${this.entryData.trailerPlate}`,
+    // Para contenedores, no validar placas contra entrada (son opcionales)
+    if (this.unitFlowType === 'contenedor') {
+      // Marcar todas las placas como válidas para contenedores
+      this.plateValidations = {
+        trailerPlate: { isValid: true, errorMessage: '' },
+        trailerPlate2: { isValid: true, errorMessage: '' },
+        containerPlate: { isValid: true, errorMessage: '' },
       };
+      return;
     }
 
-    // Validar placa del remolque (solo si existe en entrada)
-    if (this.entryData.trailerPlate2 && this.detectedPlates.trailerPlate2) {
-      const isValid =
-        this.detectedPlates.trailerPlate2 === this.entryData.trailerPlate2;
-      this.plateValidations.trailerPlate2 = {
-        isValid,
-        errorMessage: isValid
-          ? ''
-          : `La placa detectada no coincide con la registrada en la entrada: ${this.entryData.trailerPlate2}`,
-      };
+    // Para remolque único, validar placas obligatorias contra entrada
+    if (this.unitFlowType === 'remolque') {
+      // Validar placa del tráiler (obligatoria)
+      if (this.detectedPlates.trailerPlate) {
+        if (this.entryData.trailerPlate) {
+          const isValid =
+            this.detectedPlates.trailerPlate === this.entryData.trailerPlate;
+          this.plateValidations.trailerPlate = {
+            isValid,
+            errorMessage: isValid
+              ? ''
+              : `La placa del tráiler no coincide con la registrada en la entrada: ${this.entryData.trailerPlate}`,
+          };
+        } else {
+          // Si no hay placa en entrada, pero se capturó, marcar como válida
+          this.plateValidations.trailerPlate = {
+            isValid: true,
+            errorMessage: '',
+          };
+        }
+      } else {
+        // Placa del tráiler no capturada - OBLIGATORIA
+        this.plateValidations.trailerPlate = {
+          isValid: false,
+          errorMessage: 'Debe capturar la placa del tráiler',
+        };
+      }
+
+      // Validar placa del remolque (obligatoria)
+      if (this.detectedPlates.trailerPlate2) {
+        if (this.entryData.trailerPlate2) {
+          const isValid =
+            this.detectedPlates.trailerPlate2 === this.entryData.trailerPlate2;
+          this.plateValidations.trailerPlate2 = {
+            isValid,
+            errorMessage: isValid
+              ? ''
+              : `La placa del remolque no coincide con la registrada en la entrada: ${this.entryData.trailerPlate2}`,
+          };
+        } else {
+          // Si no hay placa en entrada, pero se capturó, marcar como válida
+          this.plateValidations.trailerPlate2 = {
+            isValid: true,
+            errorMessage: '',
+          };
+        }
+      } else {
+        // Placa del remolque no capturada - OBLIGATORIA
+        this.plateValidations.trailerPlate2 = {
+          isValid: false,
+          errorMessage: 'Debe capturar la placa del remolque',
+        };
+      }
+    }
+
+    // Para doble remolque, validar todas las placas
+    if (this.unitFlowType === 'doble-remolque') {
+      // Validar placa del tráiler (obligatoria)
+      if (this.detectedPlates.trailerPlate) {
+        if (this.entryData.trailerPlate) {
+          const isValid =
+            this.detectedPlates.trailerPlate === this.entryData.trailerPlate;
+          this.plateValidations.trailerPlate = {
+            isValid,
+            errorMessage: isValid
+              ? ''
+              : `La placa del tráiler no coincide con la registrada en la entrada: ${this.entryData.trailerPlate}`,
+          };
+        } else {
+          // Si no hay placa en entrada, pero se capturó, marcar como válida
+          this.plateValidations.trailerPlate = {
+            isValid: true,
+            errorMessage: '',
+          };
+        }
+      } else {
+        // Placa del tráiler no capturada - OBLIGATORIA
+        this.plateValidations.trailerPlate = {
+          isValid: false,
+          errorMessage: 'Debe capturar la placa del tráiler',
+        };
+      }
+
+      // Validar placas de remolques (obligatorias)
+      if (this.detectedPlates.trailerPlate2) {
+        if (this.entryData.trailerPlate2) {
+          const isValid =
+            this.detectedPlates.trailerPlate2 === this.entryData.trailerPlate2;
+          this.plateValidations.trailerPlate2 = {
+            isValid,
+            errorMessage: isValid
+              ? ''
+              : `La placa del remolque no coincide con la registrada en la entrada: ${this.entryData.trailerPlate2}`,
+          };
+        } else {
+          // Si no hay placa en entrada, pero se capturó, marcar como válida
+          this.plateValidations.trailerPlate2 = {
+            isValid: true,
+            errorMessage: '',
+          };
+        }
+      } else {
+        // Placa del remolque no capturada - OBLIGATORIA
+        this.plateValidations.trailerPlate2 = {
+          isValid: false,
+          errorMessage: 'Debe capturar la placa del remolque',
+        };
+      }
     }
   }
 
@@ -408,7 +563,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
 
       this.photoData.trailerPlate = 'Foto capturada';
 
-      // Validar placa
+      // Validar placa según el tipo de unidad
       this.validatePlates();
 
       // Actualizar formulario con placa detectada
@@ -425,7 +580,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
 
       this.photoData.trailerPlate2 = 'Foto capturada';
 
-      // Validar placa
+      // Validar placa según el tipo de unidad
       this.validatePlates();
 
       // Actualizar formulario con placa detectada
@@ -461,6 +616,14 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   onPlateManualEdit(plateType: 'trailerPlate' | 'trailerPlate2'): void {
     if (!this.entryData) return;
 
+    // Para contenedores, no validar placas contra entrada (son opcionales)
+    if (this.unitFlowType === 'contenedor') {
+      this.plateValidations[plateType] = { isValid: true, errorMessage: '' };
+      this.detectedPlates[plateType] =
+        this.exitForm.get(plateType)?.value || '';
+      return;
+    }
+
     const currentValue = this.exitForm.get(plateType)?.value;
     let expectedValue = '';
 
@@ -470,14 +633,28 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       expectedValue = this.entryData.trailerPlate2 || '';
     }
 
-    // Validar coincidencia
-    if (expectedValue && currentValue !== expectedValue) {
-      this.plateValidations[plateType] = {
-        isValid: false,
-        errorMessage: `La placa ingresada no coincide con la registrada en la entrada: ${expectedValue}`,
-      };
-    } else {
-      this.plateValidations[plateType] = { isValid: true, errorMessage: '' };
+    // Para remolque único y doble remolque, validar coincidencia
+    if (
+      this.unitFlowType === 'remolque' ||
+      this.unitFlowType === 'doble-remolque'
+    ) {
+      if (!currentValue) {
+        // Si no hay valor, marcar como inválida (es obligatoria)
+        this.plateValidations[plateType] = {
+          isValid: false,
+          errorMessage:
+            plateType === 'trailerPlate'
+              ? 'Debe capturar la placa del tráiler'
+              : 'Debe capturar la placa del remolque',
+        };
+      } else if (expectedValue && currentValue !== expectedValue) {
+        this.plateValidations[plateType] = {
+          isValid: false,
+          errorMessage: `La placa ingresada no coincide con la registrada en la entrada: ${expectedValue}`,
+        };
+      } else {
+        this.plateValidations[plateType] = { isValid: true, errorMessage: '' };
+      }
     }
 
     // Actualizar datos detectados
@@ -517,35 +694,37 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Validar que las placas sean válidas
-    if (!this.plateValidations.trailerPlate.isValid) {
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message: 'La placa del tráiler no coincide con la registrada en la entrada.',
-        position: 'top-right',
-      });
-      return;
-    }
+    // Validar que las placas sean válidas según el tipo de unidad
+    if (
+      this.unitFlowType === 'remolque' ||
+      this.unitFlowType === 'doble-remolque'
+    ) {
+      // Para remolques, validar placas obligatorias
+      if (!this.plateValidations.trailerPlate.isValid) {
+        this.messageService.showErrorToast({
+          title: 'Error de Validación',
+          message:
+            this.plateValidations.trailerPlate.errorMessage ||
+            'La placa del tráiler no es válida.',
+          position: 'top-right',
+        });
+        return;
+      }
 
-    if (this.entryData.trailerPlate2 && !this.plateValidations.trailerPlate2.isValid) {
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message: 'La placa del remolque no coincide con la registrada en la entrada.',
-        position: 'top-right',
-      });
-      return;
+      if (!this.plateValidations.trailerPlate2.isValid) {
+        this.messageService.showErrorToast({
+          title: 'Error de Validación',
+          message:
+            this.plateValidations.trailerPlate2.errorMessage ||
+            'La placa del remolque no es válida.',
+          position: 'top-right',
+        });
+        return;
+      }
     }
+    // Para contenedores, no validar placas (son opcionales)
 
-    // Validar que se hayan capturado las fotos requeridas
-    if (!this.photoData.trailerPlate) {
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message: 'Debe capturar la foto de la placa del tráiler.',
-        position: 'top-right',
-      });
-      return;
-    }
-
+    // Validar que se haya capturado la foto del estado de carga (obligatoria para todos)
     if (!this.photoData.cargoState) {
       this.messageService.showErrorToast({
         title: 'Error de Validación',
@@ -555,9 +734,33 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Para remolques, validar fotos del tráiler y remolque
+    if (
+      this.unitFlowType === 'remolque' ||
+      this.unitFlowType === 'doble-remolque'
+    ) {
+      if (!this.photoData.trailerPlate) {
+        this.messageService.showErrorToast({
+          title: 'Error de Validación',
+          message: 'Debe capturar la foto de la placa del tráiler.',
+          position: 'top-right',
+        });
+        return;
+      }
+
+      if (!this.photoData.trailerPlate2) {
+        this.messageService.showErrorToast({
+          title: 'Error de Validación',
+          message: 'Debe capturar la foto de la placa del remolque.',
+          position: 'top-right',
+        });
+        return;
+      }
+    }
+
     this.isLoading = true;
 
-    // Preparar datos para el registro
+    // Preparar datos para el registro según el tipo de unidad
     const exitRequest: ExitRegistrationRequest = {
       folio: this.entryData.id,
       pesoBruto: this.entryData.entryWeight || 0,
@@ -565,18 +768,34 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       pesoNeto: this.exitForm.get('netWeight')?.value || 0,
       placaTrailer: this.exitForm.get('trailerPlate')?.value || '',
       placaRemolque: this.exitForm.get('trailerPlate2')?.value || undefined,
-      fotos: {
-        trailerPlate: this.photoData.trailerPlate,
-        trailerPlate2: this.photoData.trailerPlate2,
-        cargoState: this.photoData.cargoState,
-      },
+      placaContenedor: undefined, // Ya no se usa para contenedores
+      // Campos para contenedor (opcionales)
+      placaTrailerContenedor:
+        this.unitFlowType === 'contenedor'
+          ? this.exitForm.get('trailerPlate')?.value || undefined
+          : undefined,
+      placaRemolqueContenedor:
+        this.unitFlowType === 'contenedor'
+          ? this.exitForm.get('trailerPlate2')?.value || undefined
+          : undefined,
+      fotos:
+        this.unitFlowType === 'contenedor'
+          ? {
+              cargoState: this.photoData.cargoState,
+            }
+          : {
+              trailerPlate: this.photoData.trailerPlate,
+              trailerPlate2: this.photoData.trailerPlate2,
+              cargoState: this.photoData.cargoState,
+            },
       estado: 'SALIDA_REGISTRADA',
       fechaSalida: new Date().toISOString(),
       tipoUnidad: this.unitFlowType || 'remolque',
     };
 
     // Validar request antes de enviar
-    const validation = this.exitRegistrationService.validateExitRequest(exitRequest);
+    const validation =
+      this.exitRegistrationService.validateExitRequest(exitRequest);
     if (!validation.isValid) {
       this.isLoading = false;
       this.messageService.showErrorToast({
@@ -591,11 +810,11 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     this.exitRegistrationService.registerExit(exitRequest).subscribe({
       next: (response: ExitRegistrationResponse) => {
         this.isLoading = false;
-        
+
         if (response.success && response.data) {
           // Registro exitoso
           this.isExitRegistered = true;
-          
+
           this.messageService.showSuccessToast({
             title: '✅ Salida Registrada',
             message: 'Salida registrada correctamente',
@@ -606,7 +825,8 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           if (this.entryData) {
             this.entryData.status = 'SALIDA_REGISTRADA';
             this.entryData.exitWeight = this.weightData.capturedWeight;
-            this.entryData.netWeight = this.exitForm.get('netWeight')?.value || 0;
+            this.entryData.netWeight =
+              this.exitForm.get('netWeight')?.value || 0;
             this.entryData.updatedAt = new Date();
           }
 
@@ -618,7 +838,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           // Error en la respuesta
           this.messageService.showErrorToast({
             title: '❌ Error en el Servidor',
-            message: response.message || 'Ocurrió un error inesperado al registrar la salida.',
+            message:
+              response.message ||
+              'Ocurrió un error inesperado al registrar la salida.',
             position: 'top-right',
           });
         }
@@ -627,7 +849,8 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         this.messageService.showErrorToast({
           title: '❌ Error de Conexión',
-          message: 'Ocurrió un error al registrar la salida. Intenta nuevamente.',
+          message:
+            'Ocurrió un error al registrar la salida. Intenta nuevamente.',
           position: 'top-right',
         });
         console.error('Error registering exit:', error);
@@ -644,14 +867,22 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       trailerPlate: '',
       trailerPlate2: '',
       cargoState: '',
+      containerPlate: '', // Mantener por compatibilidad
     };
     this.detectedPlates = {
       trailerPlate: '',
       trailerPlate2: '',
+      containerPlate: '', // Mantener por compatibilidad
     };
     this.plateValidations = {
       trailerPlate: { isValid: true, errorMessage: '' },
       trailerPlate2: { isValid: true, errorMessage: '' },
+      containerPlate: { isValid: true, errorMessage: '' }, // Mantener por compatibilidad
+    };
+    this.manualEditEnabled = {
+      trailerPlate: false,
+      trailerPlate2: false,
+      containerPlate: false, // Mantener por compatibilidad
     };
     this.weightData.capturedWeight = undefined;
     this.weightData.capturedAt = undefined;
@@ -691,11 +922,34 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   get isFormValid(): boolean {
-    return (
+    const basicValidation =
       this.exitForm.valid &&
       this.isEntryFound &&
-      !!this.weightData.capturedWeight
-    );
+      !!this.weightData.capturedWeight;
+
+    // Para contenedores, solo validaciones básicas + foto de carga
+    if (this.unitFlowType === 'contenedor') {
+      return basicValidation && !!this.photoData.cargoState;
+    }
+
+    // Para remolques, validaciones básicas + validaciones de placas + fotos
+    if (
+      this.unitFlowType === 'remolque' ||
+      this.unitFlowType === 'doble-remolque'
+    ) {
+      const plateValidationsValid =
+        this.plateValidations.trailerPlate.isValid &&
+        this.plateValidations.trailerPlate2.isValid;
+
+      const photosValid =
+        !!this.photoData.trailerPlate &&
+        !!this.photoData.trailerPlate2 &&
+        !!this.photoData.cargoState;
+
+      return basicValidation && plateValidationsValid && photosValid;
+    }
+
+    return basicValidation;
   }
 
   onQueries(): void {

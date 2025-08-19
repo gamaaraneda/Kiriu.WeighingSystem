@@ -15,6 +15,9 @@ export interface EntrySearchResponse {
     placaRemolque?: string;
     placaRemolque1?: string;
     placaRemolque2?: string;
+    // Nuevos campos para contenedor
+    placaTrailerContenedor?: string;
+    placaRemolqueContenedor?: string;
     fotos: {
       fotoEntradaTrailer?: string;
       fotoEntradaRemolque?: string;
@@ -119,6 +122,8 @@ export class EntrySearchMockService {
         placaRemolque: undefined,
         placaRemolque1: undefined,
         placaRemolque2: undefined,
+        placaTrailerContenedor: 'TC001',
+        placaRemolqueContenedor: 'RC001',
         fotos: {
           fotoEntradaTrailer: undefined,
           fotoEntradaRemolque: undefined,

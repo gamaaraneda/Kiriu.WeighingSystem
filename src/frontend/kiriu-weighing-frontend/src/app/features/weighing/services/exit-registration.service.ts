@@ -10,10 +10,15 @@ export interface ExitRegistrationRequest {
   pesoNeto: number;
   placaTrailer: string;
   placaRemolque?: string;
+  placaContenedor?: string;
+  // Nuevos campos para contenedor
+  placaTrailerContenedor?: string;
+  placaRemolqueContenedor?: string;
   fotos: {
     trailerPlate?: string;
     trailerPlate2?: string;
     cargoState?: string;
+    containerPlate?: string;
   };
   estado: 'SALIDA_REGISTRADA';
   fechaSalida: string;
@@ -45,7 +50,9 @@ export class ExitRegistrationService {
   /**
    * Registra la salida en el sistema
    */
-  registerExit(request: ExitRegistrationRequest): Observable<ExitRegistrationResponse> {
+  registerExit(
+    request: ExitRegistrationRequest
+  ): Observable<ExitRegistrationResponse> {
     // TODO: Implementar llamada real al backend
     // return this.http.post<ExitRegistrationResponse>(`${this.baseUrl}/registrar`, request);
 
@@ -56,7 +63,9 @@ export class ExitRegistrationService {
   /**
    * Mock temporal para simular el registro de salida
    */
-  private mockRegisterExit(request: ExitRegistrationRequest): Observable<ExitRegistrationResponse> {
+  private mockRegisterExit(
+    request: ExitRegistrationRequest
+  ): Observable<ExitRegistrationResponse> {
     // Simular latencia de red
     const shouldSucceed = Math.random() > 0.1; // 90% de éxito
 
@@ -80,7 +89,10 @@ export class ExitRegistrationService {
         success: false,
         data: null,
         message: 'Error al registrar la salida',
-        errors: ['Error de conexión con la base de datos', 'Timeout en la operación'],
+        errors: [
+          'Error de conexión con la base de datos',
+          'Timeout en la operación',
+        ],
       };
 
       return of(response).pipe(delay(1000)); // Simular tiempo de respuesta
@@ -90,7 +102,10 @@ export class ExitRegistrationService {
   /**
    * Valida que todos los campos requeridos estén presentes
    */
-  validateExitRequest(request: ExitRegistrationRequest): { isValid: boolean; errors: string[] } {
+  validateExitRequest(request: ExitRegistrationRequest): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!request.folio) {
