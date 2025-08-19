@@ -340,6 +340,27 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Si se selecciona "Solo contenedor", desmarcar "Doble remolque"
       this.weighingForm.patchValue({ doubleTrailer: false });
       this.resetDoubleTrailerState();
+      
+      // Hacer las placas opcionales cuando es solo contenedor
+      this.weighingForm.get('trailerPlate')?.clearValidators();
+      this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
+      
+      // Limpiar valores de placas ya que son opcionales
+      this.weighingForm.patchValue({
+        trailerPlate: '',
+        trailerPlate2: ''
+      });
+      
+      // Limpiar datos de fotos de placas
+      this.photoData.trailerPlate = '';
+      this.photoData.trailerPlate2 = '';
+    } else {
+      // Si se desmarca "Solo contenedor", restaurar validaciones normales
+      this.weighingForm.get('trailerPlate')?.setValidators([
+        Validators.required,
+        Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/)
+      ]);
+      this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
     }
   }
 
@@ -832,6 +853,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   // Getters para validaciones
   getFieldError(fieldName: string): string {
     const field = this.weighingForm.get(fieldName);
+    const isContainerOnly = this.weighingForm.get('containerOnly')?.value;
+    
+    // Si es solo contenedor, no mostrar errores de placas
+    if (isContainerOnly && (fieldName === 'trailerPlate' || fieldName === 'trailerPlate2')) {
+      return '';
+    }
+    
     if (field?.invalid && field?.touched) {
       if (field.errors?.['required']) {
         return 'Este campo es obligatorio';
