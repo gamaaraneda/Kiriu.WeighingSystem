@@ -69,6 +69,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   isSearching = false;
   isEntryFound = false;
   isLoading = false;
+  
+  // Tipo de unidad para adaptar la UI
+  unitFlowType: 'remolque' | 'contenedor' | 'doble-remolque' | null = null;
 
   // Control de edición manual de placas
   manualEditEnabled = {
@@ -142,13 +145,16 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       next: (response: EntrySearchResponse) => {
         this.isSearching = false;
         if (response.success && response.data) {
+          // Guardar el tipo de unidad para adaptar la UI
+          this.unitFlowType = response.data.tipoUnidad;
+          
           // Convertir la respuesta mock a WeighingOperation
           const mockOperation: WeighingOperation = {
             id: response.data.folio,
-            unitType: response.data.tipoUnidad === 'cliente' ? 'client' : 'provider',
+            unitType: 'client', // Por defecto cliente para el mock
             operationType: 'entry',
-            trailerPlate: response.data.placaTrailer,
-            trailerPlate2: response.data.placaRemolque,
+            trailerPlate: response.data.placaTrailer || '',
+            trailerPlate2: response.data.placaRemolque || response.data.placaRemolque1 || '',
             product: response.data.producto,
             clientProviderName: response.data.cliente,
             entryWeight: response.data.pesoBruto,
@@ -163,7 +169,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           
           this.messageService.showSuccessToast({
             title: 'Entrada Encontrada',
-            message: `Se encontró la entrada con folio: ${response.data.folio}`,
+            message: `Se encontró la entrada con folio: ${response.data.folio} - Tipo: ${this.getUnitFlowTypeDisplayName(response.data.tipoUnidad)}`,
             position: 'top-right',
           });
         } else {
@@ -272,6 +278,43 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Obtiene el nombre de visualización del tipo de unidad
+   */
+  getUnitFlowTypeDisplayName(tipoUnidad: string): string {
+    switch (tipoUnidad) {
+      case 'remolque':
+        return 'Remolque Único';
+      case 'contenedor':
+        return 'Solo Contenedor';
+      case 'doble-remolque':
+        return 'Doble Remolque';
+      default:
+        return 'Desconocido';
+    }
+  }
+
+  /**
+   * Verifica si debe mostrar campos de remolque
+   */
+  shouldShowTrailerFields(): boolean {
+    return this.unitFlowType === 'remolque' || this.unitFlowType === 'doble-remolque';
+  }
+
+  /**
+   * Verifica si debe mostrar campos de doble remolque
+   */
+  shouldShowDoubleTrailerFields(): boolean {
+    return this.unitFlowType === 'doble-remolque';
+  }
+
+  /**
+   * Verifica si debe mostrar campos de contenedor
+   */
+  shouldShowContainerFields(): boolean {
+    return this.unitFlowType === 'contenedor';
+  }
+
   onSave(): void {
     if (!this.entryData) {
       this.messageService.showErrorToast({
@@ -331,6 +374,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     this.exitForm.reset();
     this.entryData = null;
     this.isEntryFound = false;
+    this.unitFlowType = null;
     this.photoData = {
       trailerPlate: '',
       trailerPlate2: '',

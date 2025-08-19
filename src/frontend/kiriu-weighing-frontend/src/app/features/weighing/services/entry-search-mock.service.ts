@@ -6,19 +6,23 @@ export interface EntrySearchResponse {
   data: {
     folio: string;
     fechaEntrada: string;
-    tipoUnidad: 'cliente' | 'proveedor';
+    tipoUnidad: 'remolque' | 'contenedor' | 'doble-remolque';
     cliente: string;
     producto: string;
     pesoBruto: number;
-    placaTrailer: string;
-    placaRemolque?: string;
     status: string;
+    placaTrailer?: string;
+    placaRemolque?: string;
+    placaRemolque1?: string;
+    placaRemolque2?: string;
     fotos: {
-      fotoEntradaTrailer: string;
+      fotoEntradaTrailer?: string;
       fotoEntradaRemolque?: string;
+      fotoEntradaRemolque1?: string;
+      fotoEntradaRemolque2?: string;
       fotoCargaEntrada: string;
     };
-  };
+  } | null;
   message: string;
   errors: null;
   metadata: null;
@@ -39,95 +43,139 @@ export class EntrySearchMockService {
   }
 
   /**
-   * Genera una respuesta mock siempre exitosa
+   * Genera una respuesta mock condicional basada en la placa ingresada
    */
   private generateMockResponse(plate: string): EntrySearchResponse {
-    // Generar folio único basado en la placa
-    const folio = `F${plate.replace(/[^A-Z0-9]/g, '').substring(0, 3)}${Date.now().toString().slice(-4)}`;
-    
-    // Fecha de entrada simulada (hace 2-7 días)
-    const daysAgo = Math.floor(Math.random() * 6) + 2;
-    const fechaEntrada = new Date();
-    fechaEntrada.setDate(fechaEntrada.getDate() - daysAgo);
-    fechaEntrada.setHours(8 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60));
+    // Lógica condicional para placas específicas
+    if (plate === '1') {
+      return this.generateRemolqueUnicoResponse();
+    } else if (plate === '2') {
+      return this.generateSoloContenedorResponse();
+    } else if (plate === '3') {
+      return this.generateDobleRemolqueResponse();
+    } else {
+      // Para cualquier otra placa, retornar error
+      return {
+        success: false,
+        data: null,
+        message: 'Registro no encontrado',
+        errors: null,
+        metadata: null
+      };
+    }
+  }
 
-    // Tipo de unidad aleatorio
-    const tipoUnidad = Math.random() > 0.5 ? 'cliente' : 'proveedor';
+  /**
+   * Genera respuesta para Remolque Único (placa "1")
+   */
+  private generateRemolqueUnicoResponse(): EntrySearchResponse {
+    const fechaEntrada = this.generateRandomDate();
     
-    // Cliente/Proveedor aleatorio
-    const clientes = [
-      'Transportes García',
-      'Constructora ABC',
-      'Logística Rápida',
-      'Carga Express',
-      'Mercancías del Norte',
-      'Transporte Integral',
-      'Carga Segura',
-      'Logística Nacional'
-    ];
-    
-    const proveedores = [
-      'Minería del Sur',
-      'Materiales del Norte',
-      'Arena y Grava S.A.',
-      'Construcción Rápida',
-      'Materiales Premium',
-      'Construcción del Valle',
-      'Materiales Nacionales',
-      'Construcción Integral'
-    ];
-    
-    const nombre = tipoUnidad === 'cliente' 
-      ? clientes[Math.floor(Math.random() * clientes.length)]
-      : proveedores[Math.floor(Math.random() * proveedores.length)];
-
-    // Producto aleatorio
-    const productos = [
-      'Arena',
-      'Grava',
-      'Material de construcción',
-      'Piedra triturada',
-      'Tierra',
-      'Cemento',
-      'Ladrillos',
-      'Varilla',
-      'Alambre',
-      'Tubería'
-    ];
-    
-    const producto = productos[Math.floor(Math.random() * productos.length)];
-    
-    // Peso bruto aleatorio entre 15,000 y 35,000 kg
-    const pesoBruto = 15000 + Math.floor(Math.random() * 20001);
-    
-    // Determinar si tiene remolque basado en el tipo de unidad
-    const tieneRemolque = Math.random() > 0.3; // 70% de probabilidad
-    const placaRemolque = tieneRemolque ? this.generateRandomPlate() : undefined;
-
     return {
       success: true,
       data: {
-        folio,
+        folio: 'R001',
         fechaEntrada: fechaEntrada.toISOString(),
-        tipoUnidad,
-        cliente: nombre,
-        producto,
-        pesoBruto,
-        placaTrailer: plate,
-        placaRemolque,
+        tipoUnidad: 'remolque',
+        cliente: 'Cliente Remolque',
+        producto: 'Cemento',
+        pesoBruto: 18000,
         status: 'ENTRADA_REGISTRADA',
+        placaTrailer: 'REM-001',
+        placaRemolque: 'REMOLQUE-001',
+        placaRemolque1: undefined,
+        placaRemolque2: undefined,
         fotos: {
-          fotoEntradaTrailer: `https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Foto+Trailer+${plate}`,
-          fotoEntradaRemolque: tieneRemolque 
-            ? `https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Foto+Remolque+${placaRemolque}` 
-            : undefined,
-          fotoCargaEntrada: `https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Foto+Carga+${producto}`
+          fotoEntradaTrailer: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Foto+Trailer+REM-001',
+          fotoEntradaRemolque: 'https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Foto+Remolque+REMOLQUE-001',
+          fotoEntradaRemolque1: undefined,
+          fotoEntradaRemolque2: undefined,
+          fotoCargaEntrada: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Foto+Carga+Cemento'
         }
       },
       message: 'Registro de entrada encontrado',
       errors: null,
       metadata: null
     };
+  }
+
+  /**
+   * Genera respuesta para Solo Contenedor (placa "2")
+   */
+  private generateSoloContenedorResponse(): EntrySearchResponse {
+    const fechaEntrada = this.generateRandomDate();
+    
+    return {
+      success: true,
+      data: {
+        folio: 'SC001',
+        fechaEntrada: fechaEntrada.toISOString(),
+        tipoUnidad: 'contenedor',
+        cliente: 'Cliente Contenedor',
+        producto: 'Mineral',
+        pesoBruto: 15000,
+        status: 'ENTRADA_REGISTRADA',
+        placaTrailer: undefined,
+        placaRemolque: undefined,
+        placaRemolque1: undefined,
+        placaRemolque2: undefined,
+        fotos: {
+          fotoEntradaTrailer: undefined,
+          fotoEntradaRemolque: undefined,
+          fotoEntradaRemolque1: undefined,
+          fotoEntradaRemolque2: undefined,
+          fotoCargaEntrada: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Foto+Carga+Mineral'
+        }
+      },
+      message: 'Registro de entrada encontrado',
+      errors: null,
+      metadata: null
+    };
+  }
+
+  /**
+   * Genera respuesta para Doble Remolque (placa "3")
+   */
+  private generateDobleRemolqueResponse(): EntrySearchResponse {
+    const fechaEntrada = this.generateRandomDate();
+    
+    return {
+      success: true,
+      data: {
+        folio: 'DR001',
+        fechaEntrada: fechaEntrada.toISOString(),
+        tipoUnidad: 'doble-remolque',
+        cliente: 'Cliente Doble',
+        producto: 'Grava',
+        pesoBruto: 32000,
+        status: 'ENTRADA_REGISTRADA',
+        placaTrailer: 'DR-TRAILER-001',
+        placaRemolque: undefined,
+        placaRemolque1: 'DR-REM1',
+        placaRemolque2: 'DR-REM2',
+        fotos: {
+          fotoEntradaTrailer: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Foto+Trailer+DR-TRAILER-001',
+          fotoEntradaRemolque: undefined,
+          fotoEntradaRemolque1: 'https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Foto+Remolque+DR-REM1',
+          fotoEntradaRemolque2: 'https://via.placeholder.com/300/2196F3/FFFFFF?text=Foto+Remolque+DR-REM2',
+          fotoCargaEntrada: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Foto+Carga+Grava'
+        }
+      },
+      message: 'Registro de entrada encontrado',
+      errors: null,
+      metadata: null
+    };
+  }
+
+  /**
+   * Genera una fecha aleatoria para entrada (hace 2-7 días)
+   */
+  private generateRandomDate(): Date {
+    const daysAgo = Math.floor(Math.random() * 6) + 2;
+    const fechaEntrada = new Date();
+    fechaEntrada.setDate(fechaEntrada.getDate() - daysAgo);
+    fechaEntrada.setHours(8 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60));
+    return fechaEntrada;
   }
 
   /**
