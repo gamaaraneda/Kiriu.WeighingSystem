@@ -1,0 +1,328 @@
+<div class="prime-ng-demo">
+  <div class="container">
+    <h1 class="text-center mb-4">Demostración de PrimeNG Components</h1>
+
+    <!-- Formulario de Ejemplo -->
+    <p-card
+      header="Formulario de Ejemplo"
+      subheader="Muestra varios controles de PrimeNG"
+      class="mb-4"
+    >
+      <div class="grid grid-2 gap-3">
+        <!-- Campo de texto -->
+        <div class="form-group">
+          <label for="name">Nombre:</label>
+          <p-inputText
+            id="name"
+            placeholder="Ingrese su nombre"
+            [(ngModel)]="name"
+            class="w-100"
+          ></p-inputText>
+        </div>
+
+        <!-- Campo de texto -->
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <p-inputText
+            id="email"
+            placeholder="Ingrese su email"
+            [(ngModel)]="email"
+            class="w-100"
+          ></p-inputText>
+        </div>
+
+        <!-- Campo numérico -->
+        <div class="form-group">
+          <label for="weight">Peso (kg):</label>
+          <p-inputNumber
+            id="weight"
+            placeholder="0.00"
+            [(ngModel)]="weight"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            class="w-100"
+          ></p-inputNumber>
+        </div>
+
+        <!-- Rating -->
+        <div class="form-group">
+          <label for="rating">Calificación:</label>
+          <p-rating
+            id="rating"
+            [(ngModel)]="rating"
+            [stars]="5"
+            [readonly]="false"
+            class="w-100"
+          ></p-rating>
+        </div>
+
+        <!-- Checkbox -->
+        <div class="form-group">
+          <p-checkbox
+            [(ngModel)]="accepted"
+            [binary]="true"
+            label="Acepto los términos y condiciones"
+          ></p-checkbox>
+        </div>
+
+        <!-- Radio Buttons -->
+        <div class="form-group">
+          <label>Género:</label>
+          <div class="radio-group">
+            <p-radioButton
+              name="gender"
+              value="male"
+              [(ngModel)]="gender"
+              label="Masculino"
+            ></p-radioButton>
+            <p-radioButton
+              name="gender"
+              value="female"
+              [(ngModel)]="gender"
+              label="Femenino"
+            ></p-radioButton>
+          </div>
+        </div>
+
+        <!-- Textarea -->
+        <div class="form-group grid-span-2">
+          <label for="description">Descripción:</label>
+          <textarea
+            pInputTextarea
+            id="description"
+            [(ngModel)]="description"
+            rows="3"
+            class="w-100"
+            placeholder="Ingrese una descripción"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions mt-3">
+        <p-button
+          label="Guardar"
+          icon="pi pi-check"
+          (onClick)="save()"
+          severity="success"
+          class="me-2"
+        ></p-button>
+        <p-button
+          label="Limpiar"
+          icon="pi pi-refresh"
+          severity="secondary"
+          (onClick)="clearForm()"
+        ></p-button>
+      </div>
+    </p-card>
+
+    <!-- Botones de Ejemplo -->
+    <p-card header="Botones de Ejemplo" class="mb-4">
+      <div class="button-group">
+        <p-button label="Primario" icon="pi pi-check" class="me-2"></p-button>
+        <p-button
+          label="Secundario"
+          severity="secondary"
+          icon="pi pi-times"
+          class="me-2"
+        ></p-button>
+        <p-button
+          label="Éxito"
+          severity="success"
+          icon="pi pi-check"
+          class="me-2"
+        ></p-button>
+        <p-button
+          label="Advertencia"
+          severity="warn"
+          icon="pi pi-exclamation-triangle"
+          class="me-2"
+        ></p-button>
+        <p-button
+          label="Peligro"
+          severity="danger"
+          icon="pi pi-trash"
+          class="me-2"
+        ></p-button>
+        <p-button
+          label="Información"
+          severity="info"
+          icon="pi pi-info-circle"
+          class="me-2"
+        ></p-button>
+      </div>
+
+      <div class="button-group mt-3">
+        <p-button
+          label="Con Loading"
+          [loading]="isLoading"
+          icon="pi pi-spin pi-spinner"
+          (onClick)="simulateLoading()"
+          class="me-2"
+        ></p-button>
+        <p-button
+          label="Deshabilitado"
+          [disabled]="true"
+          icon="pi pi-lock"
+          class="me-2"
+        ></p-button>
+        <p-button
+          label="Pequeño"
+          size="small"
+          icon="pi pi-user"
+          class="me-2"
+        ></p-button>
+        <p-button
+          label="Grande"
+          size="large"
+          icon="pi pi-home"
+          class="me-2"
+        ></p-button>
+      </div>
+    </p-card>
+
+    <!-- Tabla de Ejemplo -->
+    <p-card header="Tabla de Productos" class="mb-4">
+      <p-table
+        [value]="products"
+        [paginator]="true"
+        [rows]="3"
+        [showCurrentPageReport]="true"
+        responsiveLayout="scroll"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
+        [rowsPerPageOptions]="[3, 5, 10]"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Categoría</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-product>
+          <tr>
+            <td>{{ product.code }}</td>
+            <td>{{ product.name }}</td>
+            <td>{{ product.price | currency : "USD" }}</td>
+            <td>
+              <p-tag
+                [value]="product.category"
+                [severity]="getCategorySeverity(product.category)"
+              ></p-tag>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <p-button
+                  icon="pi pi-pencil"
+                  severity="secondary"
+                  size="small"
+                  pTooltip="Editar"
+                  (onClick)="editProduct(product)"
+                  class="me-1"
+                ></p-button>
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  size="small"
+                  pTooltip="Eliminar"
+                  (onClick)="deleteProduct(product)"
+                ></p-button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <!-- Mensajes de Ejemplo -->
+    <p-card header="Mensajes de Ejemplo" class="mb-4">
+      <div class="message-group">
+        <p-message
+          severity="info"
+          text="Esta es una información importante para el usuario"
+        ></p-message>
+        <p-message
+          severity="success"
+          text="Operación completada exitosamente"
+        ></p-message>
+        <p-message
+          severity="warn"
+          text="Por favor revise los datos ingresados antes de continuar"
+        ></p-message>
+        <p-message
+          severity="error"
+          text="Ha ocurrido un error durante la operación"
+        ></p-message>
+      </div>
+    </p-card>
+
+    <!-- Paneles de Ejemplo -->
+    <div class="grid grid-2 gap-3 mb-4">
+      <p-panel header="Panel Colapsable" [toggleable]="true">
+        <p>
+          Este es un panel que se puede colapsar y expandir. Útil para organizar
+          contenido de manera compacta.
+        </p>
+        <p>
+          Puede contener cualquier tipo de contenido, incluyendo formularios,
+          tablas, o texto.
+        </p>
+      </p-panel>
+
+      <p-panel header="Panel con Footer" [toggleable]="false">
+        <p>Este panel tiene un footer personalizado con botones de acción.</p>
+        <ng-template pTemplate="footer">
+          <div class="flex flex-between">
+            <p-button
+              label="Cancelar"
+              severity="secondary"
+              icon="pi pi-times"
+            ></p-button>
+            <p-button
+              label="Confirmar"
+              severity="success"
+              icon="pi pi-check"
+            ></p-button>
+          </div>
+        </ng-template>
+      </p-panel>
+    </div>
+
+    <!-- Progress y Loading -->
+    <p-card header="Indicadores de Progreso" class="mb-4">
+      <div class="progress-group">
+        <div class="mb-3">
+          <label>Progreso General: 75%</label>
+          <p-progressBar [value]="75" [showValue]="true"></p-progressBar>
+        </div>
+
+        <div class="mb-3">
+          <label>Progreso de Carga: 45%</label>
+          <p-progressBar
+            [value]="45"
+            [showValue]="true"
+            severity="warn"
+          ></p-progressBar>
+        </div>
+
+        <div class="mb-3">
+          <label>Progreso Completado: 100%</label>
+          <p-progressBar
+            [value]="100"
+            [showValue]="true"
+            severity="success"
+          ></p-progressBar>
+        </div>
+
+        <div class="text-center">
+          <p-progressSpinner
+            [style]="{ width: '50px', height: '50px' }"
+          ></p-progressSpinner>
+          <p class="mt-2">Cargando...</p>
+        </div>
+      </div>
+    </p-card>
+  </div>
+</div>
