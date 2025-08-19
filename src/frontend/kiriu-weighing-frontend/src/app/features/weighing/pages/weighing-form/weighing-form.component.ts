@@ -22,50 +22,14 @@ import { ProcessStepsComponent } from '../../../../shared/components/process-ste
 import { MessageService } from '../../../../shared/services/message.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ToastModule } from 'primeng/toast';
-
-export interface VehicleData {
-  trailerPlate: string;
-  trailerPlate2?: string;
-  containerOnly: boolean;
-  doubleTrailer: boolean;
-  product: string;
-}
-
-export interface ClientProviderData {
-  id?: string;
-  name: string;
-  rfc: string;
-  isNew: boolean;
-}
-
-export interface WeightData {
-  currentWeight: number;
-  isStable: boolean;
-  isConnected: boolean;
-  weightHistory: number[];
-  capturedWeight?: number;
-  capturedAt?: Date;
-}
-
-export interface PhotoData {
-  trailerPlate: string;
-  trailerPlate2?: string;
-  cargo: string;
-  remolque1Plate?: string;
-  remolque2Plate?: string;
-  cargoRemolque2?: string;
-}
-
-export interface TicketOperation {
-  folio?: string;
-  type?: string;
-  plate?: string;
-}
-
-export interface ExitOperation {
-  type: string;
-  plate: string;
-}
+import {
+  VehicleData,
+  ClientProviderData,
+  WeightData,
+  PhotoData,
+  TicketOperation,
+  ExitOperation,
+} from '../../types/weighing.types';
 
 @Component({
   selector: 'app-weighing-form',
