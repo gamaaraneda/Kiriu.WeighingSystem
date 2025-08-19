@@ -90,6 +90,24 @@
                 <div *ngIf="getFieldError('product')" class="error-message">
                   {{ getFieldError("product") }}
                 </div>
+
+                <!-- Foto de carga para flujo Solo Contenedor -->
+                <div
+                  *ngIf="weighingForm.get('containerOnly')?.value"
+                  class="photo-display-group"
+                >
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.cargo"
+                  >
+                    <span *ngIf="!photoData.cargo" class="photo-placeholder">
+                      📷
+                    </span>
+                    <span *ngIf="photoData.cargo" class="photo-captured">
+                      ✅
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div class="form-group">
@@ -156,6 +174,24 @@
                 >
                   {{ getFieldError("trailerPlate") }}
                 </div>
+
+                <!-- Foto de placa del tráiler -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.trailerPlate"
+                  >
+                    <span
+                      *ngIf="!photoData.trailerPlate"
+                      class="photo-placeholder"
+                    >
+                      📷
+                    </span>
+                    <span *ngIf="photoData.trailerPlate" class="photo-captured">
+                      ✅
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -206,6 +242,27 @@
                 >
                   {{ getFieldError("remolque1Plate") }}
                 </div>
+
+                <!-- Foto de placa del remolque 1 -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.remolque1Plate"
+                  >
+                    <span
+                      *ngIf="!photoData.remolque1Plate"
+                      class="photo-placeholder"
+                    >
+                      📷
+                    </span>
+                    <span
+                      *ngIf="photoData.remolque1Plate"
+                      class="photo-captured"
+                    >
+                      ✅
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <!-- Foto de carga del Remolque 1 -->
@@ -225,13 +282,13 @@
                       *ngIf="doubleTrailerState.remolque1.fotoCargaCapturada"
                       class="photo-captured"
                     >
-                      ✅ Foto capturada
+                      ✅
                     </span>
                     <span
                       *ngIf="!doubleTrailerState.remolque1.fotoCargaCapturada"
                       class="photo-pending"
                     >
-                      ⏳ Foto pendiente
+                      ⏳
                     </span>
                   </div>
                 </div>
@@ -366,6 +423,27 @@
                 >
                   {{ getFieldError("remolque2Plate") }}
                 </div>
+
+                <!-- Foto de placa del remolque 2 -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.remolque2Plate"
+                  >
+                    <span
+                      *ngIf="!photoData.remolque2Plate"
+                      class="photo-placeholder"
+                    >
+                      📷
+                    </span>
+                    <span
+                      *ngIf="photoData.remolque2Plate"
+                      class="photo-captured"
+                    >
+                      ✅
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <!-- Foto de carga del Remolque 2 -->
@@ -386,13 +464,13 @@
                       *ngIf="doubleTrailerState.remolque2.fotosCapturadas"
                       class="photo-captured"
                     >
-                      ✅ Foto capturada
+                      ✅
                     </span>
                     <span
                       *ngIf="!doubleTrailerState.remolque2.fotosCapturadas"
                       class="photo-pending"
                     >
-                      ⏳ Foto pendiente
+                      ⏳
                     </span>
                   </div>
                 </div>
@@ -543,6 +621,24 @@
                 >
                   {{ getFieldError("trailerPlate") }}
                 </div>
+
+                <!-- Foto de placa del tráiler -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.trailerPlate"
+                  >
+                    <span
+                      *ngIf="!photoData.trailerPlate"
+                      class="photo-placeholder"
+                    >
+                      📷
+                    </span>
+                    <span *ngIf="photoData.trailerPlate" class="photo-captured">
+                      ✅
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div class="form-group">
@@ -590,6 +686,27 @@
                 >
                   {{ getFieldError("trailerPlate2") }}
                 </div>
+
+                <!-- Foto de placa del remolque -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.trailerPlate2"
+                  >
+                    <span
+                      *ngIf="!photoData.trailerPlate2"
+                      class="photo-placeholder"
+                    >
+                      📷
+                    </span>
+                    <span
+                      *ngIf="photoData.trailerPlate2"
+                      class="photo-captured"
+                    >
+                      ✅
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div class="form-group">
@@ -616,6 +733,21 @@
                 </div>
                 <div *ngIf="getFieldError('product')" class="error-message">
                   {{ getFieldError("product") }}
+                </div>
+
+                <!-- Foto de carga -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.cargo"
+                  >
+                    <span *ngIf="!photoData.cargo" class="photo-placeholder">
+                      📷
+                    </span>
+                    <span *ngIf="photoData.cargo" class="photo-captured">
+                      ✅
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -731,119 +863,6 @@
               </div>
               <div class="captured-weight-timestamp">
                 Capturado el {{ getCurrentTime() | date : "dd/MM/yyyy HH:mm" }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Sección de Fotos -->
-          <div class="photo-section">
-            <h2 class="section-title">Fotografías</h2>
-
-            <div class="photo-grid">
-              <!-- Para flujo normal -->
-              <div
-                *ngIf="!weighingForm.get('doubleTrailer')?.value"
-                class="photo-item"
-              >
-                <h4>Placa Tráiler *</h4>
-                <div
-                  class="photo-preview"
-                  [class.has-photo]="photoData.trailerPlate"
-                >
-                  <span
-                    *ngIf="!photoData.trailerPlate"
-                    class="photo-placeholder"
-                  >
-                    📷
-                  </span>
-                  <span *ngIf="photoData.trailerPlate" class="photo-captured">
-                    ✅ {{ photoData.trailerPlate }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Para flujo normal -->
-              <div
-                *ngIf="!weighingForm.get('doubleTrailer')?.value"
-                class="photo-item"
-              >
-                <h4>Placa Remolque *</h4>
-                <div
-                  class="photo-preview"
-                  [class.has-photo]="photoData.trailerPlate2"
-                >
-                  <span
-                    *ngIf="!photoData.trailerPlate2"
-                    class="photo-placeholder"
-                  >
-                    📷
-                  </span>
-                  <span *ngIf="photoData.trailerPlate2" class="photo-captured">
-                    ✅ {{ photoData.trailerPlate2 }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Para flujo de doble remolque -->
-              <div
-                *ngIf="weighingForm.get('doubleTrailer')?.value"
-                class="photo-item"
-              >
-                <h4>Placa del Tráiler *</h4>
-                <div
-                  class="photo-preview"
-                  [class.has-photo]="photoData.trailerPlate"
-                >
-                  <span
-                    *ngIf="!photoData.trailerPlate"
-                    class="photo-placeholder"
-                  >
-                    📷
-                  </span>
-                  <span *ngIf="photoData.trailerPlate" class="photo-captured">
-                    ✅ {{ photoData.trailerPlate }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Para flujo de doble remolque -->
-              <div
-                *ngIf="weighingForm.get('doubleTrailer')?.value"
-                class="photo-item"
-              >
-                <h4>Placa del Remolque 1 *</h4>
-                <div
-                  class="photo-preview"
-                  [class.has-photo]="photoData.remolque1Plate"
-                >
-                  <span
-                    *ngIf="!photoData.remolque1Plate"
-                    class="photo-placeholder"
-                  >
-                    📷
-                  </span>
-                  <span *ngIf="photoData.remolque1Plate" class="photo-captured">
-                    ✅ {{ photoData.remolque1Plate }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="photo-item">
-                <h4>Carga/Material *</h4>
-                <div class="photo-preview" [class.has-photo]="photoData.cargo">
-                  <span *ngIf="!photoData.cargo" class="photo-placeholder">
-                    📷
-                  </span>
-                  <span *ngIf="photoData.cargo" class="photo-captured">
-                    ✅ {{ photoData.cargo }}
-                  </span>
-                </div>
-                <div class="photo-help-text">
-                  <small class="help-text">
-                    <i class="info-icon">ℹ️</i>
-                    Foto capturada desde el campo Producto
-                  </small>
-                </div>
               </div>
             </div>
           </div>

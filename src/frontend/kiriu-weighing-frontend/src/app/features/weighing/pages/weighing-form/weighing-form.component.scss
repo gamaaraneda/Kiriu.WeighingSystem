@@ -500,17 +500,17 @@
 // Sección de pasos del proceso
 .process-steps-section {
   margin-bottom: 24px;
-  
+
   // Hacer que el panel de pasos sea sticky dentro de la columna
   position: sticky;
   top: 100px;
   z-index: 10;
-  
+
   @media (max-width: 1024px) {
     position: static;
     margin-bottom: 20px;
   }
-  
+
   // Ajustar el componente de pasos para que se vea bien en la columna lateral
   ::ng-deep .process-steps-container {
     background: #ffffff;
@@ -518,62 +518,62 @@
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     border: 1px solid #e9ecef;
-    
+
     // Reducir el padding para que quepa mejor en la columna lateral
     .flow-header {
       margin-bottom: 1rem;
-      
+
       .flow-title {
         font-size: 1rem;
       }
-      
+
       .progress-indicator {
         .progress-bar {
           width: 60px;
         }
-        
+
         .progress-text {
           font-size: 0.8rem;
         }
       }
     }
-    
+
     .steps-list {
       gap: 0.5rem;
-      
+
       .step-item {
         padding: 0.5rem;
-        
+
         .step-icon {
           min-width: 50px;
-          
+
           .step-icon-main {
             font-size: 1rem;
           }
         }
-        
+
         .step-content {
           .step-label {
             font-size: 0.875rem;
           }
-          
+
           .step-status-text {
             font-size: 0.75rem;
           }
         }
       }
     }
-    
+
     .next-step-suggestion {
       margin-top: 1rem;
       padding: 0.75rem;
-      
+
       .suggestion-text {
         font-size: 0.8rem;
       }
     }
   }
-  
+
   // Ocultar el panel cuando showProcessSteps es false
   &.hidden {
     display: none;
@@ -584,11 +584,11 @@
 .mobile-process-steps-toggle {
   display: none;
   margin-bottom: 16px;
-  
+
   @media (max-width: 1024px) {
     display: block;
   }
-  
+
   .toggle-steps-btn {
     width: 100%;
     padding: 12px 16px;
@@ -598,14 +598,14 @@
     border: 2px solid #398df1;
     color: #398df1;
     transition: all 0.2s ease;
-    
+
     &:hover {
       background: #398df1;
       color: #ffffff;
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(57, 141, 241, 0.3);
     }
-    
+
     &:active {
       transform: translateY(0);
     }
@@ -806,6 +806,28 @@
         .photo-captured {
           color: #1ee733;
           font-weight: 500;
+        }
+      }
+
+      // Grupo de visualización de fotos integrado en el formulario
+      .photo-display-group {
+        margin-top: 12px;
+
+        .photo-preview {
+          height: 60px;
+          margin-bottom: 0;
+
+          .photo-placeholder {
+            font-size: 14px;
+            text-align: center;
+            padding: 0 8px;
+          }
+
+          .photo-captured {
+            font-size: 14px;
+            text-align: center;
+            padding: 0 8px;
+          }
         }
       }
 
@@ -1035,9 +1057,6 @@
 
 // Mejoras en la sección de peso para doble remolque
 .weight-section {
-
-
-
 }
 
 // Responsive para doble remolque
