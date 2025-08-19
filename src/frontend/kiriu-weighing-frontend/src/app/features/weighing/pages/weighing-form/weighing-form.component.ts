@@ -279,7 +279,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       if (this.weighingForm.get('doubleTrailer')?.value) {
         if (this.doubleTrailerState.currentStep === 'remolque1') {
           // Validar que se hayan capturado las placas y foto de carga antes de permitir capturar peso
-          if (!this.canProceedToRemolque2()) {
+          // NOTA: Usar canCaptureWeight() en lugar de canProceedToRemolque2() para evitar validación circular
+          if (!this.canCaptureWeight()) {
             // Mostrar notificación de error
             this.notificationService.showError(
               'Información incompleta',
@@ -431,7 +432,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   /**
    * Valida que se haya capturado toda la información del primer remolque
-   * antes de permitir avanzar al segundo remolque
+   * ANTES de permitir avanzar al segundo remolque
+   * NOTA: AHORA SÍ se valida el peso del Remolque 1
    */
   canProceedToRemolque2(): boolean {
     // Validar que se haya capturado:
@@ -440,21 +442,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // 3. Foto de la carga del remolque 1
     // 4. Material/producto
     // 5. Nombre del proveedor/cliente
-    // NOTA: NO se valida el peso aquí, solo se valida cuando se quiere proceder al remolque 2
-    return !!(
-      this.doubleTrailerState.trailerPlaca &&
-      this.doubleTrailerState.remolque1.fotoPlacaCapturada &&
-      this.doubleTrailerState.remolque1.fotoCargaCapturada &&
-      this.weighingForm.get('product')?.value &&
-      this.weighingForm.get('clientProviderName')?.value
-    );
-  }
-
-  /**
-   * Valida que se haya capturado toda la información del primer remolque
-   * INCLUYENDO el peso, para poder proceder al remolque 2
-   */
-  canProceedToRemolque2WithWeight(): boolean {
+    // 6. Peso del remolque 1 (NUEVO REQUISITO)
     return !!(
       this.doubleTrailerState.trailerPlaca &&
       this.doubleTrailerState.remolque1.fotoPlacaCapturada &&
@@ -466,7 +454,17 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Valida que se haya capturado toda la información del primer remolque
+   * INCLUYENDO el peso, para poder proceder al remolque 2
+   * NOTA: Ahora usa la misma lógica que canProceedToRemolque2
+   */
+  canProceedToRemolque2WithWeight(): boolean {
+    return this.canProceedToRemolque2();
+  }
+
+  /**
    * Determina si se puede capturar peso en el momento actual
+   * NOTA: Esta función NO incluye la validación del peso, solo los campos previos
    */
   canCaptureWeight(): boolean {
     if (!this.weighingForm.get('doubleTrailer')?.value) return true;
@@ -479,6 +477,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // 3. Foto de la carga del remolque 1
       // 4. Material/producto
       // 5. Nombre del proveedor/cliente
+      // NOTA: NO se valida el peso aquí, solo se valida cuando se quiere proceder al remolque 2
       const canCapture = !!(
         this.doubleTrailerState.trailerPlaca &&
         this.doubleTrailerState.remolque1.fotoPlacaCapturada &&
@@ -487,6 +486,17 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.weighingForm.get('clientProviderName')?.value
       );
 
+      // Log de debug para identificar el problema
+      console.log('🔍 Debug canCaptureWeight:', {
+        currentStep: this.doubleTrailerState.currentStep,
+        trailerPlaca: !!this.doubleTrailerState.trailerPlaca,
+        fotoPlacaCapturada: !!this.doubleTrailerState.remolque1.fotoPlacaCapturada,
+        fotoCargaCapturada: !!this.doubleTrailerState.remolque1.fotoCargaCapturada,
+        product: !!this.weighingForm.get('product')?.value,
+        clientProviderName: !!this.weighingForm.get('clientProviderName')?.value,
+        canCapture: canCapture
+      });
+
       // Si se pueden capturar pesos, ocultar el panel tipo checklist
       if (canCapture && this.showChecklistPanel) {
         this.showChecklistPanel = false;
@@ -494,6 +504,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
       return canCapture;
     }
+
+    // Log de debug para otros pasos
+    console.log('🔍 Debug canCaptureWeight - Otro paso:', {
+      currentStep: this.doubleTrailerState.currentStep,
+      isDoubleTrailer: this.weighingForm.get('doubleTrailer')?.value
+    });
 
     return true; // Para otros pasos, permitir captura de peso
   }
@@ -540,6 +556,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         pesoBruto: 0,
         fotos: [],
         fotoCargaCapturada: false,
+        fotoPlacaCapturada: false,
       },
       remolque2: {
         numero: 2,
@@ -547,6 +564,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         pesoBruto: 0,
         fotos: [],
         fotoCargaCapturada: false,
+        fotoPlacaCapturada: false,
       },
       pesoBrutoTotal: 0,
       isComplete: false,
@@ -583,6 +601,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
         // NO marcar fotosCapturadas aquí, solo se marca cuando se captura la foto de carga
         // this.doubleTrailerState.remolque1.fotosCapturadas = true;
+        
+        // Asegurar que estemos en el paso correcto para capturar peso
+        if (this.doubleTrailerState.currentStep === 'trailer') {
+          this.doubleTrailerState.currentStep = 'remolque1';
+        }
       }
     } else if (photoType === 'remolque2Plate') {
       this.photoData.remolque2Plate = 'Foto capturada';
@@ -618,7 +641,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         ];
         // También marcar que se capturó la foto de carga del remolque 1
         this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
-        
+
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
       }
@@ -635,7 +658,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           'foto_carga_remolque2.jpg',
         ];
         this.doubleTrailerState.remolque2.fotosCapturadas = true;
-        
+
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
       }
@@ -1075,12 +1098,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       case 'double-trailer':
         this.stepStatuses = {
           'trailer-plate': !!this.doubleTrailerState.trailerPlaca,
-          'remolque1-plate': !!this.doubleTrailerState.remolque1.fotoPlacaCapturada,
+          'remolque1-plate':
+            !!this.doubleTrailerState.remolque1.fotoPlacaCapturada,
           'remolque1-cargo':
             !!this.doubleTrailerState.remolque1.fotoCargaCapturada,
           product: !!this.weighingForm.get('product')?.value,
           client: !!this.weighingForm.get('clientProviderName')?.value,
-          'remolque2-plate': !!this.doubleTrailerState.remolque2.fotoPlacaCapturada,
+          'remolque2-plate':
+            !!this.doubleTrailerState.remolque2.fotoPlacaCapturada,
           'remolque2-cargo':
             !!this.doubleTrailerState.remolque2.fotosCapturadas,
           weight: this.doubleTrailerState.isComplete,

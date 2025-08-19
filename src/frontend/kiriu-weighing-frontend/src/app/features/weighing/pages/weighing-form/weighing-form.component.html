@@ -78,6 +78,7 @@
                     placeholder="Ingresa el nombre del producto o material"
                   />
                   <button
+                    *ngIf="!weighingForm.get('doubleTrailer')?.value"
                     type="button"
                     class="btn btn-outline photo-capture-btn"
                     (click)="onPhotoCapture('cargo')"
@@ -85,13 +86,6 @@
                   >
                     📷
                   </button>
-                </div>
-                <div class="form-help-text">
-                  <small class="help-text">
-                    <i class="info-icon">ℹ️</i>
-                    Es necesario tomar fotos de la carga para documentar el
-                    estado del material
-                  </small>
                 </div>
                 <div *ngIf="getFieldError('product')" class="error-message">
                   {{ getFieldError("product") }}
@@ -611,6 +605,7 @@
                     placeholder="Ingresa el nombre del producto o material"
                   />
                   <button
+                    *ngIf="!weighingForm.get('doubleTrailer')?.value"
                     type="button"
                     class="btn btn-outline photo-capture-btn"
                     (click)="onPhotoCapture('cargo')"
@@ -618,13 +613,6 @@
                   >
                     📷
                   </button>
-                </div>
-                <div class="form-help-text">
-                  <small class="help-text">
-                    <i class="info-icon">ℹ️</i>
-                    Es necesario tomar fotos de la carga para documentar el
-                    estado del material
-                  </small>
                 </div>
                 <div *ngIf="getFieldError('product')" class="error-message">
                   {{ getFieldError("product") }}
