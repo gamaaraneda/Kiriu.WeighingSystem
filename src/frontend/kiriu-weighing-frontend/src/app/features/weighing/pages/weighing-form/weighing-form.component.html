@@ -58,6 +58,67 @@
               </div>
             </div>
 
+            <!-- Sección: Datos Generales del Viaje (solo para doble remolque) -->
+            <div
+              *ngIf="weighingForm.get('doubleTrailer')?.value"
+              class="form-section"
+            >
+              <h2 class="section-title">Datos Generales del Viaje</h2>
+
+              <div class="form-group">
+                <label for="product" class="form-label"
+                  >Producto/Material *</label
+                >
+                <div class="product-input-group">
+                  <input
+                    type="text"
+                    id="product"
+                    formControlName="product"
+                    class="form-input product-input"
+                    placeholder="Ingresa el nombre del producto o material"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline photo-capture-btn"
+                    (click)="onPhotoCapture('cargo')"
+                    title="Capturar foto de la carga para documentación"
+                  >
+                    📷
+                  </button>
+                </div>
+                <div class="form-help-text">
+                  <small class="help-text">
+                    <i class="info-icon">ℹ️</i>
+                    Es necesario tomar fotos de la carga para documentar el
+                    estado del material
+                  </small>
+                </div>
+                <div *ngIf="getFieldError('product')" class="error-message">
+                  {{ getFieldError("product") }}
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="clientProviderName" class="form-label"
+                  >Nombre/Razón Social *</label
+                >
+                <input
+                  type="text"
+                  id="clientProviderName"
+                  formControlName="clientProviderName"
+                  class="form-input"
+                  [class.error]="getFieldError('clientProviderName')"
+                  placeholder="Buscar por nombre..."
+                />
+                <div
+                  *ngIf="getFieldError('clientProviderName')"
+                  class="error-message"
+                >
+                  {{ getFieldError("clientProviderName") }}
+                </div>
+              </div>
+            </div>
+
             <!-- Sección: Datos del Tráiler (solo para doble remolque) -->
             <div
               *ngIf="weighingForm.get('doubleTrailer')?.value"
@@ -153,56 +214,32 @@
                 </div>
               </div>
 
+              <!-- Foto de carga del Remolque 1 -->
               <div class="form-group">
-                <label for="product" class="form-label"
-                  >Producto/Material *</label
-                >
-                <div class="product-input-group">
-                  <input
-                    type="text"
-                    id="product"
-                    formControlName="product"
-                    class="form-input product-input"
-                    placeholder="Ingresa el nombre del producto o material"
-                  />
+                <label class="form-label">Foto de Carga del Remolque 1 *</label>
+                <div class="photo-capture-group">
                   <button
                     type="button"
                     class="btn btn-outline photo-capture-btn"
                     (click)="onPhotoCapture('cargo')"
-                    title="Capturar foto de la carga para documentación"
+                    title="Capturar foto de la carga del remolque 1"
                   >
-                    📷
+                    📷 Capturar Foto
                   </button>
-                </div>
-                <div class="form-help-text">
-                  <small class="help-text">
-                    <i class="info-icon">ℹ️</i>
-                    Es necesario tomar fotos de la carga para documentar el
-                    estado del material
-                  </small>
-                </div>
-                <div *ngIf="getFieldError('product')" class="error-message">
-                  {{ getFieldError("product") }}
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="clientProviderName" class="form-label"
-                  >Nombre/Razón Social *</label
-                >
-                <input
-                  type="text"
-                  id="clientProviderName"
-                  formControlName="clientProviderName"
-                  class="form-input"
-                  [class.error]="getFieldError('clientProviderName')"
-                  placeholder="Buscar por nombre..."
-                />
-                <div
-                  *ngIf="getFieldError('clientProviderName')"
-                  class="error-message"
-                >
-                  {{ getFieldError("clientProviderName") }}
+                  <div class="photo-status">
+                    <span
+                      *ngIf="doubleTrailerState.remolque1.fotoCargaCapturada"
+                      class="photo-captured"
+                    >
+                      ✅ Foto capturada
+                    </span>
+                    <span
+                      *ngIf="!doubleTrailerState.remolque1.fotoCargaCapturada"
+                      class="photo-pending"
+                    >
+                      ⏳ Foto pendiente
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -642,6 +679,28 @@
 
         <!-- Columna derecha: Peso y Fotos -->
         <div class="side-column">
+          <!-- Panel de Pasos del Proceso -->
+          <div class="process-steps-section" [class.hidden]="!showProcessSteps">
+            <app-process-steps
+              [flowType]="getProcessFlowType()"
+              [currentStep]="getCurrentProcessStep()"
+              [showProgress]="true"
+              [stepStatuses]="stepStatuses"
+            ></app-process-steps>
+          </div>
+
+          <!-- Botón flotante para mostrar pasos en móviles -->
+          <div class="mobile-process-steps-toggle">
+            <button
+              type="button"
+              class="btn btn-outline toggle-steps-btn"
+              (click)="toggleProcessSteps()"
+              title="Ver pasos del proceso"
+            >
+              📋 Ver Pasos
+            </button>
+          </div>
+
           <!-- Sección de Peso -->
           <div class="weight-section">
             <h2 class="section-title">Peso en Tiempo Real</h2>
@@ -675,81 +734,6 @@
               Capturar Peso
             </button>
 
-            <!-- Mensaje informativo cuando no se pueden capturar pesos por requisitos faltantes -->
-            <div
-              *ngIf="
-                weighingForm.get('doubleTrailer')?.value &&
-                doubleTrailerState.currentStep === 'remolque1' &&
-                !canProceedToRemolque2()
-              "
-              class="weight-capture-info"
-            >
-              <div class="info-header">
-                <div class="info-message">
-                  <i class="info-icon">ℹ️</i>
-                  <span
-                    >Complete la información del primer remolque antes de
-                    capturar el peso</span
-                  >
-                </div>
-              </div>
-              <div class="requirements-list">
-                <div
-                  class="requirement-item"
-                  [class.completed]="!!doubleTrailerState.trailerPlaca"
-                >
-                  <span class="requirement-icon">{{
-                    doubleTrailerState.trailerPlaca ? "✅" : "⏳"
-                  }}</span>
-                  <span class="requirement-text">Placa del tráiler</span>
-                </div>
-                <div
-                  class="requirement-item"
-                  [class.completed]="!!doubleTrailerState.remolque1.placa"
-                >
-                  <span class="requirement-icon">{{
-                    doubleTrailerState.remolque1.placa ? "✅" : "⏳"
-                  }}</span>
-                  <span class="requirement-text">Placa del remolque 1</span>
-                </div>
-                <div
-                  class="requirement-item"
-                  [class.completed]="
-                    !!doubleTrailerState.remolque1.fotoCargaCapturada
-                  "
-                >
-                  <span class="requirement-icon">{{
-                    doubleTrailerState.remolque1.fotoCargaCapturada
-                      ? "✅"
-                      : "⏳"
-                  }}</span>
-                  <span class="requirement-text">Foto de la carga</span>
-                </div>
-                <div
-                  class="requirement-item"
-                  [class.completed]="!!weighingForm.get('product')?.value"
-                >
-                  <span class="requirement-icon">{{
-                    weighingForm.get("product")?.value ? "✅" : "⏳"
-                  }}</span>
-                  <span class="requirement-text">Material/Producto</span>
-                </div>
-                <div
-                  class="requirement-item"
-                  [class.completed]="
-                    !!weighingForm.get('clientProviderName')?.value
-                  "
-                >
-                  <span class="requirement-icon">{{
-                    weighingForm.get("clientProviderName")?.value ? "✅" : "⏳"
-                  }}</span>
-                  <span class="requirement-text"
-                    >Nombre del {{ unitTypeTitle.toLowerCase() }}</span
-                  >
-                </div>
-              </div>
-            </div>
-
             <div *ngIf="weightData.capturedWeight" class="captured-weight">
               <div class="captured-weight-header">
                 <span class="captured-label">Peso Capturado</span>
@@ -759,59 +743,6 @@
               </div>
               <div class="captured-weight-timestamp">
                 Capturado el {{ getCurrentTime() | date : "dd/MM/yyyy HH:mm" }}
-              </div>
-            </div>
-
-            <!-- Estado del doble remolque -->
-            <div
-              *ngIf="weighingForm.get('doubleTrailer')?.value"
-              class="double-trailer-status"
-            >
-              <div class="status-title">{{ currentDoubleTrailerStep }}</div>
-              <div class="status-details">
-                <div class="status-item">
-                  <span class="label">Tráiler:</span>
-                  <span class="value">{{
-                    doubleTrailerState.trailerPlaca || "Pendiente"
-                  }}</span>
-                </div>
-                <div class="status-item">
-                  <span class="label">Remolque 1:</span>
-                  <span class="value">
-                    <span *ngIf="doubleTrailerState.remolque1.placa">{{
-                      doubleTrailerState.remolque1.placa
-                    }}</span>
-                    <span *ngIf="!doubleTrailerState.remolque1.placa"
-                      >Pendiente</span
-                    >
-                    <span *ngIf="doubleTrailerState.remolque1.pesoCapturado">
-                      - {{ doubleTrailerState.remolque1.pesoBruto }} kg</span
-                    >
-                  </span>
-                </div>
-                <div class="status-item">
-                  <span class="label">Remolque 2:</span>
-                  <span class="value">
-                    <span *ngIf="doubleTrailerState.remolque2.placa">{{
-                      doubleTrailerState.remolque2.placa
-                    }}</span>
-                    <span *ngIf="!doubleTrailerState.remolque2.placa"
-                      >Pendiente</span
-                    >
-                    <span *ngIf="doubleTrailerState.remolque2.pesoCapturado">
-                      - {{ doubleTrailerState.remolque2.pesoBruto }} kg</span
-                    >
-                  </span>
-                </div>
-                <div
-                  *ngIf="doubleTrailerState.isComplete"
-                  class="status-item total"
-                >
-                  <span class="label">Total:</span>
-                  <span class="value"
-                    >{{ doubleTrailerState.pesoBrutoTotal }} kg</span
-                  >
-                </div>
               </div>
             </div>
           </div>

@@ -1,0 +1,59 @@
+<div class="process-steps-container" *ngIf="processFlow">
+  <!-- Título del flujo -->
+  <div class="flow-header">
+    <h3 class="flow-title">{{ processFlow.title }}</h3>
+    <div class="progress-indicator" *ngIf="showProgress">
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          [style.width.%]="getProgressPercentage()"
+        ></div>
+      </div>
+      <span class="progress-text"
+        >{{ getCompletedStepsCount() }}/{{ getTotalStepsCount() }}</span
+      >
+    </div>
+  </div>
+
+  <!-- Lista de pasos -->
+  <div class="steps-list">
+    <div
+      *ngFor="let step of processFlow.steps; trackBy: trackByStepId"
+      class="step-item"
+      [class.completed]="step.isCompleted"
+      [class.current]="step.id === currentStep"
+    >
+      <div class="step-icon">
+        <span *ngIf="step.isCompleted" class="step-status completed">✅</span>
+        <span *ngIf="!step.isCompleted" class="step-status pending">⏳</span>
+        <span class="step-icon-main">{{ step.icon }}</span>
+      </div>
+
+      <div class="step-content">
+        <div class="step-label">
+          {{ step.label }}
+          <span *ngIf="step.isRequired" class="required-indicator">*</span>
+        </div>
+
+        <div class="step-status-text">
+          <span *ngIf="step.isCompleted" class="status-completed"
+            >Completado</span
+          >
+          <span *ngIf="!step.isCompleted" class="status-pending"
+            >Pendiente</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Próximo paso sugerido -->
+  <div class="next-step-suggestion" *ngIf="getNextPendingStep()">
+    <div class="suggestion-content">
+      <i class="suggestion-icon">💡</i>
+      <span class="suggestion-text">
+        <strong>Próximo paso:</strong> {{ getNextPendingStep()?.label }}
+      </span>
+    </div>
+  </div>
+</div>

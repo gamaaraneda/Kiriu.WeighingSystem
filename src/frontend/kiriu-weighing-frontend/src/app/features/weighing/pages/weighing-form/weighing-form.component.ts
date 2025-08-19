@@ -18,6 +18,7 @@ import {
 } from '../../services/weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
+import { ProcessStepsComponent } from '../../../../shared/components/process-steps';
 import { MessageService } from '../../../../shared/services/message.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ToastModule } from 'primeng/toast';
@@ -74,6 +75,7 @@ export interface ExitOperation {
     ReactiveFormsModule,
     HeaderComponent,
     BreadcrumbComponent,
+    ProcessStepsComponent,
     ToastModule,
   ],
   templateUrl: './weighing-form.component.html',
@@ -143,6 +145,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   // Control de visibilidad del panel tipo checklist
   showChecklistPanel = false;
 
+  // Propiedades para el panel de pasos del proceso
+  showProcessSteps = true;
+  processStepsComponent?: ProcessStepsComponent;
+  stepStatuses: Record<string, boolean> = {};
+
   isLoading = false;
   weightUpdateInterval: Subscription | undefined;
 
@@ -158,6 +165,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Validar que el flujo sea correcto
       this.validateFlow();
     });
+
+    // Actualizar el estado de los pasos del proceso después de la inicialización
+    setTimeout(() => this.updateProcessStepsStatus(), 100);
   }
 
   ngOnDestroy(): void {
@@ -214,6 +224,23 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       ?.valueChanges.subscribe((doubleTrailer: boolean) => {
         this.onDoubleTrailerChange(doubleTrailer);
       });
+
+    // Suscribirse a cambios en campos clave para actualizar el estado de los pasos
+    this.weighingForm.get('product')?.valueChanges.subscribe(() => {
+      setTimeout(() => this.updateProcessStepsStatus(), 0);
+    });
+
+    this.weighingForm.get('clientProviderName')?.valueChanges.subscribe(() => {
+      setTimeout(() => this.updateProcessStepsStatus(), 0);
+    });
+
+    this.weighingForm.get('trailerPlate')?.valueChanges.subscribe(() => {
+      setTimeout(() => this.updateProcessStepsStatus(), 0);
+    });
+
+    this.weighingForm.get('trailerPlate2')?.valueChanges.subscribe(() => {
+      setTimeout(() => this.updateProcessStepsStatus(), 0);
+    });
   }
 
   private startWeightUpdates(): void {
@@ -275,6 +302,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       if (this.weighingForm.get('doubleTrailer')?.value) {
         this.processDoubleTrailerWeight();
       }
+
+      // Actualizar el estado de los pasos del proceso
+      setTimeout(() => this.updateProcessStepsStatus(), 0);
     }
   }
 
@@ -298,6 +328,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
           // Avanzar al siguiente paso
           this.doubleTrailerState.currentStep = 'remolque2';
+
+          // Actualizar el estado de los pasos del proceso
+          setTimeout(() => this.updateProcessStepsStatus(), 0);
         } else {
           // Mostrar error si faltan datos del primer remolque
           this.notificationService.showError(
@@ -327,6 +360,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           message: `Peso total: ${this.doubleTrailerState.pesoBrutoTotal} kg. Puede proceder a guardar.`,
           position: 'top-right',
         });
+
+        // Actualizar el estado de los pasos del proceso
+        setTimeout(() => this.updateProcessStepsStatus(), 0);
         break;
     }
   }
@@ -340,28 +376,33 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Si se selecciona "Solo contenedor", desmarcar "Doble remolque"
       this.weighingForm.patchValue({ doubleTrailer: false });
       this.resetDoubleTrailerState();
-      
+
       // Hacer las placas opcionales cuando es solo contenedor
       this.weighingForm.get('trailerPlate')?.clearValidators();
       this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
-      
+
       // Limpiar valores de placas ya que son opcionales
       this.weighingForm.patchValue({
         trailerPlate: '',
-        trailerPlate2: ''
+        trailerPlate2: '',
       });
-      
+
       // Limpiar datos de fotos de placas
       this.photoData.trailerPlate = '';
       this.photoData.trailerPlate2 = '';
     } else {
       // Si se desmarca "Solo contenedor", restaurar validaciones normales
-      this.weighingForm.get('trailerPlate')?.setValidators([
-        Validators.required,
-        Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/)
-      ]);
+      this.weighingForm
+        .get('trailerPlate')
+        ?.setValidators([
+          Validators.required,
+          Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
+        ]);
       this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
     }
+
+    // Actualizar el estado de los pasos del proceso
+    setTimeout(() => this.updateProcessStepsStatus(), 0);
   }
 
   onDoubleTrailerChange(isChecked: boolean): void {
@@ -372,6 +413,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     } else {
       this.resetDoubleTrailerState();
     }
+
+    // Actualizar el estado de los pasos del proceso
+    setTimeout(() => this.updateProcessStepsStatus(), 0);
   }
 
   // Métodos auxiliares para manejar eventos de checkbox
@@ -399,7 +443,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // NOTA: NO se valida el peso aquí, solo se valida cuando se quiere proceder al remolque 2
     return !!(
       this.doubleTrailerState.trailerPlaca &&
-      this.doubleTrailerState.remolque1.placa &&
+      this.doubleTrailerState.remolque1.fotoPlacaCapturada &&
       this.doubleTrailerState.remolque1.fotoCargaCapturada &&
       this.weighingForm.get('product')?.value &&
       this.weighingForm.get('clientProviderName')?.value
@@ -413,7 +457,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   canProceedToRemolque2WithWeight(): boolean {
     return !!(
       this.doubleTrailerState.trailerPlaca &&
-      this.doubleTrailerState.remolque1.placa &&
+      this.doubleTrailerState.remolque1.fotoPlacaCapturada &&
       this.doubleTrailerState.remolque1.fotoCargaCapturada &&
       this.weighingForm.get('product')?.value &&
       this.weighingForm.get('clientProviderName')?.value &&
@@ -437,7 +481,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // 5. Nombre del proveedor/cliente
       const canCapture = !!(
         this.doubleTrailerState.trailerPlaca &&
-        this.doubleTrailerState.remolque1.placa &&
+        this.doubleTrailerState.remolque1.fotoPlacaCapturada &&
         this.doubleTrailerState.remolque1.fotoCargaCapturada &&
         this.weighingForm.get('product')?.value &&
         this.weighingForm.get('clientProviderName')?.value
@@ -464,6 +508,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         pesoBruto: 0,
         fotos: [],
         fotoCargaCapturada: false,
+        fotoPlacaCapturada: false,
       },
       remolque2: {
         numero: 2,
@@ -471,6 +516,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         pesoBruto: 0,
         fotos: [],
         fotoCargaCapturada: false,
+        fotoPlacaCapturada: false,
       },
       pesoBrutoTotal: 0,
       isComplete: false,
@@ -533,7 +579,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       if (this.weighingForm.get('doubleTrailer')?.value) {
         this.doubleTrailerState.remolque1.placa = 'XYZ-789-AB';
         this.doubleTrailerState.remolque1.fotos = ['foto_remolque1.jpg'];
-        this.doubleTrailerState.remolque1.fotosCapturadas = true;
+        // Marcar que se capturó la foto de la placa del remolque 1
+        this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
+        // NO marcar fotosCapturadas aquí, solo se marca cuando se captura la foto de carga
+        // this.doubleTrailerState.remolque1.fotosCapturadas = true;
       }
     } else if (photoType === 'remolque2Plate') {
       this.photoData.remolque2Plate = 'Foto capturada';
@@ -545,7 +594,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       if (this.weighingForm.get('doubleTrailer')?.value) {
         this.doubleTrailerState.remolque2.placa = 'DEF-456-CD';
         this.doubleTrailerState.remolque2.fotos = ['foto_remolque2.jpg'];
-        this.doubleTrailerState.remolque2.fotosCapturadas = true;
+        // Marcar que se capturó la foto de la placa del remolque 2
+        this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
+        // NO marcar fotosCapturadas aquí, solo se marca cuando se captura la foto de carga
+        // this.doubleTrailerState.remolque2.fotosCapturadas = true;
       }
     } else if (photoType === 'cargo') {
       this.photoData.cargo = 'Foto capturada';
@@ -566,6 +618,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         ];
         // También marcar que se capturó la foto de carga del remolque 1
         this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
+        
+        // Actualizar el estado de los pasos del proceso
+        setTimeout(() => this.updateProcessStepsStatus(), 0);
       }
     } else if (photoType === 'cargoRemolque2') {
       this.photoData.cargoRemolque2 = 'Foto capturada';
@@ -580,6 +635,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           'foto_carga_remolque2.jpg',
         ];
         this.doubleTrailerState.remolque2.fotosCapturadas = true;
+        
+        // Actualizar el estado de los pasos del proceso
+        setTimeout(() => this.updateProcessStepsStatus(), 0);
       }
     } else if (photoType === 'trailerPlate2') {
       this.photoData.trailerPlate2 = 'Foto capturada';
@@ -587,6 +645,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.weighingForm.patchValue({ trailerPlate2: 'XYZ-789-AB' });
       console.log('Placa detectada automáticamente: XYZ-789-AB');
     }
+
+    // Actualizar el estado de los pasos del proceso
+    setTimeout(() => this.updateProcessStepsStatus(), 0);
   }
 
   onEnableManualEdit(
@@ -820,6 +881,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (this.weighingForm.get('doubleTrailer')?.value) {
       this.resetDoubleTrailerState();
     }
+
+    // Actualizar el estado de los pasos del proceso
+    setTimeout(() => this.updateProcessStepsStatus(), 0);
   }
 
   onGoBack(): void {
@@ -854,12 +918,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   getFieldError(fieldName: string): string {
     const field = this.weighingForm.get(fieldName);
     const isContainerOnly = this.weighingForm.get('containerOnly')?.value;
-    
+
     // Si es solo contenedor, no mostrar errores de placas
-    if (isContainerOnly && (fieldName === 'trailerPlate' || fieldName === 'trailerPlate2')) {
+    if (
+      isContainerOnly &&
+      (fieldName === 'trailerPlate' || fieldName === 'trailerPlate2')
+    ) {
       return '';
     }
-    
+
     if (field?.invalid && field?.touched) {
       if (field.errors?.['required']) {
         return 'Este campo es obligatorio';
@@ -903,22 +970,6 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Getters para el estado de doble remolque
-  get currentDoubleTrailerStep(): string {
-    switch (this.doubleTrailerState.currentStep) {
-      case 'trailer':
-        return 'Paso 1: Placa del tráiler';
-      case 'remolque1':
-        return 'Paso 2: Remolque 1';
-      case 'remolque2':
-        return 'Paso 3: Remolque 2';
-      case 'complete':
-        return 'Completado';
-      default:
-        return '';
-    }
-  }
-
   get canProceedToNextStep(): boolean {
     if (!this.weighingForm.get('doubleTrailer')?.value) return false;
 
@@ -959,5 +1010,179 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
    */
   hideChecklistPanel(): void {
     this.showChecklistPanel = false;
+  }
+
+  /**
+   * Determina el tipo de flujo para el componente de pasos del proceso
+   */
+  getProcessFlowType(): 'container-only' | 'single-trailer' | 'double-trailer' {
+    if (this.weighingForm.get('containerOnly')?.value) {
+      return 'container-only';
+    } else if (this.weighingForm.get('doubleTrailer')?.value) {
+      return 'double-trailer';
+    } else {
+      return 'single-trailer';
+    }
+  }
+
+  /**
+   * Determina el paso actual del proceso
+   */
+  getCurrentProcessStep(): string {
+    if (this.weighingForm.get('doubleTrailer')?.value) {
+      return this.doubleTrailerState.currentStep;
+    }
+    return '';
+  }
+
+  /**
+   * Actualiza el estado de los pasos del proceso
+   */
+  updateProcessStepsStatus(): void {
+    const flowType = this.getProcessFlowType();
+    this.updateStepStatuses(flowType);
+  }
+
+  /**
+   * Actualiza el estado de los pasos según el tipo de flujo
+   */
+  private updateStepStatuses(
+    flowType: 'container-only' | 'single-trailer' | 'double-trailer'
+  ): void {
+    this.stepStatuses = {};
+
+    switch (flowType) {
+      case 'container-only':
+        this.stepStatuses = {
+          product: !!this.weighingForm.get('product')?.value,
+          client: !!this.weighingForm.get('clientProviderName')?.value,
+          'cargo-photo': !!this.photoData.cargo,
+          weight: this.weightData.capturedWeight !== undefined,
+        };
+        break;
+
+      case 'single-trailer':
+        this.stepStatuses = {
+          'trailer-plate': !!this.weighingForm.get('trailerPlate')?.value,
+          'trailer2-plate': !!this.weighingForm.get('trailerPlate2')?.value,
+          product: !!this.weighingForm.get('product')?.value,
+          client: !!this.weighingForm.get('clientProviderName')?.value,
+          'cargo-photo': !!this.photoData.cargo,
+          weight: this.weightData.capturedWeight !== undefined,
+        };
+        break;
+
+      case 'double-trailer':
+        this.stepStatuses = {
+          'trailer-plate': !!this.doubleTrailerState.trailerPlaca,
+          'remolque1-plate': !!this.doubleTrailerState.remolque1.fotoPlacaCapturada,
+          'remolque1-cargo':
+            !!this.doubleTrailerState.remolque1.fotoCargaCapturada,
+          product: !!this.weighingForm.get('product')?.value,
+          client: !!this.weighingForm.get('clientProviderName')?.value,
+          'remolque2-plate': !!this.doubleTrailerState.remolque2.fotoPlacaCapturada,
+          'remolque2-cargo':
+            !!this.doubleTrailerState.remolque2.fotosCapturadas,
+          weight: this.doubleTrailerState.isComplete,
+        };
+        break;
+    }
+  }
+
+  /**
+   * Actualiza los pasos para el flujo "Solo contenedor"
+   */
+  private updateContainerOnlySteps(): void {
+    this.processStepsComponent?.updateStepStatus(
+      'product',
+      !!this.weighingForm.get('product')?.value
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'client',
+      !!this.weighingForm.get('clientProviderName')?.value
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'cargo-photo',
+      !!this.photoData.cargo
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'weight',
+      this.weightData.capturedWeight !== undefined
+    );
+  }
+
+  /**
+   * Actualiza los pasos para el flujo "Remolque único"
+   */
+  private updateSingleTrailerSteps(): void {
+    this.processStepsComponent?.updateStepStatus(
+      'trailer-plate',
+      !!this.weighingForm.get('trailerPlate')?.value
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'trailer2-plate',
+      !!this.weighingForm.get('trailerPlate2')?.value
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'product',
+      !!this.weighingForm.get('product')?.value
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'client',
+      !!this.weighingForm.get('clientProviderName')?.value
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'cargo-photo',
+      !!this.photoData.cargo
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'weight',
+      this.weightData.capturedWeight !== undefined
+    );
+  }
+
+  /**
+   * Actualiza los pasos para el flujo "Doble remolque"
+   */
+  private updateDoubleTrailerSteps(): void {
+    this.processStepsComponent?.updateStepStatus(
+      'trailer-plate',
+      !!this.doubleTrailerState.trailerPlaca
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'remolque1-plate',
+      !!this.doubleTrailerState.remolque1.placa
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'remolque1-cargo',
+      !!this.doubleTrailerState.remolque1.fotoCargaCapturada
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'product',
+      !!this.weighingForm.get('product')?.value
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'client',
+      !!this.weighingForm.get('clientProviderName')?.value
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'remolque2-plate',
+      !!this.doubleTrailerState.remolque2.placa
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'remolque2-cargo',
+      !!this.doubleTrailerState.remolque2.fotosCapturadas
+    );
+    this.processStepsComponent?.updateStepStatus(
+      'weight',
+      this.doubleTrailerState.isComplete
+    );
+  }
+
+  /**
+   * Alterna la visibilidad del panel de pasos del proceso en móviles
+   */
+  toggleProcessSteps(): void {
+    this.showProcessSteps = !this.showProcessSteps;
   }
 }

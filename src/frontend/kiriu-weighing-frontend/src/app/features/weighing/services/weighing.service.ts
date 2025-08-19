@@ -35,6 +35,7 @@ export interface RemolqueData {
   pesoCapturado?: boolean;
   fotosCapturadas?: boolean;
   fotoCargaCapturada?: boolean; // Nueva propiedad para rastrear foto de carga
+  fotoPlacaCapturada?: boolean; // Nueva propiedad para rastrear foto de placa
 }
 
 export interface EntradaConDobleRemolque {
