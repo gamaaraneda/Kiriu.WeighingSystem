@@ -46,10 +46,7 @@ public class WeighingApplicationService : IWeighingApplicationService
                 ClientProviderRfc = request.ClientProviderRfc,
                 EntryWeight = request.EntryWeight,
                 Status = "ENTRADA_REGISTRADA",
-                TipoUnidad = _weighingService.DetermineTipoUnidad(
-                    request.TrailerPlate, 
-                    request.TrailerPlateContenedor, 
-                    false),
+                TipoUnidad = request.TipoUnidad,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 EntryDate = DateTime.UtcNow
@@ -94,7 +91,7 @@ public class WeighingApplicationService : IWeighingApplicationService
                 ClientProviderName = request.ClientProviderName,
                 EntryWeight = request.PesoBrutoTotal,
                 Status = "ENTRADA_REGISTRADA",
-                TipoUnidad = "doble-remolque",
+                TipoUnidad = request.TipoUnidad,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 EntryDate = DateTime.UtcNow

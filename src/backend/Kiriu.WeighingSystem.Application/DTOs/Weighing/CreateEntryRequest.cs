@@ -2,8 +2,9 @@ namespace Kiriu.WeighingSystem.Application.DTOs.Weighing;
 
 public class CreateEntryRequest
 {
-    public string UnitType { get; set; } = string.Empty;
-    public string OperationType { get; set; } = string.Empty;
+    public string UnitType { get; set; } = string.Empty; // client, provider
+    public string OperationType { get; set; } = string.Empty; // entry
+    public string TipoUnidad { get; set; } = string.Empty; // remolque, contenedor, doble-remolque
     public string TrailerPlate { get; set; } = string.Empty;
     public string? TrailerPlate2 { get; set; }
     public string? TrailerPlateContenedor { get; set; }

@@ -19,6 +19,12 @@ public class CreateEntryRequestValidator : AbstractValidator<CreateEntryRequest>
             .Must(x => x == "entry")
             .WithMessage("OperationType debe ser 'entry'");
 
+        RuleFor(x => x.TipoUnidad)
+            .NotEmpty()
+            .WithMessage("TipoUnidad es requerido")
+            .Must(x => x == "remolque" || x == "contenedor" || x == "doble-remolque")
+            .WithMessage("TipoUnidad debe ser 'remolque', 'contenedor' o 'doble-remolque'");
+
         RuleFor(x => x.TrailerPlate)
             .NotEmpty()
             .WithMessage("TrailerPlate es requerido")

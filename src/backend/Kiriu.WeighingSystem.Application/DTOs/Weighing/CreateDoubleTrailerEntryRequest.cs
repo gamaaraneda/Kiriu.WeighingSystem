@@ -2,7 +2,8 @@ namespace Kiriu.WeighingSystem.Application.DTOs.Weighing;
 
 public class CreateDoubleTrailerEntryRequest
 {
-    public string UnitType { get; set; } = string.Empty;
+    public string UnitType { get; set; } = string.Empty; // client, provider
+    public string TipoUnidad { get; set; } = "doble-remolque"; // Siempre será doble-remolque para este endpoint
     public string TrailerPlaca { get; set; } = string.Empty;
     public List<RemolqueDataDto> Remolques { get; set; } = new();
     public decimal PesoBrutoTotal { get; set; }

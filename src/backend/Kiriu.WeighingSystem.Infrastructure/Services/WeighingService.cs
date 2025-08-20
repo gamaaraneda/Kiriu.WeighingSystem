@@ -20,20 +20,6 @@ public class WeighingService : IWeighingService
         return $"KWS-{now:yyyyMMdd}-{now:HHmmss}-{randomSuffix}";
     }
 
-    public string DetermineTipoUnidad(string? trailerPlate, string? trailerPlateContenedor, bool hasMultipleRemolques)
-    {
-        if (hasMultipleRemolques)
-        {
-            return "doble-remolque";
-        }
-
-        if (!string.IsNullOrEmpty(trailerPlateContenedor))
-        {
-            return "contenedor";
-        }
-
-        return "remolque";
-    }
 
     public async Task<bool> ValidateUniqueEntryAsync(string plate)
     {
