@@ -159,7 +159,18 @@ export class WeighingService {
     }
 
     operation.exitWeight = exitWeight;
-    operation.netWeight = (operation.entryWeight || 0) - exitWeight;
+
+    // Calcular peso neto según la lógica de negocio del tipo de unidad
+    if (operation.unitType === 'provider') {
+      // Proveedor (Entrada con Carga, Salida Vacío)
+      // Peso neto: Peso bruto - Peso tara = Material descargado
+      operation.netWeight = (operation.entryWeight || 0) - exitWeight;
+    } else {
+      // Cliente (Entrada Vacío, Salida con Carga)
+      // Peso neto: Peso tara - Peso bruto = Material cargado
+      operation.netWeight = exitWeight - (operation.entryWeight || 0);
+    }
+
     operation.status = 'SALIDA_REGISTRADA';
     operation.updatedAt = new Date();
 

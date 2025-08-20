@@ -9,28 +9,18 @@ import {
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HeaderComponent } from '../../../../layout/header/header.component';
-import {
-  WeighingService,
-  WeighingOperation,
-} from '../../services/weighing.service';
+import { WeighingService } from '../../services/weighing.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { MessageService } from '../../../../shared/services/message.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ToastModule } from 'primeng/toast';
 import {
-  ExitFormData,
   ExitPhotoData,
   WeightData,
+  EntrySearchData,
+  DoubleTrailerExitState,
 } from '../../types/weighing.types';
-import {
-  EntrySearchMockService,
-  EntrySearchResponse,
-} from '../../services/entry-search-mock.service';
-import {
-  ExitRegistrationService,
-  ExitRegistrationRequest,
-  ExitRegistrationResponse,
-} from '../../services/exit-registration.service';
+import { EntrySearchMockService } from '../../services/entry-search-mock.service';
 
 @Component({
   selector: 'app-weighing-exit-form',
@@ -53,7 +43,6 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private messageService = inject(MessageService);
   private notificationService = inject(NotificationService);
   private entrySearchMockService = inject(EntrySearchMockService);
-  private exitRegistrationService = inject(ExitRegistrationService);
 
   unitType = '';
   unitTypeTitle = '';
@@ -72,893 +61,701 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     trailerPlate2: '',
     cargoState: '',
     containerPlate: '',
+    remolque1Plate: '',
+    remolque2Plate: '',
+    cargoRemolque1: '',
+    cargoRemolque2: '',
   };
 
   // Datos de placas detectadas por OCR
-  detectedPlates: {
-    trailerPlate: string;
-    trailerPlate2: string;
-    containerPlate: string;
-  } = {
+  detectedPlates: Record<string, string> = {
     trailerPlate: '',
     trailerPlate2: '',
     containerPlate: '',
+    remolque1Plate: '',
+    remolque2Plate: '',
   };
 
   // Validaciones de placas
-  plateValidations: {
-    trailerPlate: { isValid: boolean; errorMessage: string };
-    trailerPlate2: { isValid: boolean; errorMessage: string };
-    containerPlate: { isValid: boolean; errorMessage: string };
-  } = {
-    trailerPlate: { isValid: true, errorMessage: '' },
-    trailerPlate2: { isValid: true, errorMessage: '' },
-    containerPlate: { isValid: true, errorMessage: '' },
-  };
+  plateValidations: Record<string, { isValid: boolean; errorMessage: string }> =
+    {
+      trailerPlate: { isValid: true, errorMessage: '' },
+      trailerPlate2: { isValid: true, errorMessage: '' },
+      containerPlate: { isValid: true, errorMessage: '' },
+      remolque1Plate: { isValid: true, errorMessage: '' },
+      remolque2Plate: { isValid: true, errorMessage: '' },
+    };
 
   // Datos de la entrada encontrada
-  entryData: WeighingOperation | null = null;
-  isSearching = false;
+  entryData: EntrySearchData | null = null;
   isEntryFound = false;
+  isSearching = false;
   isLoading = false;
-
-  // Tipo de unidad para adaptar la UI
-  unitFlowType: 'remolque' | 'contenedor' | 'doble-remolque' | null = null;
+  isExitRegistered = false;
 
   // Control de edición manual de placas
-  manualEditEnabled = {
+  manualEditEnabled: Record<string, boolean> = {
     trailerPlate: false,
     trailerPlate2: false,
     containerPlate: false,
+    remolque1Plate: false,
+    remolque2Plate: false,
   };
 
-  // Estado del registro de salida
-  isExitRegistered = false;
+  // Estado para doble remolque
+  doubleTrailerState: DoubleTrailerExitState = {
+    currentStep: 'trailer',
+    trailerPlaca: '',
+    remolque1: {
+      numero: 1,
+      placa: '',
+      pesoTara: 0,
+      fotoCargaCapturada: false,
+    },
+    remolque2: {
+      numero: 2,
+      placa: '',
+      pesoTara: 0,
+      fotoCargaCapturada: false,
+    },
+    isComplete: false,
+    pesoBrutoTotal: 0,
+    pesoNetoCalculado: 0,
+  };
 
-  weightUpdateInterval: Subscription | undefined;
+  // Tipo de captura de peso actual
+  currentWeightCaptureType: string | null = null;
+
+  private subscriptions = new Subscription();
 
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      this.unitType = params['unitType'];
-      this.updateTitles();
-      this.initializeForm();
-      this.startWeightUpdates();
-    });
+    this.initializeForm();
+    this.setupWeightSimulation();
+    this.getUnitTypeFromRoute();
   }
 
   ngOnDestroy(): void {
-    if (this.weightUpdateInterval) {
-      this.weightUpdateInterval.unsubscribe();
-    }
+    this.subscriptions.unsubscribe();
   }
 
-  private updateTitles(): void {
-    if (this.unitType === 'client') {
-      this.unitTypeTitle = 'Cliente';
-    } else if (this.unitType === 'provider') {
-      this.unitTypeTitle = 'Proveedor';
-    }
-  }
-
+  /**
+   * Inicializa el formulario con validaciones
+   */
   private initializeForm(): void {
     this.exitForm = this.fb.group({
-      trailerPlate: [''],
+      trailerPlate: ['', [Validators.required]],
       trailerPlate2: [''],
-      containerPlate: [''],
       exitWeight: [0, [Validators.required, Validators.min(0)]],
-      netWeight: [{ value: 0, disabled: true }],
+      netWeight: [0, [Validators.required, Validators.min(0)]],
+      // Campos para doble remolque
+      remolque1Plate: [''],
+      remolque2Plate: [''],
+      pesoTaraRemolque1: [0, [Validators.required, Validators.min(0)]],
+      pesoTaraRemolque2: [0, [Validators.required, Validators.min(0)]],
     });
+
+    // Suscribirse a cambios en los pesos tara para calcular peso neto
+    this.subscriptions.add(
+      this.exitForm.get('pesoTaraRemolque1')?.valueChanges.subscribe(() => {
+        this.calculateNetWeight();
+      })
+    );
+
+    this.subscriptions.add(
+      this.exitForm.get('pesoTaraRemolque2')?.valueChanges.subscribe(() => {
+        this.calculateNetWeight();
+      })
+    );
   }
 
-  private startWeightUpdates(): void {
-    this.weightUpdateInterval = this.weighingService
-      .getWeightReadings()
-      .subscribe((reading) => {
-        this.weightData.currentWeight = reading.weight;
-        this.weightData.isStable = reading.isStable;
-        this.weightData.isConnected = reading.isConnected;
-        this.weightData.weightHistory = [
-          ...this.weightData.weightHistory,
-          reading.weight,
-        ].slice(-10); // Mantener solo los últimos 10 valores
-      });
+  /**
+   * Configura la simulación de peso en tiempo real
+   */
+  private setupWeightSimulation(): void {
+    // Simular cambios de peso cada 2 segundos
+    setInterval(() => {
+      if (this.weightData.isConnected) {
+        const variation = Math.random() * 100 - 50; // ±50 kg
+        this.weightData.currentWeight = Math.max(
+          0,
+          this.weightData.currentWeight + variation
+        );
+        this.weightData.isStable = Math.abs(variation) < 10; // Estable si variación < 10kg
+      }
+    }, 2000);
   }
 
+  /**
+   * Busca una entrada por placa del tráiler
+   */
   onSearchEntry(): void {
-    const trailerPlate = this.exitForm.get('trailerPlate')?.value;
-    if (!trailerPlate) {
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message: 'Por favor ingrese la placa del tráiler para buscar.',
-        position: 'top-right',
+    const plate = this.exitForm.get('trailerPlate')?.value;
+    if (!plate) {
+      this.messageService.showError({
+        message: 'Debe ingresar una placa para buscar',
       });
       return;
     }
 
     this.isSearching = true;
-
-    // Usar el servicio mock para buscar entradas
-    this.entrySearchMockService.searchEntryByPlate(trailerPlate).subscribe({
-      next: (response: EntrySearchResponse) => {
+    this.entrySearchMockService.searchEntryByPlate(plate).subscribe({
+      next: (response) => {
         this.isSearching = false;
         if (response.success && response.data) {
-          // Guardar el tipo de unidad para adaptar la UI
-          this.unitFlowType = response.data.tipoUnidad;
-
-          // Convertir la respuesta mock a WeighingOperation
-          const mockOperation: WeighingOperation = {
-            id: response.data.folio,
-            unitType: 'client', // Por defecto cliente para el mock
-            operationType: 'entry',
-            trailerPlate: response.data.placaTrailer || '',
-            trailerPlate2:
-              response.data.placaRemolque || response.data.placaRemolque1 || '',
-            // Mapear nuevos campos del contenedor
-            trailerPlateContenedor: response.data.placaTrailerContenedor,
-            remolquePlateContenedor: response.data.placaRemolqueContenedor,
-            product: response.data.producto,
-            clientProviderName: response.data.cliente,
-            entryWeight: response.data.pesoBruto,
-            status: response.data.status as 'ENTRADA_REGISTRADA',
-            createdAt: new Date(response.data.fechaEntrada),
-            updatedAt: new Date(response.data.fechaEntrada),
-          };
-
-          this.entryData = mockOperation;
+          this.entryData = response.data;
           this.isEntryFound = true;
-          this.populateFormWithEntryData(mockOperation);
-
-          this.messageService.showSuccessToast({
-            title: 'Entrada Encontrada',
-            message: `Se encontró la entrada con folio: ${
-              response.data.folio
-            } - Tipo: ${this.getUnitFlowTypeDisplayName(
-              response.data.tipoUnidad
-            )}`,
-            position: 'top-right',
+          this.populateFormWithEntryData();
+          this.messageService.showSuccess({
+            message: 'Entrada encontrada exitosamente',
           });
         } else {
-          this.isEntryFound = false;
-          this.entryData = null;
-          this.messageService.showErrorToast({
-            title: 'Entrada No Encontrada',
-            message: 'No se encontró una entrada previa para esta placa.',
-            position: 'top-right',
+          this.messageService.showError({
+            message: response.message || 'No se encontró la entrada',
           });
         }
       },
       error: (error) => {
         this.isSearching = false;
-        this.messageService.showErrorToast({
-          title: 'Error en la Búsqueda',
-          message: 'Error al buscar la entrada. Intente nuevamente.',
-          position: 'top-right',
+        this.messageService.showError({
+          message: 'Error al buscar la entrada',
         });
         console.error('Error searching entry:', error);
       },
     });
   }
 
-  private populateFormWithEntryData(operation: WeighingOperation): void {
-    // Prellenar campos con datos de entrada según el tipo de unidad
-    if (this.unitFlowType === 'contenedor') {
-      // Para contenedores, prellenar con datos del contenedor si están disponibles
-      this.exitForm.patchValue({
-        trailerPlate: operation.trailerPlateContenedor || '',
-        trailerPlate2: operation.remolquePlateContenedor || '',
-        containerPlate: '', // Ya no se usa para contenedores
-      });
-
-      // Inicializar placas detectadas con los valores de entrada
-      this.detectedPlates = {
-        trailerPlate: operation.trailerPlateContenedor || '',
-        trailerPlate2: operation.remolquePlateContenedor || '',
-        containerPlate: '',
-      };
-
-      // Para contenedores, no validar placas contra entrada (son opcionales)
-      this.plateValidations = {
-        trailerPlate: { isValid: true, errorMessage: '' },
-        trailerPlate2: { isValid: true, errorMessage: '' },
-        containerPlate: { isValid: true, errorMessage: '' },
-      };
-    } else {
-      // Para remolques
-      this.exitForm.patchValue({
-        trailerPlate: operation.trailerPlate,
-        trailerPlate2: operation.trailerPlate2 || '',
-      });
-
-      // Inicializar placas detectadas con los valores de entrada
-      this.detectedPlates = {
-        trailerPlate: operation.trailerPlate,
-        trailerPlate2: operation.trailerPlate2 || '',
-        containerPlate: '',
-      };
-
-      // Para remolques, las placas son obligatorias - deben capturarse con fotos
-      if (
-        this.unitFlowType === 'remolque' ||
-        this.unitFlowType === 'doble-remolque'
-      ) {
-        // Inicializar como inválidas porque se requieren fotos
-        this.plateValidations = {
-          trailerPlate: {
-            isValid: false,
-            errorMessage: 'Debe capturar la placa del tráiler',
-          },
-          trailerPlate2: {
-            isValid: false,
-            errorMessage: 'Debe capturar la placa del remolque',
-          },
-          containerPlate: { isValid: true, errorMessage: '' },
-        };
-      } else {
-        // Para otros tipos, inicializar como válidas
-        this.plateValidations = {
-          trailerPlate: { isValid: true, errorMessage: '' },
-          trailerPlate2: { isValid: true, errorMessage: '' },
-          containerPlate: { isValid: true, errorMessage: '' },
-        };
-      }
-    }
-
-    // Calcular peso neto inicial (será 0 hasta que se capture el peso de salida)
-    this.updateNetWeight();
-
-    // Ejecutar validaciones iniciales según el tipo de unidad
-    this.validatePlates();
-  }
-
-  onPhotoCapture(photoType: keyof ExitPhotoData): void {
-    // TODO: Implementar captura de fotos con cámara real
-    console.log('Capturando foto:', photoType);
-
-    // Mock: simular captura de foto
-    if (photoType === 'trailerPlate') {
-      this.photoData.trailerPlate = 'Foto capturada';
-    } else if (photoType === 'trailerPlate2') {
-      this.photoData.trailerPlate2 = 'Foto capturada';
-    } else if (photoType === 'cargoState') {
-      this.photoData.cargoState = 'Foto capturada';
-    }
-
-    this.messageService.showSuccessToast({
-      title: 'Foto Capturada',
-      message: 'Foto capturada exitosamente',
-      position: 'top-right',
-    });
-  }
-
-  onCaptureWeight(): void {
-    if (!this.weightData.isConnected) {
-      this.messageService.showErrorToast({
-        title: 'Error de Conexión',
-        message: 'La báscula no está conectada.',
-        position: 'top-right',
-      });
-      return;
-    }
-
-    if (!this.weightData.isStable) {
-      this.messageService.showErrorToast({
-        title: 'Peso Inestable',
-        message: 'Espere a que el peso se estabilice antes de capturarlo.',
-        position: 'top-right',
-      });
-      return;
-    }
-
-    this.weightData.capturedWeight = this.weightData.currentWeight;
-    this.weightData.capturedAt = new Date();
-
-    // Actualizar el formulario
-    this.exitForm.patchValue({
-      exitWeight: this.weightData.capturedWeight,
-    });
-
-    this.updateNetWeight();
-
-    this.messageService.showSuccessToast({
-      title: 'Peso Capturado',
-      message: `Peso de salida capturado: ${this.weightData.capturedWeight} kg`,
-      position: 'top-right',
-    });
-  }
-
-  private updateNetWeight(): void {
-    if (this.entryData?.entryWeight && this.exitForm.get('exitWeight')?.value) {
-      const entryWeight = this.entryData.entryWeight;
-      const exitWeight = this.exitForm.get('exitWeight')?.value;
-      const netWeight = entryWeight - exitWeight;
-
-      this.exitForm.patchValue({
-        netWeight: netWeight,
-      });
-    }
-  }
-
   /**
-   * Obtiene el nombre de visualización del tipo de unidad
+   * Pobla el formulario con los datos de la entrada encontrada
    */
-  getUnitFlowTypeDisplayName(tipoUnidad: string): string {
-    switch (tipoUnidad) {
-      case 'remolque':
-        return 'Remolque Único';
-      case 'contenedor':
-        return 'Solo Contenedor';
-      case 'doble-remolque':
-        return 'Doble Remolque';
-      default:
-        return 'Desconocido';
-    }
-  }
-
-  /**
-   * Verifica si debe mostrar campos de remolque
-   */
-  shouldShowTrailerFields(): boolean {
-    return (
-      this.unitFlowType === 'remolque' || this.unitFlowType === 'doble-remolque'
-    );
-  }
-
-  /**
-   * Verifica si debe mostrar campos de doble remolque
-   */
-  shouldShowDoubleTrailerFields(): boolean {
-    return this.unitFlowType === 'doble-remolque';
-  }
-
-  /**
-   * Verifica si debe mostrar campos de contenedor
-   */
-  shouldShowContainerFields(): boolean {
-    return this.unitFlowType === 'contenedor';
-  }
-
-  /**
-   * Valida que las placas detectadas coincidan con las registradas en entrada
-   */
-  validatePlates(): void {
+  private populateFormWithEntryData(): void {
     if (!this.entryData) return;
 
-    // Para contenedores, no validar placas contra entrada (son opcionales)
-    if (this.unitFlowType === 'contenedor') {
-      // Marcar todas las placas como válidas para contenedores
-      this.plateValidations = {
-        trailerPlate: { isValid: true, errorMessage: '' },
-        trailerPlate2: { isValid: true, errorMessage: '' },
-        containerPlate: { isValid: true, errorMessage: '' },
-      };
-      return;
-    }
+    // Prellenar campos según el tipo de unidad
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      this.exitForm.patchValue({
+        trailerPlate: this.entryData.placaTrailer || '',
+        remolque1Plate: this.entryData.placaRemolque1 || '',
+        remolque2Plate: this.entryData.placaRemolque2 || '',
+      });
 
-    // Para remolque único, validar placas obligatorias contra entrada
-    if (this.unitFlowType === 'remolque') {
-      // Validar placa del tráiler (obligatoria)
-      if (this.detectedPlates.trailerPlate) {
-        if (this.entryData.trailerPlate) {
-          const isValid =
-            this.detectedPlates.trailerPlate === this.entryData.trailerPlate;
-          this.plateValidations.trailerPlate = {
-            isValid,
-            errorMessage: isValid
-              ? ''
-              : `La placa del tráiler no coincide con la registrada en la entrada: ${this.entryData.trailerPlate}`,
-          };
-        } else {
-          // Si no hay placa en entrada, pero se capturó, marcar como válida
-          this.plateValidations.trailerPlate = {
-            isValid: true,
-            errorMessage: '',
-          };
-        }
-      } else {
-        // Placa del tráiler no capturada - OBLIGATORIA
-        this.plateValidations.trailerPlate = {
-          isValid: false,
-          errorMessage: 'Debe capturar la placa del tráiler',
-        };
-      }
+      // Actualizar estado de doble remolque
+      this.doubleTrailerState.trailerPlaca = this.entryData.placaTrailer || '';
+      this.doubleTrailerState.remolque1.placa =
+        this.entryData.placaRemolque1 || '';
+      this.doubleTrailerState.remolque2.placa =
+        this.entryData.placaRemolque2 || '';
+      this.doubleTrailerState.pesoBrutoTotal = this.entryData.entryWeight;
 
-      // Validar placa del remolque (obligatoria)
-      if (this.detectedPlates.trailerPlate2) {
-        if (this.entryData.trailerPlate2) {
-          const isValid =
-            this.detectedPlates.trailerPlate2 === this.entryData.trailerPlate2;
-          this.plateValidations.trailerPlate2 = {
-            isValid,
-            errorMessage: isValid
-              ? ''
-              : `La placa del remolque no coincide con la registrada en la entrada: ${this.entryData.trailerPlate2}`,
-          };
-        } else {
-          // Si no hay placa en entrada, pero se capturó, marcar como válida
-          this.plateValidations.trailerPlate2 = {
-            isValid: true,
-            errorMessage: '',
-          };
-        }
-      } else {
-        // Placa del remolque no capturada - OBLIGATORIA
-        this.plateValidations.trailerPlate2 = {
-          isValid: false,
-          errorMessage: 'Debe capturar la placa del remolque',
-        };
-      }
-    }
+      // Actualizar validaciones de placas
+      this.updatePlateValidations();
+    } else {
+      // Para otros tipos de unidad
+      this.exitForm.patchValue({
+        trailerPlate: this.entryData.placaTrailer || '',
+        trailerPlate2: this.entryData.placaRemolque || '',
+      });
 
-    // Para doble remolque, validar todas las placas
-    if (this.unitFlowType === 'doble-remolque') {
-      // Validar placa del tráiler (obligatoria)
-      if (this.detectedPlates.trailerPlate) {
-        if (this.entryData.trailerPlate) {
-          const isValid =
-            this.detectedPlates.trailerPlate === this.entryData.trailerPlate;
-          this.plateValidations.trailerPlate = {
-            isValid,
-            errorMessage: isValid
-              ? ''
-              : `La placa del tráiler no coincide con la registrada en la entrada: ${this.entryData.trailerPlate}`,
-          };
-        } else {
-          // Si no hay placa en entrada, pero se capturó, marcar como válida
-          this.plateValidations.trailerPlate = {
-            isValid: true,
-            errorMessage: '',
-          };
-        }
-      } else {
-        // Placa del tráiler no capturada - OBLIGATORIA
-        this.plateValidations.trailerPlate = {
-          isValid: false,
-          errorMessage: 'Debe capturar la placa del tráiler',
-        };
-      }
-
-      // Validar placas de remolques (obligatorias)
-      if (this.detectedPlates.trailerPlate2) {
-        if (this.entryData.trailerPlate2) {
-          const isValid =
-            this.detectedPlates.trailerPlate2 === this.entryData.trailerPlate2;
-          this.plateValidations.trailerPlate2 = {
-            isValid,
-            errorMessage: isValid
-              ? ''
-              : `La placa del remolque no coincide con la registrada en la entrada: ${this.entryData.trailerPlate2}`,
-          };
-        } else {
-          // Si no hay placa en entrada, pero se capturó, marcar como válida
-          this.plateValidations.trailerPlate2 = {
-            isValid: true,
-            errorMessage: '',
-          };
-        }
-      } else {
-        // Placa del remolque no capturada - OBLIGATORIA
-        this.plateValidations.trailerPlate2 = {
-          isValid: false,
-          errorMessage: 'Debe capturar la placa del remolque',
-        };
-      }
+      // Actualizar validaciones de placas
+      this.updatePlateValidations();
     }
   }
 
   /**
-   * Simula la captura de foto con OCR (mock temporal)
+   * Actualiza las validaciones de placas basándose en los datos de entrada
    */
-  onPhotoCaptureWithOCR(photoType: keyof ExitPhotoData): void {
-    // TODO: Implementar captura real con cámara y OCR
-    console.log('Capturando foto con OCR:', photoType);
+  private updatePlateValidations(): void {
+    if (!this.entryData) return;
 
-    // Mock: simular OCR detectando placas
-    if (photoType === 'trailerPlate') {
-      // Simular OCR detectando placa del tráiler
-      // Para testing: a veces detecta placa incorrecta para probar validaciones
-      const shouldDetectIncorrect = Math.random() > 0.7; // 30% de probabilidad de error
-      this.detectedPlates.trailerPlate = shouldDetectIncorrect
-        ? 'INCORRECT-123'
-        : this.entryData?.trailerPlate || 'ABC-123';
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      // Validar placa del tráiler
+      this.validatePlate('trailerPlate', this.entryData.placaTrailer);
+      this.validatePlate('remolque1Plate', this.entryData.placaRemolque1);
+      this.validatePlate('remolque2Plate', this.entryData.placaRemolque2);
+    } else {
+      // Validar placas para otros tipos
+      this.validatePlate('trailerPlate', this.entryData.placaTrailer);
+      this.validatePlate('trailerPlate2', this.entryData.placaRemolque);
+    }
+  }
 
-      this.photoData.trailerPlate = 'Foto capturada';
-
-      // Validar placa según el tipo de unidad
-      this.validatePlates();
-
-      // Actualizar formulario con placa detectada
-      this.exitForm.patchValue({
-        trailerPlate: this.detectedPlates.trailerPlate,
-      });
-    } else if (photoType === 'trailerPlate2') {
-      // Simular OCR detectando placa del remolque
-      // Para testing: a veces detecta placa incorrecta para probar validaciones
-      const shouldDetectIncorrect = Math.random() > 0.7; // 30% de probabilidad de error
-      this.detectedPlates.trailerPlate2 = shouldDetectIncorrect
-        ? 'INCORRECT-789'
-        : this.entryData?.trailerPlate2 || 'XYZ-789';
-
-      this.photoData.trailerPlate2 = 'Foto capturada';
-
-      // Validar placa según el tipo de unidad
-      this.validatePlates();
-
-      // Actualizar formulario con placa detectada
-      this.exitForm.patchValue({
-        trailerPlate2: this.detectedPlates.trailerPlate2,
-      });
-    } else if (photoType === 'cargoState') {
-      this.photoData.cargoState = 'Foto capturada';
+  /**
+   * Valida una placa específica contra el valor de entrada
+   */
+  private validatePlate(fieldName: string, expectedPlate?: string): void {
+    if (!expectedPlate) {
+      this.plateValidations[fieldName] = {
+        isValid: true,
+        errorMessage: '',
+      };
+      return;
     }
 
-    this.messageService.showSuccessToast({
-      title: 'Foto Capturada',
-      message: 'Foto capturada exitosamente con OCR',
-      position: 'top-right',
+    const currentValue = this.exitForm.get(fieldName)?.value;
+    const isValid = currentValue === expectedPlate;
+
+    this.plateValidations[fieldName] = {
+      isValid,
+      errorMessage: isValid
+        ? ''
+        : `La placa debe coincidir con ${expectedPlate}`,
+    };
+  }
+
+  /**
+   * Captura foto con OCR para una placa específica
+   */
+  onPhotoCaptureWithOCR(fieldName: string): void {
+    // Simular captura de foto con OCR
+    const mockPlate = this.generateMockPlate(fieldName);
+
+    if (mockPlate) {
+      this.detectedPlates[fieldName] = mockPlate;
+      this.exitForm.get(fieldName)?.setValue(mockPlate);
+
+      // Simular foto capturada
+      this.photoData[
+        fieldName as keyof ExitPhotoData
+      ] = `https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Foto+${fieldName}`;
+
+      // Validar placa
+      this.onPlateManualEdit(fieldName);
+
+      this.messageService.showSuccess({
+        message: `Placa ${fieldName} detectada: ${mockPlate}`,
+      });
+    }
+  }
+
+  /**
+   * Genera una placa mock para simulación
+   */
+  private generateMockPlate(fieldName: string): string {
+    const plates: Record<string, string> = {
+      trailerPlate: 'TRAILER-001',
+      remolque1Plate: 'REM1-001',
+      remolque2Plate: 'REM2-001',
+      trailerPlate2: 'REMOLQUE-001',
+      containerPlate: 'CONT-001',
+    };
+
+    return plates[fieldName] || 'MOCK-001';
+  }
+
+  /**
+   * Captura foto para campos que no requieren OCR
+   */
+  onPhotoCapture(fieldName: string): void {
+    // Simular captura de foto
+    this.photoData[
+      fieldName as keyof ExitPhotoData
+    ] = `https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Foto+${fieldName}`;
+
+    // Actualizar estado de doble remolque si es necesario
+    if (fieldName === 'cargoRemolque1') {
+      this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
+    } else if (fieldName === 'cargoRemolque2') {
+      this.doubleTrailerState.remolque2.fotoCargaCapturada = true;
+    }
+
+    this.messageService.showSuccess({
+      message: `Foto de ${fieldName} capturada`,
     });
   }
 
   /**
    * Habilita la edición manual de una placa
    */
-  onEnableManualEdit(plateType: 'trailerPlate' | 'trailerPlate2'): void {
-    this.manualEditEnabled[plateType] = true;
-
-    // Limpiar validación al habilitar edición manual
-    this.plateValidations[plateType] = { isValid: true, errorMessage: '' };
-
-    console.log(`Edición manual habilitada para: ${plateType}`);
+  onEnableManualEdit(fieldName: string): void {
+    this.manualEditEnabled[fieldName] = true;
+    this.messageService.showInfo({
+      message: `Edición manual habilitada para ${fieldName}`,
+    });
   }
 
   /**
-   * Valida la placa después de edición manual
+   * Maneja la edición manual de una placa
    */
-  onPlateManualEdit(plateType: 'trailerPlate' | 'trailerPlate2'): void {
+  onPlateManualEdit(fieldName: string): void {
+    if (this.entryData) {
+      this.validatePlate(fieldName, this.getExpectedPlate(fieldName));
+    }
+  }
+
+  /**
+   * Obtiene la placa esperada para un campo específico
+   */
+  private getExpectedPlate(fieldName: string): string | undefined {
+    if (!this.entryData) return undefined;
+
+    const plateMap: Record<string, string | undefined> = {
+      trailerPlate: this.entryData.placaTrailer,
+      remolque1Plate: this.entryData.placaRemolque1,
+      remolque2Plate: this.entryData.placaRemolque2,
+      trailerPlate2: this.entryData.placaRemolque,
+      containerPlate: this.entryData.placaTrailerContenedor,
+    };
+
+    return plateMap[fieldName];
+  }
+
+  /**
+   * Captura peso para remolque 1
+   */
+  onCaptureWeightRemolque1(): void {
+    if (this.canCaptureWeight()) {
+      this.currentWeightCaptureType = 'Remolque 1';
+      this.weightData.capturedWeight = this.weightData.currentWeight;
+      this.weightData.capturedAt = new Date();
+
+      this.exitForm
+        .get('pesoTaraRemolque1')
+        ?.setValue(this.weightData.currentWeight);
+      this.doubleTrailerState.remolque1.pesoTara =
+        this.weightData.currentWeight;
+
+      this.messageService.showSuccess({
+        message: `Peso tara del Remolque 1 capturado: ${this.weightData.currentWeight} kg`,
+      });
+      this.calculateNetWeight();
+    }
+  }
+
+  /**
+   * Captura peso para remolque 2
+   */
+  onCaptureWeightRemolque2(): void {
+    if (this.canCaptureWeightRemolque2()) {
+      this.currentWeightCaptureType = 'Remolque 2';
+      this.weightData.capturedWeight = this.weightData.currentWeight;
+      this.weightData.capturedAt = new Date();
+
+      this.exitForm
+        .get('pesoTaraRemolque2')
+        ?.setValue(this.weightData.currentWeight);
+      this.doubleTrailerState.remolque2.pesoTara =
+        this.weightData.currentWeight;
+
+      this.messageService.showSuccess({
+        message: `Peso tara del Remolque 2 capturado: ${this.weightData.currentWeight} kg`,
+      });
+      this.calculateNetWeight();
+    }
+  }
+
+  /**
+   * Captura peso para flujos normales
+   */
+  onCaptureWeight(): void {
+    if (this.canCaptureWeight()) {
+      this.currentWeightCaptureType = 'Salida';
+      this.weightData.capturedWeight = this.weightData.currentWeight;
+      this.weightData.capturedAt = new Date();
+
+      this.exitForm.get('exitWeight')?.setValue(this.weightData.currentWeight);
+      this.calculateNetWeight();
+
+      this.messageService.showSuccess({
+        message: `Peso de salida capturado: ${this.weightData.currentWeight} kg`,
+      });
+    }
+  }
+
+  /**
+   * Obtiene el tipo de unidad del parámetro de la ruta
+   */
+  private getUnitTypeFromRoute(): void {
+    this.route.params.subscribe(params => {
+      this.unitType = params['unitType'] || '';
+      this.unitTypeTitle = this.getUnitTypeDisplayName(this.unitType);
+    });
+  }
+
+  /**
+   * Calcula el peso neto basándose en el tipo de unidad y la lógica de negocio
+   */
+  private calculateNetWeight(): void {
     if (!this.entryData) return;
 
-    // Para contenedores, no validar placas contra entrada (son opcionales)
-    if (this.unitFlowType === 'contenedor') {
-      this.plateValidations[plateType] = { isValid: true, errorMessage: '' };
-      this.detectedPlates[plateType] =
-        this.exitForm.get(plateType)?.value || '';
-      return;
-    }
-
-    const currentValue = this.exitForm.get(plateType)?.value;
-    let expectedValue = '';
-
-    if (plateType === 'trailerPlate') {
-      expectedValue = this.entryData.trailerPlate;
-    } else if (plateType === 'trailerPlate2') {
-      expectedValue = this.entryData.trailerPlate2 || '';
-    }
-
-    // Para remolque único y doble remolque, validar coincidencia
-    if (
-      this.unitFlowType === 'remolque' ||
-      this.unitFlowType === 'doble-remolque'
-    ) {
-      if (!currentValue) {
-        // Si no hay valor, marcar como inválida (es obligatoria)
-        this.plateValidations[plateType] = {
-          isValid: false,
-          errorMessage:
-            plateType === 'trailerPlate'
-              ? 'Debe capturar la placa del tráiler'
-              : 'Debe capturar la placa del remolque',
-        };
-      } else if (expectedValue && currentValue !== expectedValue) {
-        this.plateValidations[plateType] = {
-          isValid: false,
-          errorMessage: `La placa ingresada no coincide con la registrada en la entrada: ${expectedValue}`,
-        };
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      // Para doble remolque: peso bruto - suma de pesos tara de ambos remolques
+      const pesoTaraRemolque1 =
+        this.exitForm.get('pesoTaraRemolque1')?.value || 0;
+      const pesoTaraRemolque2 =
+        this.exitForm.get('pesoTaraRemolque2')?.value || 0;
+      
+      let pesoNeto: number;
+      
+      if (this.unitType === 'provider') {
+        // Proveedor (Entrada con Carga, Salida Vacío)
+        // Peso neto: Peso bruto - Peso tara = Material descargado
+        pesoNeto = this.entryData.entryWeight - (pesoTaraRemolque1 + pesoTaraRemolque2);
       } else {
-        this.plateValidations[plateType] = { isValid: true, errorMessage: '' };
-      }
-    }
-
-    // Actualizar datos detectados
-    this.detectedPlates[plateType] = currentValue;
-  }
-
-  onSave(): void {
-    // Validar que se haya encontrado una entrada
-    if (!this.entryData) {
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message:
-          'Debe buscar y encontrar una entrada antes de registrar la salida.',
-        position: 'top-right',
-      });
-      return;
-    }
-
-    // Validar formulario
-    if (!this.exitForm.valid) {
-      this.markFormGroupTouched();
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message: 'Por favor complete todos los campos requeridos.',
-        position: 'top-right',
-      });
-      return;
-    }
-
-    // Validar peso capturado
-    if (!this.weightData.capturedWeight) {
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message: 'Debe capturar el peso de salida antes de continuar.',
-        position: 'top-right',
-      });
-      return;
-    }
-
-    // Validar que las placas sean válidas según el tipo de unidad
-    if (
-      this.unitFlowType === 'remolque' ||
-      this.unitFlowType === 'doble-remolque'
-    ) {
-      // Para remolques, validar placas obligatorias
-      if (!this.plateValidations.trailerPlate.isValid) {
-        this.messageService.showErrorToast({
-          title: 'Error de Validación',
-          message:
-            this.plateValidations.trailerPlate.errorMessage ||
-            'La placa del tráiler no es válida.',
-          position: 'top-right',
-        });
-        return;
+        // Cliente (Entrada Vacío, Salida con Carga)
+        // Peso neto: Peso tara - Peso bruto = Material cargado
+        pesoNeto = (pesoTaraRemolque1 + pesoTaraRemolque2) - this.entryData.entryWeight;
       }
 
-      if (!this.plateValidations.trailerPlate2.isValid) {
-        this.messageService.showErrorToast({
-          title: 'Error de Validación',
-          message:
-            this.plateValidations.trailerPlate2.errorMessage ||
-            'La placa del remolque no es válida.',
-          position: 'top-right',
-        });
-        return;
+      this.exitForm.get('netWeight')?.setValue(pesoNeto);
+      this.doubleTrailerState.pesoNetoCalculado = pesoNeto;
+    } else {
+      // Para otros tipos: aplicar lógica según tipo de unidad
+      const exitWeight = this.exitForm.get('exitWeight')?.value || 0;
+      
+      let pesoNeto: number;
+      
+      if (this.unitType === 'provider') {
+        // Proveedor (Entrada con Carga, Salida Vacío)
+        // Peso neto: Peso bruto - Peso tara = Material descargado
+        pesoNeto = this.entryData.entryWeight - exitWeight;
+      } else {
+        // Cliente (Entrada Vacío, Salida con Carga)
+        // Peso neto: Peso tara - Peso bruto = Material cargado
+        pesoNeto = exitWeight - this.entryData.entryWeight;
       }
+      
+      this.exitForm.get('netWeight')?.setValue(pesoNeto);
     }
-    // Para contenedores, no validar placas (son opcionales)
-
-    // Validar que se haya capturado la foto del estado de carga (obligatoria para todos)
-    if (!this.photoData.cargoState) {
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message: 'Debe capturar la foto del estado de carga.',
-        position: 'top-right',
-      });
-      return;
-    }
-
-    // Para remolques, validar fotos del tráiler y remolque
-    if (
-      this.unitFlowType === 'remolque' ||
-      this.unitFlowType === 'doble-remolque'
-    ) {
-      if (!this.photoData.trailerPlate) {
-        this.messageService.showErrorToast({
-          title: 'Error de Validación',
-          message: 'Debe capturar la foto de la placa del tráiler.',
-          position: 'top-right',
-        });
-        return;
-      }
-
-      if (!this.photoData.trailerPlate2) {
-        this.messageService.showErrorToast({
-          title: 'Error de Validación',
-          message: 'Debe capturar la foto de la placa del remolque.',
-          position: 'top-right',
-        });
-        return;
-      }
-    }
-
-    this.isLoading = true;
-
-    // Preparar datos para el registro según el tipo de unidad
-    const exitRequest: ExitRegistrationRequest = {
-      folio: this.entryData.id,
-      pesoBruto: this.entryData.entryWeight || 0,
-      pesoTara: this.weightData.capturedWeight,
-      pesoNeto: this.exitForm.get('netWeight')?.value || 0,
-      placaTrailer: this.exitForm.get('trailerPlate')?.value || '',
-      placaRemolque: this.exitForm.get('trailerPlate2')?.value || undefined,
-      placaContenedor: undefined, // Ya no se usa para contenedores
-      // Campos para contenedor (opcionales)
-      placaTrailerContenedor:
-        this.unitFlowType === 'contenedor'
-          ? this.exitForm.get('trailerPlate')?.value || undefined
-          : undefined,
-      placaRemolqueContenedor:
-        this.unitFlowType === 'contenedor'
-          ? this.exitForm.get('trailerPlate2')?.value || undefined
-          : undefined,
-      fotos:
-        this.unitFlowType === 'contenedor'
-          ? {
-              cargoState: this.photoData.cargoState,
-            }
-          : {
-              trailerPlate: this.photoData.trailerPlate,
-              trailerPlate2: this.photoData.trailerPlate2,
-              cargoState: this.photoData.cargoState,
-            },
-      estado: 'SALIDA_REGISTRADA',
-      fechaSalida: new Date().toISOString(),
-      tipoUnidad: this.unitFlowType || 'remolque',
-    };
-
-    // Validar request antes de enviar
-    const validation =
-      this.exitRegistrationService.validateExitRequest(exitRequest);
-    if (!validation.isValid) {
-      this.isLoading = false;
-      this.messageService.showErrorToast({
-        title: 'Error de Validación',
-        message: `Campos inválidos: ${validation.errors.join(', ')}`,
-        position: 'top-right',
-      });
-      return;
-    }
-
-    // Registrar la salida
-    this.exitRegistrationService.registerExit(exitRequest).subscribe({
-      next: (response: ExitRegistrationResponse) => {
-        this.isLoading = false;
-
-        if (response.success && response.data) {
-          // Registro exitoso
-          this.isExitRegistered = true;
-
-          this.messageService.showSuccessToast({
-            title: '✅ Salida Registrada',
-            message: 'Salida registrada correctamente',
-            position: 'top-right',
-          });
-
-          // Actualizar estado local
-          if (this.entryData) {
-            this.entryData.status = 'SALIDA_REGISTRADA';
-            this.entryData.exitWeight = this.weightData.capturedWeight;
-            this.entryData.netWeight =
-              this.exitForm.get('netWeight')?.value || 0;
-            this.entryData.updatedAt = new Date();
-          }
-
-          // Opcional: redirigir después de un delay
-          setTimeout(() => {
-            this.onGoBack();
-          }, 3000);
-        } else {
-          // Error en la respuesta
-          this.messageService.showErrorToast({
-            title: '❌ Error en el Servidor',
-            message:
-              response.message ||
-              'Ocurrió un error inesperado al registrar la salida.',
-            position: 'top-right',
-          });
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.messageService.showErrorToast({
-          title: '❌ Error de Conexión',
-          message:
-            'Ocurrió un error al registrar la salida. Intenta nuevamente.',
-          position: 'top-right',
-        });
-        console.error('Error registering exit:', error);
-      },
-    });
   }
 
-  onClear(): void {
-    this.exitForm.reset();
-    this.entryData = null;
-    this.isEntryFound = false;
-    this.unitFlowType = null;
-    this.photoData = {
-      trailerPlate: '',
-      trailerPlate2: '',
-      cargoState: '',
-      containerPlate: '', // Mantener por compatibilidad
-    };
-    this.detectedPlates = {
-      trailerPlate: '',
-      trailerPlate2: '',
-      containerPlate: '', // Mantener por compatibilidad
-    };
-    this.plateValidations = {
-      trailerPlate: { isValid: true, errorMessage: '' },
-      trailerPlate2: { isValid: true, errorMessage: '' },
-      containerPlate: { isValid: true, errorMessage: '' }, // Mantener por compatibilidad
-    };
-    this.manualEditEnabled = {
-      trailerPlate: false,
-      trailerPlate2: false,
-      containerPlate: false, // Mantener por compatibilidad
-    };
-    this.weightData.capturedWeight = undefined;
-    this.weightData.capturedAt = undefined;
-    this.isExitRegistered = false;
+  /**
+   * Verifica si se puede capturar peso
+   */
+  canCaptureWeight(): boolean {
+    return this.weightData.isConnected && this.weightData.isStable;
   }
 
-  onGoBack(): void {
-    this.router.navigate(['/weighing', this.unitType]);
+  /**
+   * Verifica si se puede capturar peso para el remolque 2
+   */
+  canCaptureWeightRemolque2(): boolean {
+    // Verificar que se pueda capturar peso en general
+    if (!this.canCaptureWeight()) return false;
+
+    // Verificar que el remolque 1 esté completo
+    if (!this.entryData || this.entryData.tipoUnidad !== 'doble-remolque')
+      return false;
+
+    const remolque1Complete =
+      this.exitForm.get('remolque1Plate')?.value &&
+      this.exitForm.get('pesoTaraRemolque1')?.value &&
+      this.photoData.cargoRemolque1 &&
+      this.plateValidations['remolque1Plate'].isValid;
+
+    return !!remolque1Complete;
   }
 
-  private markFormGroupTouched(): void {
-    Object.keys(this.exitForm.controls).forEach((key) => {
-      const control = this.exitForm.get(key);
-      control?.markAsTouched();
-    });
+  /**
+   * Verifica si se deben mostrar campos de tráiler
+   */
+  shouldShowTrailerFields(): boolean {
+    return this.entryData?.tipoUnidad !== 'contenedor';
   }
 
+  /**
+   * Obtiene el nombre de visualización del tipo de unidad
+   */
+  getUnitTypeDisplayName(tipoUnidad: string): string {
+    const displayNames: Record<string, string> = {
+      remolque: 'Remolque Único',
+      contenedor: 'Solo Contenedor',
+      'doble-remolque': 'Doble Remolque',
+    };
+
+    return displayNames[tipoUnidad] || tipoUnidad;
+  }
+
+  /**
+   * Obtiene el error de un campo específico
+   */
   getFieldError(fieldName: string): string {
-    const control = this.exitForm.get(fieldName);
-    if (control && control.errors && control.touched) {
-      if (control.errors['required']) {
-        return 'Este campo es requerido.';
-      }
-      if (control.errors['min']) {
-        return 'El valor debe ser mayor a 0.';
-      }
+    const field = this.exitForm.get(fieldName);
+    if (field?.errors && field.touched) {
+      if (field.errors['required']) return 'Este campo es obligatorio';
+      if (field.errors['min']) return 'El valor debe ser mayor a 0';
     }
     return '';
   }
 
-  getCurrentTime(): Date {
-    return new Date();
-  }
-
-  canCaptureWeight(): boolean {
-    return this.isEntryFound && !!this.entryData;
-  }
-
+  /**
+   * Verifica si el formulario es válido
+   */
   get isFormValid(): boolean {
-    const basicValidation =
-      this.exitForm.valid &&
-      this.isEntryFound &&
-      !!this.weightData.capturedWeight;
+    if (!this.entryData) return false;
 
-    // Para contenedores, solo validaciones básicas + foto de carga
-    if (this.unitFlowType === 'contenedor') {
-      return basicValidation && !!this.photoData.cargoState;
-    }
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      // Validar campos obligatorios para doble remolque
+      const basicValid =
+        this.exitForm.get('trailerPlate')?.valid &&
+        this.exitForm.get('remolque1Plate')?.valid &&
+        this.exitForm.get('remolque2Plate')?.valid &&
+        this.exitForm.get('pesoTaraRemolque1')?.valid &&
+        this.exitForm.get('pesoTaraRemolque2')?.valid;
 
-    // Para remolques, validaciones básicas + validaciones de placas + fotos
-    if (
-      this.unitFlowType === 'remolque' ||
-      this.unitFlowType === 'doble-remolque'
-    ) {
-      const plateValidationsValid =
-        this.plateValidations.trailerPlate.isValid &&
-        this.plateValidations.trailerPlate2.isValid;
+      // Validar que las placas coincidan
+      const platesValid =
+        this.plateValidations['trailerPlate'].isValid &&
+        this.plateValidations['remolque1Plate'].isValid &&
+        this.plateValidations['remolque2Plate'].isValid;
+
+      // Validar que las fotos estén capturadas
+      const photosValid =
+        this.photoData.trailerPlate &&
+        this.photoData.remolque1Plate &&
+        this.photoData.remolque2Plate &&
+        this.photoData.cargoRemolque1 &&
+        this.photoData.cargoRemolque2;
+
+      return !!(basicValid && platesValid && photosValid);
+    } else {
+      // Validar campos para otros tipos
+      const basicValid =
+        this.exitForm.get('trailerPlate')?.valid &&
+        this.exitForm.get('exitWeight')?.valid;
+
+      const platesValid =
+        this.plateValidations['trailerPlate'].isValid &&
+        (this.entryData.tipoUnidad === 'contenedor' ||
+          this.plateValidations['trailerPlate2'].isValid);
 
       const photosValid =
-        !!this.photoData.trailerPlate &&
-        !!this.photoData.trailerPlate2 &&
-        !!this.photoData.cargoState;
+        this.photoData.trailerPlate &&
+        (this.entryData.tipoUnidad === 'contenedor' ||
+          this.photoData.trailerPlate2) &&
+        this.photoData.cargoState;
 
-      return basicValidation && plateValidationsValid && photosValid;
+      return !!(basicValid && platesValid && photosValid);
+    }
+  }
+
+  /**
+   * Guarda el registro de salida
+   */
+  onSave(): void {
+    if (!this.isFormValid) {
+      this.messageService.showError({
+        message: 'Por favor complete todos los campos requeridos',
+      });
+      return;
     }
 
-    return basicValidation;
+    this.isLoading = true;
+
+    // Simular envío al backend
+    setTimeout(() => {
+      this.isLoading = false;
+      this.isExitRegistered = true;
+
+      this.messageService.showSuccess({
+        message: 'Salida registrada exitosamente',
+        duration: 3000,
+      });
+
+      // Limpiar formulario después de 3 segundos
+      setTimeout(() => {
+        this.onClear();
+      }, 3000);
+    }, 2000);
   }
 
+  /**
+   * Limpia el formulario
+   */
+  onClear(): void {
+    this.exitForm.reset();
+    this.photoData = {
+      trailerPlate: '',
+      trailerPlate2: '',
+      cargoState: '',
+      containerPlate: '',
+      remolque1Plate: '',
+      remolque2Plate: '',
+      cargoRemolque1: '',
+      cargoRemolque2: '',
+    };
+    this.entryData = null;
+    this.isEntryFound = false;
+    this.isExitRegistered = false;
+    this.currentWeightCaptureType = null;
+
+    // Resetear estado de doble remolque
+    this.doubleTrailerState = {
+      currentStep: 'trailer',
+      trailerPlaca: '',
+      remolque1: {
+        numero: 1,
+        placa: '',
+        pesoTara: 0,
+        fotoCargaCapturada: false,
+      },
+      remolque2: {
+        numero: 2,
+        placa: '',
+        pesoTara: 0,
+        fotoCargaCapturada: false,
+      },
+      isComplete: false,
+      pesoBrutoTotal: 0,
+      pesoNetoCalculado: 0,
+    };
+
+    // Resetear validaciones
+    Object.keys(this.plateValidations).forEach((key) => {
+      this.plateValidations[key] = {
+        isValid: true,
+        errorMessage: '',
+      };
+    });
+
+    // Resetear edición manual
+    Object.keys(this.manualEditEnabled).forEach((key) => {
+      this.manualEditEnabled[key] = false;
+    });
+
+    this.messageService.showInfo({ message: 'Formulario limpiado' });
+  }
+
+  /**
+   * Regresa a la página anterior
+   */
+  onGoBack(): void {
+    this.router.navigate(['/weighing/operation-selection']);
+  }
+
+  /**
+   * Maneja clic en consultas
+   */
   onQueries(): void {
-    // TODO: Implementar navegación a consultas
-    console.log('Navegando a consultas');
+    // Implementar navegación a consultas
+    this.messageService.showInfo({ message: 'Navegando a consultas...' });
   }
 
+  /**
+   * Maneja clic en logout
+   */
   onLogout(): void {
-    // TODO: Implementar logout
-    console.log('Cerrando sesión');
+    // Implementar logout
+    this.messageService.showInfo({ message: 'Cerrando sesión...' });
+  }
+
+  /**
+   * Obtiene la descripción del cálculo del peso neto según el tipo de unidad
+   */
+  getNetWeightCalculationDescription(): string {
+    if (this.unitType === 'provider') {
+      return 'Peso bruto menos peso tara (Material descargado)';
+    } else {
+      return 'Peso tara menos peso bruto (Material cargado)';
+    }
+  }
+
+  /**
+   * Obtiene la descripción del cálculo del peso neto para doble remolque
+   */
+  getDoubleTrailerNetWeightCalculationDescription(): string {
+    if (this.unitType === 'provider') {
+      return 'Peso bruto menos suma de pesos tara (Material descargado)';
+    } else {
+      return 'Suma de pesos tara menos peso bruto (Material cargado)';
+    }
   }
 }
