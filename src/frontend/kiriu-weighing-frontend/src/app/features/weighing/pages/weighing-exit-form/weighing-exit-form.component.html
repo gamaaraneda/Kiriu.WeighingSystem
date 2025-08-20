@@ -346,15 +346,38 @@
                 <label for="pesoTaraRemolque1" class="form-label"
                   >Peso Tara del Remolque 1 *</label
                 >
-                <div class="weight-input-group">
-                  <input
-                    type="number"
-                    id="pesoTaraRemolque1"
-                    formControlName="pesoTaraRemolque1"
-                    class="form-input weight-input"
-                    placeholder="Peso tara del remolque 1 desde la báscula"
-                    [readonly]="true"
-                  />
+                <div class="weight-display-group">
+                  <div class="weight-value-display">
+                    <span
+                      *ngIf="
+                        exitForm.get('pesoTaraRemolque1')?.value;
+                        else noWeightRemolque1
+                      "
+                    >
+                      {{
+                        exitForm.get("pesoTaraRemolque1")?.value
+                          | number : "1.0-0"
+                      }}
+                      kg
+                    </span>
+                    <ng-template #noWeightRemolque1>
+                      <span class="no-weight-text">Peso no capturado</span>
+                    </ng-template>
+                  </div>
+                  <div class="weight-status">
+                    <span
+                      *ngIf="exitForm.get('pesoTaraRemolque1')?.value"
+                      class="weight-captured"
+                    >
+                      ✅ Capturado
+                    </span>
+                    <span
+                      *ngIf="!exitForm.get('pesoTaraRemolque1')?.value"
+                      class="weight-pending"
+                    >
+                      ⏳ Pendiente
+                    </span>
+                  </div>
                   <button
                     type="button"
                     class="btn btn-success capture-weight-btn"
@@ -525,15 +548,38 @@
                 <label for="pesoTaraRemolque2" class="form-label"
                   >Peso Tara del Remolque 2 *</label
                 >
-                <div class="weight-input-group">
-                  <input
-                    type="number"
-                    id="pesoTaraRemolque2"
-                    formControlName="pesoTaraRemolque2"
-                    class="form-input weight-input"
-                    placeholder="Peso tara del remolque 2 desde la báscula"
-                    [readonly]="true"
-                  />
+                <div class="weight-display-group">
+                  <div class="weight-value-display">
+                    <span
+                      *ngIf="
+                        exitForm.get('pesoTaraRemolque2')?.value;
+                        else noWeightRemolque2
+                      "
+                    >
+                      {{
+                        exitForm.get("pesoTaraRemolque2")?.value
+                          | number : "1.0-0"
+                      }}
+                      kg
+                    </span>
+                    <ng-template #noWeightRemolque2>
+                      <span class="no-weight-text">Peso no capturado</span>
+                    </ng-template>
+                  </div>
+                  <div class="weight-status">
+                    <span
+                      *ngIf="exitForm.get('pesoTaraRemolque2')?.value"
+                      class="weight-captured"
+                    >
+                      ✅ Capturado
+                    </span>
+                    <span
+                      *ngIf="!exitForm.get('pesoTaraRemolque2')?.value"
+                      class="weight-pending"
+                    >
+                      ⏳ Pendiente
+                    </span>
+                  </div>
                   <button
                     type="button"
                     class="btn btn-success capture-weight-btn"
@@ -871,15 +917,34 @@
                 <label for="exitWeight" class="form-label"
                   >Peso Tara (Salida) *</label
                 >
-                <div class="weight-input-group">
-                  <input
-                    type="number"
-                    id="exitWeight"
-                    formControlName="exitWeight"
-                    class="form-input weight-input"
-                    placeholder="Peso de salida desde la báscula"
-                    [readonly]="true"
-                  />
+                <div class="weight-display-group">
+                  <div class="weight-value-display">
+                    <span
+                      *ngIf="exitForm.get('exitWeight')?.value; else noWeight"
+                    >
+                      {{
+                        exitForm.get("exitWeight")?.value | number : "1.0-0"
+                      }}
+                      kg
+                    </span>
+                    <ng-template #noWeight>
+                      <span class="no-weight-text">Peso no capturado</span>
+                    </ng-template>
+                  </div>
+                  <div class="weight-status">
+                    <span
+                      *ngIf="exitForm.get('exitWeight')?.value"
+                      class="weight-captured"
+                    >
+                      ✅ Capturado
+                    </span>
+                    <span
+                      *ngIf="!exitForm.get('exitWeight')?.value"
+                      class="weight-pending"
+                    >
+                      ⏳ Pendiente
+                    </span>
+                  </div>
                   <button
                     type="button"
                     class="btn btn-success capture-weight-btn"
@@ -938,43 +1003,6 @@
                 <span *ngIf="isLoading">Registrando...</span>
                 <span *ngIf="isExitRegistered">✅ Salida Registrada</span>
               </button>
-            </div>
-
-            <!-- Indicador de salida registrada -->
-            <div *ngIf="isExitRegistered" class="exit-success-indicator">
-              <div class="success-box">
-                <div class="success-content">
-                  <i class="success-icon">✅</i>
-                  <div class="success-text">
-                    <h3>Salida Registrada Exitosamente</h3>
-                    <p>
-                      La salida ha sido registrada en el sistema. El registro
-                      está completo.
-                    </p>
-                    <div class="exit-details">
-                      <div class="detail-item">
-                        <span class="label">Folio:</span>
-                        <span class="value">{{ entryData?.id }}</span>
-                      </div>
-                      <div class="detail-item">
-                        <span class="label">Peso Neto:</span>
-                        <span class="value"
-                          >{{
-                            exitForm.get("netWeight")?.value | number : "1.0-0"
-                          }}
-                          kg</span
-                        >
-                      </div>
-                      <div class="detail-item">
-                        <span class="label">Estado:</span>
-                        <span class="value success-status"
-                          >SALIDA_REGISTRADA</span
-                        >
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </form>
         </div>

@@ -464,7 +464,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    * Obtiene el tipo de unidad del parámetro de la ruta
    */
   private getUnitTypeFromRoute(): void {
-    this.route.params.subscribe(params => {
+    this.route.params.subscribe((params) => {
       this.unitType = params['unitType'] || '';
       this.unitTypeTitle = this.getUnitTypeDisplayName(this.unitType);
     });
@@ -482,17 +482,19 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         this.exitForm.get('pesoTaraRemolque1')?.value || 0;
       const pesoTaraRemolque2 =
         this.exitForm.get('pesoTaraRemolque2')?.value || 0;
-      
+
       let pesoNeto: number;
-      
+
       if (this.unitType === 'provider') {
         // Proveedor (Entrada con Carga, Salida Vacío)
         // Peso neto: Peso bruto - Peso tara = Material descargado
-        pesoNeto = this.entryData.entryWeight - (pesoTaraRemolque1 + pesoTaraRemolque2);
+        pesoNeto =
+          this.entryData.entryWeight - (pesoTaraRemolque1 + pesoTaraRemolque2);
       } else {
         // Cliente (Entrada Vacío, Salida con Carga)
         // Peso neto: Peso tara - Peso bruto = Material cargado
-        pesoNeto = (pesoTaraRemolque1 + pesoTaraRemolque2) - this.entryData.entryWeight;
+        pesoNeto =
+          pesoTaraRemolque1 + pesoTaraRemolque2 - this.entryData.entryWeight;
       }
 
       this.exitForm.get('netWeight')?.setValue(pesoNeto);
@@ -500,9 +502,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     } else {
       // Para otros tipos: aplicar lógica según tipo de unidad
       const exitWeight = this.exitForm.get('exitWeight')?.value || 0;
-      
+
       let pesoNeto: number;
-      
+
       if (this.unitType === 'provider') {
         // Proveedor (Entrada con Carga, Salida Vacío)
         // Peso neto: Peso bruto - Peso tara = Material descargado
@@ -512,7 +514,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         // Peso neto: Peso tara - Peso bruto = Material cargado
         pesoNeto = exitWeight - this.entryData.entryWeight;
       }
-      
+
       this.exitForm.get('netWeight')?.setValue(pesoNeto);
     }
   }
@@ -640,26 +642,26 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
 
-    // Simular envío al backend
+    // Mostrar toast de éxito inmediatamente
+    this.notificationService.showSuccess(
+      'Salida registrada',
+      'La operación se realizó correctamente.'
+    );
+
+    // Simular envío al backend (sin retraso para el usuario)
     setTimeout(() => {
       this.isLoading = false;
       this.isExitRegistered = true;
-
-      // Mostrar toast de éxito usando NotificationService
-      this.notificationService.showSuccess(
-        'Salida registrada',
-        'La operación se realizó correctamente.'
-      );
 
       // Esperar 3 segundos para que el usuario vea el mensaje antes de limpiar y navegar
       setTimeout(() => {
         // Limpiar formulario
         this.onClear();
-        
+
         // Navegar al dashboard
         this.router.navigate(['/dashboard']);
       }, 3000);
-    }, 2000);
+    }, 500); // Reducido a 500ms para mejor experiencia de usuario
   }
 
   /**

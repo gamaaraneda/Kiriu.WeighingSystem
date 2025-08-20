@@ -492,6 +492,118 @@
   }
 }
 
+// Grupo de visualización de peso (nuevo estilo para campos de solo lectura)
+.weight-display-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  transition: all 0.2s ease;
+
+  .weight-value-display {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-height: 24px;
+
+    span {
+      font-size: 18px;
+      font-weight: 600;
+      color: #000000;
+    }
+
+    .no-weight-text {
+      color: #6c757d;
+      font-style: italic;
+      font-weight: 400;
+    }
+  }
+
+  .weight-status {
+    display: flex;
+    align-items: center;
+    margin-right: 12px;
+
+    .weight-captured {
+      color: #1ee733;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background-color: rgba(30, 231, 51, 0.1);
+      border-radius: 4px;
+      border: 1px solid rgba(30, 231, 51, 0.3);
+    }
+
+    .weight-pending {
+      color: #ffc107;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background-color: rgba(255, 193, 7, 0.1);
+      border-radius: 4px;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+  }
+
+  .capture-weight-btn {
+    padding: 12px 20px;
+    border: none;
+    background-color: #1ee733;
+    color: #ffffff;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    min-width: 100px;
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+      background-color: #00b32a;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(30, 231, 51, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      background-color: #6c757d;
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  }
+
+  // Variante para cuando hay peso capturado
+  &.has-weight {
+    border-color: #1ee733;
+    background-color: rgba(30, 231, 51, 0.05);
+
+    .weight-value-display span {
+      color: #155724;
+    }
+  }
+
+  // Variante para estado pendiente
+  &.pending {
+    border-color: #ffc107;
+    background-color: rgba(255, 193, 7, 0.05);
+  }
+}
+
 // Visualización de pesos
 .weight-display {
   padding: 16px;
