@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Threading;
+using Microsoft.EntityFrameworkCore;
 using Kiriu.WeighingSystem.Api.Extensions;
+using Kiriu.WeighingSystem.Infrastructure.Data;
 
 // Configuración definitiva de cultura para México - DEBE IR ANTES DEL BUILDER
 AppContext.SetData("System.Globalization.Invariant", true);
@@ -26,6 +28,9 @@ builder.Services
     .AddControllers();
 
 var app = builder.Build();
+
+// Database will be created manually
+Console.WriteLine("API starting - Database should be configured manually using the provided SQL script.");
 
 // Configure Middleware Pipeline
 if (app.Environment.IsDevelopment())

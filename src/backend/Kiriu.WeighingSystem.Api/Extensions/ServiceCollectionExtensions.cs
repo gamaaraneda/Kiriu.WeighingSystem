@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUsuarioApplicationService, UsuarioApplicationService>();
         services.AddScoped<IAuthApplicationService, AuthApplicationService>();
         services.AddScoped<IHealthCheckApplicationService, HealthCheckApplicationService>();
+        services.AddScoped<IWeighingApplicationService, WeighingApplicationService>();
 
         return services;
     }
@@ -29,6 +30,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPasswordService, AuthService>(); // AuthService implementa IPasswordService
         services.AddScoped<IHealthCheckService, HealthCheckService>();
+        
+        // Weighing Services
+        services.AddScoped<IWeighingOperationRepository, WeighingOperationRepository>();
+        services.AddScoped<IWeighingService, WeighingService>();
 
         return services;
     }

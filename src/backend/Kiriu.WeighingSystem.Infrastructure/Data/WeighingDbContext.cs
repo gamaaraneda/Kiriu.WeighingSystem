@@ -16,6 +16,11 @@ public class WeighingDbContext : DbContext
     public DbSet<Permiso> Permisos { get; set; }
     public DbSet<ModuloPermiso> ModuloPermisos { get; set; }
     public DbSet<RolePermiso> RolePermisos { get; set; }
+    
+    // Weighing entities
+    public DbSet<WeighingOperation> WeighingOperations { get; set; }
+    public DbSet<WeighingPhoto> WeighingPhotos { get; set; }
+    public DbSet<WeighingRemolque> WeighingRemolques { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -109,6 +114,74 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             entity.HasOne(d => d.ModuloPermiso)
                   .WithMany()
                   .HasForeignKey(d => d.ModuloPermisoId);
+        });
+        
+        // Weighing entities configuration
+        modelBuilder.Entity<WeighingOperation>(entity =>
+        {
+            entity.ToTable("WeighingOperations", "weighing");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Folio).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.UnitType).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.OperationType).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.TrailerPlate).HasMaxLength(20);
+            entity.Property(e => e.TrailerPlate2).HasMaxLength(20);
+            entity.Property(e => e.TrailerPlateContenedor).HasMaxLength(20);
+            entity.Property(e => e.RemolquePlateContenedor).HasMaxLength(20);
+            entity.Property(e => e.PlacaRemolque1).HasMaxLength(20);
+            entity.Property(e => e.PlacaRemolque2).HasMaxLength(20);
+            entity.Property(e => e.Product).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.ClientProviderName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.ClientProviderRfc).HasMaxLength(50);
+            entity.Property(e => e.EntryWeight).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.ExitWeight).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.NetWeight).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Status).HasMaxLength(30).IsRequired();
+            entity.Property(e => e.TipoUnidad).HasMaxLength(30).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnType("DATETIME").IsRequired();
+            entity.Property(e => e.UpdatedAt).HasColumnType("DATETIME").IsRequired();
+            entity.Property(e => e.EntryDate).HasColumnType("DATETIME");
+            entity.Property(e => e.ExitDate).HasColumnType("DATETIME");
+            
+            entity.HasIndex(e => e.Folio).IsUnique();
+            entity.HasIndex(e => e.TrailerPlate);
+            entity.HasIndex(e => e.Status);
+        });
+        
+        modelBuilder.Entity<WeighingPhoto>(entity =>
+        {
+            entity.ToTable("WeighingPhotos", "weighing");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PhotoType).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.PhotoUrl).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.CreatedAt).HasColumnType("DATETIME").IsRequired();
+            
+            entity.HasOne(d => d.WeighingOperation)
+                  .WithMany(p => p.Photos)
+                  .HasForeignKey(d => d.WeighingOperationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+        
+        modelBuilder.Entity<WeighingRemolque>(entity =>
+        {
+            entity.ToTable("WeighingRemolques", "weighing");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Numero).IsRequired();
+            entity.Property(e => e.Placa).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.PesoBruto).HasColumnType("decimal(18,2)").IsRequired();
+            entity.Property(e => e.PesoTara).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.PesoCapturado).HasColumnType("bit").IsRequired();
+            entity.Property(e => e.FotosCapturadas).HasColumnType("bit").IsRequired();
+            entity.Property(e => e.FotoCargaCapturada).HasColumnType("bit").IsRequired();
+            entity.Property(e => e.FotoPlacaCapturada).HasColumnType("bit").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnType("DATETIME").IsRequired();
+            entity.Property(e => e.UpdatedAt).HasColumnType("DATETIME").IsRequired();
+            
+            entity.HasOne(d => d.WeighingOperation)
+                  .WithMany(p => p.Remolques)
+                  .HasForeignKey(d => d.WeighingOperationId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 } 
