@@ -143,7 +143,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    */
   private initializeForm(): void {
     this.exitForm = this.fb.group({
-      trailerPlate: ['', [Validators.required]],
+      trailerPlate: ['', []], // Removido Validators.required para permitir contenedor sin placa
       trailerPlate2: [''],
       exitWeight: [0, [Validators.required, Validators.min(0)]],
       netWeight: [0, [Validators.required, Validators.min(0)]],
@@ -190,6 +190,19 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    */
   onSearchEntry(): void {
     const plate = this.exitForm.get('trailerPlate')?.value;
+
+    // Para contenedor, permitir búsqueda sin placa
+    if (this.unitType === 'contenedor' && !plate) {
+      // En contenedor, buscar por algún otro criterio o mostrar mensaje específico
+      this.messageService.showInfo({
+        message:
+          'Para contenedor, la búsqueda se realizará por otros criterios',
+      });
+      // TODO: Implementar búsqueda alternativa para contenedor
+      return;
+    }
+
+    // Para otros tipos, validar que se ingrese placa
     if (!plate) {
       this.messageService.showError({
         message: 'Debe ingresar una placa para buscar',
@@ -271,8 +284,18 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       this.validatePlate('trailerPlate', this.entryData.placaTrailer);
       this.validatePlate('remolque1Plate', this.entryData.placaRemolque1);
       this.validatePlate('remolque2Plate', this.entryData.placaRemolque2);
+    } else if (this.entryData.tipoUnidad === 'contenedor') {
+      // Para contenedor: no validar placas, solo marcar como válidas
+      this.plateValidations['trailerPlate'] = {
+        isValid: true,
+        errorMessage: '',
+      };
+      this.plateValidations['trailerPlate2'] = {
+        isValid: true,
+        errorMessage: '',
+      };
     } else {
-      // Validar placas para otros tipos
+      // Validar placas para otros tipos (remolque único)
       this.validatePlate('trailerPlate', this.entryData.placaTrailer);
       this.validatePlate('trailerPlate2', this.entryData.placaRemolque);
     }
@@ -608,21 +631,30 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         this.photoData.cargoRemolque2;
 
       return !!(basicValid && platesValid && photosValid);
+    } else if (this.entryData.tipoUnidad === 'contenedor') {
+      // Para contenedor: trailerPlate es opcional, solo validar peso y foto de carga
+      const basicValid = this.exitForm.get('exitWeight')?.valid;
+
+      // No validar placas para contenedor
+      const platesValid = true;
+
+      // Solo validar foto de carga (obligatoria)
+      const photosValid = this.photoData.cargoState;
+
+      return !!(basicValid && platesValid && photosValid);
     } else {
-      // Validar campos para otros tipos
+      // Validar campos para otros tipos (remolque único)
       const basicValid =
         this.exitForm.get('trailerPlate')?.valid &&
         this.exitForm.get('exitWeight')?.valid;
 
       const platesValid =
         this.plateValidations['trailerPlate'].isValid &&
-        (this.entryData.tipoUnidad === 'contenedor' ||
-          this.plateValidations['trailerPlate2'].isValid);
+        this.plateValidations['trailerPlate2'].isValid;
 
       const photosValid =
         this.photoData.trailerPlate &&
-        (this.entryData.tipoUnidad === 'contenedor' ||
-          this.photoData.trailerPlate2) &&
+        this.photoData.trailerPlate2 &&
         this.photoData.cargoState;
 
       return !!(basicValid && platesValid && photosValid);
