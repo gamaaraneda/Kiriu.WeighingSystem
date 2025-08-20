@@ -645,14 +645,19 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       this.isLoading = false;
       this.isExitRegistered = true;
 
-      this.messageService.showSuccess({
-        message: 'Salida registrada exitosamente',
-        duration: 3000,
-      });
+      // Mostrar toast de éxito usando NotificationService
+      this.notificationService.showSuccess(
+        'Salida registrada',
+        'La operación se realizó correctamente.'
+      );
 
-      // Limpiar formulario después de 3 segundos
+      // Esperar 3 segundos para que el usuario vea el mensaje antes de limpiar y navegar
       setTimeout(() => {
+        // Limpiar formulario
         this.onClear();
+        
+        // Navegar al dashboard
+        this.router.navigate(['/dashboard']);
       }, 3000);
     }, 2000);
   }
