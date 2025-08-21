@@ -182,16 +182,47 @@ public class WeighingApplicationService : IWeighingApplicationService
     {
         try
         {
+            Console.WriteLine($"[CreateExitAsync] Starting exit registration for folio: {request.Folio}");
+            
             var entry = await _weighingRepository.GetByFolioAsync(request.Folio);
             if (entry == null)
             {
+                Console.WriteLine($"[CreateExitAsync] No entry found for folio: {request.Folio}");
                 return ApiResponse<ExitResponseDto>.CreateError("Registro de entrada no encontrado");
+            }
+
+            Console.WriteLine($"[CreateExitAsync] Found entry - Folio: {entry.Folio}, Status: {entry.Status}, ID: {entry.Id}");
+            Console.WriteLine($"[CreateExitAsync] Entry plates: Trailer={entry.TrailerPlate}, Trailer2={entry.TrailerPlate2}");
+            Console.WriteLine($"[CreateExitAsync] Request plates: Trailer={request.PlacaTrailer}, Remolque={request.PlacaRemolque}");
+
+            // Validación más específica del estado
+            if (entry.Status == "SALIDA_REGISTRADA")
+            {
+                Console.WriteLine($"[CreateExitAsync] Entry already has exit registered - Status: {entry.Status}");
+                return ApiResponse<ExitResponseDto>.CreateError("El registro ya tiene una salida registrada");
             }
 
             if (entry.Status != "ENTRADA_REGISTRADA")
             {
-                return ApiResponse<ExitResponseDto>.CreateError("El registro ya tiene una salida registrada");
+                Console.WriteLine($"[CreateExitAsync] Invalid entry status - Expected: ENTRADA_REGISTRADA, Found: {entry.Status}");
+                return ApiResponse<ExitResponseDto>.CreateError($"Estado del registro inválido: {entry.Status}. Se esperaba ENTRADA_REGISTRADA");
             }
+
+            // Validar que las placas del request coincidan con las del entry
+            bool plateMatches = 
+                (request.PlacaTrailer == entry.TrailerPlate) ||
+                (request.PlacaRemolque == entry.TrailerPlate2) ||
+                (request.PlacaTrailer == entry.TrailerPlate2);
+
+            if (!plateMatches)
+            {
+                Console.WriteLine($"[CreateExitAsync] Plate mismatch detected!");
+                Console.WriteLine($"  Request: Trailer={request.PlacaTrailer}, Remolque={request.PlacaRemolque}");
+                Console.WriteLine($"  Entry: Trailer={entry.TrailerPlate}, Trailer2={entry.TrailerPlate2}");
+                return ApiResponse<ExitResponseDto>.CreateError("Las placas del request no coinciden con el registro de entrada");
+            }
+
+            Console.WriteLine($"[CreateExitAsync] All validations passed, proceeding with update");
 
             // Update entry to exit
             entry.ExitWeight = request.PesoBruto;
@@ -207,7 +238,11 @@ public class WeighingApplicationService : IWeighingApplicationService
                 entry.Photos.Add(photo);
             }
 
-            await _weighingRepository.UpdateAsync(entry);
+            Console.WriteLine($"[CreateExitAsync] About to update - Folio: {entry.Folio}, New Status: {entry.Status}");
+            
+            var updatedEntry = await _weighingRepository.UpdateAsync(entry);
+            
+            Console.WriteLine($"[CreateExitAsync] Successfully updated - Folio: {updatedEntry.Folio}, Final Status: {updatedEntry.Status}");
 
             var response = new ExitResponseDto
             {
@@ -344,7 +379,17 @@ public class WeighingApplicationService : IWeighingApplicationService
     {
         try
         {
+            Console.WriteLine($"[ValidateExitAsync] Validating plate: {placa}");
             var activeEntry = await _weighingService.FindActiveEntryAsync(placa);
+
+            if (activeEntry != null)
+            {
+                Console.WriteLine($"[ValidateExitAsync] Found active entry - Folio: {activeEntry.Folio}, Status: {activeEntry.Status}, ID: {activeEntry.Id}");
+            }
+            else
+            {
+                Console.WriteLine($"[ValidateExitAsync] No active entry found for plate: {placa}");
+            }
 
             var result = new ExitValidationDto
             {
@@ -403,7 +448,7 @@ public class WeighingApplicationService : IWeighingApplicationService
             {
                 Id = Guid.NewGuid(),
                 WeighingOperationId = operationId,
-                PhotoType = "cargo",
+                PhotoType = "cargoEntry",
                 PhotoUrl = photos.Cargo,
                 CreatedAt = createdAt
             });
@@ -423,7 +468,7 @@ public class WeighingApplicationService : IWeighingApplicationService
             {
                 Id = Guid.NewGuid(),
                 WeighingOperationId = operationId,
-                PhotoType = "cargoState",
+                PhotoType = "cargoExit",
                 PhotoUrl = photos.CargoState,
                 CreatedAt = createdAt
             });
@@ -452,7 +497,7 @@ public class WeighingApplicationService : IWeighingApplicationService
                 case "remolque2Plate":
                     result.FotoEntradaRemolque2 = photo.PhotoUrl;
                     break;
-                case "cargo":
+                case "cargoEntry":
                     result.FotoCargaEntrada = photo.PhotoUrl;
                     break;
             }

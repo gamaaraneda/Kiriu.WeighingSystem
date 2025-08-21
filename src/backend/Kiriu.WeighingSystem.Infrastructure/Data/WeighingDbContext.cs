@@ -119,7 +119,11 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
         // Weighing entities configuration
         modelBuilder.Entity<WeighingOperation>(entity =>
         {
-            entity.ToTable("WeighingOperations", "weighing");
+            entity.ToTable("WeighingOperations", "weighing", table =>
+  {
+      // Deshabilita la cláusula OUTPUT para tablas con triggers
+      table.HasTrigger("TR_WeighingOperations_UpdatedAt");
+  });
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Folio).HasMaxLength(50).IsRequired();
             entity.Property(e => e.UnitType).HasMaxLength(20).IsRequired();
@@ -150,7 +154,11 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
         
         modelBuilder.Entity<WeighingPhoto>(entity =>
         {
-            entity.ToTable("WeighingPhotos", "weighing");
+            entity.ToTable("WeighingPhotos", "weighing", table =>
+  {
+      // Deshabilita la cláusula OUTPUT para tablas con triggers
+      table.HasTrigger("TR_WeighingPhotos_UpdatedAt");
+  });
             entity.HasKey(e => e.Id);
             entity.Property(e => e.PhotoType).HasMaxLength(50).IsRequired();
             entity.Property(e => e.PhotoUrl).HasMaxLength(500).IsRequired();
@@ -165,7 +173,12 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
         
         modelBuilder.Entity<WeighingRemolque>(entity =>
         {
-            entity.ToTable("WeighingRemolques", "weighing");
+            entity.ToTable("WeighingRemolques", "weighing", table =>
+  {
+      // Deshabilita la cláusula OUTPUT para tablas con triggers
+      table.HasTrigger("TR_WeighingRemolques_UpdatedAt");
+  });
+            
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Numero).IsRequired();
             entity.Property(e => e.Placa).HasMaxLength(20).IsRequired();

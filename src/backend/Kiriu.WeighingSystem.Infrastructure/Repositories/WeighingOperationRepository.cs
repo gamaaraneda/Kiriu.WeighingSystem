@@ -117,10 +117,78 @@ public class WeighingOperationRepository : IWeighingOperationRepository
 
     public async Task<WeighingOperation> UpdateAsync(WeighingOperation operation)
     {
-        operation.UpdatedAt = DateTime.UtcNow;
-        _context.WeighingOperations.Update(operation);
-        await _context.SaveChangesAsync();
-        return operation;
+        try
+        {
+            Console.WriteLine($"[UpdateAsync] Updating operation ID: {operation.Id}, Status: {operation.Status}");
+            
+            // Attach the entity if it's not already tracked
+            var entry = _context.Entry(operation);
+            if (entry.State == EntityState.Detached)
+            {
+                _context.Attach(operation);
+            }
+
+            // Only mark specific properties as modified (the ones we actually want to update)
+            operation.UpdatedAt = DateTime.UtcNow;
+            
+            entry.Property(e => e.ExitWeight).IsModified = true;
+            entry.Property(e => e.NetWeight).IsModified = true;
+            entry.Property(e => e.Status).IsModified = true;
+            entry.Property(e => e.ExitDate).IsModified = true;
+            entry.Property(e => e.UpdatedAt).IsModified = true;
+            
+            // Don't let EF track the Photos collection changes on the main entity
+            entry.Collection(e => e.Photos).IsModified = false;
+            
+            Console.WriteLine($"[UpdateAsync] Marked specific properties as modified for operation: {operation.Id}");
+            
+            // Handle exit photos - add them directly without attaching to the main entity
+            foreach (var photo in operation.Photos ?? new List<WeighingPhoto>())
+            {
+                // Only handle exit photos (cargoExit), skip entry photos that are already in DB
+                if (photo.PhotoType == "cargoExit")
+                {
+                    // Ensure photo has correct properties
+                    photo.WeighingOperationId = operation.Id;
+                    photo.CreatedAt = DateTime.UtcNow;
+                    
+                    // Add photo directly to context (not through the navigation property)
+                    _context.WeighingPhotos.Add(photo);
+                    Console.WriteLine($"[UpdateAsync] Adding exit photo: {photo.PhotoType} with ID: {photo.Id}");
+                }
+            }
+
+            // Handle remolques updates
+            foreach (var remolque in operation.Remolques ?? new List<WeighingRemolque>())
+            {
+                var existingRemolque = await _context.WeighingRemolques
+                    .FirstOrDefaultAsync(r => r.Id == remolque.Id);
+                
+                if (existingRemolque != null)
+                {
+                    existingRemolque.PesoTara = remolque.PesoTara;
+                    existingRemolque.FotoCargaCapturada = remolque.FotoCargaCapturada;
+                    existingRemolque.UpdatedAt = DateTime.UtcNow;
+                    Console.WriteLine($"[UpdateAsync] Updated remolque: {remolque.Placa}");
+                }
+            }
+
+            Console.WriteLine($"[UpdateAsync] About to save changes for operation: {operation.Id}");
+            await _context.SaveChangesAsync();
+            
+            Console.WriteLine($"[UpdateAsync] Successfully saved changes for operation: {operation.Id}");
+            return operation;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            Console.WriteLine($"[UpdateAsync] Concurrency exception: {ex.Message}");
+            throw new InvalidOperationException("El registro fue modificado por otro usuario. Por favor, recargue los datos e intente nuevamente.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[UpdateAsync] Unexpected error: {ex.Message}");
+            throw;
+        }
     }
 
     public async Task<bool> HasActiveEntryAsync(string plate)
