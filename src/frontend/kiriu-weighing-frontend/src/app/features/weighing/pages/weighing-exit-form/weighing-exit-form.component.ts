@@ -9,7 +9,7 @@ import {
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HeaderComponent } from '../../../../layout/header/header.component';
-import { WeighingService } from '../../services/weighing.service';
+import { RealWeighingService } from '../../services/real-weighing.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { MessageService } from '../../../../shared/services/message.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
@@ -20,7 +20,7 @@ import {
   EntrySearchData,
   DoubleTrailerExitState,
 } from '../../types/weighing.types';
-import { EntrySearchMockService } from '../../services/entry-search-mock.service';
+import { extractErrorMessage } from '../../../../shared/utils/error.utils';
 
 @Component({
   selector: 'app-weighing-exit-form',
@@ -39,10 +39,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private weighingService = inject(WeighingService);
+  private weighingService = inject(RealWeighingService);
   private messageService = inject(MessageService);
   private notificationService = inject(NotificationService);
-  private entrySearchMockService = inject(EntrySearchMockService);
 
   unitType = '';
   unitTypeTitle = '';
@@ -89,6 +88,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   // Datos de la entrada encontrada
   entryData: EntrySearchData | null = null;
   isEntryFound = false;
+  entryFolio = ''; // Folio de la entrada para usar en la salida
   isSearching = false;
   isLoading = false;
   isExitRegistered = false;
@@ -186,17 +186,15 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Busca una entrada por placa del tráiler
+   * Busca una entrada por placa del tráiler usando endpoints reales
    */
   onSearchEntry(): void {
     const plate = this.exitForm.get('trailerPlate')?.value;
 
     // Para contenedor, permitir búsqueda sin placa
     if (this.unitType === 'contenedor' && !plate) {
-      // En contenedor, buscar por algún otro criterio o mostrar mensaje específico
       this.messageService.showInfo({
-        message:
-          'Para contenedor, la búsqueda se realizará por otros criterios',
+        message: 'Para contenedor, la búsqueda se realizará por otros criterios',
       });
       // TODO: Implementar búsqueda alternativa para contenedor
       return;
@@ -211,30 +209,129 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     }
 
     this.isSearching = true;
-    this.entrySearchMockService.searchEntryByPlate(plate).subscribe({
-      next: (response) => {
-        this.isSearching = false;
-        if (response.success && response.data) {
-          this.entryData = response.data;
-          this.isEntryFound = true;
-          this.populateFormWithEntryData();
-          this.messageService.showSuccess({
-            message: 'Entrada encontrada exitosamente',
-          });
+
+    // Paso 1: Validar si se puede registrar salida para esta placa
+    this.weighingService.validateExit(plate).subscribe({
+      next: (validation) => {
+        if (validation.canExit) {
+          // Paso 2: Si se puede registrar salida, obtener datos completos de la operación
+          this.loadOperationData(plate);
         } else {
+          this.isSearching = false;
           this.messageService.showError({
-            message: response.message || 'No se encontró la entrada',
+            message: validation.message || 'No se puede registrar salida para esta placa',
           });
         }
       },
       error: (error) => {
         this.isSearching = false;
-        this.messageService.showError({
-          message: 'Error al buscar la entrada',
+        console.error('Error validating exit:', error);
+        this.messageService.showErrorToast({
+          title: 'Error de validación',
+          message: extractErrorMessage(error),
+          position: 'top-right'
         });
-        console.error('Error searching entry:', error);
       },
     });
+  }
+
+  /**
+   * Carga los datos completos de la operación por placa
+   */
+  private loadOperationData(plate: string): void {
+    this.weighingService.getOperationByPlate(plate).subscribe({
+      next: (operation) => {
+        this.isSearching = false;
+        
+        // Guardar el folio para usar en la salida
+        this.entryFolio = operation.folio;
+        
+        // Convertir datos de la operación al formato esperado por el componente
+        this.entryData = this.mapOperationToEntryData(operation);
+        this.isEntryFound = true;
+        
+        // Poblar formulario con los datos encontrados
+        this.populateFormWithEntryData();
+        
+        this.messageService.showSuccess({
+          message: `Entrada encontrada exitosamente. Folio: ${operation.folio}`,
+        });
+      },
+      error: (error) => {
+        this.isSearching = false;
+        console.error('Error loading operation data:', error);
+        this.messageService.showErrorToast({
+          title: 'Error de búsqueda',
+          message: extractErrorMessage(error),
+          position: 'top-right'
+        });
+      },
+    });
+  }
+
+  /**
+   * Mapea los datos de WeighingOperationDto al formato EntrySearchData esperado
+   */
+  private mapOperationToEntryData(operation: any): EntrySearchData {
+    return {
+      id: operation.folio, // Usar el folio en lugar del id para mostrarlo en la UI
+      createdAt: new Date(operation.createdAt),
+      tipoUnidad: this.mapTipoUnidad(operation.unitType, operation.trailerPlate2),
+      clientProviderName: operation.clientProviderName,
+      product: operation.product,
+      entryWeight: operation.entryWeight || 0,
+      status: operation.status,
+      placaTrailer: operation.trailerPlate,
+      placaRemolque: operation.trailerPlate2,
+      placaRemolque1: this.extractRemolque1Plate(operation.trailerPlate2),
+      placaRemolque2: this.extractRemolque2Plate(operation.trailerPlate2),
+      placaTrailerContenedor: operation.trailerPlateContenedor,
+      placaRemolqueContenedor: operation.remolquePlateContenedor,
+      fotos: {
+        fotoEntradaTrailer: '',
+        fotoEntradaRemolque: '',
+        fotoEntradaRemolque1: '',
+        fotoEntradaRemolque2: '',
+        fotoCargaEntrada: '',
+      },
+    };
+  }
+
+  /**
+   * Mapea el tipo de unidad basándose en los datos de la operación
+   */
+  private mapTipoUnidad(unitType: string, trailerPlate2?: string): 'remolque' | 'contenedor' | 'doble-remolque' {
+    // Si trailerPlate2 contiene " + " es un doble remolque
+    if (trailerPlate2 && trailerPlate2.includes(' + ')) {
+      return 'doble-remolque';
+    }
+    
+    // Determinar basándose en el tipo de unidad de la ruta o datos adicionales
+    if (this.unitType === 'contenedor') {
+      return 'contenedor';
+    }
+    
+    return 'remolque';
+  }
+
+  /**
+   * Extrae la placa del remolque 1 desde el campo trailerPlate2 si es doble remolque
+   */
+  private extractRemolque1Plate(trailerPlate2?: string): string | undefined {
+    if (trailerPlate2 && trailerPlate2.includes(' + ')) {
+      return trailerPlate2.split(' + ')[0];
+    }
+    return undefined;
+  }
+
+  /**
+   * Extrae la placa del remolque 2 desde el campo trailerPlate2 si es doble remolque
+   */
+  private extractRemolque2Plate(trailerPlate2?: string): string | undefined {
+    if (trailerPlate2 && trailerPlate2.includes(' + ')) {
+      return trailerPlate2.split(' + ')[1];
+    }
+    return undefined;
   }
 
   /**
@@ -662,7 +759,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Guarda el registro de salida
+   * Guarda el registro de salida usando endpoints reales
    */
   onSave(): void {
     if (!this.isFormValid) {
@@ -672,28 +769,158 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.entryData || !this.entryFolio) {
+      this.messageService.showError({
+        message: 'No hay datos de entrada válidos para procesar la salida. Debe buscar una entrada primero.',
+      });
+      return;
+    }
+
     this.isLoading = true;
 
-    // Mostrar toast de éxito inmediatamente
-    this.notificationService.showSuccess(
-      'Salida registrada',
-      'La operación se realizó correctamente.'
-    );
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      this.saveDoubleTrailerExit();
+    } else {
+      this.saveNormalExit();
+    }
+  }
 
-    // Simular envío al backend (sin retraso para el usuario)
-    setTimeout(() => {
-      this.isLoading = false;
-      this.isExitRegistered = true;
+  /**
+   * Guarda una salida normal (remolque único o contenedor)
+   */
+  private saveNormalExit(): void {
+    if (!this.entryData) return;
 
-      // Esperar 3 segundos para que el usuario vea el mensaje antes de limpiar y navegar
-      setTimeout(() => {
-        // Limpiar formulario
-        this.onClear();
+    const exitWeight = this.exitForm.get('exitWeight')?.value || 0;
+    const netWeight = this.exitForm.get('netWeight')?.value || 0;
 
-        // Navegar al dashboard
-        this.router.navigate(['/dashboard']);
-      }, 3000);
-    }, 500); // Reducido a 500ms para mejor experiencia de usuario
+    const exitRequest = {
+      folio: this.entryFolio, // Usar el folio de la entrada encontrada
+      pesoBruto: exitWeight,
+      pesoTara: exitWeight,
+      pesoNeto: Math.abs(netWeight),
+      placaTrailer: this.entryData.placaTrailer || '',
+      placaRemolque: this.entryData.placaRemolque,
+      placaContenedor: this.entryData.tipoUnidad === 'contenedor' ? this.entryData.placaTrailerContenedor : undefined,
+      placaTrailerContenedor: this.entryData.placaTrailerContenedor,
+      placaRemolqueContenedor: this.entryData.placaRemolqueContenedor,
+      fotos: {
+        trailerPlate: this.photoData.trailerPlate,
+        trailerPlate2: this.photoData.trailerPlate2,
+        cargoState: this.photoData.cargoState || '',
+        containerPlate: this.photoData.containerPlate,
+      },
+      estado: 'SALIDA_REGISTRADA',
+      fechaSalida: new Date().toISOString(),
+      tipoUnidad: this.entryData.tipoUnidad,
+    };
+
+    this.weighingService.createExitOperation(exitRequest).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.isExitRegistered = true;
+        console.log('✅ Exit saved successfully:', response);
+
+        this.notificationService.showSuccess(
+          'Salida registrada',
+          `Salida registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`
+        );
+
+        // Navegar después de 3 segundos
+        setTimeout(() => {
+          this.onClear();
+          this.router.navigate(['/dashboard']);
+        }, 3000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('🔥 Error saving exit:', {
+          error,
+          errorMessage: error.message,
+          errorStatus: error.status,
+          isApiError: (error as any).isApiError,
+          originalResponse: (error as any).originalResponse
+        });
+
+        const finalMessage = extractErrorMessage(error);
+        console.log('📢 Showing error toast:', finalMessage);
+
+        this.messageService.showErrorToast({
+          title: 'Error al registrar salida',
+          message: finalMessage,
+          position: 'top-right'
+        });
+      },
+    });
+  }
+
+  /**
+   * Guarda una salida con doble remolque
+   */
+  private saveDoubleTrailerExit(): void {
+    if (!this.entryData) return;
+
+    const exitRequest = {
+      folio: this.entryFolio, // Usar el folio de la entrada encontrada
+      placaTrailer: this.entryData.placaTrailer || '',
+      remolque1: {
+        placa: this.entryData.placaRemolque1 || '',
+        pesoTara: this.exitForm.get('pesoTaraRemolque1')?.value || 0,
+        fotoCargaCapturada: !!this.photoData.cargoRemolque1,
+      },
+      remolque2: {
+        placa: this.entryData.placaRemolque2 || '',
+        pesoTara: this.exitForm.get('pesoTaraRemolque2')?.value || 0,
+        fotoCargaCapturada: !!this.photoData.cargoRemolque2,
+      },
+      pesoBrutoTotal: this.entryData.entryWeight,
+      pesoNetoCalculado: Math.abs(this.exitForm.get('netWeight')?.value || 0),
+      fechaSalida: new Date().toISOString(),
+      fotos: {
+        trailerPlate: this.photoData.trailerPlate || '',
+        remolque1Plate: this.photoData.remolque1Plate || '',
+        remolque2Plate: this.photoData.remolque2Plate || '',
+        cargoRemolque1: this.photoData.cargoRemolque1 || '',
+        cargoRemolque2: this.photoData.cargoRemolque2 || '',
+      },
+    };
+
+    this.weighingService.createDoubleTrailerExit(exitRequest).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.isExitRegistered = true;
+
+        this.notificationService.showSuccess(
+          'Salida registrada',
+          `Salida con doble remolque registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`
+        );
+
+        // Navegar después de 3 segundos
+        setTimeout(() => {
+          this.onClear();
+          this.router.navigate(['/dashboard']);
+        }, 3000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('🔥 Error saving double trailer exit:', {
+          error,
+          errorMessage: error.message,
+          errorStatus: error.status,
+          isApiError: (error as any).isApiError,
+          originalResponse: (error as any).originalResponse
+        });
+
+        const finalMessage = extractErrorMessage(error);
+        console.log('📢 Showing error toast for double trailer:', finalMessage);
+
+        this.messageService.showErrorToast({
+          title: 'Error al registrar salida',
+          message: finalMessage,
+          position: 'top-right'
+        });
+      },
+    });
   }
 
   /**
@@ -714,6 +941,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     this.entryData = null;
     this.isEntryFound = false;
     this.isExitRegistered = false;
+    this.entryFolio = ''; // Limpiar el folio
     this.currentWeightCaptureType = null;
 
     // Resetear estado de doble remolque

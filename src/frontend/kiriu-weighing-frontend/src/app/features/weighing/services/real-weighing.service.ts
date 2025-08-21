@@ -115,6 +115,74 @@ export interface EntrySearchResponse {
   };
 }
 
+// ============= INTERFACES PARA SALIDAS =============
+
+export interface CreateExitRequest {
+  folio: string;
+  pesoBruto: number;
+  pesoTara: number;
+  pesoNeto: number;
+  placaTrailer: string;
+  placaRemolque?: string;
+  placaContenedor?: string;
+  placaTrailerContenedor?: string;
+  placaRemolqueContenedor?: string;
+  fotos: ExitPhotoDataDto;
+  estado: string;
+  fechaSalida: string;
+  tipoUnidad: string;
+}
+
+export interface ExitPhotoDataDto {
+  trailerPlate?: string;
+  trailerPlate2?: string;
+  cargoState: string;
+  containerPlate?: string;
+}
+
+export interface CreateDoubleTrailerExitRequest {
+  folio: string;
+  placaTrailer: string;
+  remolque1: RemolqueExitDataDto;
+  remolque2: RemolqueExitDataDto;
+  pesoBrutoTotal: number;
+  pesoNetoCalculado: number;
+  fechaSalida: string;
+  fotos: DoubleTrailerExitPhotoDataDto;
+}
+
+export interface RemolqueExitDataDto {
+  placa: string;
+  pesoTara: number;
+  fotoCargaCapturada: boolean;
+}
+
+export interface DoubleTrailerExitPhotoDataDto {
+  trailerPlate: string;
+  remolque1Plate: string;
+  remolque2Plate: string;
+  cargoRemolque1: string;
+  cargoRemolque2: string;
+}
+
+export interface ExitValidationDto {
+  canExit: boolean;
+  entryOperation?: {
+    id: string;
+    entryWeight: number;
+    status: string;
+  };
+  message: string;
+}
+
+export interface ExitResponseDto {
+  folio: string;
+  estado: string;
+  fechaSalida: string;
+  pesoNeto: number;
+  mensaje: string;
+}
+
 // Interfaces del frontend (reutilizamos las existentes)
 export interface WeightReading {
   weight: number;
@@ -184,6 +252,36 @@ export class RealWeighingService {
     return this.http.get<EntrySearchResponse>(`${this.apiUrl}/entry/search`, {
       params: { placa }
     });
+  }
+
+  // ============= ENDPOINTS DE SALIDA =============
+
+  /**
+   * Crear operación de salida (remolque/contenedor simple)
+   */
+  createExitOperation(request: CreateExitRequest): Observable<ExitResponseDto> {
+    return this.http.post<ExitResponseDto>(`${this.apiUrl}/exit`, request);
+  }
+
+  /**
+   * Crear operación de salida con doble remolque
+   */
+  createDoubleTrailerExit(request: CreateDoubleTrailerExitRequest): Observable<ExitResponseDto> {
+    return this.http.post<ExitResponseDto>(`${this.apiUrl}/exit/double-trailer`, request);
+  }
+
+  /**
+   * Validar si se puede registrar salida para una placa
+   */
+  validateExit(placa: string): Observable<ExitValidationDto> {
+    return this.http.get<ExitValidationDto>(`${this.apiUrl}/exit/validate/${placa}`);
+  }
+
+  /**
+   * Obtener operación por placa (último registro de entrada)
+   */
+  getOperationByPlate(placa: string): Observable<WeighingOperationDto> {
+    return this.http.get<WeighingOperationDto>(`${this.apiUrl}/operations/plate/${placa}`);
   }
 
   // ============= FUNCIONES DE PESO (SIMULADAS) =============
@@ -322,11 +420,11 @@ export class RealWeighingService {
   // ============= UTILIDADES =============
 
   /**
-   * Validar si se puede registrar una salida (mock)
+   * Validar si se puede registrar una salida
    */
   canRegisterExit(trailerPlate: string): Observable<boolean> {
-    return this.searchEntryByPlate(trailerPlate).pipe(
-      map(response => response != null)
+    return this.validateExit(trailerPlate).pipe(
+      map(response => response.canExit)
     );
   }
 

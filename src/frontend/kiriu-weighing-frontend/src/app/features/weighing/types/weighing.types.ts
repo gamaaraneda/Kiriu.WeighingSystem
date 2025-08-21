@@ -20,6 +20,12 @@ export interface WeightData {
   weightHistory: number[];
   capturedWeight?: number;
   capturedAt?: Date;
+  // Campos para salidas
+  entryWeight?: number;
+  hasValidEntry?: boolean;
+  entryOperationId?: string;
+  entryFolio?: string;
+  entryDate?: string;
 }
 
 export interface PhotoData {
