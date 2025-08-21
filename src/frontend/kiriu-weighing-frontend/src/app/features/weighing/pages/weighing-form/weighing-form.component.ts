@@ -10,26 +10,20 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import {
-  WeighingService,
+  RealWeighingService,
   DoubleTrailerWeighingState,
   RemolqueData,
-  EntradaConDobleRemolque,
-  WeighingOperation,
-} from '../../services/weighing.service';
+  CreateEntryRequest,
+  CreateDoubleTrailerEntryRequest,
+  WeightReading,
+} from '../../services/real-weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { ProcessStepsComponent } from '../../../../shared/components/process-steps';
 import { MessageService } from '../../../../shared/services/message.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ToastModule } from 'primeng/toast';
-import {
-  VehicleData,
-  ClientProviderData,
-  WeightData,
-  PhotoData,
-  TicketOperation,
-  ExitOperation,
-} from '../../types/weighing.types';
+import { WeightData, PhotoData } from '../../types/weighing.types';
 
 @Component({
   selector: 'app-weighing-form',
@@ -49,7 +43,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private weighingService = inject(WeighingService);
+  private weighingService = inject(RealWeighingService);
   private weighingFlowService = inject(WeighingFlowService);
   private messageService = inject(MessageService);
   private notificationService = inject(NotificationService);
@@ -454,11 +448,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       console.log('🔍 Debug canCaptureWeight:', {
         currentStep: this.doubleTrailerState.currentStep,
         trailerPlaca: !!this.doubleTrailerState.trailerPlaca,
-        fotoPlacaCapturada: !!this.doubleTrailerState.remolque1.fotoPlacaCapturada,
-        fotoCargaCapturada: !!this.doubleTrailerState.remolque1.fotoCargaCapturada,
+        fotoPlacaCapturada:
+          !!this.doubleTrailerState.remolque1.fotoPlacaCapturada,
+        fotoCargaCapturada:
+          !!this.doubleTrailerState.remolque1.fotoCargaCapturada,
         product: !!this.weighingForm.get('product')?.value,
-        clientProviderName: !!this.weighingForm.get('clientProviderName')?.value,
-        canCapture: canCapture
+        clientProviderName:
+          !!this.weighingForm.get('clientProviderName')?.value,
+        canCapture: canCapture,
       });
 
       // Si se pueden capturar pesos, ocultar el panel tipo checklist
@@ -472,7 +469,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Log de debug para otros pasos
     console.log('🔍 Debug canCaptureWeight - Otro paso:', {
       currentStep: this.doubleTrailerState.currentStep,
-      isDoubleTrailer: this.weighingForm.get('doubleTrailer')?.value
+      isDoubleTrailer: this.weighingForm.get('doubleTrailer')?.value,
     });
 
     return true; // Para otros pasos, permitir captura de peso
@@ -535,6 +532,41 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     };
   }
 
+  /**
+   * Genera una placa aleatoria siguiendo el formato mexicano estándar
+   * Formato: AAA-000-AA (3 letras - 3 números - 2 caracteres alfanuméricos)
+   */
+  private generateRandomPlate(): string {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numbers = '0123456789';
+    const alphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+    let plate = '';
+
+    // Primera parte: 3 letras
+    for (let i = 0; i < 3; i++) {
+      plate += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+
+    plate += '-';
+
+    // Segunda parte: 3 números
+    for (let i = 0; i < 3; i++) {
+      plate += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+
+    plate += '-';
+
+    // Tercera parte: 2 caracteres alfanuméricos
+    for (let i = 0; i < 2; i++) {
+      plate += alphanumeric.charAt(
+        Math.floor(Math.random() * alphanumeric.length)
+      );
+    }
+
+    return plate;
+  }
+
   onPhotoCapture(photoType: keyof PhotoData): void {
     // TODO: Implementar captura de fotos con cámara real
     console.log('Capturando foto:', photoType);
@@ -542,30 +574,32 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Mock: simular captura de foto y detección automática de placa
     if (photoType === 'trailerPlate') {
       this.photoData.trailerPlate = 'Foto capturada';
-      // Simular detección automática de placa (OCR)
-      this.weighingForm.patchValue({ trailerPlate: 'ABC-123-XY' });
-      console.log('Placa detectada automáticamente: ABC-123-XY');
+      // Generar placa aleatoria en lugar de estática
+      const randomPlate = this.generateRandomPlate();
+      this.weighingForm.patchValue({ trailerPlate: randomPlate });
+      console.log('Placa detectada automáticamente:', randomPlate);
 
       // Si es doble remolque, actualizar el estado
       if (this.weighingForm.get('doubleTrailer')?.value) {
-        this.doubleTrailerState.trailerPlaca = 'ABC-123-XY';
+        this.doubleTrailerState.trailerPlaca = randomPlate;
         this.doubleTrailerState.currentStep = 'remolque1';
       }
     } else if (photoType === 'remolque1Plate') {
       this.photoData.remolque1Plate = 'Foto capturada';
-      // Simular detección automática de placa (OCR)
-      this.weighingForm.patchValue({ remolque1Plate: 'XYZ-789-AB' });
-      console.log('Placa detectada automáticamente: XYZ-789-AB');
+      // Generar placa aleatoria en lugar de estática
+      const randomPlate = this.generateRandomPlate();
+      this.weighingForm.patchValue({ remolque1Plate: randomPlate });
+      console.log('Placa detectada automáticamente:', randomPlate);
 
       // Si es doble remolque, actualizar el estado del remolque 1
       if (this.weighingForm.get('doubleTrailer')?.value) {
-        this.doubleTrailerState.remolque1.placa = 'XYZ-789-AB';
+        this.doubleTrailerState.remolque1.placa = randomPlate;
         this.doubleTrailerState.remolque1.fotos = ['foto_remolque1.jpg'];
         // Marcar que se capturó la foto de la placa del remolque 1
         this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
         // NO marcar fotosCapturadas aquí, solo se marca cuando se captura la foto de carga
         // this.doubleTrailerState.remolque1.fotosCapturadas = true;
-        
+
         // Asegurar que estemos en el paso correcto para capturar peso
         if (this.doubleTrailerState.currentStep === 'trailer') {
           this.doubleTrailerState.currentStep = 'remolque1';
@@ -573,13 +607,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       }
     } else if (photoType === 'remolque2Plate') {
       this.photoData.remolque2Plate = 'Foto capturada';
-      // Simular detección automática de placa (OCR)
-      this.weighingForm.patchValue({ remolque2Plate: 'DEF-456-CD' });
-      console.log('Placa detectada automáticamente: DEF-456-CD');
+      // Generar placa aleatoria en lugar de estática
+      const randomPlate = this.generateRandomPlate();
+      this.weighingForm.patchValue({ remolque2Plate: randomPlate });
+      console.log('Placa detectada automáticamente:', randomPlate);
 
       // Si es doble remolque, actualizar el estado del remolque 2
       if (this.weighingForm.get('doubleTrailer')?.value) {
-        this.doubleTrailerState.remolque2.placa = 'DEF-456-CD';
+        this.doubleTrailerState.remolque2.placa = randomPlate;
         this.doubleTrailerState.remolque2.fotos = ['foto_remolque2.jpg'];
         // Marcar que se capturó la foto de la placa del remolque 2
         this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
@@ -628,9 +663,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       }
     } else if (photoType === 'trailerPlate2') {
       this.photoData.trailerPlate2 = 'Foto capturada';
-      // Simular detección automática de placa (OCR)
-      this.weighingForm.patchValue({ trailerPlate2: 'XYZ-789-AB' });
-      console.log('Placa detectada automáticamente: XYZ-789-AB');
+      // Generar placa aleatoria en lugar de estática
+      const randomPlate = this.generateRandomPlate();
+      this.weighingForm.patchValue({ trailerPlate2: randomPlate });
+      console.log('Placa detectada automáticamente:', randomPlate);
     }
 
     // Actualizar el estado de los pasos del proceso
@@ -703,41 +739,82 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const entradaData: Omit<
-      EntradaConDobleRemolque,
-      'folio' | 'fechaHoraEntrada'
-    > = {
+    const entradaData: CreateDoubleTrailerEntryRequest = {
+      unitType: this.unitType as 'client' | 'provider',
+      tipoUnidad: 'doble-remolque',
       trailerPlaca: this.doubleTrailerState.trailerPlaca,
       remolques: [
-        this.doubleTrailerState.remolque1 as RemolqueData,
-        this.doubleTrailerState.remolque2 as RemolqueData,
+        {
+          numero: this.doubleTrailerState.remolque1.numero || 1,
+          placa: this.doubleTrailerState.remolque1.placa || '',
+          pesoBruto: this.doubleTrailerState.remolque1.pesoBruto || 0,
+          fotos: this.doubleTrailerState.remolque1.fotos || [],
+          pesoCapturado:
+            this.doubleTrailerState.remolque1.pesoCapturado || false,
+          fotosCapturadas:
+            this.doubleTrailerState.remolque1.fotosCapturadas || false,
+          fotoCargaCapturada:
+            this.doubleTrailerState.remolque1.fotoCargaCapturada || false,
+          fotoPlacaCapturada:
+            this.doubleTrailerState.remolque1.fotoPlacaCapturada || false,
+        },
+        {
+          numero: this.doubleTrailerState.remolque2.numero || 2,
+          placa: this.doubleTrailerState.remolque2.placa || '',
+          pesoBruto: this.doubleTrailerState.remolque2.pesoBruto || 0,
+          fotos: this.doubleTrailerState.remolque2.fotos || [],
+          pesoCapturado:
+            this.doubleTrailerState.remolque2.pesoCapturado || false,
+          fotosCapturadas:
+            this.doubleTrailerState.remolque2.fotosCapturadas || false,
+          fotoCargaCapturada:
+            this.doubleTrailerState.remolque2.fotoCargaCapturada || false,
+          fotoPlacaCapturada:
+            this.doubleTrailerState.remolque2.fotoPlacaCapturada || false,
+        },
       ],
       pesoBrutoTotal: this.doubleTrailerState.pesoBrutoTotal,
-      unitType: this.unitType as 'client' | 'provider',
       product: formData['product'] as string,
       clientProviderName: formData['clientProviderName'] as string,
     };
 
     this.weighingService.createDoubleTrailerEntry(entradaData).subscribe({
-      next: (entrada) => {
+      next: (response) => {
         this.isLoading = false;
-        console.log('Entrada con doble remolque registrada:', entrada);
+        console.log('Entrada con doble remolque registrada:', response);
 
-        this.messageService.showSuccessToast({
-          title: 'Entrada registrada',
-          message: `Entrada con doble remolque registrada exitosamente. Folio: ${entrada.folio}`,
-          position: 'top-right',
-        });
+        if (response.success && response.data) {
+          this.messageService.showSuccessToast({
+            title: 'Entrada registrada',
+            message: `Entrada con doble remolque registrada exitosamente. Folio: ${response.data.folio}`,
+            position: 'top-right',
+          });
 
-        // Generar ticket para entrada con doble remolque
-        this.generateTicket('double', entrada);
+          // Generar ticket para entrada con doble remolque
+          this.generateTicket('double', response.data);
+        } else {
+          this.messageService.showErrorToast({
+            title: 'Error al registrar',
+            message: response.message || 'No se pudo completar la operación.',
+            position: 'top-right',
+          });
+        }
       },
       error: (error) => {
         this.isLoading = false;
         console.error('Error al registrar entrada con doble remolque:', error);
+
+        let errorMessage = 'No se pudo completar la operación.';
+        if (error.status === 409) {
+          errorMessage =
+            'La placa ya tiene una entrada registrada previamente.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
         this.messageService.showErrorToast({
           title: 'Error al registrar',
-          message: 'No se pudo completar la operación.',
+          message: errorMessage,
           position: 'top-right',
         });
       },
@@ -745,47 +822,81 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   private saveNormalEntry(formData: Record<string, unknown>): void {
-    // Crear nueva operación de entrada
-    this.weighingService
-      .createEntryOperation({
-        unitType: this.unitType as 'client' | 'provider',
-        operationType: 'entry',
-        trailerPlate: formData['trailerPlate'] as string,
-        trailerPlate2: (formData['trailerPlate2'] as string) || undefined,
-        product: formData['product'] as string,
-        clientProviderName: formData['clientProviderName'] as string,
-        entryWeight: this.weightData.capturedWeight,
-      })
-      .subscribe({
-        next: (operation) => {
-          this.isLoading = false;
-          console.log('Entrada registrada:', operation);
+    // Determinar tipo de unidad basado en checkboxes
+    const tipoUnidad = formData['containerOnly'] ? 'contenedor' : 'remolque';
 
-          // Mostrar mensaje de éxito con folio (homologado como doble remolque)
+    // Crear request para el backend
+    const request: CreateEntryRequest = {
+      unitType: this.unitType as 'client' | 'provider',
+      operationType: 'entry',
+      tipoUnidad: tipoUnidad,
+      trailerPlate: formData['trailerPlate'] as string,
+      trailerPlate2: (formData['trailerPlate2'] as string) || undefined,
+      trailerPlateContenedor: formData['containerOnly']
+        ? (formData['trailerPlate'] as string)
+        : undefined,
+      remolquePlateContenedor: formData['containerOnly']
+        ? (formData['trailerPlate2'] as string)
+        : undefined,
+      product: formData['product'] as string,
+      clientProviderName: formData['clientProviderName'] as string,
+      clientProviderRfc: (formData['clientProviderRfc'] as string) || undefined,
+      entryWeight: this.weightData.capturedWeight || 0,
+      photos: {
+        trailerPlate: this.photoData.trailerPlate || undefined,
+        trailerPlate2: this.photoData.trailerPlate2 || undefined,
+        cargo: this.photoData.cargo || '',
+      },
+    };
+
+    this.weighingService.createEntryOperation(request).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        console.log('Entrada registrada:', response);
+
+        if (response.success && response.data) {
+          // Mostrar mensaje de éxito con folio
           this.messageService.showSuccessToast({
             title: 'Entrada registrada',
-            message: `Entrada normal registrada exitosamente. Folio: ${operation.id}`,
+            message: `Entrada registrada exitosamente. Folio: ${response.data.folio}`,
             position: 'top-right',
           });
 
           // Generar ticket para entrada normal
-          this.generateTicket('normal', operation);
-        },
-        error: (error) => {
-          this.isLoading = false;
-          console.error('Error al registrar entrada:', error);
+          this.generateTicket('normal', response.data);
+        } else {
+          // Manejar error del backend
           this.messageService.showErrorToast({
             title: 'Error al registrar',
-            message: 'No se pudo completar la operación.',
+            message: response.message || 'No se pudo completar la operación.',
             position: 'top-right',
           });
-        },
-      });
+        }
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error al registrar entrada:', error);
+
+        let errorMessage = 'No se pudo completar la operación.';
+        if (error.status === 409) {
+          errorMessage =
+            'La placa ya tiene una entrada registrada previamente.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
+        this.messageService.showErrorToast({
+          title: 'Error al registrar',
+          message: errorMessage,
+          position: 'top-right',
+        });
+      },
+    });
   }
 
   private generateTicket(
     type: 'double' | 'normal' | 'exit',
-    operation: WeighingOperation | EntradaConDobleRemolque | ExitOperation
+    operation: any
   ): void {
     // TODO: Implementar generación de ticket PDF con QR
     console.log(`Generando ticket para operación tipo: ${type}`, operation);
@@ -795,17 +906,17 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     switch (type) {
       case 'double':
         message = `Entrada con doble remolque registrada exitosamente. Folio: ${
-          (operation as EntradaConDobleRemolque)?.folio || 'N/A'
+          operation?.folio || 'N/A'
         }`;
         break;
       case 'normal':
         message = `Entrada normal registrada exitosamente. Folio: ${
-          (operation as WeighingOperation)?.id || 'N/A'
+          operation?.folio || 'N/A'
         }`;
         break;
       case 'exit':
         message = `Salida registrada exitosamente para placa: ${
-          (operation as ExitOperation)?.plate || 'N/A'
+          operation?.plate || 'N/A'
         }`;
         break;
     }
