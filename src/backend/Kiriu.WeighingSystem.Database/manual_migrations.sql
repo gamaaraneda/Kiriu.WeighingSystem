@@ -210,16 +210,94 @@ BEGIN
 END
 
 -- =====================================================
--- PLANTILLA PARA FUTURAS MIGRACIONES
--- =====================================================
-/*
--- =====================================================
--- MIGRACIÓN VERSIÓN 2: [DESCRIPCIÓN]
+-- MIGRACIÓN VERSIÓN 2: SINCRONIZACIÓN CON ENTITY FRAMEWORK
 -- =====================================================
 IF @SchemaVersion < 2
 BEGIN
     PRINT '==========================================';
-    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 2: [DESCRIPCIÓN]';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 2: SINCRONIZACIÓN CON ENTITY FRAMEWORK';
+    PRINT '==========================================';
+    
+    -- Esta migración asegura que las tablas existentes estén completamente sincronizadas
+    -- con el modelo de Entity Framework Core, incluyendo foreign keys y restricciones
+    
+    -- Verificar y crear foreign keys si no existen
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_WeighingPhotos_WeighingOperations')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingPhotos] 
+        ADD CONSTRAINT [FK_WeighingPhotos_WeighingOperations] 
+        FOREIGN KEY ([WeighingOperationId]) 
+        REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE CASCADE;
+        PRINT '✓ Foreign key FK_WeighingPhotos_WeighingOperations creada';
+    END
+    
+    IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_WeighingRemolques_WeighingOperations')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingRemolques] 
+        ADD CONSTRAINT [FK_WeighingRemolques_WeighingOperations] 
+        FOREIGN KEY ([WeighingOperationId]) 
+        REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE CASCADE;
+        PRINT '✓ Foreign key FK_WeighingRemolques_WeighingOperations creada';
+    END
+    
+    -- Verificar y crear índices adicionales si no existen
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_WeighingPhotos_PhotoType')
+    BEGIN
+        CREATE INDEX [IX_WeighingPhotos_PhotoType] ON [weighing].[WeighingPhotos] ([PhotoType]);
+        PRINT '✓ Índice IX_WeighingPhotos_PhotoType creado';
+    END
+    
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_WeighingRemolques_Placa')
+    BEGIN
+        CREATE INDEX [IX_WeighingRemolques_Placa] ON [weighing].[WeighingRemolques] ([Placa]);
+        PRINT '✓ Índice IX_WeighingRemolques_Placa creado';
+    END
+    
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_WeighingRemolques_Operation_Numero')
+    BEGIN
+        CREATE UNIQUE INDEX [IX_WeighingRemolques_Operation_Numero] ON [weighing].[WeighingRemolques] ([WeighingOperationId], [Numero]);
+        PRINT '✓ Índice único IX_WeighingRemolques_Operation_Numero creado';
+    END
+    
+    -- Verificar y crear índices adicionales para WeighingOperations
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_WeighingOperations_CreatedAt')
+    BEGIN
+        CREATE INDEX [IX_WeighingOperations_CreatedAt] ON [weighing].[WeighingOperations] ([CreatedAt]);
+        PRINT '✓ Índice IX_WeighingOperations_CreatedAt creado';
+    END
+    
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_WeighingOperations_ClientProvider')
+    BEGIN
+        CREATE INDEX [IX_WeighingOperations_ClientProvider] ON [weighing].[WeighingOperations] ([ClientProviderName]);
+        PRINT '✓ Índice IX_WeighingOperations_ClientProvider creado';
+    END
+    
+    -- Registrar migración
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (2, 'Sincronización completa con Entity Framework Core: Foreign keys, índices adicionales y restricciones', 'manual_migrations.sql');
+    
+    PRINT '✅ MIGRACIÓN VERSIÓN 2 COMPLETADA EXITOSAMENTE';
+    PRINT '   • Foreign keys sincronizadas';
+    PRINT '   • Índices adicionales creados';
+    PRINT '   • Sistema completamente compatible con EF Core';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'ℹ️  Migración versión 2 ya aplicada - Saltando...';
+END
+
+-- =====================================================
+-- PLANTILLA PARA FUTURAS MIGRACIONES
+-- =====================================================
+/*
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 3: [DESCRIPCIÓN]
+-- =====================================================
+IF @SchemaVersion < 3
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 3: [DESCRIPCIÓN]';
     PRINT '==========================================';
     
     -- Aquí van los comandos SQL para la migración
@@ -229,14 +307,14 @@ BEGIN
     
     -- Registrar migración
     INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
-    VALUES (2, '[DESCRIPCIÓN DE LA MIGRACIÓN]', 'manual_migrations.sql');
+    VALUES (3, '[DESCRIPCIÓN DE LA MIGRACIÓN]', 'manual_migrations.sql');
     
-    PRINT '✅ MIGRACIÓN VERSIÓN 2 COMPLETADA EXITOSAMENTE';
+    PRINT '✅ MIGRACIÓN VERSIÓN 3 COMPLETADA EXITOSAMENTE';
     PRINT '';
 END
 ELSE
 BEGIN
-    PRINT 'ℹ️  Migración versión 2 ya aplicada - Saltando...';
+    PRINT 'ℹ️  Migración versión 3 ya aplicada - Saltando...';
 END
 */
 
