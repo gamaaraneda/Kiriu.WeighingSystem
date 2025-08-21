@@ -166,22 +166,22 @@ export class RealWeighingService {
   /**
    * Crear operación de entrada (remolque/contenedor simple)
    */
-  createEntryOperation(request: CreateEntryRequest): Observable<ApiResponse<WeighingOperationDto>> {
-    return this.http.post<ApiResponse<WeighingOperationDto>>(`${this.apiUrl}/entry`, request);
+  createEntryOperation(request: CreateEntryRequest): Observable<WeighingOperationDto> {
+    return this.http.post<WeighingOperationDto>(`${this.apiUrl}/entry`, request);
   }
 
   /**
    * Crear operación de entrada con doble remolque
    */
-  createDoubleTrailerEntry(request: CreateDoubleTrailerEntryRequest): Observable<ApiResponse<DoubleTrailerEntryResponse>> {
-    return this.http.post<ApiResponse<DoubleTrailerEntryResponse>>(`${this.apiUrl}/entry/double-trailer`, request);
+  createDoubleTrailerEntry(request: CreateDoubleTrailerEntryRequest): Observable<DoubleTrailerEntryResponse> {
+    return this.http.post<DoubleTrailerEntryResponse>(`${this.apiUrl}/entry/double-trailer`, request);
   }
 
   /**
    * Buscar entrada por placa
    */
-  searchEntryByPlate(placa: string): Observable<ApiResponse<EntrySearchResponse>> {
-    return this.http.get<ApiResponse<EntrySearchResponse>>(`${this.apiUrl}/entry/search`, {
+  searchEntryByPlate(placa: string): Observable<EntrySearchResponse> {
+    return this.http.get<EntrySearchResponse>(`${this.apiUrl}/entry/search`, {
       params: { placa }
     });
   }
@@ -326,7 +326,7 @@ export class RealWeighingService {
    */
   canRegisterExit(trailerPlate: string): Observable<boolean> {
     return this.searchEntryByPlate(trailerPlate).pipe(
-      map(response => response.success && response.data != null)
+      map(response => response != null)
     );
   }
 

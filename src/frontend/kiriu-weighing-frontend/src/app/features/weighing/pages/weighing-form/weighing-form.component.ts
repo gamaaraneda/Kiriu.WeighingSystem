@@ -783,22 +783,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         console.log('Entrada con doble remolque registrada:', response);
 
-        if (response.success && response.data) {
-          this.messageService.showSuccessToast({
-            title: 'Entrada registrada',
-            message: `Entrada con doble remolque registrada exitosamente. Folio: ${response.data.folio}`,
-            position: 'top-right',
-          });
+        // El interceptor ya procesó la respuesta y extrajo solo los datos
+        this.messageService.showSuccessToast({
+          title: 'Entrada registrada',
+          message: `Entrada con doble remolque registrada exitosamente. Folio: ${response.folio}`,
+          position: 'top-right',
+        });
 
-          // Generar ticket para entrada con doble remolque
-          this.generateTicket('double', response.data);
-        } else {
-          this.messageService.showErrorToast({
-            title: 'Error al registrar',
-            message: response.message || 'No se pudo completar la operación.',
-            position: 'top-right',
-          });
-        }
+        // Generar ticket para entrada con doble remolque
+        this.generateTicket('double', response);
       },
       error: (error) => {
         this.isLoading = false;
@@ -854,24 +847,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         console.log('Entrada registrada:', response);
 
-        if (response.success && response.data) {
-          // Mostrar mensaje de éxito con folio
-          this.messageService.showSuccessToast({
-            title: 'Entrada registrada',
-            message: `Entrada registrada exitosamente. Folio: ${response.data.folio}`,
-            position: 'top-right',
-          });
+        // El interceptor ya procesó la respuesta y extrajo solo los datos
+        this.messageService.showSuccessToast({
+          title: 'Entrada registrada',
+          message: `Entrada registrada exitosamente. Folio: ${response.folio}`,
+          position: 'top-right',
+        });
 
-          // Generar ticket para entrada normal
-          this.generateTicket('normal', response.data);
-        } else {
-          // Manejar error del backend
-          this.messageService.showErrorToast({
-            title: 'Error al registrar',
-            message: response.message || 'No se pudo completar la operación.',
-            position: 'top-right',
-          });
-        }
+        // Generar ticket para entrada normal
+        this.generateTicket('normal', response);
       },
       error: (error) => {
         this.isLoading = false;
