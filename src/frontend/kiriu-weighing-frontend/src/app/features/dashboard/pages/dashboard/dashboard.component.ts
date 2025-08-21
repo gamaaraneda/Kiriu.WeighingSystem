@@ -101,7 +101,6 @@ export class DashboardComponent implements OnInit {
    */
   onQueries(): void {
     console.log('Navegando a consultas...');
-    // Aquí se navegaría a la página de consultas
-    alert('Funcionalidad de consultas en desarrollo');
+    this.router.navigate(['/weighing-query']);
   }
 }

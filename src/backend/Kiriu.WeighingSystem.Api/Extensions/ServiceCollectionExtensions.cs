@@ -19,6 +19,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthApplicationService, AuthApplicationService>();
         services.AddScoped<IHealthCheckApplicationService, HealthCheckApplicationService>();
         services.AddScoped<IWeighingApplicationService, WeighingApplicationService>();
+        services.AddScoped<IWeighingQueryService, WeighingQueryService>();
+        services.AddScoped<IExcelExportService, ExcelExportService>();
 
         return services;
     }

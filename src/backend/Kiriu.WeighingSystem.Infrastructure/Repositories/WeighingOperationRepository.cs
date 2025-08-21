@@ -166,4 +166,127 @@ public class WeighingOperationRepository : IWeighingOperationRepository
             .OrderByDescending(w => w.CreatedAt)
             .ToListAsync();
     }
+
+    public async Task<List<WeighingOperation>> QueryOperationsAsync(
+        DateTime? fechaDesde,
+        DateTime? fechaHasta,
+        string? folio,
+        string? placa,
+        string? estado,
+        string? edicionPosterior,
+        int page,
+        int size)
+    {
+        var query = _context.WeighingOperations
+            .Include(w => w.Photos)
+            .Include(w => w.Remolques)
+            .AsQueryable();
+
+        if (fechaDesde.HasValue)
+        {
+            query = query.Where(w => w.CreatedAt >= fechaDesde.Value);
+        }
+
+        if (fechaHasta.HasValue)
+        {
+            query = query.Where(w => w.CreatedAt <= fechaHasta.Value.AddDays(1).AddSeconds(-1));
+        }
+
+        if (!string.IsNullOrEmpty(folio))
+        {
+            query = query.Where(w => w.Folio.Contains(folio));
+        }
+
+        if (!string.IsNullOrEmpty(placa))
+        {
+            query = query.Where(w => 
+                w.TrailerPlate.Contains(placa) || 
+                w.TrailerPlate2.Contains(placa) || 
+                w.TrailerPlateContenedor.Contains(placa) || 
+                w.RemolquePlateContenedor.Contains(placa) ||
+                w.PlacaRemolque1.Contains(placa) ||
+                w.PlacaRemolque2.Contains(placa) ||
+                w.Remolques.Any(r => r.Placa.Contains(placa)));
+        }
+
+        if (!string.IsNullOrEmpty(estado))
+        {
+            query = query.Where(w => w.Status == estado);
+        }
+
+        if (!string.IsNullOrEmpty(edicionPosterior) && edicionPosterior != "Todos")
+        {
+            if (edicionPosterior == "Editado")
+            {
+                query = query.Where(w => EF.Functions.DateDiffMinute(w.CreatedAt, w.UpdatedAt) > 5);
+            }
+            else if (edicionPosterior == "NoEditado")
+            {
+                query = query.Where(w => EF.Functions.DateDiffMinute(w.CreatedAt, w.UpdatedAt) <= 5);
+            }
+        }
+
+        return await query
+            .OrderByDescending(w => w.CreatedAt)
+            .Skip((page - 1) * size)
+            .Take(size)
+            .ToListAsync();
+    }
+
+    public async Task<int> CountOperationsAsync(
+        DateTime? fechaDesde,
+        DateTime? fechaHasta,
+        string? folio,
+        string? placa,
+        string? estado,
+        string? edicionPosterior)
+    {
+        var query = _context.WeighingOperations.AsQueryable();
+
+        if (fechaDesde.HasValue)
+        {
+            query = query.Where(w => w.CreatedAt >= fechaDesde.Value);
+        }
+
+        if (fechaHasta.HasValue)
+        {
+            query = query.Where(w => w.CreatedAt <= fechaHasta.Value.AddDays(1).AddSeconds(-1));
+        }
+
+        if (!string.IsNullOrEmpty(folio))
+        {
+            query = query.Where(w => w.Folio.Contains(folio));
+        }
+
+        if (!string.IsNullOrEmpty(placa))
+        {
+            query = query.Where(w => 
+                w.TrailerPlate.Contains(placa) || 
+                w.TrailerPlate2.Contains(placa) || 
+                w.TrailerPlateContenedor.Contains(placa) || 
+                w.RemolquePlateContenedor.Contains(placa) ||
+                w.PlacaRemolque1.Contains(placa) ||
+                w.PlacaRemolque2.Contains(placa) ||
+                w.Remolques.Any(r => r.Placa.Contains(placa)));
+        }
+
+        if (!string.IsNullOrEmpty(estado))
+        {
+            query = query.Where(w => w.Status == estado);
+        }
+
+        if (!string.IsNullOrEmpty(edicionPosterior) && edicionPosterior != "Todos")
+        {
+            if (edicionPosterior == "Editado")
+            {
+                query = query.Where(w => EF.Functions.DateDiffMinute(w.CreatedAt, w.UpdatedAt) > 5);
+            }
+            else if (edicionPosterior == "NoEditado")
+            {
+                query = query.Where(w => EF.Functions.DateDiffMinute(w.CreatedAt, w.UpdatedAt) <= 5);
+            }
+        }
+
+        return await query.CountAsync();
+    }
 }

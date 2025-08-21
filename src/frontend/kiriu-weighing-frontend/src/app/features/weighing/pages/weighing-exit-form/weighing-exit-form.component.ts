@@ -765,7 +765,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    */
   onQueries(): void {
     // Implementar navegación a consultas
-    this.messageService.showInfo({ message: 'Navegando a consultas...' });
+    this.router.navigate(['/weighing-query']);
   }
 
   /**

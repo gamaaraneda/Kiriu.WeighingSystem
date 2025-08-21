@@ -11,6 +11,8 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { SliderModule } from 'primeng/slider';
 import { RatingModule } from 'primeng/rating';
+import { DatePickerModule } from 'primeng/datepicker';
+import { SelectModule } from 'primeng/select';
 
 // PrimeNG Layout Components
 import { CardModule } from 'primeng/card';
@@ -54,6 +56,8 @@ import { StyleClassModule } from 'primeng/styleclass';
     RadioButtonModule,
     SliderModule,
     RatingModule,
+    DatePickerModule,
+    SelectModule,
 
     // Layout Components
     CardModule,
@@ -96,6 +100,8 @@ import { StyleClassModule } from 'primeng/styleclass';
     RadioButtonModule,
     SliderModule,
     RatingModule,
+    DatePickerModule,
+    SelectModule,
 
     // Layout Components
     CardModule,
@@ -137,6 +143,8 @@ export {
   RadioButtonModule,
   SliderModule,
   RatingModule,
+  DatePickerModule,
+  SelectModule,
   CardModule,
   PanelModule,
   DividerModule,

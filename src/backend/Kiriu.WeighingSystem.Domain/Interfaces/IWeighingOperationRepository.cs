@@ -20,4 +20,20 @@ public interface IWeighingOperationRepository
     Task<bool> HasActiveEntryAsync(string plate);
     Task<WeighingOperation?> GetActiveEntryByPlateAsync(string plate);
     Task<List<WeighingOperation>> GetOperationsByPlateAsync(string plate);
+    Task<List<WeighingOperation>> QueryOperationsAsync(
+        DateTime? fechaDesde,
+        DateTime? fechaHasta,
+        string? folio,
+        string? placa,
+        string? estado,
+        string? edicionPosterior,
+        int page,
+        int size);
+    Task<int> CountOperationsAsync(
+        DateTime? fechaDesde,
+        DateTime? fechaHasta,
+        string? folio,
+        string? placa,
+        string? estado,
+        string? edicionPosterior);
 }

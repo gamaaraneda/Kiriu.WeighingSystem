@@ -1,0 +1,283 @@
+<div class="weighing-query-container">
+  <!-- Toast para notificaciones -->
+  <p-toast key="top-right" position="top-right"></p-toast>
+
+  <!-- Header -->
+  <app-header
+    (queriesClick)="onQueries()"
+    (logoutClick)="onLogout()"
+  ></app-header>
+
+  <!-- Contenido principal -->
+  <main class="weighing-query-content">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <app-breadcrumb></app-breadcrumb>
+
+      <!-- Header de la página -->
+      <div class="page-header">
+        <div class="header-left">
+          <button
+            type="button"
+            class="btn btn-outline back-btn"
+            (click)="onGoBack()"
+          >
+            ← Regresar
+          </button>
+          <div class="page-title-group">
+            <h1 class="page-title">Consulta y Reimpresión</h1>
+            <p class="page-subtitle">Buscar y gestionar registros existentes</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <button
+            type="button"
+            class="btn btn-success export-btn"
+            [disabled]="!queryResults.length || isLoading"
+            (click)="onExportExcel()"
+          >
+            📊 Exportar Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros de búsqueda -->
+      <div class="search-filters-card">
+        <h2 class="filters-title">🔍 Filtros de Búsqueda</h2>
+        <form [formGroup]="filtersForm" class="filters-form">
+          <div class="filters-grid">
+            <!-- Fecha desde -->
+            <div class="filter-group">
+              <label for="fechaDesde" class="filter-label">Fecha Desde</label>
+              <p-datepicker
+                id="fechaDesde"
+                formControlName="fechaDesde"
+                [showIcon]="true"
+                inputId="fechaDesde"
+                placeholder="dd/mm/aaaa"
+                dateFormat="dd/mm/yy"
+                [maxDate]="today"
+                [showButtonBar]="true"
+              ></p-datepicker>
+            </div>
+
+            <!-- Fecha hasta -->
+            <div class="filter-group">
+              <label for="fechaHasta" class="filter-label">Fecha Hasta</label>
+              <p-datepicker
+                id="fechaHasta"
+                formControlName="fechaHasta"
+                [showIcon]="true"
+                inputId="fechaHasta"
+                placeholder="dd/mm/aaaa"
+                dateFormat="dd/mm/yy"
+                [maxDate]="today"
+                [showButtonBar]="true"
+              ></p-datepicker>
+            </div>
+
+            <!-- Folio -->
+            <div class="filter-group">
+              <label for="folio" class="filter-label">Folio</label>
+              <input
+                type="text"
+                id="folio"
+                formControlName="folio"
+                class="form-input"
+                placeholder="F001"
+              />
+            </div>
+
+            <!-- Placas -->
+            <div class="filter-group">
+              <label for="placas" class="filter-label">Placas</label>
+              <input
+                type="text"
+                id="placas"
+                formControlName="placas"
+                class="form-input"
+                placeholder="ABC-123"
+              />
+            </div>
+
+            <!-- Estado -->
+            <div class="filter-group">
+              <label for="estado" class="filter-label">Estado</label>
+              <p-select
+                id="estado"
+                formControlName="estado"
+                [options]="estadoOptions"
+                placeholder="Todos"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+              ></p-select>
+            </div>
+
+            <!-- Edición posterior -->
+            <div class="filter-group">
+              <label for="edicionPosterior" class="filter-label">Edición Posterior</label>
+              <p-select
+                id="edicionPosterior"
+                formControlName="edicionPosterior"
+                [options]="edicionPosteriorOptions"
+                placeholder="Todos"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+              ></p-select>
+            </div>
+          </div>
+
+          <!-- Botones de filtros -->
+          <div class="filters-actions">
+            <button
+              type="button"
+              class="btn btn-outline"
+              (click)="onClearFilters()"
+            >
+              Limpiar Filtros
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="isLoading"
+              (click)="onSearch()"
+            >
+              <span *ngIf="!isLoading">🔍 Buscar</span>
+              <span *ngIf="isLoading">Buscando...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Resultados -->
+      <div class="results-section">
+        <div class="results-header">
+          <h2 class="results-title">
+            Resultados ({{ totalResults }})
+          </h2>
+        </div>
+
+        <!-- Tabla de resultados -->
+        <div class="results-table-container" *ngIf="queryResults.length > 0">
+          <p-table
+            [value]="queryResults"
+            [paginator]="true"
+            [rows]="pageSize"
+            [totalRecords]="totalResults"
+            [lazy]="true"
+            (onLazyLoad)="onLazyLoad($event)"
+            [loading]="isLoading"
+            [scrollable]="true"
+            scrollHeight="500px"
+            styleClass="p-datatable-striped"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Folio</th>
+                <th>Fecha</th>
+                <th>Placas</th>
+                <th>Cliente/Proveedor</th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Peso Bruto</th>
+                <th>Peso Neto</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-operation>
+              <tr [class.edited-row]="operation.fueEditado">
+                <td>
+                  <span class="folio-text">{{ operation.folio }}</span>
+                  <span *ngIf="operation.fueEditado" class="edited-badge">Editado</span>
+                </td>
+                <td>{{ operation.fecha | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <span class="placas-text">{{ operation.placas }}</span>
+                </td>
+                <td>{{ operation.clienteProveedor }}</td>
+                <td>{{ operation.producto }}</td>
+                <td>
+                  <div class="tipo-badges">
+                    <span class="tipo-badge" [class]="'tipo-' + operation.tipo">
+                      {{ operation.tipo === 'client' ? 'Cliente' : 'Proveedor' }}
+                    </span>
+                    <span class="unidad-badge" [class]="'unidad-' + operation.tipoUnidad">
+                      {{ getUnidadLabel(operation.tipoUnidad) }}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <span *ngIf="operation.pesoBruto" class="peso-value">
+                    {{ operation.pesoBruto | number:'1.0-0' }} kg
+                  </span>
+                  <span *ngIf="!operation.pesoBruto" class="peso-empty">-</span>
+                </td>
+                <td>
+                  <span *ngIf="operation.pesoNeto" class="peso-value">
+                    {{ operation.pesoNeto | number:'1.0-0' }} kg
+                  </span>
+                  <span *ngIf="!operation.pesoNeto" class="peso-empty">-</span>
+                </td>
+                <td>
+                  <span class="estado-badge" [class]="'estado-' + operation.estado.toLowerCase().replace('_', '-')">
+                    {{ getEstadoLabel(operation.estado) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline action-btn"
+                      (click)="onViewDetail(operation)"
+                      title="Ver detalle"
+                    >
+                      👁️
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline action-btn"
+                      [disabled]="!operation.puedeReimprimir"
+                      (click)="onReprint(operation)"
+                      title="Reimprimir ticket"
+                    >
+                      🖨️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="10" class="empty-message">
+                  <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <div class="empty-text">
+                      <p class="empty-title">No se encontraron resultados</p>
+                      <p class="empty-subtitle">
+                        Ajusta los filtros de búsqueda o verifica los criterios ingresados
+                      </p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+
+        <!-- Estado sin resultados inicial -->
+        <div *ngIf="queryResults.length === 0 && !hasSearched && !isLoading" class="no-search-state">
+          <div class="no-search-content">
+            <div class="no-search-icon">🔍</div>
+            <h3 class="no-search-title">Buscar registros</h3>
+            <p class="no-search-text">
+              Utiliza los filtros de arriba para buscar operaciones de pesaje
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

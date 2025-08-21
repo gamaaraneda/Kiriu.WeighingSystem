@@ -888,12 +888,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   onQueries(): void {
     console.log('Navegando a consultas...');
-    // TODO: Implementar navegación a consultas
-    this.messageService.showInfoToast({
-      title: 'Funcionalidad en desarrollo',
-      message: 'Funcionalidad de consultas en desarrollo',
-      position: 'top-right',
-    });
+    this.router.navigate(['/weighing-query']);
   }
 
   onLogout(): void {
