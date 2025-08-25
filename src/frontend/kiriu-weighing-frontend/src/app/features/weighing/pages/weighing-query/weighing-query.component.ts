@@ -10,6 +10,7 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { DialogModule } from 'primeng/dialog';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { 
@@ -18,6 +19,7 @@ import {
   WeighingQueryResult 
 } from '../../services/weighing-query.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { extractErrorMessage } from '../../../../shared/utils/error.utils';
 
 @Component({
   selector: 'app-weighing-query',
@@ -31,6 +33,7 @@ import { AuthService } from '../../../../core/services/auth.service';
     TableModule,
     ButtonModule,
     InputTextModule,
+    DialogModule,
     HeaderComponent,
     BreadcrumbComponent
   ],
@@ -49,6 +52,10 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   isLoading = false;
   hasSearched = false;
   today = new Date();
+
+  // Modal state
+  showDetailModal = false;
+  selectedOperation: WeighingQueryResult | null = null;
 
   estadoOptions = [
     { label: 'Todos', value: '' },
@@ -154,25 +161,22 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.isLoading = false;
-          if (response.success && response.data) {
-            this.queryResults = response.data.resultados;
-            this.totalResults = response.data.pagination.total;
-            
-            if (this.queryResults.length === 0 && this.currentPage === 1) {
-              this.messageService.add({
-                severity: 'info',
-                summary: 'Sin resultados',
-                detail: 'No se encontraron operaciones que coincidan con los filtros especificados',
-                key: 'top-right'
-              });
-            }
-          } else {
-            this.handleError('Error al consultar operaciones: ' + response.message);
+          this.queryResults = response.resultados;
+          this.totalResults = response.pagination.total;
+          
+          if (this.queryResults.length === 0 && this.currentPage === 1) {
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Sin resultados',
+              detail: 'No se encontraron operaciones que coincidan con los filtros especificados',
+              key: 'top-right'
+            });
           }
         },
         error: (error) => {
           this.isLoading = false;
-          this.handleError('Error al consultar operaciones');
+          const errorMessage = extractErrorMessage(error);
+          this.handleError('Error al consultar operaciones: ' + errorMessage);
           console.error('Error en búsqueda:', error);
         }
       });
@@ -241,13 +245,13 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   }
 
   onViewDetail(operation: WeighingQueryResult): void {
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Ver detalle',
-      detail: `Mostrando detalles de la operación ${operation.folio}`,
-      key: 'top-right'
-    });
-    // Aquí se podría implementar un modal o navegación a detalle
+    this.selectedOperation = operation;
+    this.showDetailModal = true;
+  }
+
+  onCloseDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedOperation = null;
   }
 
   onReprint(operation: WeighingQueryResult): void {
@@ -261,13 +265,30 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Reimprimiendo',
-      detail: `Generando ticket para ${operation.folio}`,
-      key: 'top-right'
-    });
-    // Aquí se implementaría la lógica de reimpresión
+    this.isLoading = true;
+
+    this.weighingQueryService.reprintTicket(operation.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (blob) => {
+          this.isLoading = false;
+          const filename = `Ticket_${operation.folio}_${new Date().getTime()}.txt`;
+          this.weighingQueryService.downloadFile(blob, filename);
+          
+          this.messageService.add({
+            severity: 'success',
+            summary: '🎫 Ticket generado',
+            detail: `Ticket de ${operation.folio} listo para imprimir`,
+            key: 'top-right'
+          });
+        },
+        error: (error) => {
+          this.isLoading = false;
+          const errorMessage = extractErrorMessage(error);
+          this.handleError('Error al generar ticket: ' + errorMessage);
+          console.error('Error en reimpresión:', error);
+        }
+      });
   }
 
   onGoBack(): void {
@@ -298,6 +319,13 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       'SALIDA_REGISTRADA': 'Salida'
     };
     return labels[estado] || estado;
+  }
+
+  getTaraWeight(pesoBruto?: number, pesoNeto?: number): number | null {
+    if (pesoBruto && pesoNeto) {
+      return pesoBruto - pesoNeto;
+    }
+    return null;
   }
 
   private handleError(message: string): void {

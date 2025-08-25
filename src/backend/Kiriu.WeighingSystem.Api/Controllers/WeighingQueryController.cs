@@ -24,6 +24,7 @@ public class WeighingQueryController : ControllerBase
         _logger = logger;
     }
 
+
     /// <summary>
     /// Consulta operaciones de pesaje con filtros
     /// </summary>
@@ -134,5 +135,147 @@ public class WeighingQueryController : ControllerBase
             _logger.LogError(ex, "Error no controlado al obtener estadísticas");
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
+    }
+
+    /// <summary>
+    /// Genera ticket de reimpresión para una operación de salida
+    /// </summary>
+    [HttpPost("{operationId}/reprint")]
+    public async Task<IActionResult> ReprintTicket(string operationId)
+    {
+        try
+        {
+            _logger.LogInformation("Generando ticket de reimpresión para operación: {OperationId}", operationId);
+
+            if (!Guid.TryParse(operationId, out var id))
+            {
+                return BadRequest(new { success = false, message = "ID de operación inválido" });
+            }
+
+            // Obtener la operación usando el servicio de consulta con filtros amplios para buscar por ID
+            var filters = new WeighingQueryFiltersDto { Page = 1, Size = 1000 }; // Buscar en más registros
+            var result = await _weighingQueryService.QueryWeighingOperationsAsync(filters);
+
+            if (!result.Success || result.Data?.Resultados == null)
+            {
+                return BadRequest(new { success = false, message = "Error al obtener datos de la operación" });
+            }
+
+            var operation = result.Data.Resultados.FirstOrDefault(o => o.Id == operationId);
+            if (operation == null)
+            {
+                return NotFound(new { success = false, message = "Operación no encontrada" });
+            }
+
+            if (operation.Estado != "SALIDA_REGISTRADA")
+            {
+                return BadRequest(new { success = false, message = "Solo se pueden reimprimir operaciones de salida completadas" });
+            }
+
+            // Generar contenido del ticket
+            var ticketContent = GenerateTicketContent(operation);
+            var ticketBytes = System.Text.Encoding.UTF8.GetBytes(ticketContent);
+
+            var fileName = $"Ticket_{operation.Folio}_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+
+            _logger.LogInformation("Ticket generado exitosamente para operación: {Folio}", operation.Folio);
+
+            return File(ticketBytes, "text/plain", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al generar ticket de reimpresión");
+            return StatusCode(500, new { success = false, message = "Error interno del servidor al generar ticket" });
+        }
+    }
+
+    private static string GenerateTicketContent(WeighingQueryResultDto operation)
+    {
+        var ticket = new System.Text.StringBuilder();
+        var separator = new string('=', 45);
+        var lineSeparator = new string('-', 45);
+        
+        ticket.AppendLine(separator);
+        ticket.AppendLine("        SISTEMA DE PESAJE KIRIU");
+        ticket.AppendLine("          TICKET DE PESAJE");
+        ticket.AppendLine(separator);
+        ticket.AppendLine();
+        
+        // Información básica
+        ticket.AppendLine("INFORMACIÓN GENERAL:");
+        ticket.AppendLine(lineSeparator);
+        ticket.AppendLine($"Folio:        {operation.Folio}");
+        ticket.AppendLine($"Fecha:        {operation.Fecha:dd/MM/yyyy HH:mm}");
+        ticket.AppendLine($"Estado:       {GetEstadoDisplayName(operation.Estado)}");
+        ticket.AppendLine();
+        
+        // Cliente/Proveedor
+        ticket.AppendLine("CLIENTE/PROVEEDOR:");
+        ticket.AppendLine(lineSeparator);
+        ticket.AppendLine($"Nombre:       {operation.ClienteProveedor}");
+        ticket.AppendLine($"Tipo:         {(operation.Tipo == "client" ? "Cliente" : "Proveedor")}");
+        ticket.AppendLine();
+        
+        // Producto y unidad
+        ticket.AppendLine("PRODUCTO Y UNIDAD:");
+        ticket.AppendLine(lineSeparator);
+        ticket.AppendLine($"Producto:     {operation.Producto}");
+        ticket.AppendLine($"Tipo Unidad:  {GetTipoUnidadDisplayName(operation.TipoUnidad)}");
+        ticket.AppendLine($"Placas:       {operation.Placas}");
+        ticket.AppendLine();
+        
+        // Información de pesaje
+        ticket.AppendLine("PESAJE:");
+        ticket.AppendLine(lineSeparator);
+        ticket.AppendLine($"Peso Bruto:   {operation.PesoBruto:N2} kg");
+        ticket.AppendLine($"Peso Neto:    {operation.PesoNeto:N2} kg");
+        
+        var diferencia = (operation.PesoBruto ?? 0) - (operation.PesoNeto ?? 0);
+        if (diferencia > 0)
+        {
+            ticket.AppendLine($"Tara:         {diferencia:N2} kg");
+        }
+        
+        // Información de edición si aplica
+        if (operation.FueEditado && operation.FechaEdicion.HasValue)
+        {
+            ticket.AppendLine();
+            ticket.AppendLine("EDICIÓN:");
+            ticket.AppendLine(lineSeparator);
+            ticket.AppendLine($"Registro editado");
+            ticket.AppendLine($"Fecha Edición: {operation.FechaEdicion:dd/MM/yyyy HH:mm}");
+        }
+        
+        // Footer
+        ticket.AppendLine();
+        ticket.AppendLine(separator);
+        ticket.AppendLine($"Fecha Reimpresión: {DateTime.Now:dd/MM/yyyy HH:mm}");
+        ticket.AppendLine();
+        ticket.AppendLine("       Gracias por usar nuestro servicio");
+        ticket.AppendLine("         Sistema Kiriu - Versión 1.0");
+        ticket.AppendLine(separator);
+        
+        return ticket.ToString();
+    }
+
+    private static string GetEstadoDisplayName(string estado)
+    {
+        return estado switch
+        {
+            "ENTRADA_REGISTRADA" => "Entrada",
+            "SALIDA_REGISTRADA" => "Salida",
+            _ => estado
+        };
+    }
+
+    private static string GetTipoUnidadDisplayName(string tipoUnidad)
+    {
+        return tipoUnidad switch
+        {
+            "remolque" => "Remolque",
+            "contenedor" => "Contenedor",
+            "doble-remolque" => "2 Remolques",
+            _ => tipoUnidad
+        };
     }
 }

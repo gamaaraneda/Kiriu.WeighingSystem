@@ -239,11 +239,12 @@
                     <button
                       type="button"
                       class="btn btn-sm btn-outline action-btn"
-                      [disabled]="!operation.puedeReimprimir"
+                      [disabled]="!operation.puedeReimprimir || isLoading"
                       (click)="onReprint(operation)"
                       title="Reimprimir ticket"
                     >
-                      🖨️
+                      <span *ngIf="!isLoading">🖨️</span>
+                      <span *ngIf="isLoading">⏳</span>
                     </button>
                   </div>
                 </td>
@@ -280,4 +281,142 @@
       </div>
     </div>
   </main>
+
+  <!-- Modal de detalle de operación -->
+  <p-dialog
+    header="Detalle de Operación"
+    [(visible)]="showDetailModal"
+    [modal]="true"
+    [resizable]="false"
+    [draggable]="false"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    styleClass="detail-modal"
+    [style]="{ width: '90vw', maxWidth: '800px' }"
+  >
+    <div *ngIf="selectedOperation" class="operation-detail">
+      <!-- Header del modal -->
+      <div class="detail-header">
+        <div class="detail-title">
+          <h2>{{ selectedOperation.folio }}</h2>
+          <div class="detail-badges">
+            <span class="estado-badge" [class]="'estado-' + selectedOperation.estado.toLowerCase().replace('_', '-')">
+              {{ getEstadoLabel(selectedOperation.estado) }}
+            </span>
+            <span *ngIf="selectedOperation.fueEditado" class="edited-badge">
+              ✏️ Editado
+            </span>
+          </div>
+        </div>
+        <div class="detail-date">
+          {{ selectedOperation.fecha | date:'dd/MM/yyyy HH:mm' }}
+        </div>
+      </div>
+
+      <!-- Contenido del modal -->
+      <div class="detail-content">
+        <!-- Información básica -->
+        <div class="detail-section">
+          <h3 class="section-title">Información General</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Folio:</label>
+              <span>{{ selectedOperation.folio }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Fecha:</label>
+              <span>{{ selectedOperation.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Estado:</label>
+              <span class="estado-badge" [class]="'estado-' + selectedOperation.estado.toLowerCase().replace('_', '-')">
+                {{ getEstadoLabel(selectedOperation.estado) }}
+              </span>
+            </div>
+            <div class="detail-item" *ngIf="selectedOperation.fueEditado && selectedOperation.fechaEdicion">
+              <label>Fecha de Edición:</label>
+              <span>{{ selectedOperation.fechaEdicion | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cliente/Proveedor -->
+        <div class="detail-section">
+          <h3 class="section-title">Cliente/Proveedor</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Nombre:</label>
+              <span>{{ selectedOperation.clienteProveedor }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Tipo:</label>
+              <span class="tipo-badge" [class]="'tipo-' + selectedOperation.tipo">
+                {{ selectedOperation.tipo === 'client' ? 'Cliente' : 'Proveedor' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vehículo y Producto -->
+        <div class="detail-section">
+          <h3 class="section-title">Vehículo y Producto</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Placas:</label>
+              <span class="placas-text">{{ selectedOperation.placas }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Tipo de Unidad:</label>
+              <span class="unidad-badge" [class]="'unidad-' + selectedOperation.tipoUnidad">
+                {{ getUnidadLabel(selectedOperation.tipoUnidad) }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <label>Producto:</label>
+              <span>{{ selectedOperation.producto }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de Pesaje -->
+        <div class="detail-section">
+          <h3 class="section-title">Pesaje</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Peso Bruto:</label>
+              <span *ngIf="selectedOperation.pesoBruto" class="peso-value">
+                {{ selectedOperation.pesoBruto | number:'1.0-0' }} kg
+              </span>
+              <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty">No registrado</span>
+            </div>
+            <div class="detail-item">
+              <label>Peso Neto:</label>
+              <span *ngIf="selectedOperation.pesoNeto" class="peso-value">
+                {{ selectedOperation.pesoNeto | number:'1.0-0' }} kg
+              </span>
+              <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty">No registrado</span>
+            </div>
+            <div class="detail-item" *ngIf="getTaraWeight(selectedOperation.pesoBruto, selectedOperation.pesoNeto)">
+              <label>Tara:</label>
+              <span class="peso-value">
+                {{ getTaraWeight(selectedOperation.pesoBruto, selectedOperation.pesoNeto) | number:'1.0-0' }} kg
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="onCloseDetailModal()"
+        >
+          Cerrar
+        </button>
+      </div>
+    </ng-template>
+  </p-dialog>
 </div>

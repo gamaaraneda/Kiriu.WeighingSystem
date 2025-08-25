@@ -7,7 +7,7 @@ export interface WeighingQueryFilters {
   fechaDesde?: Date;
   fechaHasta?: Date;
   folio?: string;
-  placa?: string;
+  placas?: string;
   estado?: string;
   edicionPosterior?: string;
   page?: number;
@@ -54,21 +54,16 @@ export interface WeighingOperationsStats {
   }>;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message: string;
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class WeighingQueryService {
-  private readonly apiUrl = `${environment.apiUrl}/api/weighing/query`;
+  private readonly apiUrl = `${environment.apiUrl}/weighing/query`;
 
   constructor(private http: HttpClient) {}
 
-  queryOperations(filters: WeighingQueryFilters): Observable<ApiResponse<WeighingQueryResponse>> {
+  queryOperations(filters: WeighingQueryFilters): Observable<WeighingQueryResponse> {
     let params = new HttpParams();
 
     if (filters.fechaDesde) {
@@ -80,8 +75,8 @@ export class WeighingQueryService {
     if (filters.folio) {
       params = params.set('folio', filters.folio);
     }
-    if (filters.placa) {
-      params = params.set('placa', filters.placa);
+    if (filters.placas) {
+      params = params.set('placa', filters.placas);
     }
     if (filters.estado) {
       params = params.set('estado', filters.estado);
@@ -96,7 +91,7 @@ export class WeighingQueryService {
       params = params.set('size', filters.size.toString());
     }
 
-    return this.http.get<ApiResponse<WeighingQueryResponse>>(this.apiUrl, { params });
+    return this.http.get<WeighingQueryResponse>(this.apiUrl, { params });
   }
 
   exportToExcel(filters: WeighingQueryFilters): Observable<Blob> {
@@ -106,7 +101,7 @@ export class WeighingQueryService {
     });
   }
 
-  getOperationsStats(filters: WeighingQueryFilters): Observable<ApiResponse<WeighingOperationsStats>> {
+  getOperationsStats(filters: WeighingQueryFilters): Observable<WeighingOperationsStats> {
     const url = `${this.apiUrl}/stats`;
     let params = new HttpParams();
 
@@ -119,8 +114,8 @@ export class WeighingQueryService {
     if (filters.folio) {
       params = params.set('folio', filters.folio);
     }
-    if (filters.placa) {
-      params = params.set('placa', filters.placa);
+    if (filters.placas) {
+      params = params.set('placa', filters.placas);
     }
     if (filters.estado) {
       params = params.set('estado', filters.estado);
@@ -129,7 +124,7 @@ export class WeighingQueryService {
       params = params.set('edicionPosterior', filters.edicionPosterior);
     }
 
-    return this.http.get<ApiResponse<WeighingOperationsStats>>(url, { params });
+    return this.http.get<WeighingOperationsStats>(url, { params });
   }
 
   downloadFile(blob: Blob, filename: string): void {
@@ -141,5 +136,12 @@ export class WeighingQueryService {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+  }
+
+  reprintTicket(operationId: string): Observable<Blob> {
+    const url = `${this.apiUrl}/${operationId}/reprint`;
+    return this.http.post(url, {}, {
+      responseType: 'blob'
+    });
   }
 }
