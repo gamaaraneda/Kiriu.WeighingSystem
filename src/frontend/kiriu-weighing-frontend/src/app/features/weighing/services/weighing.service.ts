@@ -11,6 +11,8 @@ export interface WeighingOperation {
   // Nuevos campos para contenedor
   trailerPlateContenedor?: string;
   remolquePlateContenedor?: string;
+  placaRemolque1?: string;
+  placaRemolque2?: string;
   product: string;
   clientProviderName: string;
   clientProviderRfc?: string;
@@ -20,6 +22,26 @@ export interface WeighingOperation {
   status: 'ENTRADA_REGISTRADA' | 'SALIDA_REGISTRADA';
   createdAt: Date;
   updatedAt: Date;
+  // Campos para rastrear edición manual
+  fueEditado?: boolean;
+  fechaUltimaEdicion?: Date;
+  usuarioEditor?: string;
+}
+
+export interface UpdateWeighingOperationRequest {
+  trailerPlate?: string;
+  trailerPlate2?: string;
+  trailerPlateContenedor?: string;
+  remolquePlateContenedor?: string;
+  placaRemolque1?: string;
+  placaRemolque2?: string;
+  product?: string;
+  clientProviderName?: string;
+  clientProviderRfc?: string;
+  entryWeight?: number;
+  exitWeight?: number;
+  esEdicionManual: boolean;
+  usuarioEditor?: string;
 }
 
 export interface WeightReading {
@@ -324,5 +346,51 @@ export class WeighingService {
       default:
         return false;
     }
+  }
+
+  // Método para actualizar operación de pesaje
+  updateWeighingOperation(operationId: string, request: UpdateWeighingOperationRequest): Observable<WeighingOperation> {
+    const operationIndex = this.operations.findIndex(op => op.id === operationId);
+    
+    if (operationIndex === -1) {
+      throw new Error('Operación no encontrada');
+    }
+
+    const operation = { ...this.operations[operationIndex] };
+    const originalOperation = { ...operation };
+
+    // Detectar si se están editando placas manualmente
+    const plateFieldsChanged = this.hasPlateFieldsChanged(originalOperation, request);
+    
+    // Solo marcar como editado si se cambiaron placas y es edición manual
+    if (request.esEdicionManual && plateFieldsChanged) {
+      operation.fueEditado = true;
+      operation.fechaUltimaEdicion = new Date();
+      operation.usuarioEditor = request.usuarioEditor;
+    }
+
+    // Actualizar campos que se proporcionaron
+    Object.keys(request).forEach(key => {
+      if (key !== 'esEdicionManual' && key !== 'usuarioEditor' && request[key as keyof UpdateWeighingOperationRequest] !== undefined) {
+        (operation as any)[key] = request[key as keyof UpdateWeighingOperationRequest];
+      }
+    });
+
+    // Actualizar fecha de modificación
+    operation.updatedAt = new Date();
+
+    // Actualizar en el array
+    this.operations[operationIndex] = operation;
+
+    return of(operation);
+  }
+
+  private hasPlateFieldsChanged(original: WeighingOperation, request: UpdateWeighingOperationRequest): boolean {
+    return (request.trailerPlate !== undefined && request.trailerPlate !== original.trailerPlate) ||
+           (request.trailerPlate2 !== undefined && request.trailerPlate2 !== original.trailerPlate2) ||
+           (request.trailerPlateContenedor !== undefined && request.trailerPlateContenedor !== original.trailerPlateContenedor) ||
+           (request.remolquePlateContenedor !== undefined && request.remolquePlateContenedor !== original.remolquePlateContenedor) ||
+           (request.placaRemolque1 !== undefined && request.placaRemolque1 !== original.placaRemolque1) ||
+           (request.placaRemolque2 !== undefined && request.placaRemolque2 !== original.placaRemolque2);
   }
 }

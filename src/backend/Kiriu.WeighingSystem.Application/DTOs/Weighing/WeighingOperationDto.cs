@@ -16,6 +16,9 @@ public class WeighingOperationDto
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public bool FueEditado { get; set; } = false;
+    public DateTime? FechaUltimaEdicion { get; set; }
+    public string? UsuarioEditor { get; set; }
 }
 
 public class EntrySearchDataDto
@@ -33,6 +36,9 @@ public class EntrySearchDataDto
     public string? PlacaRemolque2 { get; set; }
     public string? PlacaTrailerContenedor { get; set; }
     public string? PlacaRemolqueContenedor { get; set; }
+    public bool FueEditado { get; set; } = false;
+    public DateTime? FechaUltimaEdicion { get; set; }
+    public string? UsuarioEditor { get; set; }
     public EntryPhotosDto Fotos { get; set; } = new();
 }
 
@@ -70,6 +76,7 @@ public class ExitResponseDto
 
 public class DoubleTrailerEntryResponseDto
 {
+    public string Id { get; set; } = string.Empty;
     public string Folio { get; set; } = string.Empty;
     public string TrailerPlaca { get; set; } = string.Empty;
     public List<RemolqueResponseDto> Remolques { get; set; } = new();

@@ -69,6 +69,23 @@ public class WeighingOperation
     
     public DateTime? ExitDate { get; set; }
     
+    /// <summary>
+    /// Indica si el registro fue editado manualmente por el usuario
+    /// Se activa cuando se modifican las placas de vehículos manualmente
+    /// </summary>
+    public bool FueEditado { get; set; } = false;
+    
+    /// <summary>
+    /// Fecha y hora de la última edición manual
+    /// </summary>
+    public DateTime? FechaUltimaEdicion { get; set; }
+    
+    /// <summary>
+    /// Usuario que realizó la última edición manual
+    /// </summary>
+    [MaxLength(100)]
+    public string? UsuarioEditor { get; set; }
+    
     // Navigation properties
     public virtual ICollection<WeighingPhoto> Photos { get; set; } = new List<WeighingPhoto>();
     public virtual ICollection<WeighingRemolque> Remolques { get; set; } = new List<WeighingRemolque>();

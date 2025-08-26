@@ -49,7 +49,11 @@ public class WeighingApplicationService : IWeighingApplicationService
                 TipoUnidad = request.TipoUnidad,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                EntryDate = DateTime.UtcNow
+                EntryDate = DateTime.UtcNow,
+                // Marcar como editado manualmente si se detectaron ediciones durante el registro
+                FueEditado = request.TieneEdicionesManuale,
+                FechaUltimaEdicion = request.TieneEdicionesManuale ? DateTime.UtcNow : null,
+                UsuarioEditor = request.TieneEdicionesManuale ? request.UsuarioEditor : null
             };
 
             // Add photos
@@ -94,7 +98,11 @@ public class WeighingApplicationService : IWeighingApplicationService
                 TipoUnidad = request.TipoUnidad,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                EntryDate = DateTime.UtcNow
+                EntryDate = DateTime.UtcNow,
+                // Marcar como editado manualmente si se detectaron ediciones durante el registro
+                FueEditado = request.TieneEdicionesManuale,
+                FechaUltimaEdicion = request.TieneEdicionesManuale ? DateTime.UtcNow : null,
+                UsuarioEditor = request.TieneEdicionesManuale ? request.UsuarioEditor : null
             };
 
             // Add remolques
@@ -117,6 +125,7 @@ public class WeighingApplicationService : IWeighingApplicationService
 
             var response = new DoubleTrailerEntryResponseDto
             {
+                Id = created.Id.ToString(),
                 Folio = created.Folio,
                 TrailerPlaca = created.TrailerPlate!,
                 Remolques = created.Remolques.Select(r => new RemolqueResponseDto
@@ -504,5 +513,84 @@ public class WeighingApplicationService : IWeighingApplicationService
         }
 
         return result;
+    }
+
+    public async Task<ApiResponse<WeighingOperationDto>> UpdateWeighingOperationAsync(Guid operationId, UpdateWeighingOperationRequest request)
+    {
+        try
+        {
+            var operation = await _weighingRepository.GetByIdAsync(operationId);
+            if (operation == null)
+            {
+                return ApiResponse<WeighingOperationDto>.CreateError("Operación de pesaje no encontrada");
+            }
+
+            // Detectar si se están editando las placas manualmente
+            bool plateFieldsChanged = HasPlateFieldsChanged(operation, request);
+            
+            // Solo marcar como editado manualmente si se cambiaron las placas
+            if (request.EsEdicionManual && plateFieldsChanged)
+            {
+                operation.FueEditado = true;
+                operation.FechaUltimaEdicion = DateTime.UtcNow;
+                operation.UsuarioEditor = request.UsuarioEditor;
+            }
+
+            // Actualizar campos si se proporcionan
+            if (!string.IsNullOrEmpty(request.TrailerPlate))
+                operation.TrailerPlate = request.TrailerPlate;
+            
+            if (!string.IsNullOrEmpty(request.TrailerPlate2))
+                operation.TrailerPlate2 = request.TrailerPlate2;
+            
+            if (!string.IsNullOrEmpty(request.TrailerPlateContenedor))
+                operation.TrailerPlateContenedor = request.TrailerPlateContenedor;
+            
+            if (!string.IsNullOrEmpty(request.RemolquePlateContenedor))
+                operation.RemolquePlateContenedor = request.RemolquePlateContenedor;
+            
+            if (!string.IsNullOrEmpty(request.PlacaRemolque1))
+                operation.PlacaRemolque1 = request.PlacaRemolque1;
+            
+            if (!string.IsNullOrEmpty(request.PlacaRemolque2))
+                operation.PlacaRemolque2 = request.PlacaRemolque2;
+            
+            if (!string.IsNullOrEmpty(request.Product))
+                operation.Product = request.Product;
+            
+            if (!string.IsNullOrEmpty(request.ClientProviderName))
+                operation.ClientProviderName = request.ClientProviderName;
+            
+            if (!string.IsNullOrEmpty(request.ClientProviderRfc))
+                operation.ClientProviderRfc = request.ClientProviderRfc;
+            
+            if (request.EntryWeight.HasValue)
+                operation.EntryWeight = request.EntryWeight.Value;
+            
+            if (request.ExitWeight.HasValue)
+                operation.ExitWeight = request.ExitWeight.Value;
+
+            // Actualizar fecha de modificación
+            operation.UpdatedAt = DateTime.UtcNow;
+
+            var updated = await _weighingRepository.UpdateAsync(operation);
+            var result = updated.Adapt<WeighingOperationDto>();
+
+            return ApiResponse<WeighingOperationDto>.CreateSuccess(result, "Operación de pesaje actualizada exitosamente");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<WeighingOperationDto>.CreateError($"Error interno del servidor: {ex.Message}");
+        }
+    }
+
+    private bool HasPlateFieldsChanged(WeighingOperation original, UpdateWeighingOperationRequest request)
+    {
+        return (!string.IsNullOrEmpty(request.TrailerPlate) && request.TrailerPlate != original.TrailerPlate) ||
+               (!string.IsNullOrEmpty(request.TrailerPlate2) && request.TrailerPlate2 != original.TrailerPlate2) ||
+               (!string.IsNullOrEmpty(request.TrailerPlateContenedor) && request.TrailerPlateContenedor != original.TrailerPlateContenedor) ||
+               (!string.IsNullOrEmpty(request.RemolquePlateContenedor) && request.RemolquePlateContenedor != original.RemolquePlateContenedor) ||
+               (!string.IsNullOrEmpty(request.PlacaRemolque1) && request.PlacaRemolque1 != original.PlacaRemolque1) ||
+               (!string.IsNullOrEmpty(request.PlacaRemolque2) && request.PlacaRemolque2 != original.PlacaRemolque2);
     }
 }

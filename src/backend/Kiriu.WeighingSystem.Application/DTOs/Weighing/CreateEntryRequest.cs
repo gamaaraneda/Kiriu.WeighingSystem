@@ -14,6 +14,10 @@ public class CreateEntryRequest
     public string? ClientProviderRfc { get; set; }
     public decimal EntryWeight { get; set; }
     public PhotoDataDto Photos { get; set; } = new();
+    
+    // Campos para rastrear edición manual durante el registro
+    public bool TieneEdicionesManuale { get; set; } = false;
+    public string? UsuarioEditor { get; set; }
 }
 
 public class PhotoDataDto

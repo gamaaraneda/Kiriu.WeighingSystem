@@ -58,8 +58,8 @@ public class WeighingQueryService : IWeighingQueryService
                 PesoBruto = op.EntryWeight,
                 PesoNeto = op.NetWeight,
                 Estado = op.Status,
-                FueEditado = op.UpdatedAt > op.CreatedAt.AddMinutes(5), // Considera editado si fue actualizado después de 5 min
-                FechaEdicion = op.UpdatedAt > op.CreatedAt.AddMinutes(5) ? op.UpdatedAt : null,
+                FueEditado = op.FueEditado,
+                FechaEdicion = op.FechaUltimaEdicion,
                 PuedeReimprimir = op.Status == "SALIDA_REGISTRADA"
             }).ToList();
 
@@ -115,8 +115,8 @@ public class WeighingQueryService : IWeighingQueryService
                 Estado = op.Status,
                 FechaEntrada = op.EntryDate,
                 FechaSalida = op.ExitDate,
-                EditadoPor = "", // Se puede obtener de logs de auditoría si existe
-                FechaEdicion = op.UpdatedAt > op.CreatedAt.AddMinutes(5) ? op.UpdatedAt : null
+                EditadoPor = op.UsuarioEditor ?? "",
+                FechaEdicion = op.FechaUltimaEdicion
             }).ToList();
 
             return ApiResponse<List<WeighingExportDto>>.CreateSuccess(exportData, "Datos de exportación obtenidos exitosamente");

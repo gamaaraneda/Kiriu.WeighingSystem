@@ -16,7 +16,7 @@ GO
 -- =====================================================
 -- VARIABLES DE CONTROL
 -- =====================================================
-DECLARE @CurrentVersion INT = 1; -- Versión actual del script
+DECLARE @CurrentVersion INT = 3; -- Versión actual del script
 DECLARE @SchemaVersion INT;
 
 -- Crear tabla de versiones si no existe
@@ -114,7 +114,7 @@ BEGIN
             
             CONSTRAINT [PK_WeighingPhotos] PRIMARY KEY ([Id]),
             CONSTRAINT [FK_WeighingPhotos_WeighingOperations] FOREIGN KEY ([WeighingOperationId]) 
-                REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE CASCADE,
+                REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE NO ACTION,
             CONSTRAINT [CK_WeighingPhotos_PhotoType] CHECK ([PhotoType] IN (
                 'trailerPlate', 'trailerPlate2', 'cargo', 'cargoState', 'containerPlate',
                 'remolque1Plate', 'remolque2Plate', 'cargoRemolque1', 'cargoRemolque2'
@@ -147,7 +147,7 @@ BEGIN
             
             CONSTRAINT [PK_WeighingRemolques] PRIMARY KEY ([Id]),
             CONSTRAINT [FK_WeighingRemolques_WeighingOperations] FOREIGN KEY ([WeighingOperationId]) 
-                REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE CASCADE,
+                REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE NO ACTION,
             CONSTRAINT [CK_WeighingRemolques_Numero] CHECK ([Numero] IN (1, 2)),
             CONSTRAINT [CK_WeighingRemolques_Weights] CHECK ([PesoBruto] >= 0 AND ([PesoTara] IS NULL OR [PesoTara] >= 0))
         );
@@ -227,7 +227,7 @@ BEGIN
         ALTER TABLE [weighing].[WeighingPhotos] 
         ADD CONSTRAINT [FK_WeighingPhotos_WeighingOperations] 
         FOREIGN KEY ([WeighingOperationId]) 
-        REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE CASCADE;
+        REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE NO ACTION;
         PRINT '✓ Foreign key FK_WeighingPhotos_WeighingOperations creada';
     END
     
@@ -236,7 +236,7 @@ BEGIN
         ALTER TABLE [weighing].[WeighingRemolques] 
         ADD CONSTRAINT [FK_WeighingRemolques_WeighingOperations] 
         FOREIGN KEY ([WeighingOperationId]) 
-        REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE CASCADE;
+        REFERENCES [weighing].[WeighingOperations] ([Id]) ON DELETE NO ACTION;
         PRINT '✓ Foreign key FK_WeighingRemolques_WeighingOperations creada';
     END
     
@@ -288,16 +288,67 @@ BEGIN
 END
 
 -- =====================================================
--- PLANTILLA PARA FUTURAS MIGRACIONES
--- =====================================================
-/*
--- =====================================================
--- MIGRACIÓN VERSIÓN 3: [DESCRIPCIÓN]
+-- MIGRACIÓN VERSIÓN 3: CAMPOS DE EDICIÓN MANUAL
 -- =====================================================
 IF @SchemaVersion < 3
 BEGIN
     PRINT '==========================================';
-    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 3: [DESCRIPCIÓN]';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 3: CAMPOS DE EDICIÓN MANUAL';
+    PRINT '==========================================';
+    
+    -- Agregar campos para rastrear ediciones manuales
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('[weighing].[WeighingOperations]') AND name = 'FueEditado')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingOperations] ADD [FueEditado] BIT NOT NULL DEFAULT 0;
+        PRINT '✓ Campo FueEditado agregado a WeighingOperations';
+    END
+    
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('[weighing].[WeighingOperations]') AND name = 'FechaUltimaEdicion')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingOperations] ADD [FechaUltimaEdicion] DATETIME2 NULL;
+        PRINT '✓ Campo FechaUltimaEdicion agregado a WeighingOperations';
+    END
+    
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('[weighing].[WeighingOperations]') AND name = 'UsuarioEditor')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingOperations] ADD [UsuarioEditor] NVARCHAR(100) NULL;
+        PRINT '✓ Campo UsuarioEditor agregado a WeighingOperations';
+    END
+    
+    -- Crear índice para consultas de registros editados
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_WeighingOperations_FueEditado')
+    BEGIN
+        CREATE INDEX [IX_WeighingOperations_FueEditado] ON [weighing].[WeighingOperations] ([FueEditado]);
+        PRINT '✓ Índice IX_WeighingOperations_FueEditado creado';
+    END
+    
+    -- Registrar migración
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (3, 'Campos de edición manual: FueEditado, FechaUltimaEdicion, UsuarioEditor', 'manual_migrations.sql');
+    
+    PRINT '✅ MIGRACIÓN VERSIÓN 3 COMPLETADA EXITOSAMENTE';
+    PRINT '   • Campo FueEditado para marcar registros editados manualmente';
+    PRINT '   • Campo FechaUltimaEdicion para timestamp de última edición';
+    PRINT '   • Campo UsuarioEditor para identificar quien editó el registro';
+    PRINT '   • Índice para mejorar consultas por estado de edición';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'ℹ️  Migración versión 3 ya aplicada - Saltando...';
+END
+
+-- =====================================================
+-- PLANTILLA PARA FUTURAS MIGRACIONES
+-- =====================================================
+/*
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 4: [DESCRIPCIÓN]
+-- =====================================================
+IF @SchemaVersion < 4
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 4: [DESCRIPCIÓN]';
     PRINT '==========================================';
     
     -- Aquí van los comandos SQL para la migración
@@ -307,14 +358,14 @@ BEGIN
     
     -- Registrar migración
     INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
-    VALUES (3, '[DESCRIPCIÓN DE LA MIGRACIÓN]', 'manual_migrations.sql');
+    VALUES (4, '[DESCRIPCIÓN DE LA MIGRACIÓN]', 'manual_migrations.sql');
     
-    PRINT '✅ MIGRACIÓN VERSIÓN 3 COMPLETADA EXITOSAMENTE';
+    PRINT '✅ MIGRACIÓN VERSIÓN 4 COMPLETADA EXITOSAMENTE';
     PRINT '';
 END
 ELSE
 BEGIN
-    PRINT 'ℹ️  Migración versión 3 ya aplicada - Saltando...';
+    PRINT 'ℹ️  Migración versión 4 ya aplicada - Saltando...';
 END
 */
 

@@ -4,6 +4,9 @@ export interface VehicleData {
   containerOnly: boolean;
   doubleTrailer: boolean;
   product: string;
+  // Campos para rastrear edición manual
+  hasManualEdits?: boolean;
+  manualEditUser?: string;
 }
 
 export interface ClientProviderData {
@@ -108,6 +111,10 @@ export interface EntrySearchData {
   placaRemolque2?: string;
   placaTrailerContenedor?: string;
   placaRemolqueContenedor?: string;
+  // Campos para edición manual
+  fueEditado?: boolean;
+  fechaUltimaEdicion?: Date;
+  usuarioEditor?: string;
   fotos: {
     fotoEntradaTrailer?: string;
     fotoEntradaRemolque?: string;

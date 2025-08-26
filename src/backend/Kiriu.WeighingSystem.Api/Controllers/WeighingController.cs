@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Kiriu.WeighingSystem.Application.DTOs.Weighing;
 using Kiriu.WeighingSystem.Application.Interfaces;
+using System.Security.Claims;
 
 namespace Kiriu.WeighingSystem.Api.Controllers;
 
@@ -32,6 +33,15 @@ public class WeighingController : ControllerBase
         try
         {
             _logger.LogInformation("Creando operación de entrada para placa: {TrailerPlate}", request.TrailerPlate);
+            
+            // Obtener el usuario actual del token JWT
+            var currentUser = GetCurrentUser();
+            
+            // Si tiene ediciones manuales, asignar el usuario actual
+            if (request.TieneEdicionesManuale && !string.IsNullOrEmpty(currentUser))
+            {
+                request.UsuarioEditor = currentUser;
+            }
             
             var result = await _weighingService.CreateEntryAsync(request);
             
@@ -64,6 +74,15 @@ public class WeighingController : ControllerBase
         try
         {
             _logger.LogInformation("Creando entrada con doble remolque para trailer: {TrailerPlaca}", request.TrailerPlaca);
+            
+            // Obtener el usuario actual del token JWT
+            var currentUser = GetCurrentUser();
+            
+            // Si tiene ediciones manuales, asignar el usuario actual
+            if (request.TieneEdicionesManuale && !string.IsNullOrEmpty(currentUser))
+            {
+                request.UsuarioEditor = currentUser;
+            }
             
             var result = await _weighingService.CreateDoubleTrailerEntryAsync(request);
             
@@ -262,6 +281,81 @@ public class WeighingController : ControllerBase
         {
             _logger.LogError(ex, "Error al validar salida para placa: {Placa}", placa);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Actualizar Operación de Pesaje
+    /// </summary>
+    /// <param name="operationId">ID de la operación</param>
+    /// <param name="request">Datos a actualizar</param>
+    /// <returns>Operación actualizada</returns>
+    [HttpPut("operations/{operationId}")]
+    public async Task<IActionResult> UpdateWeighingOperation(Guid operationId, [FromBody] UpdateWeighingOperationRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Actualizando operación de pesaje: {OperationId}", operationId);
+            
+            // Obtener el usuario actual del token JWT
+            var currentUser = GetCurrentUser();
+            
+            // Si es una edición manual, asignar el usuario actual
+            if (request.EsEdicionManual && !string.IsNullOrEmpty(currentUser))
+            {
+                request.UsuarioEditor = currentUser;
+            }
+            
+            var result = await _weighingService.UpdateWeighingOperationAsync(operationId, request);
+            
+            if (!result.Success)
+            {
+                return result.Message.Contains("no encontrada") ? NotFound(result) : BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar operación de pesaje: {OperationId}", operationId);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el nombre del usuario actual desde el token JWT
+    /// </summary>
+    private string? GetCurrentUser()
+    {
+        try
+        {
+            // Intentar obtener el nombre del usuario desde diferentes claims
+            var userName = User.Identity?.Name;
+            if (!string.IsNullOrEmpty(userName))
+                return userName;
+
+            // Si no está en Identity.Name, intentar con el claim "name"
+            var nameClaim = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (!string.IsNullOrEmpty(nameClaim))
+                return nameClaim;
+
+            // Si no está en "name", intentar con el claim "sub" (subject)
+            var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(subClaim))
+                return subClaim;
+
+            // Como último recurso, intentar con "username" o "email"
+            var usernameClaim = User.FindFirst("username")?.Value ?? User.FindFirst("email")?.Value;
+            if (!string.IsNullOrEmpty(usernameClaim))
+                return usernameClaim;
+
+            // Si ninguno está disponible, usar un identificador genérico
+            return "Sistema";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error al obtener usuario actual del token JWT");
+            return "Sistema";
         }
     }
 }

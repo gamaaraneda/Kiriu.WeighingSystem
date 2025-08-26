@@ -286,11 +286,11 @@ public class WeighingOperationRepository : IWeighingOperationRepository
         {
             if (edicionPosterior == "Editado")
             {
-                query = query.Where(w => EF.Functions.DateDiffMinute(w.CreatedAt, w.UpdatedAt) > 5);
+                query = query.Where(w => w.FueEditado == true);
             }
             else if (edicionPosterior == "NoEditado")
             {
-                query = query.Where(w => EF.Functions.DateDiffMinute(w.CreatedAt, w.UpdatedAt) <= 5);
+                query = query.Where(w => w.FueEditado == false);
             }
         }
 
@@ -347,11 +347,11 @@ public class WeighingOperationRepository : IWeighingOperationRepository
         {
             if (edicionPosterior == "Editado")
             {
-                query = query.Where(w => EF.Functions.DateDiffMinute(w.CreatedAt, w.UpdatedAt) > 5);
+                query = query.Where(w => w.FueEditado == true);
             }
             else if (edicionPosterior == "NoEditado")
             {
-                query = query.Where(w => EF.Functions.DateDiffMinute(w.CreatedAt, w.UpdatedAt) <= 5);
+                query = query.Where(w => w.FueEditado == false);
             }
         }
 

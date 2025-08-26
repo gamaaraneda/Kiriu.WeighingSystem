@@ -9,6 +9,10 @@ public class CreateDoubleTrailerEntryRequest
     public decimal PesoBrutoTotal { get; set; }
     public string Product { get; set; } = string.Empty;
     public string ClientProviderName { get; set; } = string.Empty;
+    
+    // Campos para rastrear edición manual durante el registro
+    public bool TieneEdicionesManuale { get; set; } = false;
+    public string? UsuarioEditor { get; set; }
 }
 
 public class RemolqueDataDto

@@ -18,6 +18,9 @@ export interface CreateEntryRequest {
   clientProviderRfc?: string;
   entryWeight: number;
   photos: PhotoDataDto;
+  // Campos para rastrear edición manual durante el registro
+  tieneEdicionesManuale?: boolean;
+  usuarioEditor?: string;
 }
 
 export interface PhotoDataDto {
@@ -45,6 +48,10 @@ export interface WeighingOperationDto {
   tipoUnidad: string;
   createdAt: string;
   updatedAt: string;
+  // Campos para edición manual
+  fueEditado?: boolean;
+  fechaUltimaEdicion?: string;
+  usuarioEditor?: string;
 }
 
 export interface CreateDoubleTrailerEntryRequest {
@@ -55,6 +62,9 @@ export interface CreateDoubleTrailerEntryRequest {
   pesoBrutoTotal: number;
   product: string;
   clientProviderName: string;
+  // Campos para rastrear edición manual durante el registro
+  tieneEdicionesManuale?: boolean;
+  usuarioEditor?: string;
 }
 
 export interface RemolqueEntryData {
@@ -69,6 +79,7 @@ export interface RemolqueEntryData {
 }
 
 export interface DoubleTrailerEntryResponse {
+  id: string;
   folio: string;
   trailerPlaca: string;
   remolques: RemolqueResponseData[];
@@ -211,6 +222,22 @@ export interface RemolqueData {
   fotoPlacaCapturada?: boolean;
 }
 
+export interface UpdateWeighingOperationRequest {
+  trailerPlate?: string;
+  trailerPlate2?: string;
+  trailerPlateContenedor?: string;
+  remolquePlateContenedor?: string;
+  placaRemolque1?: string;
+  placaRemolque2?: string;
+  product?: string;
+  clientProviderName?: string;
+  clientProviderRfc?: string;
+  entryWeight?: number;
+  exitWeight?: number;
+  esEdicionManual: boolean;
+  usuarioEditor?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -282,6 +309,13 @@ export class RealWeighingService {
    */
   getOperationByPlate(placa: string): Observable<WeighingOperationDto> {
     return this.http.get<WeighingOperationDto>(`${this.apiUrl}/operations/plate/${placa}`);
+  }
+
+  /**
+   * Actualizar operación de pesaje (para ediciones manuales)
+   */
+  updateWeighingOperation(operationId: string, request: UpdateWeighingOperationRequest): Observable<WeighingOperationDto> {
+    return this.http.put<WeighingOperationDto>(`${this.apiUrl}/operations/${operationId}`, request);
   }
 
   // ============= FUNCIONES DE PESO (SIMULADAS) =============

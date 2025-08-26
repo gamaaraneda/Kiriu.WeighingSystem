@@ -19,8 +19,10 @@ import {
   CreateDoubleTrailerExitRequest,
   ExitPhotoDataDto,
   WeightReading,
+  UpdateWeighingOperationRequest,
 } from '../../services/real-weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
+import { ManualEditDetectorService, ManualEditEvent } from '../../services/manual-edit-detector.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { ProcessStepsComponent } from '../../../../shared/components/process-steps';
 import { MessageService } from '../../../../shared/services/message.service';
@@ -50,6 +52,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private weighingFlowService = inject(WeighingFlowService);
   private messageService = inject(MessageService);
   private notificationService = inject(NotificationService);
+  private manualEditDetector = inject(ManualEditDetectorService);
 
   unitType = '';
   operationType = '';
@@ -116,6 +119,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   isLoading = false;
   weightUpdateInterval: Subscription | undefined;
+  manualEditSubscription: Subscription | undefined;
+  hasManualEdits = false;
+  currentOperationId: string | null = null;
 
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
@@ -132,12 +138,22 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     // Actualizar el estado de los pasos del proceso después de la inicialización
     setTimeout(() => this.updateProcessStepsStatus(), 100);
+    
+    // Configurar detección de edición manual
+    this.setupManualEditDetection();
   }
 
   ngOnDestroy(): void {
     if (this.weightUpdateInterval) {
       this.weightUpdateInterval.unsubscribe();
     }
+    
+    if (this.manualEditSubscription) {
+      this.manualEditSubscription.unsubscribe();
+    }
+    
+    // Limpiar estado del detector de edición manual
+    this.manualEditDetector.resetFormState('weighing-form');
   }
 
   private updateTitles(): void {
@@ -205,6 +221,37 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     this.weighingForm.get('trailerPlate2')?.valueChanges.subscribe(() => {
       setTimeout(() => this.updateProcessStepsStatus(), 0);
     });
+  }
+
+  /**
+   * Configura la detección de edición manual para campos de placa
+   */
+  private setupManualEditDetection(): void {
+    // Configurar el detector para este formulario
+    this.manualEditDetector.setupFormMonitoring(this.weighingForm, 'weighing-form');
+    
+    // Suscribirse a eventos de edición manual
+    this.manualEditSubscription = this.manualEditDetector.manualEdit$.subscribe(
+      (editEvent: ManualEditEvent) => {
+        console.log('🔍 Edición detectada:', editEvent);
+        
+        if (editEvent.isManualEdit) {
+          this.hasManualEdits = true;
+          
+          // Si ya hay una operación registrada, actualizar en el backend
+          if (this.currentOperationId) {
+            this.updateOperationWithManualEdit(editEvent);
+          }
+          
+          // Mostrar indicador visual de edición manual
+          this.messageService.showInfoToast({
+            title: 'Edición manual detectada',
+            message: `Campo ${editEvent.fieldName} fue editado manualmente`,
+            position: 'top-right'
+          });
+        }
+      }
+    );
   }
 
   private startWeightUpdates(): void {
@@ -699,6 +746,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.photoData.trailerPlate = 'Foto capturada';
       // Generar placa aleatoria en lugar de estática
       const randomPlate = this.generateRandomPlate();
+      
+      // Marcar el siguiente cambio como automático (OCR)
+      this.manualEditDetector.markNextChangeAsAutomatic();
       this.weighingForm.patchValue({ trailerPlate: randomPlate });
       console.log('Placa detectada automáticamente:', randomPlate);
 
@@ -711,6 +761,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.photoData.remolque1Plate = 'Foto capturada';
       // Generar placa aleatoria en lugar de estática
       const randomPlate = this.generateRandomPlate();
+      
+      // Marcar el siguiente cambio como automático (OCR)
+      this.manualEditDetector.markNextChangeAsAutomatic();
       this.weighingForm.patchValue({ remolque1Plate: randomPlate });
       console.log('Placa detectada automáticamente:', randomPlate);
 
@@ -732,6 +785,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.photoData.remolque2Plate = 'Foto capturada';
       // Generar placa aleatoria en lugar de estática
       const randomPlate = this.generateRandomPlate();
+      
+      // Marcar el siguiente cambio como automático (OCR)
+      this.manualEditDetector.markNextChangeAsAutomatic();
       this.weighingForm.patchValue({ remolque2Plate: randomPlate });
       console.log('Placa detectada automáticamente:', randomPlate);
 
@@ -788,6 +844,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.photoData.trailerPlate2 = 'Foto capturada';
       // Generar placa aleatoria en lugar de estática
       const randomPlate = this.generateRandomPlate();
+      
+      // Marcar el siguiente cambio como automático (OCR)
+      this.manualEditDetector.markNextChangeAsAutomatic();
       this.weighingForm.patchValue({ trailerPlate2: randomPlate });
       console.log('Placa detectada automáticamente:', randomPlate);
     }
@@ -805,7 +864,20 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   ): void {
     // Habilitar edición manual del campo de placa
     this.manualEditEnabled[plateType] = true;
+    
+    // Marcar los siguientes cambios en este campo como manuales
+    this.manualEditDetector.markNextChangeAsManual();
+    
     console.log(`Edición manual habilitada para: ${plateType}`);
+    
+    // Enfocar el campo para que el usuario pueda editarlo inmediatamente
+    setTimeout(() => {
+      const fieldElement = document.querySelector(`input[formControlName="${plateType}"]`) as HTMLInputElement;
+      if (fieldElement) {
+        fieldElement.focus();
+        fieldElement.select(); // Seleccionar todo el texto para facilitar la edición
+      }
+    }, 100);
   }
 
   onSave(): void {
@@ -813,6 +885,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.isLoading = true;
 
       const formData = this.weighingForm.value;
+
+      // Si hay ediciones manuales, incluir información del usuario
+      if (this.hasManualEdits) {
+        console.log('⚠️ Formulario tiene ediciones manuales, se marcará como editado');
+      }
 
       if (this.operationType === 'entry') {
         if (formData.doubleTrailer) {
@@ -886,12 +963,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       pesoBrutoTotal: this.doubleTrailerState.pesoBrutoTotal,
       product: formData['product'] as string,
       clientProviderName: formData['clientProviderName'] as string,
+      // Incluir información de edición manual
+      tieneEdicionesManuale: this.hasManualEdits,
+      usuarioEditor: this.hasManualEdits ? undefined : undefined, // Se asignará en el backend desde JWT
     };
 
     this.weighingService.createDoubleTrailerEntry(entradaData).subscribe({
       next: (response) => {
         this.isLoading = false;
         console.log('Entrada con doble remolque registrada:', response);
+        
+        // Guardar el ID de la operación para futuras ediciones manuales
+        this.currentOperationId = response.id;
 
         // El interceptor ya procesó la respuesta y extrajo solo los datos
         this.messageService.showSuccessToast({
@@ -950,12 +1033,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         trailerPlate2: this.photoData.trailerPlate2 || undefined,
         cargo: this.photoData.cargo || '',
       },
+      // Incluir información de edición manual
+      tieneEdicionesManuale: this.hasManualEdits,
+      usuarioEditor: this.hasManualEdits ? undefined : undefined, // Se asignará en el backend desde JWT
     };
 
     this.weighingService.createEntryOperation(request).subscribe({
       next: (response) => {
         this.isLoading = false;
         console.log('Entrada registrada:', response);
+        
+        // Guardar el ID de la operación para futuras ediciones manuales
+        this.currentOperationId = response.id;
 
         // El interceptor ya procesó la respuesta y extrajo solo los datos
         this.messageService.showSuccessToast({
@@ -1576,5 +1665,52 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   hideEntryInfo(): void {
     this.showEntryInfo = false;
+  }
+
+  /**
+   * Verifica si el formulario tiene campos editados manualmente
+   */
+  get hasManualPlateEdits(): boolean {
+    return this.hasManualEdits || this.manualEditDetector.hasManualChanges('weighing-form');
+  }
+
+  /**
+   * Obtiene la lista de campos que fueron editados manualmente
+   */
+  getManuallyEditedFields(): string[] {
+    return this.manualEditDetector.getManuallyChangedFields('weighing-form');
+  }
+
+  /**
+   * Actualiza la operación en el backend cuando se detecta una edición manual
+   */
+  private updateOperationWithManualEdit(editEvent: ManualEditEvent): void {
+    if (!this.currentOperationId) return;
+
+    const formValues = this.weighingForm.value;
+    const updateRequest: UpdateWeighingOperationRequest = {
+      esEdicionManual: true,
+      // Solo incluir los campos que cambiaron
+      ...(editEvent.fieldName === 'trailerPlate' && { trailerPlate: formValues.trailerPlate }),
+      ...(editEvent.fieldName === 'trailerPlate2' && { trailerPlate2: formValues.trailerPlate2 }),
+      ...(editEvent.fieldName === 'remolque1Plate' && { placaRemolque1: formValues.remolque1Plate }),
+      ...(editEvent.fieldName === 'remolque2Plate' && { placaRemolque2: formValues.remolque2Plate }),
+    };
+
+    this.weighingService.updateWeighingOperation(this.currentOperationId, updateRequest)
+      .subscribe({
+        next: (response) => {
+          console.log('✅ Operación actualizada con edición manual:', response);
+          // No mostrar toast para ediciones manuales - se guarda silenciosamente
+        },
+        error: (error) => {
+          console.error('❌ Error al actualizar operación:', error);
+          this.messageService.showErrorToast({
+            title: 'Error al guardar',
+            message: 'No se pudieron guardar los cambios manuales',
+            position: 'top-right'
+          });
+        }
+      });
   }
 }
