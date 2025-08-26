@@ -114,6 +114,24 @@ export interface AsignarRolesRequest {
   rolesIds: string[];
 }
 
+export interface SearchUsuariosRequest {
+  search?: string;
+  rolId?: string;
+  activo?: boolean;
+  pageNumber: number;
+  pageSize: number;
+}
+
+export interface SearchUsuariosResponse {
+  usuarios: UsuarioDto[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

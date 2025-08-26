@@ -66,7 +66,7 @@
                 id="searchName"
                 [(ngModel)]="searchFilters.search"
                 placeholder="Buscar por nombre o email..."
-                (input)="onFilterChange()"
+                (keyup.enter)="onSearch()"
               />
             </div>
 
@@ -80,7 +80,6 @@
                 optionLabel="label"
                 optionValue="value"
                 [showClear]="true"
-                (onChange)="onFilterChange()"
               ></p-select>
             </div>
 
@@ -94,12 +93,20 @@
                 optionLabel="label"
                 optionValue="value"
                 [showClear]="true"
-                (onChange)="onFilterChange()"
               ></p-select>
             </div>
           </div>
 
           <div class="filters-actions">
+            <p-button
+              type="button"
+              severity="primary"
+              label="Buscar"
+              icon="pi pi-search"
+              [loading]="isLoading"
+              (click)="onSearch()"
+              styleClass="search-btn"
+            ></p-button>
             <p-button
               type="button"
               severity="secondary"
@@ -136,7 +143,7 @@
         >
           <ng-template pTemplate="header">
             <tr>
-              <th>Usuario</th>
+              <th>Nombre</th>
               <th>Email</th>
               <th>Rol</th>
               <th>Fecha Creación</th>
@@ -146,7 +153,7 @@
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-usuario>
-            <tr>
+            <tr [class.inactive-user]="!usuario.activo">
               <td>
                 <div class="user-cell">
                   <div class="user-avatar">
@@ -154,9 +161,9 @@
                   </div>
                   <div class="user-info">
                     <span class="user-name">{{ usuario.nombre }}</span>
-                    <span class="user-lastname" *ngIf="usuario.apellidos">{{
-                      usuario.apellidos
-                    }}</span>
+                    <span class="user-lastname" *ngIf="usuario.apellidos">
+                      {{ usuario.apellidos }}</span
+                    >
                   </div>
                 </div>
               </td>
@@ -192,17 +199,32 @@
                     tooltipPosition="top"
                     styleClass="action-btn edit-btn"
                   ></p-button>
+                  <!-- Botón de eliminar para usuarios activos -->
                   <p-button
                     type="button"
                     severity="danger"
                     outlined="true"
                     size="small"
                     icon="pi pi-trash"
-                    [disabled]="!usuario.activo"
+                    *ngIf="usuario.activo"
                     (click)="confirmDelete(usuario)"
-                    pTooltip="Eliminar usuario"
+                    pTooltip="Desactivar usuario"
                     tooltipPosition="top"
                     styleClass="action-btn delete-btn"
+                  ></p-button>
+
+                  <!-- Botón de reactivar para usuarios inactivos -->
+                  <p-button
+                    type="button"
+                    severity="success"
+                    outlined="true"
+                    size="small"
+                    icon="pi pi-check"
+                    *ngIf="!usuario.activo"
+                    (click)="confirmReactivate(usuario)"
+                    pTooltip="Reactivar usuario"
+                    tooltipPosition="top"
+                    styleClass="action-btn reactivate-btn"
                   ></p-button>
                 </div>
               </td>

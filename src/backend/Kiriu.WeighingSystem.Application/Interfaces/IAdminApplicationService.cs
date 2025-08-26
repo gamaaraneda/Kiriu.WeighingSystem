@@ -29,6 +29,8 @@ public interface IAdminApplicationService
 
     // Gestión de Usuarios (funcionalidad extendida)
     Task<IEnumerable<UsuarioDto>> GetAllUsuariosWithRolesAsync();
+    Task<SearchUsuariosResponse> SearchUsuariosAsync(SearchUsuariosRequest request);
+    Task<CreateUsuarioResponse> CreateUsuarioAsync(CreateUsuarioRequest request);
     Task<UsuarioDto> UpdateUsuarioAsync(Guid id, UpdateUsuarioRequest request);
     Task<bool> DeleteUsuarioAsync(Guid id);
 

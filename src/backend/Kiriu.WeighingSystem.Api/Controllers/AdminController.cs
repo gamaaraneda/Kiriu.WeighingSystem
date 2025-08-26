@@ -609,6 +609,117 @@ public class AdminController : ControllerBase
         }
     }
 
+    [HttpPost("usuarios/search")]
+    public async Task<ActionResult<ApiResponse<SearchUsuariosResponse>>> SearchUsuarios(SearchUsuariosRequest request)
+    {
+        try
+        {
+            var searchResult = await _adminApplicationService.SearchUsuariosAsync(request);
+            return Ok(new ApiResponse<SearchUsuariosResponse>
+            {
+                Success = true,
+                Data = searchResult,
+                Message = $"Se encontraron {searchResult.TotalCount} usuarios"
+            });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new ApiResponse<SearchUsuariosResponse>
+            {
+                Success = false,
+                Message = "Error de validación",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar usuarios: {@Request}", request);
+            return StatusCode(500, new ApiResponse<SearchUsuariosResponse>
+            {
+                Success = false,
+                Message = "Error interno del servidor",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+    }
+
+    [HttpPost("usuarios")]
+    public async Task<ActionResult<ApiResponse<CreateUsuarioResponse>>> CreateUsuario(CreateUsuarioRequest request)
+    {
+        try
+        {
+            var response = await _adminApplicationService.CreateUsuarioAsync(request);
+            return CreatedAtAction(nameof(GetUsuarioById), new { id = response.Id }, new ApiResponse<CreateUsuarioResponse>
+            {
+                Success = true,
+                Data = response,
+                Message = "Usuario creado exitosamente"
+            });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new ApiResponse<CreateUsuarioResponse>
+            {
+                Success = false,
+                Message = "Error de validación",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+        catch (ConflictException ex)
+        {
+            return BadRequest(new ApiResponse<CreateUsuarioResponse>
+            {
+                Success = false,
+                Message = "Conflicto de datos",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear usuario: {Email}", request.Email);
+            return StatusCode(500, new ApiResponse<CreateUsuarioResponse>
+            {
+                Success = false,
+                Message = "Error interno del servidor",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+    }
+
+    [HttpGet("usuarios/{id}")]
+    public async Task<ActionResult<ApiResponse<UsuarioDto>>> GetUsuarioById(Guid id)
+    {
+        try
+        {
+            var usuarios = await _adminApplicationService.GetAllUsuariosWithRolesAsync();
+            var usuario = usuarios.FirstOrDefault(u => u.Id == id);
+            
+            if (usuario == null)
+                return NotFound(new ApiResponse<UsuarioDto>
+                {
+                    Success = false,
+                    Message = "Usuario no encontrado"
+                });
+
+            return Ok(new ApiResponse<UsuarioDto>
+            {
+                Success = true,
+                Data = usuario,
+                Message = "Usuario encontrado"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener usuario: {Id}", id);
+            return StatusCode(500, new ApiResponse<UsuarioDto>
+            {
+                Success = false,
+                Message = "Error interno del servidor",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+    }
+
     [HttpPut("usuarios/{id}")]
     public async Task<ActionResult<ApiResponse<UsuarioDto>>> UpdateUsuario(Guid id, UpdateUsuarioRequest request)
     {

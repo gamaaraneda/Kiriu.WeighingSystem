@@ -265,6 +265,73 @@ public class AdminApplicationService : IAdminApplicationService
         return usuarios.Adapt<IEnumerable<UsuarioDto>>();
     }
 
+    public async Task<SearchUsuariosResponse> SearchUsuariosAsync(SearchUsuariosRequest request)
+    {
+        var (usuarios, totalCount) = await _usuarioRepository.SearchUsuariosAsync(
+            search: request.Search,
+            rolId: request.RolId,
+            activo: request.Activo,
+            pageNumber: request.PageNumber,
+            pageSize: request.PageSize);
+
+        var usuariosDto = usuarios.Adapt<IEnumerable<UsuarioDto>>();
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
+
+        return new SearchUsuariosResponse
+        {
+            Usuarios = usuariosDto,
+            TotalCount = totalCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalPages = totalPages,
+            HasPreviousPage = request.PageNumber > 1,
+            HasNextPage = request.PageNumber < totalPages
+        };
+    }
+
+    public async Task<CreateUsuarioResponse> CreateUsuarioAsync(CreateUsuarioRequest request)
+    {
+        // Validar que el email no exista
+        if (await _usuarioRepository.ExistsByEmailAsync(request.Email))
+        {
+            throw new ConflictException("Ya existe un usuario con este email");
+        }
+
+        // Validar que el rol existe
+        var rol = await _rolRepository.GetByIdAsync(request.RolId);
+        if (rol == null)
+        {
+            throw new ValidationException("El ID del rol proporcionado no es válido");
+        }
+
+        // Crear el usuario
+        var usuario = new Usuario
+        {
+            Id = Guid.NewGuid(),
+            Nombre = request.Nombre,
+            Apellidos = request.Apellidos,
+            Email = request.Email,
+            PasswordHash = await _passwordService.HashPasswordAsync(request.Password),
+            RolId = request.RolId,
+            FechaCreacion = DateTime.UtcNow,
+            Activo = true
+        };
+
+        // Guardar en la base de datos
+        var usuarioCreado = await _usuarioRepository.AddAsync(usuario);
+
+        // Obtener el usuario completo con rol
+        var usuarioCompleto = await _usuarioRepository.GetByIdWithRolAsync(usuarioCreado.Id);
+        if (usuarioCompleto == null)
+        {
+            throw new NotFoundException("No se pudo recuperar la información del usuario");
+        }
+
+        // Mapear a DTO de respuesta
+        return usuarioCompleto.Adapt<CreateUsuarioResponse>();
+    }
+
     public async Task<UsuarioDto> UpdateUsuarioAsync(Guid id, UpdateUsuarioRequest request)
     {
         var usuario = await _usuarioRepository.GetByIdAsync(id);

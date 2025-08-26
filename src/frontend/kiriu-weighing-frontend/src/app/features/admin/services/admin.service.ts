@@ -17,6 +17,8 @@ import {
   AsignarPermisosRequest,
   AsignarRolesRequest,
   ModuloPermisoDto,
+  SearchUsuariosRequest,
+  SearchUsuariosResponse,
   ApiResponse,
 } from '../types/admin.types';
 
@@ -134,6 +136,15 @@ export class AdminService {
 
   getAllUsuarios(): Observable<ApiResponse<UsuarioDto[]>> {
     return this.http.get<ApiResponse<UsuarioDto[]>>(`${this.apiUrl}/usuarios`);
+  }
+
+  searchUsuarios(
+    request: SearchUsuariosRequest
+  ): Observable<ApiResponse<SearchUsuariosResponse>> {
+    return this.http.post<ApiResponse<SearchUsuariosResponse>>(
+      `${this.apiUrl}/usuarios/search`,
+      request
+    );
   }
 
   createUsuario(

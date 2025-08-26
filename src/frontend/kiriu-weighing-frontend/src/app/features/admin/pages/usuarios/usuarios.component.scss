@@ -56,7 +56,7 @@
     color: white;
     font-weight: 600;
     border-radius: 6px;
-    
+
     &:hover {
       background: #059669;
       border-color: #059669;
@@ -90,7 +90,7 @@
         font-weight: inherit;
         color: inherit;
       }
-      
+
       i {
         color: rgba(255, 255, 255, 0.9) !important;
       }
@@ -158,12 +158,25 @@
       border-top: 1px solid #e5e7eb;
       margin-top: 1rem;
 
+      ::ng-deep .search-btn {
+        min-width: 120px;
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+        font-weight: 600;
+
+        &:hover {
+          background: #2563eb;
+          border-color: #2563eb;
+        }
+      }
+
       ::ng-deep .clear-btn {
         min-width: 120px;
         background: white;
         border-color: #d1d5db;
         color: #6b7280;
-        
+
         &:hover {
           background: #f9fafb;
           border-color: #9ca3af;
@@ -229,10 +242,10 @@
     .p-datatable-tbody > tr:hover {
       background-color: #f8fafc;
     }
-    
+
     .p-datatable-tbody > tr:nth-child(even) {
       background-color: #fafbfc;
-      
+
       &:hover {
         background-color: #f8fafc;
       }
@@ -298,6 +311,24 @@
   }
 }
 
+// Inactive User Row Styling
+.inactive-user {
+  opacity: 0.6;
+  background-color: #fef2f2 !important;
+
+  &:hover {
+    background-color: #fecaca !important;
+  }
+
+  td {
+    color: #6b7280;
+  }
+
+  .user-avatar {
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%) !important;
+  }
+}
+
 // Action Buttons
 .action-buttons {
   display: flex;
@@ -319,6 +350,22 @@
       &.roles-btn:hover {
         background: var(--blue-50);
         border-color: var(--blue-200);
+      }
+
+      &.delete-btn:hover {
+        background: var(--red-50);
+        border-color: var(--red-200);
+      }
+
+      &.reactivate-btn {
+        border-color: #10b981;
+        color: #10b981;
+
+        &:hover {
+          background: #ecfdf5;
+          border-color: #059669;
+          color: #059669;
+        }
       }
 
       &.toggle-btn:hover:not(:disabled) {
@@ -455,7 +502,7 @@
 
       .p-multiselect {
         background: white;
-        
+
         .p-multiselect-label {
           padding: 0.75rem;
           font-size: 0.875rem;
@@ -564,7 +611,7 @@
       justify-content: center;
       width: 60px;
       height: 60px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100());
+      background: linear-gradient(135deg, #10b981 0%, #059669 100 ());
       border-radius: 50%;
       color: white;
       font-weight: 700;

@@ -37,6 +37,8 @@ import {
   UpdateUsuarioRequest,
   RolDto,
   AsignarRolesRequest,
+  SearchUsuariosRequest,
+  SearchUsuariosResponse,
 } from '../../types/admin.types';
 
 interface FilterOptions {
@@ -89,7 +91,14 @@ export class UsuariosComponent implements OnInit {
   isLoading = false;
   showModal = false;
   showRolesModal = false;
-  pageSize = 10;
+  pageSize = 50;
+
+  // Pagination state
+  currentPage = 1;
+  totalCount = 0;
+  totalPages = 0;
+  hasPreviousPage = false;
+  hasNextPage = false;
 
   // Forms
   usuarioForm!: FormGroup;
@@ -129,7 +138,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadUsuarios();
+    this.onSearch(); // Use search endpoint for initial load
     this.loadRoles();
   }
 
@@ -255,6 +264,66 @@ export class UsuariosComponent implements OnInit {
     this.applyFilters();
   }
 
+  // Search method using new backend endpoint
+  onSearch(): void {
+    this.isLoading = true;
+
+    const searchRequest: SearchUsuariosRequest = {
+      search: this.searchFilters.search || undefined,
+      rolId: this.searchFilters.rolId || undefined,
+      activo: this.searchFilters.activo,
+      pageNumber: this.currentPage,
+      pageSize: this.pageSize,
+    };
+
+    this.adminService.searchUsuarios(searchRequest).subscribe({
+      next: (response) => {
+        console.log('🔍 Search - Full response:', response);
+
+        if (response?.success && response.data) {
+          const searchResult = response.data;
+
+          // Update users and pagination info
+          this.usuarios = searchResult.usuarios;
+          this.filteredUsuarios = searchResult.usuarios; // No local filtering needed anymore
+          this.totalCount = searchResult.totalCount;
+          this.totalPages = searchResult.totalPages;
+          this.hasPreviousPage = searchResult.hasPreviousPage;
+          this.hasNextPage = searchResult.hasNextPage;
+
+          // Toast message removed for better UX
+
+          console.log('✅ Search - Usuarios loaded successfully:', {
+            totalCount: searchResult.totalCount,
+            currentPage: searchResult.pageNumber,
+            totalPages: searchResult.totalPages,
+            usersInPage: searchResult.usuarios.length,
+          });
+        } else {
+          console.error('❌ Search - Failed to load users');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al realizar la búsqueda',
+            key: 'top-right',
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Error al realizar búsqueda:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Error al realizar la búsqueda',
+          key: 'top-right',
+        });
+      },
+      complete: () => {
+        this.isLoading = false;
+      },
+    });
+  }
+
   private applyFilters(): void {
     this.filteredUsuarios = this.usuarios.filter((usuario) => {
       const matchesSearch =
@@ -281,9 +350,11 @@ export class UsuariosComponent implements OnInit {
     this.searchFilters = {
       search: '',
       rol: undefined,
+      rolId: undefined,
       activo: undefined,
     };
-    this.applyFilters();
+    this.currentPage = 1; // Reset to first page
+    this.onSearch(); // Reload data and apply cleared filters
   }
 
   // Modal methods
@@ -291,16 +362,17 @@ export class UsuariosComponent implements OnInit {
     this.selectedUsuario = null;
     this.usuarioForm.reset({
       nombre: '',
+      apellidos: '',
       email: '',
-      password: '',
-      confirmPassword: '',
+      contrasena: '',
+      nuevaContrasena: '',
       activo: true,
-      rolesIds: [],
+      rolId: '',
     });
 
     // Enable password fields for new user
-    this.usuarioForm.get('password')?.enable();
-    this.usuarioForm.get('confirmPassword')?.enable();
+    this.usuarioForm.get('contrasena')?.enable();
+    this.usuarioForm.get('nuevaContrasena')?.disable();
 
     this.showModal = true;
   }
@@ -311,15 +383,15 @@ export class UsuariosComponent implements OnInit {
       nombre: usuario.nombre,
       apellidos: usuario.apellidos,
       email: usuario.email,
-      password: '',
-      confirmPassword: '',
+      contrasena: '',
+      nuevaContrasena: '',
       activo: usuario.activo,
       rolId: usuario.rolId || '',
     });
 
     // Disable password fields for existing user (optional change)
-    this.usuarioForm.get('password')?.disable();
-    this.usuarioForm.get('confirmPassword')?.disable();
+    this.usuarioForm.get('contrasena')?.disable();
+    this.usuarioForm.get('nuevaContrasena')?.enable();
 
     this.showModal = true;
   }
@@ -332,13 +404,26 @@ export class UsuariosComponent implements OnInit {
 
   confirmDelete(usuario: UsuarioDto): void {
     this.confirmationService.confirm({
-      message: `¿Estás seguro de que deseas eliminar al usuario "${usuario.nombre}"?`,
-      header: 'Confirmar eliminación',
+      message: `¿Estás seguro de que deseas desactivar al usuario "${usuario.nombre}"? El usuario no podrá acceder al sistema.`,
+      header: 'Confirmar desactivación',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí',
-      rejectLabel: 'No',
+      acceptLabel: 'Sí, desactivar',
+      rejectLabel: 'Cancelar',
       accept: () => {
         this.deleteUsuario(usuario.id);
+      },
+    });
+  }
+
+  confirmReactivate(usuario: UsuarioDto): void {
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de que deseas reactivar al usuario "${usuario.nombre}"? El usuario podrá acceder nuevamente al sistema.`,
+      header: 'Confirmar reactivación',
+      icon: 'pi pi-question-circle',
+      acceptLabel: 'Sí, reactivar',
+      rejectLabel: 'Cancelar',
+      accept: () => {
+        this.reactivateUsuario(usuario);
       },
     });
   }
@@ -353,18 +438,66 @@ export class UsuariosComponent implements OnInit {
         this.messageService.add({
           severity: 'success',
           summary: 'Éxito',
-          detail: 'Usuario eliminado exitosamente',
+          detail: 'Usuario desactivado exitosamente',
           key: 'top-right',
         });
 
-        await this.loadUsuarios();
+        this.onSearch();
       }
     } catch (error) {
       console.error('Error al eliminar usuario:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'Error al eliminar el usuario',
+        detail: 'Error al desactivar el usuario',
+        key: 'top-right',
+      });
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async reactivateUsuario(usuario: UsuarioDto): Promise<void> {
+    this.isLoading = true;
+
+    try {
+      const updateRequest: UpdateUsuarioRequest = {
+        nombre: usuario.nombre,
+        apellidos: usuario.apellidos,
+        email: usuario.email,
+        activo: true, // Reactivar el usuario
+        rolId: usuario.rolId || '',
+      };
+
+      const response = await this.adminService
+        .updateUsuario(usuario.id, updateRequest)
+        .toPromise();
+
+      if (response?.success) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Usuario reactivado exitosamente',
+          key: 'top-right',
+        });
+
+        this.onSearch();
+      }
+    } catch (error: any) {
+      console.error('Error al reactivar usuario:', error);
+
+      let errorMessage = 'Error al reactivar el usuario';
+
+      if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error?.error?.errors?.length > 0) {
+        errorMessage = error.error.errors[0];
+      }
+
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: errorMessage,
         key: 'top-right',
       });
     } finally {
@@ -394,8 +527,8 @@ export class UsuariosComponent implements OnInit {
         };
 
         // Only include password if provided
-        if (formValue.password) {
-          (updateRequest as any).password = formValue.password;
+        if (formValue.nuevaContrasena) {
+          updateRequest.nuevaContrasena = formValue.nuevaContrasena;
         }
 
         const response = await this.adminService
@@ -410,7 +543,7 @@ export class UsuariosComponent implements OnInit {
             key: 'top-right',
           });
 
-          await this.loadUsuarios();
+          this.onSearch();
           this.closeModal();
         }
       } else {
@@ -419,7 +552,7 @@ export class UsuariosComponent implements OnInit {
           nombre: formValue.nombre,
           apellidos: formValue.apellidos,
           email: formValue.email,
-          contrasena: formValue.password,
+          contrasena: formValue.contrasena,
           activo: formValue.activo,
           rolId: formValue.rolId || '',
         };
@@ -436,7 +569,7 @@ export class UsuariosComponent implements OnInit {
             key: 'top-right',
           });
 
-          await this.loadUsuarios();
+          this.onSearch();
           this.closeModal();
         }
       }
@@ -501,7 +634,7 @@ export class UsuariosComponent implements OnInit {
           key: 'top-right',
         });
 
-        await this.loadUsuarios();
+        this.onSearch();
         this.closeRolesModal();
       }
     } catch (error: any) {
@@ -563,7 +696,7 @@ export class UsuariosComponent implements OnInit {
               key: 'top-right',
             });
 
-            await this.loadUsuarios();
+            this.onSearch();
           }
         } catch (error: any) {
           console.error('Error toggling user status:', error);
