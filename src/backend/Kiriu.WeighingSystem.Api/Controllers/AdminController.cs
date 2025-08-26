@@ -926,4 +926,56 @@ public class AdminController : ControllerBase
     }
 
     #endregion
+
+    #region Test Endpoints para Auditoría
+
+    /// <summary>
+    /// Endpoint de test para verificar que la auditoría funciona correctamente
+    /// </summary>
+    [HttpPost("test-audit")]
+    public IActionResult TestAudit([FromBody] object testData)
+    {
+        _logger.LogInformation("Test audit endpoint called with data: {@TestData}", testData);
+        
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Data = new { message = "Test audit endpoint executed successfully", timestamp = DateTime.UtcNow },
+            Message = "Operación de prueba para auditoría completada"
+        });
+    }
+
+    /// <summary>
+    /// Endpoint de test PUT para verificar actualizaciones en auditoría
+    /// </summary>
+    [HttpPut("test-audit/{id}")]
+    public IActionResult TestUpdateAudit(Guid id, [FromBody] object testData)
+    {
+        _logger.LogInformation("Test audit update endpoint called for ID: {Id} with data: {@TestData}", id, testData);
+        
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Data = new { id = id, message = "Test audit update executed successfully", timestamp = DateTime.UtcNow },
+            Message = "Operación de actualización de prueba para auditoría completada"
+        });
+    }
+
+    /// <summary>
+    /// Endpoint de test DELETE para verificar eliminaciones en auditoría
+    /// </summary>
+    [HttpDelete("test-audit/{id}")]
+    public IActionResult TestDeleteAudit(Guid id)
+    {
+        _logger.LogInformation("Test audit delete endpoint called for ID: {Id}", id);
+        
+        return Ok(new ApiResponse<bool>
+        {
+            Success = true,
+            Data = true,
+            Message = "Operación de eliminación de prueba para auditoría completada"
+        });
+    }
+
+    #endregion
 }

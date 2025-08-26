@@ -44,6 +44,9 @@ public static class ServiceCollectionExtensions
         // Weighing Services
         services.AddScoped<IWeighingOperationRepository, WeighingOperationRepository>();
         services.AddScoped<IWeighingService, WeighingService>();
+        
+        // Audit Services
+        services.AddScoped<IAuditLogger, AuditLoggerService>();
 
         return services;
     }

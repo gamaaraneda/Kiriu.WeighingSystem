@@ -21,6 +21,9 @@ public class WeighingDbContext : DbContext
     public DbSet<WeighingOperation> WeighingOperations { get; set; }
     public DbSet<WeighingPhoto> WeighingPhotos { get; set; }
     public DbSet<WeighingRemolque> WeighingRemolques { get; set; }
+    
+    // Audit entities
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -195,6 +198,34 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
                   .WithMany(p => p.Remolques)
                   .HasForeignKey(d => d.WeighingOperationId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+        
+        // Audit log configuration
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.ToTable("AuditLogs", "audit");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.UsuarioId).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.NombreUsuario).HasMaxLength(200);
+            entity.Property(e => e.Operacion).HasMaxLength(10).IsRequired();
+            entity.Property(e => e.Recurso).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.RegistroId).HasMaxLength(50);
+            entity.Property(e => e.Timestamp).HasColumnType("DATETIME2").IsRequired();
+            entity.Property(e => e.Payload).HasColumnType("NVARCHAR(MAX)");
+            entity.Property(e => e.IpOrigen).HasMaxLength(45);
+            entity.Property(e => e.Resultado).HasMaxLength(20).IsRequired().HasDefaultValue("success");
+            entity.Property(e => e.Detalles).HasMaxLength(500);
+            entity.Property(e => e.MetodoHttp).HasMaxLength(10);
+            entity.Property(e => e.RutaApi).HasMaxLength(200);
+            
+            // Índices para optimizar consultas
+            entity.HasIndex(e => e.UsuarioId).HasDatabaseName("IX_AuditLogs_UsuarioId");
+            entity.HasIndex(e => e.Recurso).HasDatabaseName("IX_AuditLogs_Recurso");
+            entity.HasIndex(e => e.Operacion).HasDatabaseName("IX_AuditLogs_Operacion");
+            entity.HasIndex(e => e.Timestamp).HasDatabaseName("IX_AuditLogs_Timestamp");
+            entity.HasIndex(e => new { e.UsuarioId, e.Timestamp }).HasDatabaseName("IX_AuditLogs_Usuario_Timestamp");
+            entity.HasIndex(e => new { e.Recurso, e.Timestamp }).HasDatabaseName("IX_AuditLogs_Recurso_Timestamp");
         });
     }
 } 

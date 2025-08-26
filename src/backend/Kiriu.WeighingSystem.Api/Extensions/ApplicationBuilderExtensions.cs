@@ -16,6 +16,9 @@ public static class ApplicationBuilderExtensions
         // Authentication & Authorization
         app.UseAuthentication();
         app.UseAuthorization();
+        
+        // Audit Middleware - Debe ir después de autenticación para capturar info del usuario
+        app.UseMiddleware<AuditMiddleware>();
 
         return app;
     }
