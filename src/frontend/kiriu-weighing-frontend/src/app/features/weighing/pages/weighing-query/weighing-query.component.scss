@@ -2,7 +2,7 @@
 
 .weighing-query-container {
   min-height: 100vh;
-  background-color: var(--color-background);
+  background-color: var(--surface-ground);
 }
 
 .weighing-query-content {
@@ -13,7 +13,7 @@
 .container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
 }
 
 // Page Header
@@ -23,108 +23,147 @@
   align-items: center;
   margin-bottom: 2rem;
   gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--surface-border);
 
   .header-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.5rem;
   }
 
-  .back-btn {
-    padding: 0.5rem 1rem;
+  ::ng-deep .back-btn {
     min-width: auto;
+    border-radius: 6px;
   }
 
   .page-title-group {
     .page-title {
-      font-size: 1.875rem;
+      font-size: 2rem;
       font-weight: 700;
-      color: var(--color-text-primary);
+      color: var(--text-color);
       margin: 0;
     }
 
     .page-subtitle {
-      color: var(--color-text-secondary);
-      margin: 0.25rem 0 0 0;
-      font-size: 0.875rem;
+      color: var(--text-color-secondary);
+      margin: 0.5rem 0 0 0;
+      font-size: 1rem;
     }
   }
 
-  .export-btn {
-    padding: 0.75rem 1.5rem;
+  ::ng-deep .export-btn {
     font-weight: 600;
+    border-radius: 6px;
+    min-width: 150px;
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+    
+    &:hover {
+      background: #16a34a;
+      border-color: #16a34a;
+    }
     
     &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+      background: #d1d5db;
+      border-color: #d1d5db;
+      color: #9ca3af;
     }
   }
 }
 
 // Search Filters Card
-.search-filters-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
+::ng-deep .search-filters-card {
   margin-bottom: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
 
-  .filters-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 1.5rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  .p-card-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+
+    .filters-header {
+      display: flex;
+      align-items: center;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: white;
+
+      .filters-title {
+        margin: 0;
+        font-size: inherit;
+        font-weight: inherit;
+        color: inherit;
+      }
+      
+      i {
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
+    }
+  }
+
+  .p-card-content {
+    padding: 1.5rem;
+    background: #f8fafc;
   }
 
   .filters-form {
     .filters-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 1rem;
       margin-bottom: 1.5rem;
+      align-items: end;
     }
 
     .filter-group {
       .filter-label {
         display: block;
-        font-weight: 500;
-        color: var(--color-text-primary);
+        font-weight: 600;
+        color: #374151;
         margin-bottom: 0.5rem;
         font-size: 0.875rem;
       }
 
-      .form-input {
-        width: 100%;
-        padding: 0.75rem;
-        border: 2px solid var(--color-border);
-        border-radius: 8px;
-        font-size: 0.875rem;
-        transition: border-color 0.2s;
-
-        &:focus {
-          outline: none;
-          border-color: var(--color-primary);
-        }
-      }
-
       ::ng-deep {
+        .p-inputtext,
+        .p-datepicker input,
+        .p-select {
+          width: 100%;
+          border-radius: 6px;
+          border: 1px solid #d1d5db;
+          padding: 0.75rem;
+          font-size: 0.875rem;
+          background: white;
+          transition: all 0.2s ease;
+
+          &:focus {
+            outline: 0 none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+            border-color: #3b82f6;
+          }
+        }
+
         .p-datepicker,
         .p-select {
           width: 100%;
-          
-          .p-inputtext {
-            padding: 0.75rem;
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            
-            &:focus {
-              border-color: var(--color-primary);
-            }
-          }
+        }
+
+        .p-select {
+          background: white;
+        }
+
+        .p-select-label {
+          padding: 0.75rem;
+          font-size: 0.875rem;
+        }
+        
+        .p-datepicker-input {
+          background: white;
         }
       }
     }
@@ -133,8 +172,35 @@
       display: flex;
       gap: 1rem;
       justify-content: flex-end;
-      padding-top: 1rem;
-      border-top: 1px solid var(--color-border);
+      align-items: center;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      margin-top: 1rem;
+
+      ::ng-deep .clear-btn {
+        min-width: 130px;
+        background: white;
+        border-color: #d1d5db;
+        color: #6b7280;
+        
+        &:hover {
+          background: #f9fafb;
+          border-color: #9ca3af;
+        }
+      }
+
+      ::ng-deep .search-btn {
+        min-width: 120px;
+        background: #3b82f6;
+        border-color: #3b82f6;
+        color: white;
+        font-weight: 600;
+        
+        &:hover {
+          background: #1d4ed8;
+          border-color: #1d4ed8;
+        }
+      }
     }
   }
 }
@@ -142,214 +208,300 @@
 // Results Section
 .results-section {
   .results-header {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
     .results-title {
       font-size: 1.25rem;
       font-weight: 600;
-      color: var(--color-text-primary);
+      color: #1f2937;
       margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &::before {
+        content: "📊";
+        font-size: 1.2em;
+      }
+    }
+    
+    ::ng-deep .export-excel-btn {
+      background: #22c55e;
+      border-color: #22c55e;
+      color: white;
+      font-weight: 600;
+      border-radius: 6px;
+      
+      &:hover {
+        background: #16a34a;
+        border-color: #16a34a;
+      }
+      
+      &:disabled {
+        background: #d1d5db;
+        border-color: #d1d5db;
+        color: #9ca3af;
+      }
     }
   }
 
-  .results-table-container {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  ::ng-deep .results-card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
     overflow: hidden;
 
-    ::ng-deep {
-      .p-datatable {
-        .p-datatable-header {
-          background: var(--color-background);
-          border: none;
-        }
-
-        .p-datatable-thead > tr > th {
-          background: var(--color-background);
-          color: var(--color-text-primary);
-          font-weight: 600;
-          padding: 1rem 0.75rem;
-          border-bottom: 2px solid var(--color-border);
-          font-size: 0.875rem;
-        }
-
-        .p-datatable-tbody > tr > td {
-          padding: 1rem 0.75rem;
-          border-bottom: 1px solid var(--color-border-light);
-          font-size: 0.875rem;
-        }
-
-        .p-datatable-tbody > tr:hover {
-          background-color: var(--color-background);
-        }
-
-        .p-paginator {
-          background: var(--color-background);
-          border: none;
-          padding: 1rem;
-        }
+    .p-datatable {
+      .p-datatable-thead > tr > th {
+        background: #f8fafc;
+        color: #374151;
+        font-weight: 600;
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #e5e7eb;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
       }
-    }
 
-    // Table content styles
-    .folio-text {
-      font-weight: 600;
-      color: var(--color-primary);
-    }
-
-    .edited-badge {
-      display: inline-block;
-      background: var(--color-danger);
-      color: white;
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 12px;
-      margin-left: 0.5rem;
-      font-weight: 500;
-    }
-
-    .edited-row {
-      background-color: rgba(var(--color-danger-rgb), 0.05);
-    }
-
-    .placas-text {
-      font-family: 'Courier New', monospace;
-      font-weight: 500;
-    }
-
-    .tipo-badges {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .tipo-badge,
-    .unidad-badge {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-align: center;
-    }
-
-    .tipo-badge {
-      &.tipo-client {
-        background: var(--color-success-light);
-        color: var(--color-success);
+      .p-datatable-tbody > tr > td {
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.875rem;
+        vertical-align: middle;
+        background: white;
       }
-      &.tipo-provider {
-        background: var(--color-info-light);
-        color: var(--color-info);
-      }
-    }
 
-    .unidad-badge {
-      background: var(--color-secondary-light);
-      color: var(--color-secondary);
+      .p-datatable-tbody > tr:hover {
+        background-color: #f8fafc;
+      }
       
-      &.unidad-doble-remolque {
-        background: var(--color-warning-light);
-        color: var(--color-warning);
-      }
-    }
-
-    .peso-value {
-      font-weight: 500;
-      color: var(--color-text-primary);
-    }
-
-    .peso-empty {
-      color: var(--color-text-secondary);
-      font-style: italic;
-    }
-
-    .estado-badge {
-      display: inline-block;
-      padding: 0.375rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-
-      &.estado-entrada-registrada {
-        background: var(--color-warning-light);
-        color: var(--color-warning);
-      }
-
-      &.estado-salida-registrada {
-        background: var(--color-success-light);
-        color: var(--color-success);
-      }
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .action-btn {
-      padding: 0.375rem 0.5rem;
-      min-width: auto;
-      font-size: 0.875rem;
-
-      &:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
-    }
-
-    .empty-message {
-      text-align: center;
-      padding: 3rem 1rem;
-
-      .empty-state {
-        .empty-icon {
-          font-size: 3rem;
-          margin-bottom: 1rem;
+      .p-datatable-tbody > tr:nth-child(even) {
+        background-color: #fafbfc;
+        
+        &:hover {
+          background-color: #f8fafc;
         }
+      }
 
-        .empty-title {
-          font-size: 1.125rem;
-          font-weight: 600;
-          color: var(--color-text-primary);
-          margin: 0 0 0.5rem 0;
-        }
+      .p-paginator {
+        background: var(--surface-0);
+        border: none;
+        border-top: 1px solid var(--surface-border);
+        padding: 1rem;
 
-        .empty-subtitle {
-          color: var(--color-text-secondary);
-          margin: 0;
+        .p-paginator-current {
+          color: var(--text-color-secondary);
+          font-size: 0.875rem;
         }
       }
     }
   }
 
-  .no-search-state {
+  // Table content styles
+  .folio-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .folio-text {
+      font-weight: 600;
+      color: var(--primary-color);
+      font-family: "Courier New", monospace;
+    }
+
+    ::ng-deep .edited-tag {
+      font-size: 0.7rem;
+
+      .p-tag-value {
+        font-weight: 600;
+
+        &::before {
+          content: "\e922";
+          font-family: "primeicons";
+          margin-right: 0.25rem;
+        }
+      }
+    }
+  }
+
+  .edited-row {
+    background-color: var(--red-50) !important;
+  }
+
+  .placas-text {
+    font-family: "Courier New", monospace;
+    font-weight: 600;
+    background: var(--surface-100);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid var(--surface-200);
+  }
+
+  .tipo-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    ::ng-deep {
+      .tipo-tag,
+      .unidad-tag {
+        font-size: 0.75rem;
+
+        .p-tag-value {
+          font-weight: 500;
+          text-transform: capitalize;
+        }
+      }
+
+      .tipo-tag {
+        align-self: flex-start;
+
+        &.p-tag-success .p-tag-value::before {
+          content: "\e7fd";
+          font-family: "primeicons";
+          margin-right: 0.25rem;
+        }
+
+        &.p-tag-info .p-tag-value::before {
+          content: "\e917";
+          font-family: "primeicons";
+          margin-right: 0.25rem;
+        }
+      }
+
+      .unidad-tag {
+        align-self: flex-start;
+
+        .p-tag-value::before {
+          content: "\e93b";
+          font-family: "primeicons";
+          margin-right: 0.25rem;
+        }
+      }
+    }
+  }
+
+  .peso-value {
+    font-weight: 600;
+    color: var(--text-color);
+    font-family: "Courier New", monospace;
+  }
+
+  .peso-empty {
+    color: var(--text-color-secondary);
+    font-style: italic;
+  }
+
+  ::ng-deep .estado-tag {
+    font-size: 0.75rem;
+
+    .p-tag-value {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    &.p-tag-warning .p-tag-value::before {
+      content: "\e9ba";
+      font-family: "primeicons";
+      margin-right: 0.25rem;
+    }
+
+    &.p-tag-success .p-tag-value::before {
+      content: "\e9bb";
+      font-family: "primeicons";
+      margin-right: 0.25rem;
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+
+    ::ng-deep {
+      .action-btn {
+        border-radius: 6px;
+        min-width: auto;
+        width: 2.5rem;
+        height: 2.5rem;
+
+        &.view-btn:hover {
+          background: var(--blue-50);
+          border-color: var(--blue-200);
+        }
+
+        &.print-btn:hover {
+          background: var(--surface-100);
+          border-color: var(--surface-300);
+        }
+      }
+    }
+  }
+
+  ::ng-deep .p-datatable-emptymessage {
     text-align: center;
-    padding: 4rem 1rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 3rem 1rem;
+
+    .empty-state {
+      .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-color-secondary);
+        opacity: 0.6;
+      }
+
+      .empty-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 0.75rem 0;
+      }
+
+      .empty-subtitle {
+        color: var(--text-color-secondary);
+        margin: 0;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  ::ng-deep .no-search-card {
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--surface-border);
+
+    .p-card-content {
+      padding: 4rem 2rem;
+    }
 
     .no-search-content {
       .no-search-icon {
         font-size: 4rem;
+        color: var(--primary-color);
         margin-bottom: 1.5rem;
-        opacity: 0.5;
+        opacity: 0.7;
       }
 
       .no-search-title {
         font-size: 1.5rem;
         font-weight: 600;
-        color: var(--color-text-primary);
-        margin: 0 0 0.5rem 0;
+        color: var(--text-color);
+        margin: 0 0 1rem 0;
       }
 
       .no-search-text {
-        color: var(--color-text-secondary);
+        color: var(--text-color-secondary);
         margin: 0;
         font-size: 1rem;
+        line-height: 1.5;
       }
     }
   }
@@ -358,8 +510,8 @@
 // Detail Modal Styles
 ::ng-deep .detail-modal {
   .p-dialog-header {
-    background: var(--color-primary);
-    color: white;
+    background: var(--primary-color);
+    color: var(--primary-color-text);
     font-weight: 600;
     border-radius: 12px 12px 0 0;
   }
@@ -370,38 +522,55 @@
 
   .p-dialog-footer {
     padding: 1rem 1.5rem;
-    border-top: 1px solid var(--color-border);
-    background: var(--color-background);
+    border-top: 1px solid var(--surface-border);
+    background: var(--surface-50);
+    border-radius: 0 0 12px 12px;
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin: 0;
+    }
   }
 }
 
 .operation-detail {
   .detail-header {
     padding: 1.5rem;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-background);
+    border-bottom: 1px solid var(--surface-border);
+    background: var(--surface-50);
 
     .detail-title {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
 
       h2 {
         font-size: 1.5rem;
         font-weight: 700;
-        color: var(--color-text-primary);
+        color: var(--text-color);
         margin: 0;
       }
 
       .detail-badges {
         display: flex;
-        gap: 0.5rem;
+        gap: 0.75rem;
+
+        ::ng-deep {
+          .p-tag {
+            font-size: 0.75rem;
+
+            .p-tag-value {
+              font-weight: 600;
+            }
+          }
+        }
       }
     }
 
     .detail-date {
-      color: var(--color-text-secondary);
+      color: var(--text-color-secondary);
       font-size: 0.875rem;
       font-weight: 500;
     }
@@ -421,26 +590,37 @@
     }
 
     .section-title {
-      font-size: 1rem;
+      font-size: 1.125rem;
       font-weight: 600;
-      color: var(--color-text-primary);
-      margin: 0 0 1rem 0;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid var(--color-border);
+      color: var(--text-color);
+      margin: 0 0 1.25rem 0;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--primary-color);
+      position: relative;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 30px;
+        height: 2px;
+        background: var(--primary-color);
+      }
     }
 
     .detail-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
+      gap: 1.25rem;
     }
 
     .detail-item {
       label {
         display: block;
         font-weight: 600;
-        color: var(--color-text-secondary);
-        margin-bottom: 0.25rem;
+        color: var(--text-color-secondary);
+        margin-bottom: 0.5rem;
         font-size: 0.875rem;
         text-transform: uppercase;
         letter-spacing: 0.025em;
@@ -449,95 +629,97 @@
       span {
         display: block;
         font-size: 1rem;
-        color: var(--color-text-primary);
+        color: var(--text-color);
         font-weight: 500;
+        line-height: 1.4;
 
         &.peso-value {
           font-size: 1.125rem;
           font-weight: 600;
-          color: var(--color-success);
+          color: var(--green-600);
+          font-family: "Courier New", monospace;
         }
 
         &.peso-empty {
-          color: var(--color-text-secondary);
+          color: var(--text-color-secondary);
           font-style: italic;
           font-weight: 400;
         }
 
         &.placas-text {
-          font-family: 'Courier New', monospace;
-          background: var(--color-background);
-          padding: 0.5rem;
+          font-family: "Courier New", monospace;
+          background: var(--surface-100);
+          padding: 0.75rem;
           border-radius: 6px;
-          border: 1px solid var(--color-border);
-        }
-
-        &.estado-badge {
-          display: inline-block;
-          padding: 0.375rem 0.75rem;
-          border-radius: 20px;
-          font-size: 0.75rem;
+          border: 1px solid var(--surface-200);
           font-weight: 600;
-          text-transform: uppercase;
         }
 
-        &.tipo-badge {
-          display: inline-block;
-          padding: 0.25rem 0.75rem;
-          border-radius: 12px;
-          font-size: 0.75rem;
-          font-weight: 500;
-        }
+        // PrimeNG badges in modal will use default styling
+        ::ng-deep {
+          .p-tag {
+            font-size: 0.75rem;
 
-        &.unidad-badge {
-          display: inline-block;
-          padding: 0.25rem 0.75rem;
-          border-radius: 12px;
-          font-size: 0.75rem;
-          font-weight: 500;
-          background: var(--color-secondary-light);
-          color: var(--color-secondary);
-        }
-
-        &.edited-badge {
-          display: inline-block;
-          background: var(--color-danger);
-          color: white;
-          font-size: 0.75rem;
-          padding: 0.25rem 0.5rem;
-          border-radius: 12px;
-          font-weight: 500;
+            .p-tag-value {
+              font-weight: 600;
+            }
+          }
         }
       }
     }
   }
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-}
+// Modal footer is now handled in ::ng-deep .detail-modal above
 
 // Responsive Design
 @media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .weighing-query-content {
+    padding: 1rem 0;
+  }
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
 
     .header-left {
       flex-direction: column;
       align-items: stretch;
-      gap: 0.5rem;
+      gap: 1rem;
     }
 
-    .back-btn {
+    ::ng-deep .back-btn {
       align-self: flex-start;
+      width: auto;
+    }
+
+    .page-title-group {
+      .page-title {
+        font-size: 1.75rem;
+      }
+
+      .page-subtitle {
+        font-size: 0.875rem;
+      }
+    }
+
+    ::ng-deep .export-btn {
+      width: 100%;
     }
   }
 
-  .search-filters-card {
+  ::ng-deep .search-filters-card {
+    margin: 0 -1rem 1.5rem -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+
     .filters-form {
       .filters-grid {
         grid-template-columns: 1fr;
@@ -546,30 +728,70 @@
 
       .filters-actions {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.75rem;
+
+        .clear-btn,
+        .search-btn {
+          width: 100%;
+          min-width: auto;
+        }
       }
     }
   }
 
-  .results-table-container {
-    ::ng-deep {
-      .p-datatable {
-        .p-datatable-thead > tr > th,
-        .p-datatable-tbody > tr > td {
-          padding: 0.75rem 0.5rem;
-          font-size: 0.8rem;
-        }
+  ::ng-deep .results-card {
+    margin: 0 -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+
+    .p-datatable {
+      .p-datatable-thead > tr > th,
+      .p-datatable-tbody > tr > td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+      }
+
+      .p-datatable-tbody > tr > td {
+        vertical-align: top;
       }
     }
 
     .action-buttons {
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.5rem;
+
+      .action-btn {
+        width: 100%;
+        height: 2rem;
+      }
     }
 
     .tipo-badges {
-      flex-direction: row;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      .tipo-tag,
+      .unidad-tag {
+        align-self: flex-start;
+      }
+    }
+
+    .folio-cell {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+
+  ::ng-deep .no-search-card {
+    margin: 0 -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+
+    .p-card-content {
+      padding: 2rem 1rem;
     }
   }
 
@@ -578,7 +800,22 @@
     .p-dialog {
       width: 95vw !important;
       max-width: none !important;
-      margin: 1rem;
+      margin: 0.5rem;
+      height: auto !important;
+      max-height: 90vh;
+    }
+
+    .p-dialog-header {
+      padding: 1rem;
+    }
+
+    .p-dialog-content {
+      max-height: calc(90vh - 140px);
+      overflow-y: auto;
+    }
+
+    .p-dialog-footer {
+      padding: 1rem;
     }
   }
 
@@ -589,22 +826,33 @@
       .detail-title {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
 
         h2 {
           font-size: 1.25rem;
+        }
+
+        .detail-badges {
+          flex-wrap: wrap;
         }
       }
     }
 
     .detail-content {
       padding: 1rem;
-      max-height: 50vh;
+      max-height: none;
 
       .detail-section {
+        margin-bottom: 1.5rem;
+
+        .section-title {
+          font-size: 1rem;
+        }
+
         .detail-grid {
           grid-template-columns: 1fr;
-          gap: 0.75rem;
+          gap: 1rem;
         }
       }
     }
@@ -620,10 +868,29 @@
     padding: 1rem 0;
   }
 
-  .search-filters-card,
-  .results-table-container,
-  .no-search-state {
+  .page-header {
+    .page-title-group {
+      .page-title {
+        font-size: 1.5rem;
+      }
+    }
+  }
+
+  ::ng-deep .search-filters-card,
+  ::ng-deep .results-card,
+  ::ng-deep .no-search-card {
     margin: 0 -0.5rem;
     border-radius: 0;
+  }
+
+  .results-section {
+    .results-header .results-title {
+      font-size: 1.125rem;
+    }
+  }
+
+  ::ng-deep .detail-modal .p-dialog {
+    margin: 0.25rem !important;
+    width: calc(100vw - 0.5rem) !important;
   }
 }

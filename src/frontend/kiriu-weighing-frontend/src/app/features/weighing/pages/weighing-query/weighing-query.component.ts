@@ -11,6 +11,9 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DialogModule } from 'primeng/dialog';
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { 
@@ -34,6 +37,9 @@ import { extractErrorMessage } from '../../../../shared/utils/error.utils';
     ButtonModule,
     InputTextModule,
     DialogModule,
+    CardModule,
+    TagModule,
+    TooltipModule,
     HeaderComponent,
     BreadcrumbComponent
   ],
