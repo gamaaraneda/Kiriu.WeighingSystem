@@ -72,6 +72,7 @@ public class AuditController : ControllerBase
                     Detalles = log.Detalles,
                     MetodoHttp = log.MetodoHttp,
                     RutaApi = log.RutaApi,
+                    Dispositivo = log.Dispositivo,
                     PayloadSize = log.Payload?.Length ?? 0,
                     HasPayload = !string.IsNullOrEmpty(log.Payload)
                 }).ToList(),
@@ -130,7 +131,8 @@ public class AuditController : ControllerBase
                 Resultado = log.Resultado,
                 Detalles = log.Detalles,
                 MetodoHttp = log.MetodoHttp,
-                RutaApi = log.RutaApi
+                RutaApi = log.RutaApi,
+                Dispositivo = log.Dispositivo
             };
 
             return Ok(detailedLog);
@@ -219,6 +221,7 @@ public class AuditLogDto
     public string? Detalles { get; set; }
     public string? MetodoHttp { get; set; }
     public string? RutaApi { get; set; }
+    public string? Dispositivo { get; set; }
     public int PayloadSize { get; set; }
     public bool HasPayload { get; set; }
 }

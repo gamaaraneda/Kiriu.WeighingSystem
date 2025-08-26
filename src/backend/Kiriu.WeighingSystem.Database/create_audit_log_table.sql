@@ -89,8 +89,8 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.check_constraints WHERE name = 'CK_AuditLogs_Operacion')
 BEGIN
     ALTER TABLE [audit].[AuditLogs]
-    ADD CONSTRAINT [CK_AuditLogs_Operacion] CHECK ([Operacion] IN ('CREATE', 'UPDATE', 'DELETE', 'READ'));
-    PRINT 'Constraint CK_AuditLogs_Operacion creado'
+    ADD CONSTRAINT [CK_AuditLogs_Operacion] CHECK ([Operacion] IN ('CREATE', 'UPDATE', 'DELETE', 'READ', 'LOGIN', 'LOGOUT'));
+    PRINT 'Constraint CK_AuditLogs_Operacion creado con operaciones CRUD + LOGIN/LOGOUT'
 END
 GO
 

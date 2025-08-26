@@ -83,4 +83,10 @@ public class AuditLog
     /// </summary>
     [MaxLength(200)]
     public string? RutaApi { get; set; }
+
+    /// <summary>
+    /// Información del dispositivo desde el cual se accede (User-Agent del navegador o identificador del dispositivo)
+    /// </summary>
+    [MaxLength(200)]
+    public string? Dispositivo { get; set; }
 }

@@ -218,6 +218,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             entity.Property(e => e.Detalles).HasMaxLength(500);
             entity.Property(e => e.MetodoHttp).HasMaxLength(10);
             entity.Property(e => e.RutaApi).HasMaxLength(200);
+            entity.Property(e => e.Dispositivo).HasMaxLength(200);
             
             // Índices para optimizar consultas
             entity.HasIndex(e => e.UsuarioId).HasDatabaseName("IX_AuditLogs_UsuarioId");
@@ -226,6 +227,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             entity.HasIndex(e => e.Timestamp).HasDatabaseName("IX_AuditLogs_Timestamp");
             entity.HasIndex(e => new { e.UsuarioId, e.Timestamp }).HasDatabaseName("IX_AuditLogs_Usuario_Timestamp");
             entity.HasIndex(e => new { e.Recurso, e.Timestamp }).HasDatabaseName("IX_AuditLogs_Recurso_Timestamp");
+            entity.HasIndex(e => e.Dispositivo).HasDatabaseName("IX_AuditLogs_Dispositivo");
         });
     }
 } 

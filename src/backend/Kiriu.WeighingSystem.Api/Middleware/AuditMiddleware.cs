@@ -113,7 +113,8 @@ public class AuditMiddleware
         {
             Method = context.Request.Method,
             Path = context.Request.Path.ToString(),
-            IpAddress = GetClientIpAddress(context)
+            IpAddress = GetClientIpAddress(context),
+            Dispositivo = GetUserAgent(context)
         };
 
         // Capturar payload del request para POST y PUT
@@ -186,7 +187,8 @@ public class AuditMiddleware
                 ipOrigen: requestInfo.IpAddress,
                 detalles: $"Operación exitosa - Status: {requestInfo.StatusCode}",
                 metodoHttp: requestInfo.Method,
-                rutaApi: requestInfo.Path
+                rutaApi: requestInfo.Path,
+                dispositivo: requestInfo.Dispositivo
             );
 
             _logger.LogInformation("✅ Audit log guardado exitosamente: {Operacion} en {Recurso}", operacion, recurso);
@@ -374,6 +376,26 @@ public class AuditMiddleware
         }
     }
 
+    private static string GetUserAgent(HttpContext context)
+    {
+        try
+        {
+            var userAgent = context.Request.Headers.UserAgent.ToString();
+            
+            // Truncar si es muy largo para evitar problemas de base de datos
+            if (!string.IsNullOrEmpty(userAgent) && userAgent.Length > 200)
+            {
+                userAgent = userAgent[..197] + "...";
+            }
+            
+            return userAgent ?? "Unknown";
+        }
+        catch
+        {
+            return "Unknown";
+        }
+    }
+
     private class RequestInfo
     {
         public string Method { get; set; } = string.Empty;
@@ -383,5 +405,6 @@ public class AuditMiddleware
         public string? UsuarioId { get; set; }
         public string? NombreUsuario { get; set; }
         public int StatusCode { get; set; }
+        public string? Dispositivo { get; set; }
     }
 }

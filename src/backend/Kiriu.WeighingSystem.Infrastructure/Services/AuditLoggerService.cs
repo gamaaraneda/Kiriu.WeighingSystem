@@ -32,7 +32,8 @@ public class AuditLoggerService : IAuditLogger
         string? ipOrigen = null,
         string? detalles = null,
         string? metodoHttp = null,
-        string? rutaApi = null)
+        string? rutaApi = null,
+        string? dispositivo = null)
     {
         try
         {
@@ -49,6 +50,7 @@ public class AuditLoggerService : IAuditLogger
                 Detalles = detalles,
                 MetodoHttp = metodoHttp,
                 RutaApi = rutaApi,
+                Dispositivo = dispositivo,
                 Resultado = "success"
             };
 
@@ -74,10 +76,11 @@ public class AuditLoggerService : IAuditLogger
         string? registroId = null,
         string? payload = null,
         string? ipOrigen = null,
-        string? rutaApi = null)
+        string? rutaApi = null,
+        string? dispositivo = null)
     {
         await LogAsync(usuarioId, nombreUsuario, "CREATE", recurso, registroId, payload, 
-            ipOrigen, null, "POST", rutaApi);
+            ipOrigen, null, "POST", rutaApi, dispositivo);
     }
 
     /// <inheritdoc />
@@ -88,10 +91,11 @@ public class AuditLoggerService : IAuditLogger
         string? registroId = null,
         string? payload = null,
         string? ipOrigen = null,
-        string? rutaApi = null)
+        string? rutaApi = null,
+        string? dispositivo = null)
     {
         await LogAsync(usuarioId, nombreUsuario, "UPDATE", recurso, registroId, payload, 
-            ipOrigen, null, "PUT", rutaApi);
+            ipOrigen, null, "PUT", rutaApi, dispositivo);
     }
 
     /// <inheritdoc />
@@ -101,10 +105,11 @@ public class AuditLoggerService : IAuditLogger
         string recurso,
         string? registroId = null,
         string? ipOrigen = null,
-        string? rutaApi = null)
+        string? rutaApi = null,
+        string? dispositivo = null)
     {
         await LogAsync(usuarioId, nombreUsuario, "DELETE", recurso, registroId, null, 
-            ipOrigen, null, "DELETE", rutaApi);
+            ipOrigen, null, "DELETE", rutaApi, dispositivo);
     }
 
     /// <inheritdoc />

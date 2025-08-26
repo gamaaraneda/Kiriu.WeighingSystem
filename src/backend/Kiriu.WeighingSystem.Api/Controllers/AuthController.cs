@@ -165,7 +165,8 @@ public class AuthController : ControllerBase
                 ipOrigen: ipAddress,
                 detalles: "Login exitoso",
                 metodoHttp: "POST",
-                rutaApi: "/api/auth/login"
+                rutaApi: "/api/auth/login",
+                dispositivo: Request.Headers.UserAgent.ToString()
             );
 
             _logger.LogInformation("✅ Login auditado para usuario: {Email}", email);
@@ -207,7 +208,8 @@ public class AuthController : ControllerBase
                 ipOrigen: ipAddress,
                 detalles: "Logout exitoso",
                 metodoHttp: "POST",
-                rutaApi: "/api/auth/logout"
+                rutaApi: "/api/auth/logout",
+                dispositivo: Request.Headers.UserAgent.ToString()
             );
 
             _logger.LogInformation("✅ Logout auditado para usuario: {UserId}", userId);

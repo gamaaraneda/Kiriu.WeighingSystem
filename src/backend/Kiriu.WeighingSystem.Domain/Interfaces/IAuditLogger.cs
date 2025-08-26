@@ -32,7 +32,8 @@ public interface IAuditLogger
         string? ipOrigen = null,
         string? detalles = null,
         string? metodoHttp = null,
-        string? rutaApi = null);
+        string? rutaApi = null,
+        string? dispositivo = null);
 
     /// <summary>
     /// Registra una operación CREATE exitosa
@@ -52,7 +53,8 @@ public interface IAuditLogger
         string? registroId = null,
         string? payload = null,
         string? ipOrigen = null,
-        string? rutaApi = null);
+        string? rutaApi = null,
+        string? dispositivo = null);
 
     /// <summary>
     /// Registra una operación UPDATE exitosa
@@ -72,7 +74,8 @@ public interface IAuditLogger
         string? registroId = null,
         string? payload = null,
         string? ipOrigen = null,
-        string? rutaApi = null);
+        string? rutaApi = null,
+        string? dispositivo = null);
 
     /// <summary>
     /// Registra una operación DELETE exitosa
@@ -90,7 +93,8 @@ public interface IAuditLogger
         string recurso,
         string? registroId = null,
         string? ipOrigen = null,
-        string? rutaApi = null);
+        string? rutaApi = null,
+        string? dispositivo = null);
 
     /// <summary>
     /// Obtiene los logs de auditoría con paginación
