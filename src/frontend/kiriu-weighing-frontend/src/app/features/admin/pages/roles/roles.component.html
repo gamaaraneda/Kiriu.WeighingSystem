@@ -66,7 +66,6 @@
                 id="searchName"
                 [(ngModel)]="searchFilters.search"
                 placeholder="Buscar por nombre..."
-                (input)="onFilterChange()"
               />
             </div>
 
@@ -80,12 +79,20 @@
                 optionLabel="label"
                 optionValue="value"
                 [showClear]="true"
-                (onChange)="onFilterChange()"
               ></p-select>
             </div>
           </div>
 
           <div class="filters-actions">
+            <p-button
+              type="button"
+              severity="primary"
+              label="Buscar"
+              icon="pi pi-search"
+              (click)="searchRoles()"
+              [loading]="isSearching"
+              styleClass="search-btn"
+            ></p-button>
             <p-button
               type="button"
               severity="secondary"
@@ -103,7 +110,15 @@
       <p-card styleClass="results-card">
         <ng-template pTemplate="header">
           <div class="results-header">
-            <h2 class="results-title">Roles ({{ filteredRoles.length }})</h2>
+            <h2 class="results-title">
+              Roles ({{ searchResult?.totalCount || filteredRoles.length }})
+            </h2>
+            <div class="pagination-info" *ngIf="searchResult">
+              <span
+                >Página {{ searchResult.pageNumber }} de
+                {{ searchResult.totalPages }}</span
+              >
+            </div>
           </div>
         </ng-template>
 
@@ -129,7 +144,7 @@
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-rol>
-            <tr>
+            <tr [class.inactive-role]="!rol.activo">
               <td>
                 <div class="role-cell">
                   <div class="role-icon">
@@ -187,17 +202,34 @@
                     tooltipPosition="top"
                     styleClass="action-btn edit-btn"
                   ></p-button>
+
+                  <!-- Botón de desactivar para roles activos -->
                   <p-button
                     type="button"
                     severity="danger"
                     outlined="true"
                     size="small"
                     icon="pi pi-trash"
-                    [disabled]="!rol.activo || rol.usuariosAsignados > 0"
-                    (click)="confirmDelete(rol)"
-                    pTooltip="Eliminar rol"
+                    *ngIf="rol.activo"
+                    [disabled]="rol.usuariosAsignados > 0"
+                    (click)="confirmDeactivate(rol)"
+                    pTooltip="Desactivar rol"
                     tooltipPosition="top"
                     styleClass="action-btn delete-btn"
+                  ></p-button>
+
+                  <!-- Botón de reactivar para roles inactivos -->
+                  <p-button
+                    type="button"
+                    severity="success"
+                    outlined="true"
+                    size="small"
+                    icon="pi pi-check"
+                    *ngIf="!rol.activo"
+                    (click)="confirmReactivate(rol)"
+                    pTooltip="Reactivar rol"
+                    tooltipPosition="top"
+                    styleClass="action-btn reactivate-btn"
                   ></p-button>
                 </div>
               </td>
@@ -219,6 +251,37 @@
             </tr>
           </ng-template>
         </p-table>
+
+        <!-- Controles de paginación personalizados -->
+        <div
+          class="custom-pagination"
+          *ngIf="searchResult && searchResult.totalPages > 1"
+        >
+          <p-button
+            type="button"
+            severity="secondary"
+            outlined="true"
+            icon="pi pi-angle-left"
+            [disabled]="!searchResult.hasPreviousPage"
+            (click)="goToPreviousPage()"
+            pTooltip="Página anterior"
+          ></p-button>
+
+          <span class="pagination-text">
+            Página {{ searchResult.pageNumber }} de
+            {{ searchResult.totalPages }}
+          </span>
+
+          <p-button
+            type="button"
+            severity="secondary"
+            outlined="true"
+            icon="pi pi-angle-right"
+            [disabled]="!searchResult.hasNextPage"
+            (click)="goToNextPage()"
+            pTooltip="Página siguiente"
+          ></p-button>
+        </div>
       </p-card>
     </div>
   </main>

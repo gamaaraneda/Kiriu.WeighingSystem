@@ -45,6 +45,42 @@ public class RolRepository : IRolRepository
             .FirstOrDefaultAsync(r => r.Nombre.ToLower() == nombre.ToLower());
     }
 
+    public async Task<(IEnumerable<Rol> roles, int totalCount)> SearchRolesAsync(
+        string? search = null, 
+        bool? activo = null, 
+        int pageNumber = 1, 
+        int pageSize = 10)
+    {
+        var query = _context.Roles.AsQueryable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchTerm = search.ToLower().Trim();
+            query = query.Where(r => 
+                r.Nombre.ToLower().Contains(searchTerm) ||
+                (r.Descripcion != null && r.Descripcion.ToLower().Contains(searchTerm)));
+        }
+
+        // Apply active status filter
+        if (activo.HasValue)
+        {
+            query = query.Where(r => r.Activo == activo.Value);
+        }
+
+        // Get total count before pagination
+        var totalCount = await query.CountAsync();
+
+        // Apply pagination and ordering
+        var roles = await query
+            .OrderBy(r => r.Nombre)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (roles, totalCount);
+    }
+
     public async Task<Rol> CreateAsync(Rol rol)
     {
         rol.Id = Guid.NewGuid();

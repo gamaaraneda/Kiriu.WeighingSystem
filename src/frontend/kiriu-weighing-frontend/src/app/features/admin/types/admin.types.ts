@@ -132,6 +132,23 @@ export interface SearchUsuariosResponse {
   hasNextPage: boolean;
 }
 
+export interface SearchRolesRequest {
+  search?: string;
+  activo?: boolean;
+  pageNumber: number;
+  pageSize: number;
+}
+
+export interface SearchRolesResponse {
+  roles: RolDto[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

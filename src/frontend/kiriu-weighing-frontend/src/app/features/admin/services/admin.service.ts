@@ -19,6 +19,8 @@ import {
   ModuloPermisoDto,
   SearchUsuariosRequest,
   SearchUsuariosResponse,
+  SearchRolesRequest,
+  SearchRolesResponse,
   ApiResponse,
 } from '../types/admin.types';
 
@@ -34,6 +36,15 @@ export class AdminService {
 
   getAllRoles(): Observable<ApiResponse<RolDto[]>> {
     return this.http.get<ApiResponse<RolDto[]>>(`${this.apiUrl}/roles`);
+  }
+
+  searchRoles(
+    request: SearchRolesRequest
+  ): Observable<ApiResponse<SearchRolesResponse>> {
+    return this.http.post<ApiResponse<SearchRolesResponse>>(
+      `${this.apiUrl}/roles/search`,
+      request
+    );
   }
 
   getRolById(id: string): Observable<ApiResponse<RolDto>> {

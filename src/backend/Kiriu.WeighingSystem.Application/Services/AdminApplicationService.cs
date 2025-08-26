@@ -53,6 +53,37 @@ public class AdminApplicationService : IAdminApplicationService
         return rolesDto;
     }
 
+    public async Task<SearchRolesResponse> SearchRolesAsync(SearchRolesRequest request)
+    {
+        var (roles, totalCount) = await _rolRepository.SearchRolesAsync(
+            search: request.Search,
+            activo: request.Activo,
+            pageNumber: request.PageNumber,
+            pageSize: request.PageSize);
+
+        var rolesDto = new List<RolDto>();
+
+        foreach (var rol in roles)
+        {
+            var rolDto = rol.Adapt<RolDto>();
+            rolDto.UsuariosAsignados = await _rolRepository.GetUsuariosCountAsync(rol.Id);
+            rolesDto.Add(rolDto);
+        }
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
+
+        return new SearchRolesResponse
+        {
+            Roles = rolesDto,
+            TotalCount = totalCount,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            TotalPages = totalPages,
+            HasPreviousPage = request.PageNumber > 1,
+            HasNextPage = request.PageNumber < totalPages
+        };
+    }
+
     public async Task<RolDto> GetRolByIdAsync(Guid id)
     {
         var rol = await _rolRepository.GetByIdWithPermisosAsync(id);

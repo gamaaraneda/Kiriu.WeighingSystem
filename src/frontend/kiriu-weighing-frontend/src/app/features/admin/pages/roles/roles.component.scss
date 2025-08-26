@@ -56,7 +56,7 @@
     color: white;
     font-weight: 600;
     border-radius: 6px;
-    
+
     &:hover {
       background: #16a34a;
       border-color: #16a34a;
@@ -90,7 +90,7 @@
         font-weight: inherit;
         color: inherit;
       }
-      
+
       i {
         color: rgba(255, 255, 255, 0.9) !important;
       }
@@ -163,7 +163,7 @@
         background: white;
         border-color: #d1d5db;
         color: #6b7280;
-        
+
         &:hover {
           background: #f9fafb;
           border-color: #9ca3af;
@@ -229,10 +229,10 @@
     .p-datatable-tbody > tr:hover {
       background-color: #f8fafc;
     }
-    
+
     .p-datatable-tbody > tr:nth-child(even) {
       background-color: #fafbfc;
-      
+
       &:hover {
         background-color: #f8fafc;
       }
@@ -314,6 +314,17 @@
       &.delete-btn:hover:not(:disabled) {
         background: var(--red-50);
         border-color: var(--red-200);
+      }
+
+      &.reactivate-btn {
+        border-color: #10b981;
+        color: #10b981;
+
+        &:hover {
+          background: #ecfdf5;
+          border-color: #059669;
+          color: #059669;
+        }
       }
 
       &:disabled {
@@ -596,7 +607,7 @@
     .permission-code {
       color: var(--text-color-secondary);
       font-size: 0.75rem;
-      font-family: 'Courier New', monospace;
+      font-family: "Courier New", monospace;
       background: #f3f4f6;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
@@ -704,6 +715,111 @@
   .permissions-content {
     .permissions-grid {
       grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Inactive Role Row Styling (similar to users)
+.inactive-role {
+  opacity: 0.6;
+  background-color: #fef2f2 !important;
+
+  &:hover {
+    background-color: #fecaca !important;
+  }
+
+  td {
+    color: #6b7280;
+  }
+
+  .role-icon {
+    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%) !important;
+    i {
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
+  }
+}
+
+// Estilos para los nuevos elementos de búsqueda y paginación
+.filters-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+
+  ::ng-deep .search-btn {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+
+    &:hover {
+      background-color: var(--primary-color-text);
+      border-color: var(--primary-color-text);
+    }
+  }
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  .pagination-info {
+    font-size: 0.9rem;
+    color: var(--text-color-secondary);
+  }
+}
+
+.custom-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--surface-border);
+  margin-top: 1rem;
+
+  .pagination-text {
+    font-size: 0.9rem;
+    color: var(--text-color-secondary);
+    min-width: 150px;
+    text-align: center;
+  }
+
+  ::ng-deep .p-button {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 6px;
+
+    &:disabled {
+      opacity: 0.5;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .filters-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+
+    ::ng-deep .p-button {
+      width: 100%;
+    }
+  }
+
+  .results-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .custom-pagination {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    .pagination-text {
+      order: -1;
+      width: 100%;
+      text-align: center;
     }
   }
 }

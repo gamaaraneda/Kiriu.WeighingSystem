@@ -7,6 +7,7 @@ public interface IAdminApplicationService
 {
     // Gestión de Roles
     Task<IEnumerable<RolDto>> GetAllRolesAsync();
+    Task<SearchRolesResponse> SearchRolesAsync(SearchRolesRequest request);
     Task<RolDto> GetRolByIdAsync(Guid id);
     Task<RolDto> CreateRolAsync(CreateRolRequest request);
     Task<RolDto> UpdateRolAsync(Guid id, UpdateRolRequest request);

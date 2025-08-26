@@ -51,6 +51,40 @@ public class AdminController : ControllerBase
         }
     }
 
+    [HttpPost("roles/search")]
+    public async Task<ActionResult<ApiResponse<SearchRolesResponse>>> SearchRoles(SearchRolesRequest request)
+    {
+        try
+        {
+            var searchResult = await _adminApplicationService.SearchRolesAsync(request);
+            return Ok(new ApiResponse<SearchRolesResponse>
+            {
+                Success = true,
+                Data = searchResult,
+                Message = $"Se encontraron {searchResult.TotalCount} roles"
+            });
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new ApiResponse<SearchRolesResponse>
+            {
+                Success = false,
+                Message = "Error de validación",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar roles: {@Request}", request);
+            return StatusCode(500, new ApiResponse<SearchRolesResponse>
+            {
+                Success = false,
+                Message = "Error interno del servidor",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+    }
+
     [HttpGet("roles/{id}")]
     public async Task<ActionResult<ApiResponse<RolDto>>> GetRolById(Guid id)
     {

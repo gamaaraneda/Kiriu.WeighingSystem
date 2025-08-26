@@ -8,6 +8,11 @@ public interface IRolRepository
     Task<Rol?> GetByIdAsync(Guid id);
     Task<Rol?> GetByIdWithPermisosAsync(Guid id);
     Task<Rol?> GetByNombreAsync(string nombre);
+    Task<(IEnumerable<Rol> roles, int totalCount)> SearchRolesAsync(
+        string? search = null, 
+        bool? activo = null, 
+        int pageNumber = 1, 
+        int pageSize = 10);
     Task<Rol> CreateAsync(Rol rol);
     Task<Rol> UpdateAsync(Rol rol);
     Task<bool> DeleteAsync(Guid id);

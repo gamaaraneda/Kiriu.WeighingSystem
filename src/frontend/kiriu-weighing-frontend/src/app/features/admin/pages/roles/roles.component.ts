@@ -36,6 +36,8 @@ import {
   UpdateRolRequest,
   PermisoDto,
   ModuloPermisoDto,
+  SearchRolesRequest,
+  SearchRolesResponse,
 } from '../../types/admin.types';
 
 interface FilterOptions {
@@ -81,12 +83,16 @@ export class RolesComponent implements OnInit {
   availablePermisos: PermisoDto[] = [];
   selectedRole: RolDto | null = null;
   selectedRolePermissions: ModuloPermisoDto[] = [];
+  searchResult: SearchRolesResponse | null = null;
 
   // UI state
   isLoading = false;
+  isSearching = false;
   showModal = false;
   showPermissionsModal = false;
   pageSize = 10;
+  currentPage = 1;
+  isUsingServerSearch = false;
 
   // Forms
   rolForm!: FormGroup;
@@ -134,7 +140,12 @@ export class RolesComponent implements OnInit {
 
       if (response?.success && response.data) {
         this.roles = response.data;
-        this.applyFilters();
+        this.filteredRoles = response.data;
+
+        // Reset search state when loading all roles
+        this.searchResult = null;
+        this.isUsingServerSearch = false;
+        this.currentPage = 1;
       } else {
         throw new Error('Error al cargar roles');
       }
@@ -163,36 +174,80 @@ export class RolesComponent implements OnInit {
     }
   }
 
-  // Filter methods
-  onFilterChange(): void {
-    this.applyFilters();
+  // Search methods
+  async searchRoles(): Promise<void> {
+    if (this.isSearching) return;
+
+    this.isSearching = true;
+    this.isUsingServerSearch = true;
+
+    try {
+      const searchRequest: SearchRolesRequest = {
+        search: this.searchFilters.search || undefined,
+        activo: this.searchFilters.activo,
+        pageNumber: this.currentPage,
+        pageSize: this.pageSize,
+      };
+
+      const response = await this.adminService
+        .searchRoles(searchRequest)
+        .toPromise();
+
+      if (response?.success && response.data) {
+        this.searchResult = response.data;
+        this.filteredRoles = response.data.roles;
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Búsqueda completada',
+          detail: `Se encontraron ${response.data.totalCount} roles`,
+          key: 'top-right',
+        });
+      } else {
+        throw new Error('Error en la búsqueda de roles');
+      }
+    } catch (error) {
+      console.error('Error searching roles:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Error al buscar roles',
+        key: 'top-right',
+      });
+    } finally {
+      this.isSearching = false;
+    }
   }
 
-  private applyFilters(): void {
-    this.filteredRoles = this.roles.filter((rol) => {
-      const matchesSearch =
-        !this.searchFilters.search ||
-        rol.nombre
-          .toLowerCase()
-          .includes(this.searchFilters.search.toLowerCase()) ||
-        rol.descripcion
-          ?.toLowerCase()
-          .includes(this.searchFilters.search.toLowerCase());
+  // Filter methods - No longer needed for automatic filtering
+  // Keeping this method for potential future use, but it's not called automatically anymore
 
-      const matchesStatus =
-        this.searchFilters.activo === undefined ||
-        rol.activo === this.searchFilters.activo;
-
-      return matchesSearch && matchesStatus;
-    });
-  }
-
-  clearFilters(): void {
+  async clearFilters(): Promise<void> {
     this.searchFilters = {
       search: '',
       activo: undefined,
     };
-    this.applyFilters();
+    this.currentPage = 1;
+    this.searchResult = null;
+    this.isUsingServerSearch = false;
+
+    // Reload all roles
+    await this.loadRoles();
+  }
+
+  // Pagination methods
+  async goToPreviousPage(): Promise<void> {
+    if (this.searchResult?.hasPreviousPage) {
+      this.currentPage--;
+      await this.searchRoles();
+    }
+  }
+
+  async goToNextPage(): Promise<void> {
+    if (this.searchResult?.hasNextPage) {
+      this.currentPage++;
+      await this.searchRoles();
+    }
   }
 
   // Modal methods
@@ -349,48 +404,86 @@ export class RolesComponent implements OnInit {
     }
   }
 
-  // Delete method
+  // Legacy method for backwards compatibility (to avoid cache issues)
   confirmDelete(rol: RolDto): void {
+    this.confirmDeactivate(rol);
+  }
+
+  // Deactivate role (soft delete)
+  confirmDeactivate(rol: RolDto): void {
     if (rol.usuariosAsignados > 0) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Advertencia',
-        detail: `No se puede eliminar el rol "${rol.nombre}" porque tiene ${rol.usuariosAsignados} usuario(s) asignado(s)`,
+        detail: `No se puede desactivar el rol "${rol.nombre}" porque tiene ${rol.usuariosAsignados} usuario(s) asignado(s)`,
         key: 'top-right',
       });
       return;
     }
 
     this.confirmationService.confirm({
-      message: `¿Está seguro de que desea eliminar el rol "${rol.nombre}"?`,
-      header: 'Confirmar Eliminación',
+      message: `¿Está seguro de que desea desactivar el rol "${rol.nombre}"?`,
+      header: 'Confirmar Desactivación',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, Eliminar',
+      acceptLabel: 'Sí, Desactivar',
       rejectLabel: 'Cancelar',
-      accept: () => this.deleteRole(rol),
+      accept: () => this.toggleRoleStatus(rol, false),
     });
   }
 
-  private async deleteRole(rol: RolDto): Promise<void> {
+  // Reactivate role
+  confirmReactivate(rol: RolDto): void {
+    this.confirmationService.confirm({
+      message: `¿Está seguro de que desea reactivar el rol "${rol.nombre}"?`,
+      header: 'Confirmar Reactivación',
+      icon: 'pi pi-question-circle',
+      acceptLabel: 'Sí, Reactivar',
+      rejectLabel: 'Cancelar',
+      accept: () => this.toggleRoleStatus(rol, true),
+    });
+  }
+
+  // Toggle role status (activate/deactivate)
+  private async toggleRoleStatus(
+    rol: RolDto,
+    newStatus: boolean
+  ): Promise<void> {
     this.isLoading = true;
+    const action = newStatus ? 'activar' : 'desactivar';
 
     try {
-      const response = await this.adminService.deleteRol(rol.id).toPromise();
+      const updateRequest: UpdateRolRequest = {
+        nombre: rol.nombre,
+        descripcion: rol.descripcion || '',
+        activo: newStatus,
+        permisosIds: rol.permisos?.map((p) => p.id) || [],
+      };
+
+      const response = await this.adminService
+        .updateRol(rol.id, updateRequest)
+        .toPromise();
 
       if (response?.success) {
         this.messageService.add({
           severity: 'success',
           summary: 'Éxito',
-          detail: `Rol "${rol.nombre}" eliminado exitosamente`,
+          detail: `Rol "${rol.nombre}" ${
+            newStatus ? 'activado' : 'desactivado'
+          } exitosamente`,
           key: 'top-right',
         });
 
-        await this.loadRoles();
+        // Refresh the data
+        if (this.isUsingServerSearch && this.searchResult) {
+          await this.searchRoles();
+        } else {
+          await this.loadRoles();
+        }
       }
     } catch (error: any) {
-      console.error('Error deleting role:', error);
+      console.error(`Error ${action} role:`, error);
 
-      let errorMessage = 'Error al eliminar el rol';
+      let errorMessage = `Error al ${action} el rol`;
 
       if (error?.error?.message) {
         errorMessage = error.error.message;
