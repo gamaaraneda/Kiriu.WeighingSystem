@@ -17,6 +17,12 @@ public class UsuarioRepository : IUsuarioRepository
     public async Task<Usuario?> GetByIdAsync(Guid id)
     {
         return await _context.Usuarios
+            .FirstOrDefaultAsync(u => u.Id == id);
+    }
+
+    public async Task<Usuario?> GetByIdWithRolAsync(Guid id)
+    {
+        return await _context.Usuarios
             .Include(u => u.Rol)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
@@ -31,8 +37,15 @@ public class UsuarioRepository : IUsuarioRepository
     public async Task<IEnumerable<Usuario>> GetAllAsync()
     {
         return await _context.Usuarios
-            .Include(u => u.Rol)
             .Where(u => u.Activo)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Usuario>> GetAllWithRolesAsync()
+    {
+        return await _context.Usuarios
+            .Include(u => u.Rol)
+            .OrderBy(u => u.Nombre)
             .ToListAsync();
     }
 
@@ -50,14 +63,16 @@ public class UsuarioRepository : IUsuarioRepository
         return usuario;
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var usuario = await _context.Usuarios.FindAsync(id);
         if (usuario != null)
         {
             usuario.Activo = false;
             await _context.SaveChangesAsync();
+            return true;
         }
+        return false;
     }
 
     public async Task<bool> ExistsAsync(Guid id)

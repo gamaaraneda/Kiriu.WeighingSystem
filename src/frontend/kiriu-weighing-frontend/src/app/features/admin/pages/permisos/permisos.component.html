@@ -1,0 +1,558 @@
+<div class="permisos-container">
+  <!-- Toast para notificaciones -->
+  <p-toast key="top-right" position="top-right"></p-toast>
+
+  <!-- Header -->
+  <app-header
+    (queriesClick)="onQueries()"
+    (logoutClick)="onLogout()"
+  ></app-header>
+
+  <!-- Contenido principal -->
+  <main class="permisos-content">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <app-breadcrumb></app-breadcrumb>
+
+      <!-- Header de la página -->
+      <div class="page-header">
+        <div class="header-left">
+          <p-button
+            type="button"
+            severity="secondary"
+            outlined="true"
+            label="Regresar"
+            icon="pi pi-arrow-left"
+            (click)="onGoBack()"
+            styleClass="back-btn"
+          ></p-button>
+          <div class="page-title-group">
+            <h1 class="page-title">Gestión de Permisos</h1>
+            <p class="page-subtitle">
+              Administrar permisos y accesos del sistema
+            </p>
+          </div>
+        </div>
+        <div class="header-right">
+          <p-button
+            type="button"
+            severity="primary"
+            label="Nuevo Permiso"
+            icon="pi pi-plus"
+            (click)="openCreateModal()"
+            styleClass="create-btn"
+          ></p-button>
+        </div>
+      </div>
+
+      <!-- Estadísticas de permisos por tipo -->
+      <div class="stats-section">
+        <p-card styleClass="stats-card">
+          <ng-template pTemplate="header">
+            <div class="stats-header">
+              <i
+                class="pi pi-chart-bar"
+                style="margin-right: 0.5rem; color: white"
+              ></i>
+              <span class="stats-title">Permisos por Tipo</span>
+            </div>
+          </ng-template>
+          <div class="stats-grid">
+            <div
+              *ngFor="let stat of permissionStats"
+              class="stat-item"
+              [class]="'stat-' + stat.tipo.toLowerCase()"
+            >
+              <div class="stat-icon">
+                <i [class]="getIconForPermissionType(stat.tipo)"></i>
+              </div>
+              <div class="stat-details">
+                <span class="stat-count">{{ stat.count }}</span>
+                <span class="stat-label">{{
+                  getPermissionTypeLabel(stat.tipo)
+                }}</span>
+              </div>
+            </div>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Filtros de búsqueda -->
+      <p-card styleClass="search-filters-card">
+        <ng-template pTemplate="header">
+          <div class="filters-header">
+            <i
+              class="pi pi-filter"
+              style="margin-right: 0.5rem; color: white"
+            ></i>
+            <span class="filters-title">Filtros de Búsqueda</span>
+          </div>
+        </ng-template>
+        <div class="filters-form">
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label for="searchName" class="filter-label"
+                >Nombre del Permiso</label
+              >
+              <input
+                pInputText
+                type="text"
+                id="searchName"
+                [(ngModel)]="searchFilters.search"
+                placeholder="Buscar por nombre..."
+                (input)="onFilterChange()"
+              />
+            </div>
+
+            <div class="filter-group">
+              <label for="tipoFilter" class="filter-label"
+                >Tipo de Permiso</label
+              >
+              <p-select
+                id="tipoFilter"
+                [(ngModel)]="searchFilters.tipo"
+                [options]="tipoOptions"
+                placeholder="Todos los tipos"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                (onChange)="onFilterChange()"
+              ></p-select>
+            </div>
+
+            <div class="filter-group">
+              <label for="estadoFilter" class="filter-label">Estado</label>
+              <p-select
+                id="estadoFilter"
+                [(ngModel)]="searchFilters.activo"
+                [options]="estadoOptions"
+                placeholder="Todos los estados"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                (onChange)="onFilterChange()"
+              ></p-select>
+            </div>
+          </div>
+
+          <div class="filters-actions">
+            <p-button
+              type="button"
+              severity="secondary"
+              outlined="true"
+              label="Limpiar"
+              icon="pi pi-times"
+              (click)="clearFilters()"
+              styleClass="clear-btn"
+            ></p-button>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Tabla de permisos -->
+      <p-card styleClass="results-card">
+        <ng-template pTemplate="header">
+          <div class="results-header">
+            <h2 class="results-title">
+              Permisos ({{ filteredPermisos.length }})
+            </h2>
+          </div>
+        </ng-template>
+
+        <p-table
+          [value]="filteredPermisos"
+          [paginator]="true"
+          [rows]="pageSize"
+          [loading]="isLoading"
+          [scrollable]="true"
+          scrollHeight="500px"
+          styleClass="p-datatable-striped p-datatable-gridlines"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} permisos"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Permiso</th>
+              <th>Descripción</th>
+              <th>Tipo</th>
+              <th>Fecha Creación</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-permiso>
+            <tr>
+              <td>
+                <div class="permission-cell">
+                  <div
+                    class="permission-icon"
+                    [class]="'icon-' + permiso.tipo.toLowerCase()"
+                  >
+                    <i [class]="getIconForPermissionType(permiso.tipo)"></i>
+                  </div>
+                  <div class="permission-info">
+                    <span class="permission-name">{{ permiso.nombre }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span
+                  class="permission-description"
+                  [title]="permiso.descripcion"
+                  *ngIf="permiso.descripcion; else noDescription"
+                >
+                  {{ permiso.descripcion }}
+                </span>
+                <ng-template #noDescription>
+                  <span class="no-description">Sin descripción</span>
+                </ng-template>
+              </td>
+              <td>
+                <p-tag
+                  [value]="getPermissionTypeLabel(permiso.tipo)"
+                  [severity]="getPermissionTypeSeverity(permiso.tipo)"
+                  [icon]="getIconForPermissionType(permiso.tipo)"
+                  styleClass="permission-type-tag"
+                ></p-tag>
+              </td>
+              <td>{{ permiso.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}</td>
+              <td>
+                <p-tag
+                  [value]="permiso.activo ? 'Activo' : 'Inactivo'"
+                  [severity]="permiso.activo ? 'success' : 'danger'"
+                ></p-tag>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <p-button
+                    type="button"
+                    severity="info"
+                    outlined="true"
+                    size="small"
+                    icon="pi pi-eye"
+                    (click)="viewPermissionUsage(permiso)"
+                    pTooltip="Ver uso del permiso"
+                    tooltipPosition="top"
+                    styleClass="action-btn view-btn"
+                  ></p-button>
+                  <p-button
+                    type="button"
+                    severity="help"
+                    outlined="true"
+                    size="small"
+                    icon="pi pi-pencil"
+                    (click)="openEditModal(permiso)"
+                    pTooltip="Editar permiso"
+                    tooltipPosition="top"
+                    styleClass="action-btn edit-btn"
+                  ></p-button>
+                  <p-button
+                    type="button"
+                    severity="danger"
+                    outlined="true"
+                    size="small"
+                    icon="pi pi-trash"
+                    [disabled]="!permiso.activo"
+                    (click)="confirmDelete(permiso)"
+                    pTooltip="Eliminar permiso"
+                    tooltipPosition="top"
+                    styleClass="action-btn delete-btn"
+                  ></p-button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="empty-message">
+                <div class="empty-state">
+                  <div class="empty-icon">🔑</div>
+                  <div class="empty-text">
+                    <p class="empty-title">No se encontraron permisos</p>
+                    <p class="empty-subtitle">
+                      Crea un nuevo permiso para comenzar
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    </div>
+  </main>
+
+  <!-- Modal de creación/edición de permiso -->
+  <p-dialog
+    [header]="selectedPermiso ? 'Editar Permiso' : 'Nuevo Permiso'"
+    [(visible)]="showModal"
+    [modal]="true"
+    [resizable]="false"
+    [draggable]="false"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    styleClass="permiso-modal"
+    [style]="{ width: '90vw', maxWidth: '600px' }"
+  >
+    <form
+      [formGroup]="permisoForm"
+      (ngSubmit)="onSubmit()"
+      class="permiso-form"
+    >
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="nombre" class="form-label">Nombre del Permiso *</label>
+          <input
+            pInputText
+            type="text"
+            id="nombre"
+            formControlName="nombre"
+            placeholder="Ej: Crear Usuario, Ver Reportes, Exportar Datos"
+            [class.ng-invalid]="
+              permisoForm.get('nombre')?.invalid &&
+              permisoForm.get('nombre')?.touched
+            "
+          />
+          <small
+            class="field-error"
+            *ngIf="
+              permisoForm.get('nombre')?.invalid &&
+              permisoForm.get('nombre')?.touched
+            "
+          >
+            El nombre del permiso es requerido
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="tipo" class="form-label">Tipo de Permiso *</label>
+          <p-select
+            id="tipo"
+            formControlName="tipo"
+            [options]="tipoOptions"
+            placeholder="Seleccionar tipo"
+            optionLabel="label"
+            optionValue="value"
+            [class.ng-invalid]="
+              permisoForm.get('tipo')?.invalid &&
+              permisoForm.get('tipo')?.touched
+            "
+          ></p-select>
+          <small
+            class="field-error"
+            *ngIf="
+              permisoForm.get('tipo')?.invalid &&
+              permisoForm.get('tipo')?.touched
+            "
+          >
+            El tipo de permiso es requerido
+          </small>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="descripcion" class="form-label">Descripción</label>
+          <textarea
+            pInputTextarea
+            id="descripcion"
+            formControlName="descripcion"
+            placeholder="Descripción detallada del permiso y su propósito"
+            rows="3"
+            [autoResize]="true"
+          ></textarea>
+          <small class="field-help">
+            Describe claramente qué permite hacer este permiso
+          </small>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <p-checkbox
+            id="activo"
+            formControlName="activo"
+            binary="true"
+            label="Permiso activo"
+          ></p-checkbox>
+          <small class="field-help">
+            Los permisos inactivos no pueden ser asignados a roles
+          </small>
+        </div>
+
+        <!-- Información adicional sobre tipos de permisos -->
+        <div class="form-group full-width">
+          <div class="permission-types-info">
+            <h4 class="info-title">Tipos de Permisos</h4>
+            <div class="types-grid">
+              <div class="type-info">
+                <i class="pi pi-plus-circle type-icon create"></i>
+                <span class="type-name">CREATE</span>
+                <span class="type-description"
+                  >Permite crear nuevos registros</span
+                >
+              </div>
+              <div class="type-info">
+                <i class="pi pi-eye type-icon read"></i>
+                <span class="type-name">READ</span>
+                <span class="type-description"
+                  >Permite ver y consultar información</span
+                >
+              </div>
+              <div class="type-info">
+                <i class="pi pi-pencil type-icon update"></i>
+                <span class="type-name">UPDATE</span>
+                <span class="type-description"
+                  >Permite modificar registros existentes</span
+                >
+              </div>
+              <div class="type-info">
+                <i class="pi pi-trash type-icon delete"></i>
+                <span class="type-name">DELETE</span>
+                <span class="type-description">Permite eliminar registros</span>
+              </div>
+              <div class="type-info">
+                <i class="pi pi-download type-icon export"></i>
+                <span class="type-name">EXPORT</span>
+                <span class="type-description">Permite exportar datos</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="modal-footer">
+        <p-button
+          type="button"
+          severity="secondary"
+          outlined="true"
+          label="Cancelar"
+          icon="pi pi-times"
+          (click)="closeModal()"
+        ></p-button>
+        <p-button
+          type="submit"
+          severity="primary"
+          [label]="selectedPermiso ? 'Actualizar' : 'Crear'"
+          [icon]="
+            isLoading
+              ? 'pi pi-spin pi-spinner'
+              : selectedPermiso
+              ? 'pi pi-check'
+              : 'pi pi-plus'
+          "
+          [disabled]="permisoForm.invalid || isLoading"
+          (click)="onSubmit()"
+        ></p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Modal para ver uso del permiso -->
+  <p-dialog
+    header="Uso del Permiso"
+    [(visible)]="showUsageModal"
+    [modal]="true"
+    [resizable]="false"
+    [draggable]="false"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    styleClass="usage-modal"
+    [style]="{ width: '90vw', maxWidth: '800px' }"
+  >
+    <div class="usage-content" *ngIf="selectedPermiso">
+      <div class="permission-info-header">
+        <div class="permission-title-group">
+          <div
+            class="permission-icon-large"
+            [class]="'icon-' + selectedPermiso.tipo.toLowerCase()"
+          >
+            <i [class]="getIconForPermissionType(selectedPermiso.tipo)"></i>
+          </div>
+          <div class="permission-details">
+            <h3>{{ selectedPermiso.nombre }}</h3>
+            <p class="permission-type">
+              Tipo:
+              <strong>{{
+                getPermissionTypeLabel(selectedPermiso.tipo)
+              }}</strong>
+            </p>
+            <p
+              class="permission-description"
+              *ngIf="selectedPermiso.descripcion"
+            >
+              {{ selectedPermiso.descripcion }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="usage-info">
+        <div class="usage-stats">
+          <div class="stat-card">
+            <div class="stat-value">{{ permissionUsageStats.rolesCount }}</div>
+            <div class="stat-label">Roles que lo usan</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">
+              {{ permissionUsageStats.modulesCount }}
+            </div>
+            <div class="stat-label">Módulos asociados</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ permissionUsageStats.usersCount }}</div>
+            <div class="stat-label">Usuarios afectados</div>
+          </div>
+        </div>
+
+        <div
+          class="roles-using-permission"
+          *ngIf="rolesUsingPermission.length > 0; else noRolesUsing"
+        >
+          <h4 class="section-title">Roles que utilizan este permiso</h4>
+          <div class="roles-list">
+            <div *ngFor="let rol of rolesUsingPermission" class="role-item">
+              <div class="role-icon">
+                <i class="pi pi-shield"></i>
+              </div>
+              <div class="role-details">
+                <span class="role-name">{{ rol.nombre }}</span>
+                <small class="role-users"
+                  >{{ rol.usuariosAsignados }} usuarios</small
+                >
+              </div>
+              <p-tag
+                [value]="rol.activo ? 'Activo' : 'Inactivo'"
+                [severity]="rol.activo ? 'success' : 'danger'"
+              ></p-tag>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noRolesUsing>
+          <div class="no-usage">
+            <div class="no-usage-icon">🚫</div>
+            <h4>Sin uso actual</h4>
+            <p>
+              Este permiso no está siendo utilizado por ningún rol actualmente.
+            </p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="modal-footer">
+        <p-button
+          type="button"
+          severity="secondary"
+          outlined="true"
+          label="Cerrar"
+          icon="pi pi-times"
+          (click)="closeUsageModal()"
+        ></p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialog de confirmación de eliminación -->
+  <p-confirmDialog></p-confirmDialog>
+</div>

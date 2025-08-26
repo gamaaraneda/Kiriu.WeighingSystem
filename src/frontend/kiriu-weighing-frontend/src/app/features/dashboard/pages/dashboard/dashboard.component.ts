@@ -103,4 +103,21 @@ export class DashboardComponent implements OnInit {
     console.log('Navegando a consultas...');
     this.router.navigate(['/weighing-query']);
   }
+
+  /**
+   * Maneja la navegación a administración
+   */
+  onAdmin(): void {
+    console.log('Navegando a administración...');
+    this.router.navigate(['/admin']);
+  }
+
+  /**
+   * Verifica si el usuario puede acceder a administración
+   */
+  canAccessAdmin(): boolean {
+    // Por ahora retornamos true, pero aquí se debería verificar permisos
+    // return this.authService.hasPermission('ADMIN_ACCESS');
+    return true;
+  }
 }

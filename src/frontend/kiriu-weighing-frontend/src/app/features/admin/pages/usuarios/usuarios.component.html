@@ -1,0 +1,429 @@
+<div class="usuarios-container">
+  <!-- Toast para notificaciones -->
+  <p-toast key="top-right" position="top-right"></p-toast>
+
+  <!-- Header -->
+  <app-header
+    (queriesClick)="onQueries()"
+    (logoutClick)="onLogout()"
+  ></app-header>
+
+  <!-- Contenido principal -->
+  <main class="usuarios-content">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <app-breadcrumb></app-breadcrumb>
+
+      <!-- Header de la página -->
+      <div class="page-header">
+        <div class="header-left">
+          <p-button
+            type="button"
+            severity="secondary"
+            outlined="true"
+            label="Regresar"
+            icon="pi pi-arrow-left"
+            (click)="onGoBack()"
+            styleClass="back-btn"
+          ></p-button>
+          <div class="page-title-group">
+            <h1 class="page-title">Gestión de Usuarios</h1>
+            <p class="page-subtitle">Administrar usuarios del sistema</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <p-button
+            type="button"
+            severity="primary"
+            label="Nuevo Usuario"
+            icon="pi pi-plus"
+            (click)="openCreateModal()"
+            styleClass="create-btn"
+          ></p-button>
+        </div>
+      </div>
+
+      <!-- Filtros de búsqueda -->
+      <p-card styleClass="search-filters-card">
+        <ng-template pTemplate="header">
+          <div class="filters-header">
+            <i
+              class="pi pi-filter"
+              style="margin-right: 0.5rem; color: white"
+            ></i>
+            <span class="filters-title">Filtros de Búsqueda</span>
+          </div>
+        </ng-template>
+        <div class="filters-form">
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label for="searchName" class="filter-label"
+                >Nombre o Email</label
+              >
+              <input
+                pInputText
+                type="text"
+                id="searchName"
+                [(ngModel)]="searchFilters.search"
+                placeholder="Buscar por nombre o email..."
+                (input)="onFilterChange()"
+              />
+            </div>
+
+            <div class="filter-group">
+              <label for="rolFilter" class="filter-label">Rol</label>
+              <p-select
+                id="rolFilter"
+                [(ngModel)]="searchFilters.rolId"
+                [options]="roleOptions"
+                placeholder="Todos los roles"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                (onChange)="onFilterChange()"
+              ></p-select>
+            </div>
+
+            <div class="filter-group">
+              <label for="estadoFilter" class="filter-label">Estado</label>
+              <p-select
+                id="estadoFilter"
+                [(ngModel)]="searchFilters.activo"
+                [options]="estadoOptions"
+                placeholder="Todos los estados"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                (onChange)="onFilterChange()"
+              ></p-select>
+            </div>
+          </div>
+
+          <div class="filters-actions">
+            <p-button
+              type="button"
+              severity="secondary"
+              outlined="true"
+              label="Limpiar"
+              icon="pi pi-times"
+              (click)="clearFilters()"
+              styleClass="clear-btn"
+            ></p-button>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Tabla de usuarios -->
+      <p-card styleClass="results-card">
+        <ng-template pTemplate="header">
+          <div class="results-header">
+            <h2 class="results-title">
+              Usuarios ({{ filteredUsuarios.length }})
+            </h2>
+          </div>
+        </ng-template>
+
+        <p-table
+          [value]="filteredUsuarios"
+          [paginator]="true"
+          [rows]="pageSize"
+          [loading]="isLoading"
+          [scrollable]="true"
+          scrollHeight="500px"
+          styleClass="p-datatable-striped p-datatable-gridlines"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Fecha Creación</th>
+              <th>Último Acceso</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-usuario>
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar">
+                    <i class="pi pi-user"></i>
+                  </div>
+                  <div class="user-info">
+                    <span class="user-name">{{ usuario.nombre }}</span>
+                    <span class="user-lastname" *ngIf="usuario.apellidos">{{
+                      usuario.apellidos
+                    }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>{{ usuario.email }}</td>
+              <td>
+                <p-tag [value]="usuario.rol" severity="info"></p-tag>
+              </td>
+              <td>{{ usuario.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}</td>
+              <td>
+                <span *ngIf="usuario.ultimoAcceso; else noAccess">
+                  {{ usuario.ultimoAcceso | date : "dd/MM/yyyy HH:mm" }}
+                </span>
+                <ng-template #noAccess>
+                  <span class="no-access">Sin acceso</span>
+                </ng-template>
+              </td>
+              <td>
+                <p-tag
+                  [value]="usuario.activo ? 'Activo' : 'Inactivo'"
+                  [severity]="usuario.activo ? 'success' : 'danger'"
+                ></p-tag>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <p-button
+                    type="button"
+                    severity="info"
+                    outlined="true"
+                    size="small"
+                    icon="pi pi-pencil"
+                    (click)="openEditModal(usuario)"
+                    pTooltip="Editar usuario"
+                    tooltipPosition="top"
+                    styleClass="action-btn edit-btn"
+                  ></p-button>
+                  <p-button
+                    type="button"
+                    severity="danger"
+                    outlined="true"
+                    size="small"
+                    icon="pi pi-trash"
+                    [disabled]="!usuario.activo"
+                    (click)="confirmDelete(usuario)"
+                    pTooltip="Eliminar usuario"
+                    tooltipPosition="top"
+                    styleClass="action-btn delete-btn"
+                  ></p-button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="7" class="empty-message">
+                <div class="empty-state">
+                  <div class="empty-icon">👥</div>
+                  <div class="empty-text">
+                    <p class="empty-title">No se encontraron usuarios</p>
+                    <p class="empty-subtitle">
+                      Intenta ajustar los filtros de búsqueda
+                    </p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    </div>
+  </main>
+
+  <!-- Modal de creación/edición de usuario -->
+  <p-dialog
+    [header]="selectedUsuario ? 'Editar Usuario' : 'Nuevo Usuario'"
+    [(visible)]="showModal"
+    [modal]="true"
+    [resizable]="false"
+    [draggable]="false"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    styleClass="usuario-modal"
+    [style]="{ width: '90vw', maxWidth: '600px' }"
+  >
+    <form
+      [formGroup]="usuarioForm"
+      (ngSubmit)="onSubmit()"
+      class="usuario-form"
+    >
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="nombre" class="form-label">Nombre *</label>
+          <input
+            pInputText
+            type="text"
+            id="nombre"
+            formControlName="nombre"
+            placeholder="Nombre del usuario"
+            [class.ng-invalid]="
+              usuarioForm.get('nombre')?.invalid &&
+              usuarioForm.get('nombre')?.touched
+            "
+          />
+          <small
+            class="field-error"
+            *ngIf="
+              usuarioForm.get('nombre')?.invalid &&
+              usuarioForm.get('nombre')?.touched
+            "
+          >
+            El nombre es requerido
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="apellidos" class="form-label">Apellidos</label>
+          <input
+            pInputText
+            type="text"
+            id="apellidos"
+            formControlName="apellidos"
+            placeholder="Apellidos del usuario"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email *</label>
+          <input
+            pInputText
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="correo@ejemplo.com"
+            [class.ng-invalid]="
+              usuarioForm.get('email')?.invalid &&
+              usuarioForm.get('email')?.touched
+            "
+          />
+          <small
+            class="field-error"
+            *ngIf="
+              usuarioForm.get('email')?.invalid &&
+              usuarioForm.get('email')?.touched
+            "
+          >
+            <span *ngIf="usuarioForm.get('email')?.errors?.['required']"
+              >El email es requerido</span
+            >
+            <span *ngIf="usuarioForm.get('email')?.errors?.['email']"
+              >Formato de email inválido</span
+            >
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="rol" class="form-label">Rol *</label>
+          <p-select
+            id="rol"
+            formControlName="rolId"
+            [options]="roleOptions"
+            placeholder="Seleccionar rol"
+            optionLabel="label"
+            optionValue="value"
+            [class.ng-invalid]="
+              usuarioForm.get('rolId')?.invalid &&
+              usuarioForm.get('rolId')?.touched
+            "
+          ></p-select>
+          <small
+            class="field-error"
+            *ngIf="
+              usuarioForm.get('rolId')?.invalid &&
+              usuarioForm.get('rolId')?.touched
+            "
+          >
+            El rol es requerido
+          </small>
+        </div>
+
+        <div class="form-group" *ngIf="!selectedUsuario">
+          <label for="contrasena" class="form-label">Contraseña *</label>
+          <p-password
+            id="contrasena"
+            formControlName="contrasena"
+            placeholder="Contraseña del usuario"
+            [toggleMask]="true"
+            [feedback]="false"
+            [class.ng-invalid]="
+              usuarioForm.get('contrasena')?.invalid &&
+              usuarioForm.get('contrasena')?.touched
+            "
+          ></p-password>
+          <small
+            class="field-error"
+            *ngIf="
+              usuarioForm.get('contrasena')?.invalid &&
+              usuarioForm.get('contrasena')?.touched
+            "
+          >
+            La contraseña es requerida (mínimo 6 caracteres)
+          </small>
+        </div>
+
+        <div class="form-group" *ngIf="selectedUsuario">
+          <label for="nuevaContrasena" class="form-label"
+            >Nueva Contraseña</label
+          >
+          <p-password
+            id="nuevaContrasena"
+            formControlName="nuevaContrasena"
+            placeholder="Dejar vacío para mantener la actual"
+            [toggleMask]="true"
+            [feedback]="false"
+            [class.ng-invalid]="
+              usuarioForm.get('nuevaContrasena')?.invalid &&
+              usuarioForm.get('nuevaContrasena')?.touched
+            "
+          ></p-password>
+          <small
+            class="field-error"
+            *ngIf="
+              usuarioForm.get('nuevaContrasena')?.invalid &&
+              usuarioForm.get('nuevaContrasena')?.touched
+            "
+          >
+            La contraseña debe tener al menos 6 caracteres
+          </small>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <p-checkbox
+            id="activo"
+            formControlName="activo"
+            binary="true"
+            label="Usuario activo"
+          ></p-checkbox>
+        </div>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="modal-footer">
+        <p-button
+          type="button"
+          severity="secondary"
+          outlined="true"
+          label="Cancelar"
+          icon="pi pi-times"
+          (click)="closeModal()"
+        ></p-button>
+        <p-button
+          type="submit"
+          severity="primary"
+          [label]="selectedUsuario ? 'Actualizar' : 'Crear'"
+          [icon]="
+            isLoading
+              ? 'pi pi-spin pi-spinner'
+              : selectedUsuario
+              ? 'pi pi-check'
+              : 'pi pi-plus'
+          "
+          [disabled]="usuarioForm.invalid || isLoading"
+          (click)="onSubmit()"
+        ></p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Dialog de confirmación de eliminación -->
+  <p-confirmDialog></p-confirmDialog>
+</div>

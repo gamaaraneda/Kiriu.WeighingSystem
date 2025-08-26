@@ -10,8 +10,10 @@ import { CommonModule } from '@angular/common';
 })
 export class HeaderComponent {
   @Input() showQueriesButton = true;
+  @Input() showAdminButton = false;
   @Input() showLogoutButton = true;
   @Output() queriesClick = new EventEmitter<void>();
+  @Output() adminClick = new EventEmitter<void>();
   @Output() logoutClick = new EventEmitter<void>();
 
   /**
@@ -19,6 +21,13 @@ export class HeaderComponent {
    */
   onQueriesClick(): void {
     this.queriesClick.emit();
+  }
+
+  /**
+   * Emite el evento de click en administración
+   */
+  onAdminClick(): void {
+    this.adminClick.emit();
   }
 
   /**

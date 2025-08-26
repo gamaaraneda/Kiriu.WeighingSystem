@@ -19,6 +19,14 @@
       </button>
 
       <button
+        *ngIf="showAdminButton"
+        class="btn btn-primary"
+        (click)="onAdminClick()"
+      >
+        Administración
+      </button>
+
+      <button
         *ngIf="showLogoutButton"
         class="btn btn-danger"
         (click)="onLogoutClick()"

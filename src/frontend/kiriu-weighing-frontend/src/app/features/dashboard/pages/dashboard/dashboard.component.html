@@ -2,6 +2,8 @@
   <!-- Header -->
   <app-header
     (queriesClick)="onQueries()"
+    [showAdminButton]="canAccessAdmin()"
+    (adminClick)="onAdmin()"
     (logoutClick)="onLogout()"
   ></app-header>
 

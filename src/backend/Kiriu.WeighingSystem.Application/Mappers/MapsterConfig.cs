@@ -12,7 +12,11 @@ public static class MapsterConfig
         // Mapeo de Usuario a UsuarioDto
         TypeAdapterConfig<Usuario, UsuarioDto>
             .NewConfig()
+            .Map(dest => dest.RolId, src => src.RolId)
             .Map(dest => dest.Rol, src => src.Rol.Nombre)
+            .Map(dest => dest.FechaCreacion, src => src.FechaCreacion)
+            .Map(dest => dest.UltimoAcceso, src => src.UltimoAcceso)
+            .Map(dest => dest.Activo, src => src.Activo)
             .Map(dest => dest.Permisos, src => new List<string>()); // Se llenará manualmente
 
         // Mapeo de Usuario a CreateUsuarioResponse

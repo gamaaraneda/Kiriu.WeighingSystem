@@ -1,0 +1,214 @@
+<div class="admin-dashboard-container">
+  <!-- Toast para notificaciones -->
+  <p-toast key="top-right" position="top-right"></p-toast>
+
+  <!-- Header -->
+  <app-header
+    (queriesClick)="onQueries()"
+    (logoutClick)="onLogout()"
+  ></app-header>
+
+  <!-- Contenido principal -->
+  <main class="admin-dashboard-content">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <app-breadcrumb></app-breadcrumb>
+
+      <!-- Header de la página -->
+      <div class="page-header">
+        <div class="header-left">
+          <p-button
+            type="button"
+            severity="secondary"
+            outlined="true"
+            label="Regresar"
+            icon="pi pi-arrow-left"
+            (click)="onGoBack()"
+            styleClass="back-btn"
+          ></p-button>
+          <div class="page-title-group">
+            <h1 class="page-title">Panel de Administración</h1>
+            <p class="page-subtitle">Gestionar usuarios, roles, permisos y configuración del sistema</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estadísticas principales -->
+      <div class="stats-grid" *ngIf="stats">
+        <p-card styleClass="stat-card usuarios-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <i class="pi pi-users" style="color: #3b82f6;"></i>
+            </div>
+            <div class="stat-details">
+              <h3 class="stat-number">{{ stats.usuariosActivos }}</h3>
+              <p class="stat-label">Usuarios Activos</p>
+              <small class="stat-total">de {{ stats.totalUsuarios }} total</small>
+            </div>
+          </div>
+        </p-card>
+
+        <p-card styleClass="stat-card roles-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <i class="pi pi-shield" style="color: #22c55e;"></i>
+            </div>
+            <div class="stat-details">
+              <h3 class="stat-number">{{ stats.totalRoles }}</h3>
+              <p class="stat-label">Roles Configurados</p>
+            </div>
+          </div>
+        </p-card>
+
+        <p-card styleClass="stat-card permisos-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <i class="pi pi-key" style="color: #f59e0b;"></i>
+            </div>
+            <div class="stat-details">
+              <h3 class="stat-number">{{ stats.totalPermisos }}</h3>
+              <p class="stat-label">Permisos Definidos</p>
+            </div>
+          </div>
+        </p-card>
+
+        <p-card styleClass="stat-card modulos-card">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <i class="pi pi-th-large" style="color: #8b5cf6;"></i>
+            </div>
+            <div class="stat-details">
+              <h3 class="stat-number">{{ stats.totalModulos }}</h3>
+              <p class="stat-label">Módulos del Sistema</p>
+            </div>
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Acciones rápidas -->
+      <div class="quick-actions-section">
+        <h2 class="section-title">Acciones Rápidas</h2>
+        <div class="actions-grid">
+          <p-card styleClass="action-card" (click)="navigateToUsuarios()">
+            <div class="action-content">
+              <div class="action-icon">
+                <i class="pi pi-users"></i>
+              </div>
+              <div class="action-details">
+                <h3 class="action-title">Gestión de Usuarios</h3>
+                <p class="action-description">Crear, editar y administrar usuarios del sistema</p>
+              </div>
+              <div class="action-arrow">
+                <i class="pi pi-chevron-right"></i>
+              </div>
+            </div>
+          </p-card>
+
+          <p-card styleClass="action-card" (click)="navigateToRoles()">
+            <div class="action-content">
+              <div class="action-icon">
+                <i class="pi pi-shield"></i>
+              </div>
+              <div class="action-details">
+                <h3 class="action-title">Gestión de Roles</h3>
+                <p class="action-description">Definir y configurar roles de usuario</p>
+              </div>
+              <div class="action-arrow">
+                <i class="pi pi-chevron-right"></i>
+              </div>
+            </div>
+          </p-card>
+
+          <p-card styleClass="action-card" (click)="navigateToPermisos()">
+            <div class="action-content">
+              <div class="action-icon">
+                <i class="pi pi-key"></i>
+              </div>
+              <div class="action-details">
+                <h3 class="action-title">Gestión de Permisos</h3>
+                <p class="action-description">Administrar permisos y accesos del sistema</p>
+              </div>
+              <div class="action-arrow">
+                <i class="pi pi-chevron-right"></i>
+              </div>
+            </div>
+          </p-card>
+
+          <p-card styleClass="action-card" (click)="navigateToModulos()">
+            <div class="action-content">
+              <div class="action-icon">
+                <i class="pi pi-th-large"></i>
+              </div>
+              <div class="action-details">
+                <h3 class="action-title">Gestión de Módulos</h3>
+                <p class="action-description">Configurar módulos del sistema</p>
+              </div>
+              <div class="action-arrow">
+                <i class="pi pi-chevron-right"></i>
+              </div>
+            </div>
+          </p-card>
+
+          <p-card styleClass="action-card" (click)="navigateToRolesPermisos()">
+            <div class="action-content">
+              <div class="action-icon">
+                <i class="pi pi-sitemap"></i>
+              </div>
+              <div class="action-details">
+                <h3 class="action-title">Asignación de Permisos</h3>
+                <p class="action-description">Asignar permisos específicos a cada rol</p>
+              </div>
+              <div class="action-arrow">
+                <i class="pi pi-chevron-right"></i>
+              </div>
+            </div>
+          </p-card>
+        </div>
+      </div>
+
+      <!-- Actividad reciente -->
+      <div class="recent-activity-section" *ngIf="recentUsers.length > 0">
+        <h2 class="section-title">Usuarios Registrados Recientemente</h2>
+        <p-card styleClass="recent-activity-card">
+          <p-table [value]="recentUsers" styleClass="p-datatable-striped">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Fecha de Creación</th>
+                <th>Estado</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-usuario>
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar">
+                      <i class="pi pi-user"></i>
+                    </div>
+                    <div class="user-info">
+                      <span class="user-name">{{ usuario.nombre }}</span>
+                      <span class="user-lastname" *ngIf="usuario.apellidos">{{ usuario.apellidos }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ usuario.email }}</td>
+                <td>
+                  <p-tag [value]="usuario.rol.nombre" severity="info"></p-tag>
+                </td>
+                <td>{{ usuario.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  <p-tag 
+                    [value]="usuario.activo ? 'Activo' : 'Inactivo'"
+                    [severity]="usuario.activo ? 'success' : 'danger'"
+                  ></p-tag>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-card>
+      </div>
+    </div>
+  </main>
+</div>

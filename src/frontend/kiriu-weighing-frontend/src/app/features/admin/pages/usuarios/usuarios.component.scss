@@ -1,0 +1,807 @@
+.usuarios-container {
+  min-height: 100vh;
+  background-color: var(--surface-ground);
+}
+
+.usuarios-content {
+  padding: 2rem 0;
+  min-height: calc(100vh - 80px);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+// Page Header
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--surface-border);
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  ::ng-deep .back-btn {
+    min-width: auto;
+    border-radius: 6px;
+  }
+
+  .page-title-group {
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .page-subtitle {
+      color: var(--text-color-secondary);
+      margin: 0.5rem 0 0 0;
+      font-size: 1rem;
+    }
+  }
+
+  ::ng-deep .create-btn {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    
+    &:hover {
+      background: #059669;
+      border-color: #059669;
+    }
+  }
+}
+
+// Search Filters Card
+::ng-deep .search-filters-card {
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+
+  .p-card-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+
+    .filters-header {
+      display: flex;
+      align-items: center;
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: white;
+
+      .filters-title {
+        margin: 0;
+        font-size: inherit;
+        font-weight: inherit;
+        color: inherit;
+      }
+      
+      i {
+        color: rgba(255, 255, 255, 0.9) !important;
+      }
+    }
+  }
+
+  .p-card-content {
+    padding: 1.5rem;
+    background: #f8fafc;
+  }
+
+  .filters-form {
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: end;
+    }
+
+    .filter-group {
+      .filter-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      ::ng-deep {
+        .p-inputtext,
+        .p-select {
+          width: 100%;
+          border-radius: 6px;
+          border: 1px solid #d1d5db;
+          padding: 0.75rem;
+          font-size: 0.875rem;
+          background: white;
+          transition: all 0.2s ease;
+
+          &:focus {
+            outline: 0 none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+            border-color: #3b82f6;
+          }
+        }
+
+        .p-select {
+          background: white;
+        }
+
+        .p-select-label {
+          padding: 0.75rem;
+          font-size: 0.875rem;
+        }
+      }
+    }
+
+    .filters-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      align-items: center;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      margin-top: 1rem;
+
+      ::ng-deep .clear-btn {
+        min-width: 120px;
+        background: white;
+        border-color: #d1d5db;
+        color: #6b7280;
+        
+        &:hover {
+          background: #f9fafb;
+          border-color: #9ca3af;
+        }
+      }
+    }
+  }
+}
+
+// Results Card
+::ng-deep .results-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .results-header {
+    margin-bottom: 1.5rem;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .results-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &::before {
+        content: "👥";
+        font-size: 1.2em;
+      }
+    }
+  }
+
+  .p-datatable {
+    .p-datatable-thead > tr > th {
+      background: #f8fafc;
+      color: #374151;
+      font-weight: 600;
+      padding: 1rem 0.75rem;
+      border-bottom: 2px solid #e5e7eb;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+
+    .p-datatable-tbody > tr > td {
+      padding: 1rem 0.75rem;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 0.875rem;
+      vertical-align: middle;
+      background: white;
+    }
+
+    .p-datatable-tbody > tr:hover {
+      background-color: #f8fafc;
+    }
+    
+    .p-datatable-tbody > tr:nth-child(even) {
+      background-color: #fafbfc;
+      
+      &:hover {
+        background-color: #f8fafc;
+      }
+    }
+  }
+}
+
+// User Cell Styling
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 50%;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .user-info {
+    .user-name {
+      font-weight: 600;
+      color: var(--text-color);
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .user-email {
+      color: var(--text-color-secondary);
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.roles-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  max-width: 200px;
+
+  ::ng-deep .p-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .more-roles {
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+}
+
+// Action Buttons
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+
+  ::ng-deep {
+    .action-btn {
+      border-radius: 6px;
+      min-width: auto;
+      width: 2.5rem;
+      height: 2.5rem;
+
+      &.edit-btn:hover {
+        background: var(--yellow-50);
+        border-color: var(--yellow-200);
+      }
+
+      &.roles-btn:hover {
+        background: var(--blue-50);
+        border-color: var(--blue-200);
+      }
+
+      &.toggle-btn:hover:not(:disabled) {
+        background: var(--orange-50);
+        border-color: var(--orange-200);
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Empty State
+::ng-deep .p-datatable-emptymessage {
+  text-align: center;
+  padding: 3rem 1rem;
+
+  .empty-state {
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+      opacity: 0.6;
+    }
+
+    .empty-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin: 0 0 0.75rem 0;
+    }
+
+    .empty-subtitle {
+      color: var(--text-color-secondary);
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+}
+
+// Modal Styling
+::ng-deep .usuario-modal {
+  .p-dialog-header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-weight: 600;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .p-dialog-content {
+    padding: 1.5rem;
+  }
+
+  .p-dialog-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--surface-border);
+    background: var(--surface-50);
+    border-radius: 0 0 12px 12px;
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin: 0;
+    }
+  }
+}
+
+.usuario-form {
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &.full-width {
+      grid-column: 1 / -1;
+    }
+
+    &.checkbox-group {
+      flex-direction: row;
+      align-items: center;
+      gap: 1rem;
+
+      .field-help {
+        color: var(--text-color-secondary);
+        font-size: 0.75rem;
+        margin-left: auto;
+      }
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: var(--text-color);
+      font-size: 0.875rem;
+    }
+
+    ::ng-deep {
+      .p-inputtext,
+      .p-password,
+      .p-multiselect {
+        width: 100%;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+
+        &:focus {
+          outline: 0 none;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+          border-color: #3b82f6;
+        }
+
+        &.ng-invalid.ng-touched {
+          border-color: #ef4444;
+          box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+        }
+      }
+
+      .p-password {
+        .p-password-input {
+          width: 100%;
+          padding: 0.75rem;
+        }
+      }
+
+      .p-multiselect {
+        background: white;
+        
+        .p-multiselect-label {
+          padding: 0.75rem;
+          font-size: 0.875rem;
+        }
+
+        &.p-multiselect-chip .p-multiselect-token {
+          background: #e0f2fe;
+          color: #0277bd;
+          padding: 0.25rem 0.5rem;
+          margin: 0.125rem 0.25rem 0.125rem 0;
+          border-radius: 12px;
+          font-size: 0.75rem;
+        }
+      }
+    }
+
+    .field-error {
+      color: #ef4444;
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .field-help {
+      color: var(--text-color-secondary);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+  }
+
+  .password-requirements {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+
+    .requirements-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #0369a1;
+      margin: 0 0 0.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &::before {
+        content: "🔒";
+        font-size: 1em;
+      }
+    }
+
+    .requirements-list {
+      font-size: 0.75rem;
+      color: #075985;
+      line-height: 1.4;
+      margin: 0;
+      padding-left: 1rem;
+
+      li {
+        margin-bottom: 0.25rem;
+      }
+    }
+  }
+}
+
+// Roles Assignment Modal
+::ng-deep .roles-modal {
+  .p-dialog-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    font-weight: 600;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .p-dialog-content {
+    padding: 1.5rem;
+  }
+
+  .p-dialog-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--surface-border);
+    background: var(--surface-50);
+    border-radius: 0 0 12px 12px;
+
+    .modal-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 0;
+    }
+  }
+}
+
+.roles-assignment {
+  .user-info-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+
+    .user-avatar-large {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100());
+      border-radius: 50%;
+      color: white;
+      font-weight: 700;
+      font-size: 1.5rem;
+      text-transform: uppercase;
+    }
+
+    .user-details {
+      flex: 1;
+
+      h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0 0 0.25rem 0;
+      }
+
+      .user-email {
+        color: var(--text-color-secondary);
+        margin: 0;
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  .available-roles {
+    .roles-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin: 0 0 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &::before {
+        content: "🔑";
+        font-size: 1em;
+      }
+    }
+
+    .roles-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 0.5rem;
+
+      .role-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        cursor: pointer;
+
+        &:hover {
+          background: #f8fafc;
+        }
+
+        .role-checkbox {
+          ::ng-deep .p-checkbox {
+            margin-right: 0;
+          }
+        }
+
+        .role-info {
+          flex: 1;
+
+          .role-name {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+          }
+
+          .role-description {
+            color: var(--text-color-secondary);
+            font-size: 0.75rem;
+            line-height: 1.3;
+          }
+
+          .role-permissions {
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+          }
+        }
+
+        .role-status {
+          ::ng-deep .p-tag {
+            font-size: 0.7rem;
+          }
+        }
+      }
+    }
+  }
+
+  .current-assignment {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+
+    .assignment-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin: 0 0 0.75rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &::before {
+        content: "✓";
+        font-size: 1em;
+        color: #10b981;
+      }
+    }
+
+    .assigned-roles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+
+      ::ng-deep .p-tag {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+      }
+    }
+
+    .no-roles {
+      color: var(--text-color-secondary);
+      font-style: italic;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .usuarios-content {
+    padding: 1rem 0;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+
+    .header-left {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+    }
+
+    ::ng-deep .back-btn {
+      align-self: flex-start;
+      width: auto;
+    }
+
+    ::ng-deep .create-btn {
+      width: 100%;
+    }
+  }
+
+  ::ng-deep .search-filters-card {
+    .filters-form {
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+
+  .user-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: center;
+    gap: 0.5rem;
+
+    .user-info {
+      text-align: left;
+      width: 100%;
+    }
+  }
+
+  .roles-cell {
+    max-width: none;
+    justify-content: center;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+
+    ::ng-deep .action-btn {
+      width: 100%;
+      height: 2rem;
+    }
+  }
+
+  .usuario-form {
+    .form-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  .roles-assignment {
+    .user-info-header {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .user-cell {
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      font-size: 0.75rem;
+    }
+  }
+
+  .roles-assignment {
+    .user-info-header {
+      .user-avatar-large {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+      }
+    }
+  }
+}

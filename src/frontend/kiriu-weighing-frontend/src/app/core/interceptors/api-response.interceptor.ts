@@ -15,9 +15,15 @@ interface ApiResponseBody {
  */
 function buildErrorMessage(apiResponse: ApiResponseBody): string {
   // 1. Si hay errores específicos, usarlos (mayor prioridad)
-  if (apiResponse.errors && Array.isArray(apiResponse.errors) && apiResponse.errors.length > 0) {
+  if (
+    apiResponse.errors &&
+    Array.isArray(apiResponse.errors) &&
+    apiResponse.errors.length > 0
+  ) {
     // Filtrar errores no vacíos y unirlos
-    const validErrors = apiResponse.errors.filter(error => error && error.trim().length > 0);
+    const validErrors = apiResponse.errors.filter(
+      (error) => error && error.trim().length > 0
+    );
     if (validErrors.length > 0) {
       return validErrors.join(', ');
     }
@@ -34,7 +40,7 @@ function buildErrorMessage(apiResponse: ApiResponseBody): string {
 
 export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
   console.log('🔍 API Interceptor - Request:', req.url);
-  
+
   return next(req).pipe(
     map((event) => {
       if (event.type === 4) {
@@ -52,8 +58,15 @@ export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
         ) {
           // Es una ApiResponse del backend
           if (body.success === true) {
-            // Éxito: extraer solo los datos
-            return event.clone({ body: body.data });
+            // Para endpoints de admin, devolver respuesta completa
+            // Para otros endpoints, extraer solo los datos (comportamiento original)
+            if (req.url.includes('/admin/')) {
+              console.log('🔧 Admin endpoint - returning full response');
+              return event.clone({ body: body });
+            } else {
+              console.log('🔧 Regular endpoint - extracting data only');
+              return event.clone({ body: body.data });
+            }
           } else {
             // Error del backend (aunque HTTP 200): lanzar error
             const errorMessage = buildErrorMessage(body);
@@ -62,9 +75,9 @@ export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
               originalBody: body,
               originalMessage: body.message,
               originalErrors: body.errors,
-              finalMessage: errorMessage
+              finalMessage: errorMessage,
             });
-            
+
             // Crear un error personalizado que preserve información adicional
             const customError = new Error(errorMessage);
             (customError as any).isApiError = true;
@@ -93,7 +106,7 @@ export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
               status: error.status,
               originalMessage: apiError.message,
               originalErrors: apiError.errors,
-              finalMessage: errorMessage
+              finalMessage: errorMessage,
             });
             throw new Error(errorMessage);
           }
