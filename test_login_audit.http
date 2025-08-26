@@ -1,0 +1,42 @@
+### Test de Auditoría de Login/Logout
+### Este archivo demuestra que ahora se auditan los logins y logouts
+
+### 1. Login (debería generar un registro de auditoría LOGIN)
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@test.com",
+  "password": "Admin123!"
+}
+
+### 2. Usar el token para hacer una operación auditada
+POST http://localhost:5000/api/admin/test-audit
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "testField": "Test operation after login",
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+
+### 3. Logout (debería generar un registro de auditoría LOGOUT)
+POST http://localhost:5000/api/auth/logout
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh_token}}"
+}
+
+### 4. Verificar logs de auditoría (deberías ver LOGIN, CREATE, LOGOUT)
+GET http://localhost:5000/api/audit?page=1&size=10&operacion=LOGIN
+Authorization: Bearer {{access_token}}
+
+### 5. Verificar operaciones de logout
+GET http://localhost:5000/api/audit?page=1&size=10&operacion=LOGOUT
+Authorization: Bearer {{access_token}}
+
+### 6. Ver todos los logs recientes
+GET http://localhost:5000/api/audit?page=1&size=20
+Authorization: Bearer {{access_token}}

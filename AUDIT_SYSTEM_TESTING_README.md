@@ -20,6 +20,17 @@
 - Ejecutar el logging de forma síncrona después del pipeline
 - Evitar accesos al `HttpContext` después de que el response se haya completado
 
+### Problema 3: Auditoría de Logins
+**Problema:** Los logins no se registraban en el audit log.
+
+**Causa:** El login estaba excluido intencionalmente del middleware por seguridad (para evitar registrar credenciales).
+
+**Solución:** Se implementó auditoría manual en `AuthController` que:
+- Solo audita logins exitosos (no los fallidos)
+- No incluye credenciales en el payload
+- Registra información segura: email, timestamp, user agent, IP
+- Funciona independiente del middleware principal
+
 ## Cambios Realizados
 
 ### 1. Mejoras en el Middleware de Auditoría (`AuditMiddleware.cs`)
@@ -30,7 +41,14 @@
 - **Fix ObjectDisposedException:** Se refactorizó para capturar información del usuario antes del pipeline y ejecutar logging de forma síncrona
 - **Gestión de Ciclo de Vida:** La clase `RequestInfo` ahora almacena toda la información necesaria para evitar accesos al `HttpContext` disposed
 
-### 2. Endpoints de Prueba (`AdminController.cs`)
+### 2. Auditoría de Autenticación (`AuthController.cs`)
+
+- **Auditoría Manual de Login:** Se agregó auditoría segura para logins exitosos
+- **Auditoría Manual de Logout:** Se agregó auditoría para logouts exitosos  
+- **Payload Seguro:** Sin credenciales, solo información de contexto (email, timestamp, user agent, IP)
+- **Manejo de Errores:** La auditoría no afecta el funcionamiento del login/logout
+
+### 3. Endpoints de Prueba (`AdminController.cs`)
 
 Se añadieron 3 endpoints específicos para testing:
 
@@ -114,11 +132,16 @@ ORDER BY Timestamp DESC;
 - `POST /api/weighing/*` → CREATE WeighingOperation
 - `PUT /api/weighing/*` → UPDATE WeighingOperation
 
+### ✅ Operaciones de Autenticación (auditoría manual)
+
+- `POST /api/auth/login` → LOGIN Authentication (solo logins exitosos, sin credenciales)
+- `POST /api/auth/logout` → LOGOUT Authentication (solo logouts exitosos)
+
 ### ❌ Operaciones Excluidas (correcto)
 
-- `POST /api/auth/login` - Excluido por seguridad
-- `POST /api/auth/refresh` - Excluido por seguridad
+- `POST /api/auth/refresh` - Excluido por seguridad (renovación de tokens)
 - `GET /*` - Solo se auditan operaciones de modificación
+- Logins fallidos - No se auditan por seguridad
 
 ## Debugging en Caso de Problemas
 

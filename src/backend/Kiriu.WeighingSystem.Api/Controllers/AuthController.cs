@@ -4,6 +4,7 @@ using Kiriu.WeighingSystem.Application.DTOs;
 using Kiriu.WeighingSystem.Application.DTOs.Auth;
 using Kiriu.WeighingSystem.Application.Interfaces;
 using Kiriu.WeighingSystem.Application.Exceptions;
+using Kiriu.WeighingSystem.Domain.Interfaces;
 
 namespace Kiriu.WeighingSystem.Api.Controllers;
 
@@ -14,13 +15,16 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthApplicationService _authApplicationService;
     private readonly ILogger<AuthController> _logger;
+    private readonly IAuditLogger _auditLogger;
 
     public AuthController(
         IAuthApplicationService authApplicationService,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IAuditLogger auditLogger)
     {
         _authApplicationService = authApplicationService;
         _logger = logger;
+        _auditLogger = auditLogger;
     }
 
     [HttpPost("login")]
@@ -29,6 +33,9 @@ public class AuthController : ControllerBase
         try
         {
             var response = await _authApplicationService.LoginAsync(request);
+
+            // Auditar login exitoso manualmente (sin credenciales en payload)
+            await AuditSuccessfulLogin(request.Email, response);
 
             return Ok(new ApiResponse<LoginResponse>
             {
@@ -100,6 +107,9 @@ public class AuthController : ControllerBase
         {
             await _authApplicationService.LogoutAsync(request);
 
+            // Auditar logout exitoso manualmente
+            await AuditSuccessfulLogout(request);
+
             return Ok(new ApiResponse<object>
             {
                 Success = true,
@@ -124,6 +134,116 @@ public class AuthController : ControllerBase
                 Message = "Error interno del servidor",
                 Errors = new List<string> { ex.Message }
             });
+        }
+    }
+
+    /// <summary>
+    /// Audita un login exitoso de forma manual y segura
+    /// </summary>
+    private async Task AuditSuccessfulLogin(string email, LoginResponse loginResponse)
+    {
+        try
+        {
+            var ipAddress = GetClientIpAddress();
+            
+            // Payload seguro sin credenciales
+            var safePayload = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                email = email,
+                loginTime = DateTime.UtcNow,
+                userAgent = Request.Headers.UserAgent.ToString(),
+                success = true
+            });
+
+            await _auditLogger.LogAsync(
+                usuarioId: loginResponse.User.Email, // Usar email como ID hasta tener el usuario autenticado
+                nombreUsuario: loginResponse.User.Nombre,
+                operacion: "LOGIN",
+                recurso: "Authentication",
+                registroId: loginResponse.User.Id.ToString(),
+                payload: safePayload,
+                ipOrigen: ipAddress,
+                detalles: "Login exitoso",
+                metodoHttp: "POST",
+                rutaApi: "/api/auth/login"
+            );
+
+            _logger.LogInformation("✅ Login auditado para usuario: {Email}", email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al auditar login para usuario: {Email}", email);
+            // No fallar el login por error de auditoría
+        }
+    }
+
+    /// <summary>
+    /// Audita un logout exitoso de forma manual y segura
+    /// </summary>
+    private async Task AuditSuccessfulLogout(LogoutRequest logoutRequest)
+    {
+        try
+        {
+            // Extraer información del usuario del contexto autenticado
+            var userId = HttpContext.User?.Identity?.Name ?? "UNKNOWN_USER";
+            var userName = HttpContext.User?.FindFirst("name")?.Value ?? "Usuario Desconocido";
+            var ipAddress = GetClientIpAddress();
+            
+            // Payload seguro sin tokens
+            var safePayload = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                logoutTime = DateTime.UtcNow,
+                userAgent = Request.Headers.UserAgent.ToString(),
+                success = true
+            });
+
+            await _auditLogger.LogAsync(
+                usuarioId: userId,
+                nombreUsuario: userName,
+                operacion: "LOGOUT",
+                recurso: "Authentication",
+                registroId: null,
+                payload: safePayload,
+                ipOrigen: ipAddress,
+                detalles: "Logout exitoso",
+                metodoHttp: "POST",
+                rutaApi: "/api/auth/logout"
+            );
+
+            _logger.LogInformation("✅ Logout auditado para usuario: {UserId}", userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al auditar logout");
+            // No fallar el logout por error de auditoría
+        }
+    }
+
+    /// <summary>
+    /// Obtiene la dirección IP del cliente
+    /// </summary>
+    private string GetClientIpAddress()
+    {
+        try
+        {
+            // Buscar en headers comunes de proxy
+            var ipAddress = Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
+            
+            if (string.IsNullOrEmpty(ipAddress))
+            {
+                ipAddress = Request.Headers["X-Real-IP"].FirstOrDefault();
+            }
+            
+            if (string.IsNullOrEmpty(ipAddress))
+            {
+                ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            }
+
+            return ipAddress ?? "unknown";
+        }
+        catch
+        {
+            return "unknown";
         }
     }
 
