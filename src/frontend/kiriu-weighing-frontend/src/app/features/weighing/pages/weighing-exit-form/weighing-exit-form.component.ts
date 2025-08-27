@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -21,6 +21,7 @@ import {
   DoubleTrailerExitState,
 } from '../../types/weighing.types';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
+import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/peso-realtime.service';
 
 @Component({
   selector: 'app-weighing-exit-form',
@@ -42,6 +43,8 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private weighingService = inject(RealWeighingService);
   private messageService = inject(MessageService);
   private notificationService = inject(NotificationService);
+  private pesoRealtimeService = inject(PesoRealtimeService);
+  private cdr = inject(ChangeDetectorRef);
 
   unitType = '';
   unitTypeTitle = '';
@@ -126,16 +129,35 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   // Tipo de captura de peso actual
   currentWeightCaptureType: string | null = null;
 
+  // SignalR subscriptions
+  private pesoRealtimeSubscription?: Subscription;
+  private connectionStatusSubscription?: Subscription;
+  connectionStatus: ConnectionStatus = {
+    isConnected: false,
+    reconnectAttempts: 0
+  };
+
+  // Configuración de báscula
+  currentBasculaId: number | null = null;
+
   private subscriptions = new Subscription();
 
   ngOnInit(): void {
     this.initializeForm();
-    this.setupWeightSimulation();
+    this.startRealtimeWeightUpdates();
     this.getUnitTypeFromRoute();
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+    
+    if (this.pesoRealtimeSubscription) {
+      this.pesoRealtimeSubscription.unsubscribe();
+    }
+    
+    if (this.connectionStatusSubscription) {
+      this.connectionStatusSubscription.unsubscribe();
+    }
   }
 
   /**
@@ -169,20 +191,90 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Configura la simulación de peso en tiempo real
+   * Inicia las actualizaciones de peso en tiempo real usando SignalR
    */
-  private setupWeightSimulation(): void {
-    // Simular cambios de peso cada 2 segundos
-    setInterval(() => {
-      if (this.weightData.isConnected) {
-        const variation = Math.random() * 100 - 50; // ±50 kg
-        this.weightData.currentWeight = Math.max(
-          0,
-          this.weightData.currentWeight + variation
-        );
-        this.weightData.isStable = Math.abs(variation) < 10; // Estable si variación < 10kg
-      }
-    }, 2000);
+  private startRealtimeWeightUpdates(): void {
+    // Suscribirse al servicio de peso en tiempo real
+    this.pesoRealtimeSubscription = this.pesoRealtimeService
+      .getPesoObservable()
+      .subscribe((pesoData: PesoData | null) => {
+        if (pesoData) {
+          // Filtrar por báscula si está configurado
+          if (this.currentBasculaId && pesoData.id !== this.currentBasculaId) {
+            return; // Ignorar datos de otras básculas
+          }
+
+          // Actualizar datos de peso
+          this.weightData.currentWeight = pesoData.peso;
+          this.weightData.isStable = this.isWeightStable(pesoData.peso);
+          this.weightData.isConnected = this.connectionStatus.isConnected;
+
+          // Actualizar historial
+          if (this.weightData.weightHistory.length >= 10) {
+            this.weightData.weightHistory.shift();
+          }
+          this.weightData.weightHistory.push(pesoData.peso);
+
+          // Marcar para detección de cambios
+          this.cdr.markForCheck();
+        }
+      });
+
+    // Suscribirse al estado de conexión
+    this.connectionStatusSubscription = this.pesoRealtimeService
+      .getConnectionStatus()
+      .subscribe((status: ConnectionStatus) => {
+        this.connectionStatus = status;
+        this.weightData.isConnected = status.isConnected;
+        this.cdr.markForCheck();
+      });
+  }
+
+  /**
+   * Determina si el peso está estable basado en el historial
+   */
+  private isWeightStable(currentWeight: number): boolean {
+    if (this.weightData.weightHistory.length < 3) {
+      return false;
+    }
+
+    // Verificar que las últimas 3 lecturas estén dentro de un rango de 5kg
+    const recentWeights = this.weightData.weightHistory.slice(-3);
+    const maxWeight = Math.max(...recentWeights);
+    const minWeight = Math.min(...recentWeights);
+    
+    return (maxWeight - minWeight) <= 5;
+  }
+
+  /**
+   * Reconecta el servicio SignalR
+   */
+  async onReconnectWeightService(): Promise<void> {
+    try {
+      await this.pesoRealtimeService.reconnect();
+      this.messageService.showSuccess({
+        message: 'Intentando reconectar con el servicio de peso...',
+      });
+    } catch (error) {
+      console.error('Error al reconectar:', error);
+      this.messageService.showError({
+        message: 'No se pudo reconectar con el servicio de peso',
+      });
+    }
+  }
+
+  /**
+   * Obtiene el estado actual de la conexión SignalR
+   */
+  get isWeightServiceConnected(): boolean {
+    return this.pesoRealtimeService.isConnected();
+  }
+
+  /**
+   * Obtiene el peso actual directamente del servicio
+   */
+  get currentRealtimePeso(): PesoData | null {
+    return this.pesoRealtimeService.getCurrentPeso();
   }
 
   /**

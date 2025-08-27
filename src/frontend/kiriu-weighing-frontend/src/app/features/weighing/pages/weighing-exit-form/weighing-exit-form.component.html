@@ -1042,6 +1042,48 @@
                   {{ weightData.isConnected ? "Conectado" : "Desconectado" }}
                 </span>
               </div>
+              
+              <!-- Estado de conexión SignalR -->
+              <div class="status-item">
+                <span class="status-label">Estado SignalR:</span>
+                <span
+                  class="status-value signalr-status"
+                  [class]="isWeightServiceConnected ? 'connected' : 'disconnected'"
+                  [title]="
+                    isWeightServiceConnected
+                    ? 'Báscula conectada via SignalR'
+                    : connectionStatus.reconnectAttempts > 0
+                      ? 'Reconectando... (' + connectionStatus.reconnectAttempts + ' intentos)'
+                      : 'Desconectado - Sistema de peso no disponible'
+                  "
+                >
+                  <i 
+                    class="pi"
+                    [class.pi-check-circle]="isWeightServiceConnected"
+                    [class.pi-times-circle]="!isWeightServiceConnected && connectionStatus.reconnectAttempts === 0"
+                    [class.pi-refresh]="!isWeightServiceConnected && connectionStatus.reconnectAttempts > 0"
+                    [class.pi-spin]="!isWeightServiceConnected && connectionStatus.reconnectAttempts > 0"
+                  ></i>
+                  {{
+                    isWeightServiceConnected
+                      ? 'Conectado'
+                      : connectionStatus.reconnectAttempts > 0
+                        ? 'Reconectando...'
+                        : 'Desconectado'
+                  }}
+                  
+                  <!-- Botón de reconexión -->
+                  <button
+                    *ngIf="!isWeightServiceConnected"
+                    type="button"
+                    class="reconnect-btn"
+                    (click)="onReconnectWeightService()"
+                    title="Reintentar conexión"
+                  >
+                    <i class="pi pi-refresh"></i>
+                  </button>
+                </span>
+              </div>
             </div>
 
             <div *ngIf="weightData.capturedWeight" class="captured-weight">
