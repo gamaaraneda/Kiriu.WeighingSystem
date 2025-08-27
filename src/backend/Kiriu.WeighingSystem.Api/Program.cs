@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Kiriu.WeighingSystem.Api.Extensions;
 using Kiriu.WeighingSystem.Infrastructure.Data;
 
-// Configuración definitiva de cultura para México - DEBE IR ANTES DEL BUILDER
-AppContext.SetData("System.Globalization.Invariant", true);
+// Configuración de cultura para soporte de globalización
+// AppContext.SetData("System.Globalization.Invariant", true); // Comentado para permitir culturas
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
