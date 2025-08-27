@@ -1,19 +1,3 @@
 <Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-  
-  <ItemGroup>
-    <!-- Forzar versiones específicas de Entity Framework Core -->
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.16" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.16" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.16" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.16" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Abstractions" Version="8.0.16" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.16" />
-    
-    <!-- Forzar versiones de ASP.NET Core -->
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.16" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="8.0.16" />
-  </ItemGroup>
+  <!-- Administración central de versiones deshabilitada temporalmente -->
 </Project>
