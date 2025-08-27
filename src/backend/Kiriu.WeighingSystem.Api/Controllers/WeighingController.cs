@@ -88,7 +88,7 @@ public class WeighingController : ControllerBase
             
             if (!result.Success)
             {
-                return result.Message.Contains("ya registrada") ? Conflict(result) : BadRequest(result);
+                return result.Message?.Contains("ya registrada") == true ? Conflict(result) : BadRequest(result);
             }
 
             return Ok(result);
@@ -149,7 +149,7 @@ public class WeighingController : ControllerBase
             
             if (!result.Success)
             {
-                return result.Message.Contains("no encontrado") ? NotFound(result) : BadRequest(result);
+                return result.Message?.Contains("no encontrado") == true ? NotFound(result) : BadRequest(result);
             }
 
             return Ok(result);
@@ -177,7 +177,7 @@ public class WeighingController : ControllerBase
             
             if (!result.Success)
             {
-                return result.Message.Contains("no encontrado") ? NotFound(result) : BadRequest(result);
+                return result.Message?.Contains("no encontrado") == true ? NotFound(result) : BadRequest(result);
             }
 
             return Ok(result);
@@ -310,7 +310,7 @@ public class WeighingController : ControllerBase
             
             if (!result.Success)
             {
-                return result.Message.Contains("no encontrada") ? NotFound(result) : BadRequest(result);
+                return result.Message?.Contains("no encontrada") == true ? NotFound(result) : BadRequest(result);
             }
 
             return Ok(result);

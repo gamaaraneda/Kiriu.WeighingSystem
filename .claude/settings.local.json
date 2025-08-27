@@ -4,7 +4,11 @@
       "Bash(dotnet build)",
       "Bash(dotnet run:*)",
       "Bash(npm run lint)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Read(c:\\Users\\Gama\\Downloads/**)",
+      "Read(C:\\ControlDevices\\Data/**)",
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet build:*)"
     ],
     "deny": [],
     "ask": []
