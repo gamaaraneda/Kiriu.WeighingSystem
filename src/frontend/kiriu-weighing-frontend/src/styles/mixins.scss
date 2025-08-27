@@ -1,4 +1,5 @@
-@use "variables" as *;
+// Las variables están disponibles globalmente desde styles.scss
+// No necesitamos importarlas aquí para evitar conflictos
 
 @mixin button-primary {
   background-color: $kiriu-blue;

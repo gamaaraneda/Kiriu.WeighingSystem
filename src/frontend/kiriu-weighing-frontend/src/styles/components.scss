@@ -1,5 +1,5 @@
-@use "variables" as *;
-@use "mixins" as *;
+// Las variables y mixins están disponibles globalmente desde styles.scss
+// No necesitamos importarlas aquí para evitar conflictos
 
 // Global styles
 * {

@@ -9,7 +9,8 @@
       "Read(C:\\ControlDevices\\Data/**)",
       "Bash(dotnet restore:*)",
       "Bash(dotnet build:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(del temp_original_styles.scss)"
     ],
     "deny": [],
     "ask": []
