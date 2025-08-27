@@ -825,21 +825,58 @@
           <div class="weight-section">
             <h2 class="section-title">Peso en Tiempo Real</h2>
 
+            <!-- Estado de conexión SignalR -->
+            <div class="connection-status" *ngIf="!connectionStatus.isConnected">
+              <div class="connection-warning">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>Desconectado de la báscula</span>
+                <button 
+                  class="btn-reconnect" 
+                  (click)="reconnectToWeightService()"
+                  [disabled]="connectionStatus.reconnectAttempts > 0"
+                >
+                  Reconectar
+                </button>
+              </div>
+              <small *ngIf="connectionStatus.reconnectAttempts > 0">
+                Reintentando conexión... (intento {{ connectionStatus.reconnectAttempts }})
+              </small>
+            </div>
+
             <div class="weight-display">
               <div class="weight-value">
                 {{ weightData.currentWeight | number : "1.0-0" }} kg
               </div>
               <div
                 class="connection-indicator"
-                [class]="weightData.isConnected ? 'connected' : 'disconnected'"
+                [class]="connectionStatus.isConnected ? 'connected' : 'disconnected'"
                 [title]="
-                  weightData.isConnected
-                    ? 'Sistema conectado'
-                    : 'Sistema desconectado'
+                  connectionStatus.isConnected
+                    ? 'Báscula conectada via SignalR'
+                    : 'Báscula desconectada'
                 "
               >
                 <span class="connection-dot"></span>
+                <span class="connection-text" *ngIf="connectionStatus.isConnected">
+                  Online
+                </span>
+                <span class="connection-text" *ngIf="!connectionStatus.isConnected">
+                  Offline
+                </span>
               </div>
+              <div class="weight-stability" 
+                   [class]="weightData.isStable ? 'stable' : 'unstable'">
+                <span *ngIf="weightData.isStable">📍 Peso estable</span>
+                <span *ngIf="!weightData.isStable">⏳ Estabilizando...</span>
+              </div>
+            </div>
+
+            <!-- Información de la báscula actual -->
+            <div class="bascula-info" *ngIf="currentRealtimePeso">
+              <small>
+                Báscula ID: {{ currentRealtimePeso.id }} | 
+                Última actualización: {{ currentRealtimePeso.timestamp | date:'HH:mm:ss' }}
+              </small>
             </div>
 
             <button

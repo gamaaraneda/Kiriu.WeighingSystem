@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -23,6 +23,7 @@ import {
 } from '../../services/real-weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
 import { ManualEditDetectorService, ManualEditEvent } from '../../services/manual-edit-detector.service';
+import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/peso-realtime.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { ProcessStepsComponent } from '../../../../shared/components/process-steps';
 import { MessageService } from '../../../../shared/services/message.service';
@@ -53,6 +54,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private messageService = inject(MessageService);
   private notificationService = inject(NotificationService);
   private manualEditDetector = inject(ManualEditDetectorService);
+  private pesoRealtimeService = inject(PesoRealtimeService);
+  private cdr = inject(ChangeDetectorRef);
 
   unitType = '';
   operationType = '';
@@ -120,8 +123,19 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   isLoading = false;
   weightUpdateInterval: Subscription | undefined;
   manualEditSubscription: Subscription | undefined;
+  pesoRealtimeSubscription: Subscription | undefined;
+  connectionStatusSubscription: Subscription | undefined;
   hasManualEdits = false;
   currentOperationId: string | null = null;
+  
+  // Estado de conexión con la báscula
+  connectionStatus: ConnectionStatus = {
+    isConnected: false,
+    reconnectAttempts: 0
+  };
+  
+  // Báscula actual (para filtros por dispositivo)
+  currentBasculaId: number | null = null;
 
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
@@ -129,7 +143,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.operationType = params['operationType'];
       this.updateTitles();
       this.initializeForm();
-      this.startWeightUpdates();
+      this.startRealtimeWeightUpdates();
       this.loadExistingData();
 
       // Validar que el flujo sea correcto
@@ -150,6 +164,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     
     if (this.manualEditSubscription) {
       this.manualEditSubscription.unsubscribe();
+    }
+    
+    if (this.pesoRealtimeSubscription) {
+      this.pesoRealtimeSubscription.unsubscribe();
+    }
+    
+    if (this.connectionStatusSubscription) {
+      this.connectionStatusSubscription.unsubscribe();
     }
     
     // Limpiar estado del detector de edición manual
@@ -254,21 +276,74 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     );
   }
 
-  private startWeightUpdates(): void {
-    // Usar el servicio para obtener lecturas de peso en tiempo real
-    this.weightUpdateInterval = this.weighingService
-      .getWeightReadings()
-      .subscribe((reading) => {
-        this.weightData.currentWeight = reading.weight;
-        this.weightData.isStable = reading.isStable;
-        this.weightData.isConnected = reading.isConnected;
+  private startRealtimeWeightUpdates(): void {
+    // Suscribirse al servicio de peso en tiempo real
+    this.pesoRealtimeSubscription = this.pesoRealtimeService
+      .getPesoObservable()
+      .subscribe((pesoData: PesoData | null) => {
+        if (pesoData) {
+          // Filtrar por báscula si está configurado
+          if (this.currentBasculaId && pesoData.id !== this.currentBasculaId) {
+            return; // Ignorar datos de otras básculas
+          }
 
-        // Actualizar historial
-        if (this.weightData.weightHistory.length >= 5) {
-          this.weightData.weightHistory.shift();
+          // Actualizar datos de peso
+          this.weightData.currentWeight = pesoData.peso;
+          this.weightData.isStable = this.isWeightStable(pesoData.peso);
+          this.weightData.isConnected = this.connectionStatus.isConnected;
+
+          // Actualizar historial
+          if (this.weightData.weightHistory.length >= 10) {
+            this.weightData.weightHistory.shift();
+          }
+          this.weightData.weightHistory.push(pesoData.peso);
+
+          // Marcar para detección de cambios
+          this.cdr.markForCheck();
         }
-        this.weightData.weightHistory.push(reading.weight);
       });
+
+    // Suscribirse al estado de conexión
+    this.connectionStatusSubscription = this.pesoRealtimeService
+      .getConnectionStatus()
+      .subscribe((status: ConnectionStatus) => {
+        this.connectionStatus = status;
+        this.weightData.isConnected = status.isConnected;
+
+        // Mostrar notificación de estado de conexión
+        if (!status.isConnected && status.lastError) {
+          this.messageService.showWarningToast({
+            title: 'Conexión con báscula',
+            message: 'Se perdió la conexión con la báscula. Reintentando...',
+            position: 'top-right'
+          });
+        } else if (status.isConnected && status.reconnectAttempts > 0) {
+          this.messageService.showSuccessToast({
+            title: 'Conexión restaurada',
+            message: 'La conexión con la báscula se ha restaurado',
+            position: 'top-right'
+          });
+        }
+
+        // Marcar para detección de cambios
+        this.cdr.markForCheck();
+      });
+  }
+
+  private isWeightStable(currentWeight: number): boolean {
+    const history = this.weightData.weightHistory;
+    if (history.length < 5) {
+      return false; // Necesitamos al menos 5 lecturas
+    }
+
+    // Calcular la variación en las últimas 5 lecturas
+    const lastFive = history.slice(-5);
+    const max = Math.max(...lastFive);
+    const min = Math.min(...lastFive);
+    const variation = max - min;
+
+    // Considerar estable si la variación es menor a 0.5 kg
+    return variation <= 0.5;
   }
 
   private loadExistingData(): void {
@@ -1679,6 +1754,57 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
    */
   getManuallyEditedFields(): string[] {
     return this.manualEditDetector.getManuallyChangedFields('weighing-form');
+  }
+
+  /**
+   * Configura el filtro para una báscula específica
+   */
+  setBasculaFilter(basculaId: number): void {
+    this.currentBasculaId = basculaId;
+    console.log(`Filtro de báscula configurado: ${basculaId}`);
+  }
+
+  /**
+   * Limpia el filtro de báscula
+   */
+  clearBasculaFilter(): void {
+    this.currentBasculaId = null;
+    console.log('Filtro de báscula limpiado');
+  }
+
+  /**
+   * Fuerza la reconexión con el servicio de peso en tiempo real
+   */
+  async reconnectToWeightService(): Promise<void> {
+    try {
+      await this.pesoRealtimeService.reconnect();
+      this.messageService.showInfoToast({
+        title: 'Reconexión',
+        message: 'Intentando reconectar con el servicio de peso...',
+        position: 'top-right'
+      });
+    } catch (error) {
+      console.error('Error al reconectar:', error);
+      this.messageService.showErrorToast({
+        title: 'Error de reconexión',
+        message: 'No se pudo reconectar con el servicio de peso',
+        position: 'top-right'
+      });
+    }
+  }
+
+  /**
+   * Obtiene el estado actual de la conexión
+   */
+  get isWeightServiceConnected(): boolean {
+    return this.pesoRealtimeService.isConnected();
+  }
+
+  /**
+   * Obtiene el peso actual directamente del servicio
+   */
+  get currentRealtimePeso(): PesoData | null {
+    return this.pesoRealtimeService.getCurrentPeso();
   }
 
   /**

@@ -7,6 +7,7 @@ using Kiriu.WeighingSystem.Domain.Interfaces;
 using Kiriu.WeighingSystem.Infrastructure.Data;
 using Kiriu.WeighingSystem.Infrastructure.Repositories;
 using Kiriu.WeighingSystem.Infrastructure.Services;
+using Kiriu.WeighingSystem.Api.Services;
 
 namespace Kiriu.WeighingSystem.Api.Extensions;
 
@@ -22,6 +23,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IWeighingQueryService, WeighingQueryService>();
         services.AddScoped<IExcelExportService, ExcelExportService>();
         services.AddScoped<IAdminApplicationService, AdminApplicationService>();
+
+        // Peso Real-time Service
+        services.AddHostedService<PesoRealtimeService>();
 
         return services;
     }
@@ -60,6 +64,16 @@ public static class ServiceCollectionExtensions
             // Configurar SQL Server para usar configuración básica sin cultura específica
             options.ConfigureWarnings(warnings => warnings.Ignore(
                 Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored));
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection ConfigureSignalR(this IServiceCollection services)
+    {
+        services.AddSignalR(options =>
+        {
+            options.EnableDetailedErrors = true;
         });
 
         return services;

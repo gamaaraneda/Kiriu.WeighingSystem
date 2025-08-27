@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Kiriu.WeighingSystem.Api.Middleware;
+using Kiriu.WeighingSystem.Api.Hubs;
 
 namespace Kiriu.WeighingSystem.Api.Extensions;
 
@@ -29,5 +30,10 @@ public static class ApplicationBuilderExtensions
         app.UseSwaggerUI();
         
         return app;
+    }
+
+    public static void MapSignalRHubs(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapHub<PesoHub>("/hubs/peso");
     }
 } 

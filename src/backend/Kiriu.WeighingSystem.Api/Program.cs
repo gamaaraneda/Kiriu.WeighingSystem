@@ -22,6 +22,7 @@ builder.Services
     .ConfigureHealthChecks()
     .ConfigureAuthentication(builder.Configuration)
     .ConfigureSwagger()
+    .ConfigureSignalR()
     .AddPersistence(builder.Configuration)
     .AddDomainServices()
     .AddApplicationServices()
@@ -41,5 +42,6 @@ if (app.Environment.IsDevelopment())
 app.UseGlobalMiddlewares();
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapSignalRHubs();
 
 app.Run();
