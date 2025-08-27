@@ -32,7 +32,18 @@ public static class ConfigurationExtensions
                 policy.WithOrigins("http://localhost:4200", "http://localhost:3000", "http://localhost:8080")
                       .AllowAnyHeader()
                       .AllowAnyMethod()
-                      .AllowCredentials();
+                      .AllowCredentials()
+                      .WithExposedHeaders("*");
+            });
+
+            // Política específica para SignalR
+            options.AddPolicy("AllowSignalR", policy =>
+            {
+                policy.WithOrigins("http://localhost:4200", "http://localhost:3000", "http://localhost:8080")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials()
+                      .SetIsOriginAllowed(_ => true); // Para desarrollo
             });
         });
 

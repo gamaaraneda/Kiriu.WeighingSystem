@@ -27,7 +27,8 @@ public class AuditMiddleware
         "/api/auth/login",
         "/api/auth/refresh",
         "/health",
-        "/metrics"
+        "/metrics",
+        "/hubs/peso"
     };
 
     public AuditMiddleware(RequestDelegate next, ILogger<AuditMiddleware> logger, IServiceScopeFactory serviceScopeFactory)

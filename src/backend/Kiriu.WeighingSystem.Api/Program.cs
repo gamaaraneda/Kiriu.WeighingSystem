@@ -39,7 +39,18 @@ if (app.Environment.IsDevelopment())
     app.UseDevelopmentMiddlewares();
 }
 
-app.UseGlobalMiddlewares();
+// CORS debe ir primero - usar política que permite credenciales
+app.UseCors("AllowAngular");
+
+// Authentication y Authorization
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Middleware personalizado - con exclusiones para SignalR ya implementadas
+app.UseMiddleware<Kiriu.WeighingSystem.Api.Middleware.GlobalExceptionHandlerMiddleware>();
+app.UseMiddleware<Kiriu.WeighingSystem.Api.Middleware.AuditMiddleware>();
+
+// Mapear endpoints - SignalR debe ir con otros endpoints
 app.MapControllers();
 app.MapHealthChecks("/health");
 app.MapSignalRHubs();

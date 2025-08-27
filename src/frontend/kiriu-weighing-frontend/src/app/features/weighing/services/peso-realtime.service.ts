@@ -1,6 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { distinctUntilChanged, throttleTime } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 export interface PesoData {
   id: number;
@@ -37,8 +38,13 @@ export class PesoRealtimeService implements OnDestroy {
         const { HubConnectionBuilder, LogLevel } = (window as any).signalR;
         
         this.connection = new HubConnectionBuilder()
-          .withUrl('/hubs/peso')
-          .withAutomaticReconnect()
+          .withUrl(`${environment.hubUrl}/peso`, {
+            withCredentials: true,
+            headers: {
+              'Access-Control-Allow-Credentials': 'true'
+            }
+          })
+          .withAutomaticReconnect([0, 2000, 10000, 30000])
           .configureLogging(LogLevel.Information)
           .build();
 

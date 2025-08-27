@@ -20,6 +20,13 @@ public class GlobalExceptionHandlerMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // No interceptar peticiones de SignalR
+        if (context.Request.Path.StartsWithSegments("/hubs"))
+        {
+            await _next(context);
+            return;
+        }
+
         try
         {
             await _next(context);
