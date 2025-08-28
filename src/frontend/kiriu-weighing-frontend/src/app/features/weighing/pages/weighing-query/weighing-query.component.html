@@ -33,6 +33,7 @@
         </div>
         <div class="header-right">
           <p-button
+            *appHasPermission="'REPORTES.EXPORT'"
             type="button"
             severity="success"
             label="Exportar Excel"
@@ -168,7 +169,8 @@
             Resultados ({{ totalResults }})
           </h2>
           <p-button
-            *ngIf="queryResults.length > 0"
+            *appHasPermission="'REPORTES.EXPORT'"
+            [hidden]="queryResults.length === 0"
             type="button"
             severity="success"
             label="Exportar Excel"
@@ -259,6 +261,7 @@
                 <td>
                   <div class="action-buttons">
                     <p-button
+                      *appHasPermission="'REPORTES.READ'"
                       type="button"
                       severity="info"
                       outlined="true"
@@ -270,6 +273,7 @@
                       styleClass="action-btn view-btn"
                     ></p-button>
                     <p-button
+                      *appHasPermission="'REPORTES.PRINT'"
                       type="button"
                       severity="secondary"
                       outlined="true"

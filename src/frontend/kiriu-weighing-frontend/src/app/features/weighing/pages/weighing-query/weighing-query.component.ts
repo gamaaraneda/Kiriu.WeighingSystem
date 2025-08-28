@@ -23,6 +23,7 @@ import {
 } from '../../services/weighing-query.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
+import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 
 @Component({
   selector: 'app-weighing-query',
@@ -41,7 +42,8 @@ import { extractErrorMessage } from '../../../../shared/utils/error.utils';
     TagModule,
     TooltipModule,
     HeaderComponent,
-    BreadcrumbComponent
+    BreadcrumbComponent,
+    HasPermissionDirective
   ],
   providers: [MessageService],
   templateUrl: './weighing-query.component.html',
