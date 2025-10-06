@@ -24,6 +24,7 @@ import {
 import { AuthService } from '../../../../core/services/auth.service';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
+import { PermissionsService } from '../../../../core/services/permissions.service';
 
 @Component({
   selector: 'app-weighing-query',
@@ -65,6 +66,9 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   showDetailModal = false;
   selectedOperation: WeighingQueryResult | null = null;
 
+  // Permission state
+  hasReportsPermission = false;
+
   estadoOptions = [
     { label: 'Todos', value: '' },
     { label: 'Entrada', value: 'ENTRADA_REGISTRADA' },
@@ -82,13 +86,29 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     private router: Router,
     private messageService: MessageService,
     private weighingQueryService: WeighingQueryService,
-    private authService: AuthService
+    private authService: AuthService,
+    private permissionsService: PermissionsService
   ) {
     this.initializeForm();
   }
 
   ngOnInit(): void {
+    this.checkPermissions();
     this.setupFormSubscriptions();
+  }
+
+  private checkPermissions(): void {
+    this.hasReportsPermission = this.permissionsService.hasPermission('REPORTES.READ');
+    
+    // Si no tiene permisos, mostrar mensaje de error
+    if (!this.hasReportsPermission) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Acceso Restringido',
+        detail: 'No tienes permisos para acceder a los reportes del sistema',
+        key: 'top-right'
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -205,6 +225,17 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   }
 
   onExportExcel(): void {
+    // Verificar permisos antes de exportar
+    if (!this.permissionsService.hasPermission('REPORTES.EXPORT')) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Acceso Denegado',
+        detail: 'No tienes permisos para exportar reportes',
+        key: 'top-right'
+      });
+      return;
+    }
+
     if (this.queryResults.length === 0) {
       this.messageService.add({
         severity: 'warn',
@@ -263,6 +294,17 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   }
 
   onReprint(operation: WeighingQueryResult): void {
+    // Verificar permisos antes de reimprimir
+    if (!this.permissionsService.hasPermission('REPORTES.PRINT')) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Acceso Denegado',
+        detail: 'No tienes permisos para imprimir tickets',
+        key: 'top-right'
+      });
+      return;
+    }
+
     if (!operation.puedeReimprimir) {
       this.messageService.add({
         severity: 'warn',

@@ -1373,3 +1373,59 @@
     }
   }
 }
+
+// Access denied styles
+.access-denied {
+  margin: 2rem 0;
+  
+  ::ng-deep .access-denied-card {
+    border: 2px solid #ffeaa7;
+    background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    
+    .access-denied-content {
+      text-align: center;
+      padding: 2rem;
+      
+      .access-denied-icon {
+        font-size: 4rem;
+        color: #e17055;
+        margin-bottom: 1.5rem;
+        display: block;
+      }
+      
+      .access-denied-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3436;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+      }
+      
+      .access-denied-text {
+        font-size: 1rem;
+        color: #636e72;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      ::ng-deep .back-to-dashboard-btn {
+        background: transparent !important;
+        border: 2px solid #0984e3 !important;
+        color: #0984e3 !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease !important;
+        
+        &:hover {
+          background: #0984e3 !important;
+          color: white !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(9, 132, 227, 0.3);
+        }
+      }
+    }
+  }
+}
