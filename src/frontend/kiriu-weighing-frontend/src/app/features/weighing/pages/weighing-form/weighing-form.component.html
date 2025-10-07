@@ -799,28 +799,6 @@
 
         <!-- Columna derecha: Peso y Fotos -->
         <div class="side-column">
-          <!-- Panel de Pasos del Proceso -->
-          <div class="process-steps-section" [class.hidden]="!showProcessSteps">
-            <app-process-steps
-              [flowType]="getProcessFlowType()"
-              [currentStep]="getCurrentProcessStep()"
-              [showProgress]="true"
-              [stepStatuses]="stepStatuses"
-            ></app-process-steps>
-          </div>
-
-          <!-- Botón flotante para mostrar pasos en móviles -->
-          <div class="mobile-process-steps-toggle">
-            <button
-              type="button"
-              class="btn btn-outline toggle-steps-btn"
-              (click)="toggleProcessSteps()"
-              title="Ver pasos del proceso"
-            >
-              📋 Ver Pasos
-            </button>
-          </div>
-
           <!-- Sección de Peso -->
           <div class="weight-section">
             <h2 class="section-title">Peso en Tiempo Real</h2>
@@ -920,6 +898,28 @@
                 Capturado el {{ getCurrentTime() | date : "dd/MM/yyyy HH:mm" }}
               </div>
             </div>
+          </div>
+
+          <!-- Panel de Pasos del Proceso -->
+          <div class="process-steps-section" [class.hidden]="!showProcessSteps">
+            <app-process-steps
+              [flowType]="getProcessFlowType()"
+              [currentStep]="getCurrentProcessStep()"
+              [showProgress]="true"
+              [stepStatuses]="stepStatuses"
+            ></app-process-steps>
+          </div>
+
+          <!-- Botón flotante para mostrar pasos en móviles -->
+          <div class="mobile-process-steps-toggle">
+            <button
+              type="button"
+              class="btn btn-outline toggle-steps-btn"
+              (click)="toggleProcessSteps()"
+              title="Ver pasos del proceso"
+            >
+              📋 Ver Pasos
+            </button>
           </div>
         </div>
       </div>
