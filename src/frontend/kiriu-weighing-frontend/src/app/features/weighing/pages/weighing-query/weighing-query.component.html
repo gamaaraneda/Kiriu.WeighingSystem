@@ -38,6 +38,7 @@
         </p-card>
       </div>
 
+
       <!-- Header de la página -->
       <div *appHasPermission="'REPORTES.READ'" class="page-header">
         <div class="header-left">
@@ -191,19 +192,9 @@
       <div *appHasPermission="'REPORTES.READ'" class="results-section">
         <div class="results-header">
           <h2 class="results-title">
+            <i class="pi pi-chart-bar" style="margin-right: 0.5rem;"></i>
             Resultados ({{ totalResults }})
           </h2>
-          <p-button
-            *appHasPermission="'REPORTES.EXPORT'"
-            [hidden]="queryResults.length === 0"
-            type="button"
-            severity="success"
-            label="Exportar Excel"
-            icon="pi pi-file-excel"
-            [disabled]="!queryResults.length || isLoading"
-            (click)="onExportExcel()"
-            styleClass="export-excel-btn"
-          ></p-button>
         </div>
 
         <!-- Tabla de resultados -->
