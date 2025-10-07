@@ -1083,15 +1083,23 @@
               </div>
             </div>
 
+            <button
+              class="btn btn-success capture-weight-btn"
+              [disabled]="
+                !weightData.isConnected ||
+                !canCaptureWeight()
+              "
+              (click)="onCaptureWeight()"
+            >
+              Capturar Peso
+            </button>
+
             <div *ngIf="weightData.capturedWeight" class="captured-weight">
               <div class="captured-weight-header">
-                <span class="captured-label">Peso de Salida Capturado</span>
+                <span class="captured-label">Peso Capturado</span>
               </div>
               <div class="captured-weight-value">
                 {{ weightData.capturedWeight | number : "1.0-0" }} kg
-                <span *ngIf="currentWeightCaptureType" class="weight-type">
-                  ({{ currentWeightCaptureType }})
-                </span>
               </div>
               <div class="captured-weight-timestamp">
                 Capturado el
