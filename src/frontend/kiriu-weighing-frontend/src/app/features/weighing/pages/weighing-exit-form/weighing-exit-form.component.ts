@@ -735,7 +735,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    * Verifica si se puede capturar peso
    */
   canCaptureWeight(): boolean {
-    return this.weightData.isConnected && this.weightData.isStable;
+    return this.weightData.isConnected;
   }
 
   /**

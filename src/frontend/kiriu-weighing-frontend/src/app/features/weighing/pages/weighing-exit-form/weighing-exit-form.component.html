@@ -383,7 +383,6 @@
                     class="btn btn-success capture-weight-btn"
                     [disabled]="
                       !canCaptureWeight() ||
-                      !weightData.isStable ||
                       !weightData.isConnected
                     "
                     (click)="onCaptureWeightRemolque1()"
@@ -585,7 +584,6 @@
                     class="btn btn-success capture-weight-btn"
                     [disabled]="
                       !canCaptureWeightRemolque2() ||
-                      !weightData.isStable ||
                       !weightData.isConnected
                     "
                     (click)="onCaptureWeightRemolque2()"
@@ -950,7 +948,6 @@
                     class="btn btn-success capture-weight-btn"
                     [disabled]="
                       !canCaptureWeight() ||
-                      !weightData.isStable ||
                       !weightData.isConnected
                     "
                     (click)="onCaptureWeight()"
