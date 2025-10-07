@@ -27,6 +27,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  position: relative;
 }
 
 .progress-bar {
@@ -51,10 +52,47 @@
   min-width: 40px;
 }
 
+.collapse-toggle-btn {
+  background: transparent;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+
+  &:hover {
+    background: #e9ecef;
+    color: #495057;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  i {
+    font-size: 0.875rem;
+  }
+}
+
 .steps-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-height: 1000px;
+  overflow: hidden;
+  opacity: 1;
+  transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+
+  &.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+  }
 }
 
 .step-item {

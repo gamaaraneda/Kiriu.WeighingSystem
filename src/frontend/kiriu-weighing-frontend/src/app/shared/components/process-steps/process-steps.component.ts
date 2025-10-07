@@ -36,6 +36,7 @@ export class ProcessStepsComponent implements OnInit, OnChanges {
   @Input() stepStatuses: { [key: string]: boolean } = {};
 
   processFlow: ProcessFlow | null = null;
+  isCollapsed = true;
 
   ngOnInit(): void {
     this.initializeProcessFlow();
@@ -254,5 +255,9 @@ export class ProcessStepsComponent implements OnInit, OnChanges {
 
   trackByStepId(index: number, step: ProcessStep): string {
     return step.id;
+  }
+
+  toggleCollapse(): void {
+    this.isCollapsed = !this.isCollapsed;
   }
 }

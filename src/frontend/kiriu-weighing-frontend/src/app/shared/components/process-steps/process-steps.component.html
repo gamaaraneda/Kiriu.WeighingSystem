@@ -12,11 +12,19 @@
       <span class="progress-text"
         >{{ getCompletedStepsCount() }}/{{ getTotalStepsCount() }}</span
       >
+      <button
+        type="button"
+        class="collapse-toggle-btn"
+        (click)="toggleCollapse()"
+        [title]="isCollapsed ? 'Expandir pasos' : 'Colapsar pasos'"
+      >
+        <i class="pi" [class.pi-chevron-down]="isCollapsed" [class.pi-chevron-up]="!isCollapsed"></i>
+      </button>
     </div>
   </div>
 
   <!-- Lista de pasos -->
-  <div class="steps-list">
+  <div class="steps-list" [class.collapsed]="isCollapsed">
     <div
       *ngFor="let step of processFlow.steps; trackBy: trackByStepId"
       class="step-item"
@@ -48,7 +56,7 @@
   </div>
 
   <!-- Próximo paso sugerido -->
-  <div class="next-step-suggestion" *ngIf="getNextPendingStep()">
+  <div class="next-step-suggestion" *ngIf="getNextPendingStep() && !isCollapsed">
     <div class="suggestion-content">
       <i class="suggestion-icon">💡</i>
       <span class="suggestion-text">
