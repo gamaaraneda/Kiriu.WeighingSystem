@@ -43,7 +43,7 @@
   overflow: hidden;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -101,7 +101,7 @@
 
   @media (max-width: 767px) {
     padding: 16px;
-    
+
     .page-title-group .page-title {
       font-size: 1.25rem;
     }
@@ -123,7 +123,7 @@
   font-weight: 600 !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
   transition: all 0.2s ease !important;
-  
+
   &:hover:not(:disabled) {
     background: #f9fafb !important;
     border-color: #398df1 !important;
@@ -148,7 +148,7 @@
   color: white !important;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.2s ease !important;
-  
+
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, #1ee733, #059669) !important;
     transform: translateY(-2px);
@@ -159,7 +159,7 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
   }
-  
+
   &:disabled {
     background: #e5e7eb !important;
     color: #f9fafb0 !important;
@@ -182,7 +182,8 @@
   transition: all 0.3s ease !important;
 
   &:hover {
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+      0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
     transform: translateY(-2px);
   }
 
@@ -204,7 +205,7 @@
         font-weight: inherit;
         color: inherit;
       }
-      
+
       i {
         color: rgba(255, 255, 255, 0.9) !important;
         font-size: 2rem;
@@ -263,7 +264,8 @@
 
         &:focus {
           outline: 0 none !important;
-          box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+          box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.2),
+            0 4px 8px rgba(0, 0, 0, 0.1) !important;
           border-color: #398df1 !important;
           transform: translateY(-1px);
         }
@@ -294,10 +296,11 @@
           height: 2.5rem !important;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
           font-weight: 500 !important;
-          
+
           &:focus {
             outline: 0 none !important;
-            box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.2),
+              0 4px 8px rgba(0, 0, 0, 0.1) !important;
             border-color: #398df1 !important;
             transform: translateY(-1px);
           }
@@ -316,7 +319,7 @@
           border-left: none !important;
           background: #f9fafb !important;
           transition: all 0.2s ease !important;
-          
+
           &:hover {
             background: #eff6ff !important;
             border-color: #398df1 !important;
@@ -347,7 +350,8 @@
 
         &:not(.p-disabled).p-focus {
           outline: 0 none !important;
-          box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+          box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.2),
+            0 4px 8px rgba(0, 0, 0, 0.1) !important;
           border-color: #398df1 !important;
           transform: translateY(-1px);
         }
@@ -379,7 +383,7 @@
         border-radius: 8px !important;
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
         background: #ffffff !important;
-        
+
         .p-select-option {
           padding: 8px 16px !important;
           font-size: 1rem !important;
@@ -440,7 +444,7 @@
       background: #ffffff !important;
       border: 1px solid #e5e7eb !important;
       color: #4b5563 !important;
-      
+
       &:hover:not(:disabled) {
         background: #f9fafb !important;
         border-color: #d1d5db !important;
@@ -461,7 +465,7 @@
       border: none !important;
       color: white !important;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-      
+
       &:hover:not(:disabled) {
         background: linear-gradient(135deg, #398df1, #1d4ed8) !important;
         transform: translateY(-2px);
@@ -504,7 +508,7 @@
     overflow: hidden;
 
     &::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       left: 0;
@@ -521,19 +525,13 @@
       display: flex;
       align-items: center;
       gap: 8px;
-
-      &::before {
-        content: "📊";
-        font-size: 2rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-      }
     }
 
     @media (max-width: 767px) {
       flex-direction: column;
       align-items: stretch;
       text-align: center;
-      
+
       .results-title {
         justify-content: center;
         font-size: 1.25rem;
@@ -549,13 +547,13 @@
     border-radius: 8px !important;
     height: 2.5rem !important;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-    
+
     &:hover:not(:disabled) {
       background: linear-gradient(135deg, #1ee733, #059669) !important;
       transform: translateY(-2px);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
     }
-    
+
     &:disabled {
       background: #e5e7eb !important;
       color: #9ca3af !important;
@@ -571,7 +569,8 @@
  * ============================================================================ */
 
 ::ng-deep .results-card {
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
   border: 1px solid #e5e7eb !important;
   border-radius: 12px !important;
   overflow: hidden !important;
@@ -596,7 +595,7 @@
       position: relative;
 
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         bottom: -2px;
         left: 0;
@@ -622,10 +621,10 @@
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     }
-    
+
     .p-datatable-tbody > tr:nth-child(even) > td {
       background: rgba(#f9fafb, 0.3) !important;
-      
+
       &:hover {
         background: #f9fafb !important;
       }
@@ -691,7 +690,7 @@
   position: relative;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     top: 0;
@@ -744,7 +743,7 @@
         background: linear-gradient(135deg, #d1fae5, #ecfdf5) !important;
         color: #065f46 !important;
         border: 1px solid #a7f3d0 !important;
-        
+
         .p-tag-value::before {
           content: "👤";
           margin-right: 4px;
@@ -937,13 +936,14 @@
   transition: all 0.3s ease !important;
 
   &:hover {
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+      0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
     transform: translateY(-2px);
   }
 
   .p-card-content {
     padding: 4px6 32px !important;
-    
+
     @media (max-width: 767px) {
       padding: 4px2 16px !important;
     }
@@ -1012,7 +1012,7 @@
 
     .p-dialog-header-icon {
       color: white !important;
-      
+
       &:hover {
         background: rgba(255, 255, 255, 0.15) !important;
         color: white !important;
@@ -1083,7 +1083,7 @@
       @media (max-width: 767px) {
         flex-direction: column;
         align-items: flex-start;
-        
+
         h2 {
           font-size: 1.5rem;
         }
@@ -1377,23 +1377,23 @@
 // Access denied styles
 .access-denied {
   margin: 2rem 0;
-  
+
   ::ng-deep .access-denied-card {
     border: 2px solid #ffeaa7;
     background: linear-gradient(135deg, #fff8e1 0%, #fff3c4 100%);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    
+
     .access-denied-content {
       text-align: center;
       padding: 2rem;
-      
+
       .access-denied-icon {
         font-size: 4rem;
         color: #e17055;
         margin-bottom: 1.5rem;
         display: block;
       }
-      
+
       .access-denied-title {
         font-size: 1.5rem;
         font-weight: 600;
@@ -1401,7 +1401,7 @@
         margin-bottom: 1rem;
         line-height: 1.2;
       }
-      
+
       .access-denied-text {
         font-size: 1rem;
         color: #636e72;
@@ -1411,14 +1411,14 @@
         margin-left: auto;
         margin-right: auto;
       }
-      
+
       ::ng-deep .back-to-dashboard-btn {
         background: transparent !important;
         border: 2px solid #0984e3 !important;
         color: #0984e3 !important;
         font-weight: 500 !important;
         transition: all 0.3s ease !important;
-        
+
         &:hover {
           background: #0984e3 !important;
           color: white !important;

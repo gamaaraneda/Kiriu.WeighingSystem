@@ -22,10 +22,11 @@
             <h2 class="access-denied-title">Acceso Restringido</h2>
             <p class="access-denied-text">
               No tienes permisos para acceder a la sección de reportes.
-              <br>
-              Contacta al administrador del sistema para solicitar los permisos necesarios.
+              <br />
+              Contacta al administrador del sistema para solicitar los permisos
+              necesarios.
             </p>
-            <p-button 
+            <p-button
               type="button"
               severity="secondary"
               outlined="true"
@@ -38,19 +39,9 @@
         </p-card>
       </div>
 
-
       <!-- Header de la página -->
       <div *appHasPermission="'REPORTES.READ'" class="page-header">
         <div class="header-left">
-          <p-button
-            type="button"
-            severity="secondary"
-            outlined="true"
-            label="Regresar"
-            icon="pi pi-arrow-left"
-            (click)="onGoBack()"
-            styleClass="back-btn"
-          ></p-button>
           <div class="page-title-group">
             <h1 class="page-title">Consulta y Reimpresión</h1>
             <p class="page-subtitle">Buscar y gestionar registros existentes</p>
@@ -71,10 +62,16 @@
       </div>
 
       <!-- Filtros de búsqueda -->
-      <p-card *appHasPermission="'REPORTES.READ'" styleClass="search-filters-card">
+      <p-card
+        *appHasPermission="'REPORTES.READ'"
+        styleClass="search-filters-card"
+      >
         <ng-template pTemplate="header">
           <div class="filters-header">
-            <i class="pi pi-search" style="margin-right: 0.5rem; color: var(--primary-color);"></i>
+            <i
+              class="pi pi-search"
+              style="margin-right: 0.5rem; color: var(--primary-color)"
+            ></i>
             <span class="filters-title">Filtros de Búsqueda</span>
           </div>
         </ng-template>
@@ -150,7 +147,9 @@
 
             <!-- Edición posterior -->
             <div class="filter-group">
-              <label for="edicionPosterior" class="filter-label">Edición Posterior</label>
+              <label for="edicionPosterior" class="filter-label"
+                >Edición Posterior</label
+              >
               <p-select
                 id="edicionPosterior"
                 formControlName="edicionPosterior"
@@ -192,7 +191,7 @@
       <div *appHasPermission="'REPORTES.READ'" class="results-section">
         <div class="results-header">
           <h2 class="results-title">
-            <i class="pi pi-chart-bar" style="margin-right: 0.5rem;"></i>
+            <i class="pi pi-chart-bar" style="margin-right: 0.5rem"></i>
             Resultados ({{ totalResults }})
           </h2>
         </div>
@@ -232,10 +231,15 @@
                 <td>
                   <div class="folio-cell">
                     <span class="folio-text">{{ operation.folio }}</span>
-                    <p-tag *ngIf="operation.fueEditado" severity="danger" value="Editado" styleClass="edited-tag"></p-tag>
+                    <p-tag
+                      *ngIf="operation.fueEditado"
+                      severity="danger"
+                      value="Editado"
+                      styleClass="edited-tag"
+                    ></p-tag>
                   </div>
                 </td>
-                <td>{{ operation.fecha | date:'dd/MM/yyyy' }}</td>
+                <td>{{ operation.fecha | date : "dd/MM/yyyy" }}</td>
                 <td>
                   <span class="placas-text">{{ operation.placas }}</span>
                 </td>
@@ -243,12 +247,16 @@
                 <td>{{ operation.producto }}</td>
                 <td>
                   <div class="tipo-badges">
-                    <p-tag 
-                      [value]="operation.tipo === 'client' ? 'cliente' : 'proveedor'"
-                      [severity]="operation.tipo === 'client' ? 'success' : 'info'"
+                    <p-tag
+                      [value]="
+                        operation.tipo === 'client' ? 'cliente' : 'proveedor'
+                      "
+                      [severity]="
+                        operation.tipo === 'client' ? 'success' : 'info'
+                      "
                       styleClass="tipo-tag"
                     ></p-tag>
-                    <p-tag 
+                    <p-tag
                       [value]="getUnidadLabel(operation.tipoUnidad)"
                       severity="secondary"
                       styleClass="unidad-tag"
@@ -257,20 +265,24 @@
                 </td>
                 <td>
                   <span *ngIf="operation.pesoBruto" class="peso-value">
-                    {{ operation.pesoBruto | number:'1.0-0' }} kg
+                    {{ operation.pesoBruto | number : "1.0-0" }} kg
                   </span>
                   <span *ngIf="!operation.pesoBruto" class="peso-empty">-</span>
                 </td>
                 <td>
                   <span *ngIf="operation.pesoNeto" class="peso-value">
-                    {{ operation.pesoNeto | number:'1.0-0' }} kg
+                    {{ operation.pesoNeto | number : "1.0-0" }} kg
                   </span>
                   <span *ngIf="!operation.pesoNeto" class="peso-empty">-</span>
                 </td>
                 <td>
-                  <p-tag 
+                  <p-tag
                     [value]="getEstadoLabel(operation.estado)"
-                    [severity]="operation.estado === 'ENTRADA_REGISTRADA' ? 'warning' : 'success'"
+                    [severity]="
+                      operation.estado === 'ENTRADA_REGISTRADA'
+                        ? 'warning'
+                        : 'success'
+                    "
                     styleClass="estado-tag"
                   ></p-tag>
                 </td>
@@ -294,7 +306,9 @@
                       severity="secondary"
                       outlined="true"
                       size="small"
-                      [icon]="isLoading ? 'pi pi-spin pi-spinner' : 'pi pi-print'"
+                      [icon]="
+                        isLoading ? 'pi pi-spin pi-spinner' : 'pi pi-print'
+                      "
                       [disabled]="!operation.puedeReimprimir || isLoading"
                       (click)="onReprint(operation)"
                       pTooltip="Reimprimir ticket"
@@ -313,7 +327,8 @@
                     <div class="empty-text">
                       <p class="empty-title">No se encontraron resultados</p>
                       <p class="empty-subtitle">
-                        Ajusta los filtros de búsqueda o verifica los criterios ingresados
+                        Ajusta los filtros de búsqueda o verifica los criterios
+                        ingresados
                       </p>
                     </div>
                   </div>
@@ -324,7 +339,10 @@
         </p-card>
 
         <!-- Estado sin resultados inicial -->
-        <p-card *ngIf="queryResults.length === 0 && !hasSearched && !isLoading" styleClass="no-search-card">
+        <p-card
+          *ngIf="queryResults.length === 0 && !hasSearched && !isLoading"
+          styleClass="no-search-card"
+        >
           <div class="no-search-content">
             <i class="pi pi-search no-search-icon"></i>
             <h3 class="no-search-title">Buscar registros</h3>
@@ -355,19 +373,23 @@
         <div class="detail-title">
           <h2>{{ selectedOperation.folio }}</h2>
           <div class="detail-badges">
-            <p-tag 
+            <p-tag
               [value]="getEstadoLabel(selectedOperation.estado)"
-              [severity]="selectedOperation.estado === 'ENTRADA_REGISTRADA' ? 'warning' : 'success'"
+              [severity]="
+                selectedOperation.estado === 'ENTRADA_REGISTRADA'
+                  ? 'warning'
+                  : 'success'
+              "
             ></p-tag>
-            <p-tag 
-              *ngIf="selectedOperation.fueEditado" 
+            <p-tag
+              *ngIf="selectedOperation.fueEditado"
               value="Editado"
               severity="danger"
             ></p-tag>
           </div>
         </div>
         <div class="detail-date">
-          {{ selectedOperation.fecha | date:'dd/MM/yyyy HH:mm' }}
+          {{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}
         </div>
       </div>
 
@@ -383,18 +405,31 @@
             </div>
             <div class="detail-item">
               <label>Fecha:</label>
-              <span>{{ selectedOperation.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span>{{
+                selectedOperation.fecha | date : "dd/MM/yyyy HH:mm"
+              }}</span>
             </div>
             <div class="detail-item">
               <label>Estado:</label>
-              <p-tag 
+              <p-tag
                 [value]="getEstadoLabel(selectedOperation.estado)"
-                [severity]="selectedOperation.estado === 'ENTRADA_REGISTRADA' ? 'warning' : 'success'"
+                [severity]="
+                  selectedOperation.estado === 'ENTRADA_REGISTRADA'
+                    ? 'warning'
+                    : 'success'
+                "
               ></p-tag>
             </div>
-            <div class="detail-item" *ngIf="selectedOperation.fueEditado && selectedOperation.fechaEdicion">
+            <div
+              class="detail-item"
+              *ngIf="
+                selectedOperation.fueEditado && selectedOperation.fechaEdicion
+              "
+            >
               <label>Fecha de Edición:</label>
-              <span>{{ selectedOperation.fechaEdicion | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span>{{
+                selectedOperation.fechaEdicion | date : "dd/MM/yyyy HH:mm"
+              }}</span>
             </div>
           </div>
         </div>
@@ -409,9 +444,13 @@
             </div>
             <div class="detail-item">
               <label>Tipo:</label>
-              <p-tag 
-                [value]="selectedOperation.tipo === 'client' ? 'Cliente' : 'Proveedor'"
-                [severity]="selectedOperation.tipo === 'client' ? 'success' : 'info'"
+              <p-tag
+                [value]="
+                  selectedOperation.tipo === 'client' ? 'Cliente' : 'Proveedor'
+                "
+                [severity]="
+                  selectedOperation.tipo === 'client' ? 'success' : 'info'
+                "
               ></p-tag>
             </div>
           </div>
@@ -427,7 +466,7 @@
             </div>
             <div class="detail-item">
               <label>Tipo de Unidad:</label>
-              <p-tag 
+              <p-tag
                 [value]="getUnidadLabel(selectedOperation.tipoUnidad)"
                 severity="secondary"
               ></p-tag>
@@ -446,21 +485,39 @@
             <div class="detail-item">
               <label>Peso Bruto:</label>
               <span *ngIf="selectedOperation.pesoBruto" class="peso-value">
-                {{ selectedOperation.pesoBruto | number:'1.0-0' }} kg
+                {{ selectedOperation.pesoBruto | number : "1.0-0" }} kg
               </span>
-              <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty">No registrado</span>
+              <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty"
+                >No registrado</span
+              >
             </div>
             <div class="detail-item">
               <label>Peso Neto:</label>
               <span *ngIf="selectedOperation.pesoNeto" class="peso-value">
-                {{ selectedOperation.pesoNeto | number:'1.0-0' }} kg
+                {{ selectedOperation.pesoNeto | number : "1.0-0" }} kg
               </span>
-              <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty">No registrado</span>
+              <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty"
+                >No registrado</span
+              >
             </div>
-            <div class="detail-item" *ngIf="getTaraWeight(selectedOperation.pesoBruto, selectedOperation.pesoNeto)">
+            <div
+              class="detail-item"
+              *ngIf="
+                getTaraWeight(
+                  selectedOperation.pesoBruto,
+                  selectedOperation.pesoNeto
+                )
+              "
+            >
               <label>Tara:</label>
               <span class="peso-value">
-                {{ getTaraWeight(selectedOperation.pesoBruto, selectedOperation.pesoNeto) | number:'1.0-0' }} kg
+                {{
+                  getTaraWeight(
+                    selectedOperation.pesoBruto,
+                    selectedOperation.pesoNeto
+                  ) | number : "1.0-0"
+                }}
+                kg
               </span>
             </div>
           </div>

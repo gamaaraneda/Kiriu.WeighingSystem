@@ -1,10 +1,17 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, OnInit, OnDestroy } from '@angular/core';
+import {
+  Directive,
+  Input,
+  TemplateRef,
+  ViewContainerRef,
+  OnInit,
+  OnDestroy,
+} from '@angular/core';
 import { Subscription } from 'rxjs';
 import { PermissionsService } from '../services/permissions.service';
 
 @Directive({
   selector: '[appHasPermission]',
-  standalone: true
+  standalone: true,
 })
 export class HasPermissionDirective implements OnInit, OnDestroy {
   private subscription?: Subscription;
@@ -29,7 +36,7 @@ export class HasPermissionDirective implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.updateView();
-    
+
     // Escuchar cambios en el localStorage para actualizar permisos en tiempo real
     window.addEventListener('storage', this.handleStorageChange.bind(this));
   }
@@ -48,10 +55,11 @@ export class HasPermissionDirective implements OnInit, OnDestroy {
   }
 
   private updateView(): void {
+    // Siempre limpiar la vista anterior antes de crear una nueva
+    this.viewContainer.clear();
+
     if (this.hasPermission()) {
       this.viewContainer.createEmbeddedView(this.templateRef);
-    } else {
-      this.viewContainer.clear();
     }
   }
 
@@ -61,7 +69,7 @@ export class HasPermissionDirective implements OnInit, OnDestroy {
     }
 
     if (Array.isArray(this.permissions)) {
-      return this.requireAll 
+      return this.requireAll
         ? this.permissionsService.hasAllPermissions(this.permissions)
         : this.permissionsService.hasAnyPermission(this.permissions);
     } else {
