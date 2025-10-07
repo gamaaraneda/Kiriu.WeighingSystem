@@ -54,14 +54,4 @@
       </div>
     </div>
   </div>
-
-  <!-- Próximo paso sugerido -->
-  <div class="next-step-suggestion" *ngIf="getNextPendingStep() && !isCollapsed">
-    <div class="suggestion-content">
-      <i class="suggestion-icon">💡</i>
-      <span class="suggestion-text">
-        <strong>Próximo paso:</strong> {{ getNextPendingStep()?.label }}
-      </span>
-    </div>
-  </div>
 </div>
