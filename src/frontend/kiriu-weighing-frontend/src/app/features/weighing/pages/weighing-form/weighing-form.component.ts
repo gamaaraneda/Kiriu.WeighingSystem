@@ -477,7 +477,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   onCaptureWeight(): void {
-    if (this.weightData.isStable && this.weightData.isConnected) {
+    if (this.weightData.isConnected) {
       // Si es doble remolque, validar requisitos antes de permitir capturar peso
       if (this.weighingForm.get('doubleTrailer')?.value) {
         if (this.doubleTrailerState.currentStep === 'remolque1') {
