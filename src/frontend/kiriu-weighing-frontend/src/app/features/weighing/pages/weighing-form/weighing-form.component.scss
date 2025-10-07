@@ -620,89 +620,60 @@
   margin-bottom: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
+  .section-title {
+    color: #398df1;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
   .weight-display {
     position: relative;
     text-align: center;
     margin-bottom: 20px;
-    padding: 20px;
-    border-radius: 12px;
-    border: 2px solid #ff9500;
-    background: rgba(255, 149, 0, 0.05);
+    padding: 32px 20px;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    background: #f8f9fa;
     transition: all 0.3s ease;
 
     .weight-value {
       font-size: 32px;
       font-weight: 700;
-      color: #ff9500;
-      margin-bottom: 12px;
+      color: #398df1;
+      margin-bottom: 8px;
     }
 
     .connection-indicator {
-      position: absolute;
-      top: 12px;
-      right: 12px;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      padding: 4px 8px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 500;
-      transition: all 0.3s ease;
+      margin-top: 8px;
 
       .connection-dot {
         display: block;
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
-        background: currentColor;
-        box-shadow: 0 0 4px currentColor;
-      }
-
-      .connection-text {
-        white-space: nowrap;
+        transition: all 0.3s ease;
       }
 
       &.connected {
-        color: #1ee733;
-        background: rgba(30, 231, 51, 0.1);
-        border: 1px solid rgba(30, 231, 51, 0.3);
-        
         .connection-dot {
+          background: #1ee733;
+          box-shadow: 0 0 8px rgba(30, 231, 51, 0.6);
           animation: pulse 2s infinite;
         }
       }
 
       &.disconnected {
-        color: #f70000;
-        background: rgba(247, 0, 0, 0.1);
-        border: 1px solid rgba(247, 0, 0, 0.3);
-        
         .connection-dot {
+          background: #f70000;
+          box-shadow: 0 0 8px rgba(247, 0, 0, 0.6);
           animation: blink 1.5s infinite;
         }
-      }
-    }
-
-    .weight-stability {
-      margin-top: 12px;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 500;
-      text-align: center;
-      transition: all 0.3s ease;
-
-      &.stable {
-        color: #1ee733;
-        background: rgba(30, 231, 51, 0.1);
-        border: 1px solid rgba(30, 231, 51, 0.3);
-      }
-
-      &.unstable {
-        color: #ff9500;
-        background: rgba(255, 149, 0, 0.1);
-        border: 1px solid rgba(255, 149, 0, 0.3);
       }
     }
 
@@ -727,6 +698,79 @@
       51%,
       100% {
         opacity: 0.3;
+      }
+    }
+  }
+
+  .weight-status {
+    margin-bottom: 20px;
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #e9ecef;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .status-label {
+        font-weight: 500;
+        color: #495057;
+      }
+
+      .status-value {
+        font-weight: 600;
+
+        &.connected {
+          color: #1ee733;
+        }
+
+        &.disconnected {
+          color: #f70000;
+        }
+      }
+    }
+
+    // Estilos específicos para SignalR
+    .signalr-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      &.connected {
+        color: #1ee733;
+      }
+
+      &.disconnected {
+        color: #f70000;
+      }
+
+      i {
+        font-size: 14px;
+      }
+
+      .reconnect-btn {
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        padding: 2px;
+        border-radius: 4px;
+        margin-left: 8px;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+
+        &:hover {
+          opacity: 1;
+          background-color: rgba(247, 0, 0, 0.1);
+        }
+
+        i {
+          font-size: 12px;
+        }
       }
     }
   }

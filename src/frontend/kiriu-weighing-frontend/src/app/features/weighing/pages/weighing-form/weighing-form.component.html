@@ -825,58 +825,77 @@
           <div class="weight-section">
             <h2 class="section-title">Peso en Tiempo Real</h2>
 
-            <!-- Estado de conexión SignalR -->
-            <div class="connection-status" *ngIf="!connectionStatus.isConnected">
-              <div class="connection-warning">
-                <i class="pi pi-exclamation-triangle"></i>
-                <span>Desconectado de la báscula</span>
-                <button 
-                  class="btn-reconnect" 
-                  (click)="reconnectToWeightService()"
-                  [disabled]="connectionStatus.reconnectAttempts > 0"
-                >
-                  Reconectar
-                </button>
-              </div>
-              <small *ngIf="connectionStatus.reconnectAttempts > 0">
-                Reintentando conexión... (intento {{ connectionStatus.reconnectAttempts }})
-              </small>
-            </div>
-
             <div class="weight-display">
               <div class="weight-value">
                 {{ weightData.currentWeight | number : "1.0-0" }} kg
               </div>
               <div
                 class="connection-indicator"
-                [class]="connectionStatus.isConnected ? 'connected' : 'disconnected'"
+                [class]="weightData.isConnected ? 'connected' : 'disconnected'"
                 [title]="
-                  connectionStatus.isConnected
-                    ? 'Báscula conectada via SignalR'
-                    : 'Báscula desconectada'
+                  weightData.isConnected
+                    ? 'Sistema conectado'
+                    : 'Sistema desconectado'
                 "
               >
                 <span class="connection-dot"></span>
-                <span class="connection-text" *ngIf="connectionStatus.isConnected">
-                  Online
-                </span>
-                <span class="connection-text" *ngIf="!connectionStatus.isConnected">
-                  Offline
-                </span>
-              </div>
-              <div class="weight-stability" 
-                   [class]="weightData.isStable ? 'stable' : 'unstable'">
-                <span *ngIf="weightData.isStable">📍 Peso estable</span>
-                <span *ngIf="!weightData.isStable">⏳ Estabilizando...</span>
               </div>
             </div>
 
-            <!-- Información de la báscula actual -->
-            <div class="bascula-info" *ngIf="currentRealtimePeso">
-              <small>
-                Báscula ID: {{ currentRealtimePeso.id }} | 
-                Última actualización: {{ currentRealtimePeso.timestamp | date:'HH:mm:ss' }}
-              </small>
+            <div class="weight-status">
+              <div class="status-item">
+                <span class="status-label">Conexión:</span>
+                <span
+                  class="status-value"
+                  [class]="
+                    weightData.isConnected ? 'connected' : 'disconnected'
+                  "
+                >
+                  {{ weightData.isConnected ? "Conectado" : "Desconectado" }}
+                </span>
+              </div>
+
+              <!-- Estado de conexión SignalR -->
+              <div class="status-item">
+                <span class="status-label">Estado SignalR:</span>
+                <span
+                  class="status-value signalr-status"
+                  [class]="isWeightServiceConnected ? 'connected' : 'disconnected'"
+                  [title]="
+                    isWeightServiceConnected
+                    ? 'Báscula conectada via SignalR'
+                    : connectionStatus.reconnectAttempts > 0
+                      ? 'Reconectando... (' + connectionStatus.reconnectAttempts + ' intentos)'
+                      : 'Desconectado - Sistema de peso no disponible'
+                  "
+                >
+                  <i
+                    class="pi"
+                    [class.pi-check-circle]="isWeightServiceConnected"
+                    [class.pi-times-circle]="!isWeightServiceConnected && connectionStatus.reconnectAttempts === 0"
+                    [class.pi-refresh]="!isWeightServiceConnected && connectionStatus.reconnectAttempts > 0"
+                    [class.pi-spin]="!isWeightServiceConnected && connectionStatus.reconnectAttempts > 0"
+                  ></i>
+                  {{
+                    isWeightServiceConnected
+                      ? 'Conectado'
+                      : connectionStatus.reconnectAttempts > 0
+                        ? 'Reconectando...'
+                        : 'Desconectado'
+                  }}
+
+                  <!-- Botón de reconexión -->
+                  <button
+                    *ngIf="!isWeightServiceConnected"
+                    type="button"
+                    class="reconnect-btn"
+                    (click)="reconnectToWeightService()"
+                    title="Reintentar conexión"
+                  >
+                    <i class="pi pi-refresh"></i>
+                  </button>
+                </span>
+              </div>
             </div>
 
             <button
