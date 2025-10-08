@@ -421,16 +421,20 @@
 // Grupo de visualización de fotos integrado en el formulario
 .photo-display-group {
   margin-top: 12px;
+  max-width: 400px !important; // Limitar ancho del contenedor padre
 
   .photo-preview {
-    width: 100%;
-    height: 60px;
+    width: 100% !important;
+    max-width: 400px !important;
+    height: 200px !important; // Aumentar altura para mostrar la imagen
+    margin-bottom: 0 !important;
+    overflow: hidden !important;
     border: 2px dashed #e9ecef;
     border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #f8f9fa !important;
     transition: all 0.2s ease;
 
     &.has-photo {
@@ -439,13 +443,26 @@
     }
 
     .photo-placeholder {
-      font-size: 24px;
+      font-size: 14px;
+      text-align: center;
+      padding: 0 8px;
       color: #6c757d;
     }
 
     .photo-captured {
-      font-size: 24px;
+      font-size: 14px;
+      text-align: center;
+      padding: 0 8px;
       color: #1ee733;
+    }
+
+    .captured-plate-image {
+      max-width: 100% !important;
+      max-height: 100% !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+      border-radius: 6px;
     }
   }
 }

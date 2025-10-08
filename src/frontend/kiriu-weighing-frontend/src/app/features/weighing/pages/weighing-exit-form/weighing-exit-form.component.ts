@@ -861,10 +861,17 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   /**
    * Construye la URL completa de una imagen ANPR
    */
-  getFullImageUrl(imageUrl: string): string {
-    if (!imageUrl) return '';
-    if (imageUrl.startsWith('http')) return imageUrl;
-    return `${environment.apiUrl}${imageUrl}`;
+  getFullImageUrl(relativeUrl: string): string {
+    if (!relativeUrl) return '';
+
+    // Si ya es una URL completa, retornarla tal cual
+    if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+      return relativeUrl;
+    }
+
+    // Construir URL completa desde environment
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}${relativeUrl}`;
   }
 
   /**
