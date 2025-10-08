@@ -58,6 +58,7 @@ export interface CreateDoubleTrailerEntryRequest {
   unitType: string;
   tipoUnidad: string;
   trailerPlaca: string;
+  trailerPlacaFoto?: string; // URL de la foto ANPR del tráiler
   remolques: RemolqueEntryData[];
   pesoBrutoTotal: number;
   product: string;

@@ -66,6 +66,7 @@ export interface RemolqueData {
 export interface EntradaConDobleRemolque {
   folio: string;
   trailerPlaca: string;
+  trailerPlacaFoto?: string; // URL de la foto ANPR del tráiler
   remolques: [RemolqueData, RemolqueData];
   pesoBrutoTotal: number;
   fechaHoraEntrada: string;

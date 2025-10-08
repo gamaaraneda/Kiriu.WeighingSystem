@@ -163,6 +163,11 @@ export class AnprService implements OnDestroy {
     cameraType: 'trailer' | 'remolque' | 'cargo',
     timeoutMs: number = 30000
   ): Promise<AnprEvent> {
+    console.log(`🎯 Iniciando captura de placa para cameraType: ${cameraType}`);
+
+    // Obtener el timestamp actual para filtrar solo eventos nuevos
+    const captureStartTime = new Date();
+
     // Marcar como capturando
     this.captureStateSubject.next({
       isCapturing: true,
@@ -171,22 +176,39 @@ export class AnprService implements OnDestroy {
     });
 
     try {
-      // Esperar el evento ANPR del tipo correcto con timeout
+      console.log(`⏳ Esperando evento ANPR de tipo: ${cameraType} (timeout: ${timeoutMs}ms)`);
+
+      // Esperar el SIGUIENTE evento ANPR del tipo correcto que llegue DESPUÉS de iniciar la captura
       const anprEvent = await firstValueFrom(
         this.anprEventSubject.pipe(
-          filter((event): event is AnprEvent =>
-            event !== null && event.cameraType === cameraType
-          ),
+          filter((event): event is AnprEvent => {
+            if (event === null) return false;
+
+            // Verificar que sea del tipo correcto
+            if (event.cameraType !== cameraType) return false;
+
+            // Verificar que sea un evento nuevo (posterior a cuando iniciamos la captura)
+            const isNewEvent = new Date(event.capturedAt) >= captureStartTime;
+
+            console.log(`📸 Evento recibido - Tipo: ${event.cameraType}, Placa: ${event.licensePlate}, Nuevo: ${isNewEvent}`);
+
+            return isNewEvent;
+          }),
           timeout(timeoutMs),
           take(1)
         )
       );
 
+      console.log(`✅ Evento ANPR recibido para ${cameraType}:`, anprEvent.licensePlate);
       return anprEvent;
     } catch (error) {
       // En caso de timeout u otro error
+      console.error(`❌ Error en captura de ${cameraType}:`, error);
       this.captureStateSubject.next({ isCapturing: false });
       throw error;
+    } finally {
+      // Limpiar estado de captura
+      this.captureStateSubject.next({ isCapturing: false });
     }
   }
 

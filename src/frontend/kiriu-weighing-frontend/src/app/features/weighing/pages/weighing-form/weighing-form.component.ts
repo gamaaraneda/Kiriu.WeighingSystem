@@ -819,7 +819,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Mapear photoType a cameraType de ANPR
     const cameraTypeMap: Record<string, 'trailer' | 'remolque' | 'cargo'> = {
       'trailerPlate': 'trailer',
-      'trailerPlate2': 'trailer',
+      'trailerPlate2': 'remolque',  // Placa del remolque en flujo de remolque único
       'remolque1Plate': 'remolque',
       'remolque2Plate': 'remolque',
       'cargo': 'cargo',
@@ -1102,6 +1102,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       unitType: this.unitType as 'client' | 'provider',
       tipoUnidad: 'doble-remolque',
       trailerPlaca: this.doubleTrailerState.trailerPlaca,
+      trailerPlacaFoto: this.photoData.trailerPlate, // Foto ANPR del tráiler
       remolques: [
         {
           numero: this.doubleTrailerState.remolque1.numero || 1,

@@ -260,13 +260,20 @@
                       *ngIf="!photoData.remolque1Plate"
                       class="photo-placeholder"
                     >
-                      📷
+                      📷 Sin captura
                     </span>
+                    <img
+                      *ngIf="photoData.remolque1Plate && photoData.remolque1Plate.startsWith('/')"
+                      [src]="getFullImageUrl(photoData.remolque1Plate)"
+                      alt="Placa del remolque 1"
+                      class="captured-plate-image"
+                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                    />
                     <span
-                      *ngIf="photoData.remolque1Plate"
+                      *ngIf="photoData.remolque1Plate && !photoData.remolque1Plate.startsWith('/')"
                       class="photo-captured"
                     >
-                      ✅
+                      ✅ Foto capturada
                     </span>
                   </div>
                 </div>
@@ -441,13 +448,20 @@
                       *ngIf="!photoData.remolque2Plate"
                       class="photo-placeholder"
                     >
-                      📷
+                      📷 Sin captura
                     </span>
+                    <img
+                      *ngIf="photoData.remolque2Plate && photoData.remolque2Plate.startsWith('/')"
+                      [src]="getFullImageUrl(photoData.remolque2Plate)"
+                      alt="Placa del remolque 2"
+                      class="captured-plate-image"
+                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                    />
                     <span
-                      *ngIf="photoData.remolque2Plate"
+                      *ngIf="photoData.remolque2Plate && !photoData.remolque2Plate.startsWith('/')"
                       class="photo-captured"
                     >
-                      ✅
+                      ✅ Foto capturada
                     </span>
                   </div>
                 </div>
@@ -711,13 +725,20 @@
                       *ngIf="!photoData.trailerPlate2"
                       class="photo-placeholder"
                     >
-                      📷
+                      📷 Sin captura
                     </span>
+                    <img
+                      *ngIf="photoData.trailerPlate2 && photoData.trailerPlate2.startsWith('/')"
+                      [src]="getFullImageUrl(photoData.trailerPlate2)"
+                      alt="Placa del remolque"
+                      class="captured-plate-image"
+                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                    />
                     <span
-                      *ngIf="photoData.trailerPlate2"
+                      *ngIf="photoData.trailerPlate2 && !photoData.trailerPlate2.startsWith('/')"
                       class="photo-captured"
                     >
-                      ✅
+                      ✅ Foto capturada
                     </span>
                   </div>
                 </div>

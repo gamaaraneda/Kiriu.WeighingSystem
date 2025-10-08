@@ -31,11 +31,15 @@ public class WeighingApplicationService : IWeighingApplicationService
     {
         try
         {
-            // Validate unique entry
-            var canCreate = await _weighingService.ValidateUniqueEntryAsync(request.TrailerPlate);
-            if (!canCreate)
+            // Validate unique entry (solo si hay placa del tráiler)
+            // En flujo de solo contenedor, la placa puede estar vacía
+            if (!string.IsNullOrWhiteSpace(request.TrailerPlate))
             {
-                return ApiResponse<WeighingOperationDto>.CreateError("Placa ya registrada en entrada previa");
+                var canCreate = await _weighingService.ValidateUniqueEntryAsync(request.TrailerPlate);
+                if (!canCreate)
+                {
+                    return ApiResponse<WeighingOperationDto>.CreateError("Placa ya registrada en entrada previa");
+                }
             }
 
             var operation = new WeighingOperation
@@ -44,10 +48,11 @@ public class WeighingApplicationService : IWeighingApplicationService
                 Folio = _weighingService.GenerateFolio(),
                 UnitType = request.UnitType,
                 OperationType = request.OperationType,
-                TrailerPlate = request.TrailerPlate,
-                TrailerPlate2 = request.TrailerPlate2,
-                TrailerPlateContenedor = request.TrailerPlateContenedor,
-                RemolquePlateContenedor = request.RemolquePlateContenedor,
+                // Convertir strings vacíos a null para campos opcionales (flujo contenedor)
+                TrailerPlate = string.IsNullOrWhiteSpace(request.TrailerPlate) ? null : request.TrailerPlate,
+                TrailerPlate2 = string.IsNullOrWhiteSpace(request.TrailerPlate2) ? null : request.TrailerPlate2,
+                TrailerPlateContenedor = string.IsNullOrWhiteSpace(request.TrailerPlateContenedor) ? null : request.TrailerPlateContenedor,
+                RemolquePlateContenedor = string.IsNullOrWhiteSpace(request.RemolquePlateContenedor) ? null : request.RemolquePlateContenedor,
                 Product = request.Product,
                 ClientProviderName = request.ClientProviderName,
                 ClientProviderRfc = request.ClientProviderRfc,
@@ -63,8 +68,8 @@ public class WeighingApplicationService : IWeighingApplicationService
                 UsuarioEditor = request.TieneEdicionesManuale ? request.UsuarioEditor : null
             };
 
-            // Add photos
-            operation.Photos = CreatePhotosFromRequest(operation.Id, request.Photos);
+            // Add photos - vincular fotos huérfanas asíncronamente
+            await ProcessPhotosFromRequestAsync(operation.Id, request.Photos);
 
             var created = await _weighingRepository.CreateAsync(operation);
             var result = created.Adapt<WeighingOperationDto>();
@@ -98,6 +103,9 @@ public class WeighingApplicationService : IWeighingApplicationService
                 UnitType = request.UnitType,
                 OperationType = "entry",
                 TrailerPlate = request.TrailerPlaca,
+                // Guardar placas de remolques en los campos de la operación principal
+                PlacaRemolque1 = request.Remolques.FirstOrDefault(r => r.Numero == 1)?.Placa,
+                PlacaRemolque2 = request.Remolques.FirstOrDefault(r => r.Numero == 2)?.Placa,
                 Product = request.Product,
                 ClientProviderName = request.ClientProviderName,
                 EntryWeight = request.PesoBrutoTotal,
@@ -127,6 +135,9 @@ public class WeighingApplicationService : IWeighingApplicationService
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }).ToList();
+
+            // Procesar fotos ANPR del tráiler y remolques
+            await ProcessDoubleTrailerPhotosAsync(operation.Id, request);
 
             var created = await _weighingRepository.CreateAsync(operation);
 
@@ -429,32 +440,61 @@ public class WeighingApplicationService : IWeighingApplicationService
         }
     }
 
-    private List<WeighingPhoto> CreatePhotosFromRequest(Guid operationId, PhotoDataDto photos)
+    private async Task ProcessPhotosFromRequestAsync(Guid operationId, PhotoDataDto photos)
     {
-        var photoList = new List<WeighingPhoto>();
-
-        // Procesar foto de placa del tráiler (solo si es URL de API - foto ANPR)
-        ProcessPhotoField(operationId, photos.TrailerPlate, "trailerPlate", photoList);
-
-        // Procesar foto de placa del tráiler 2 / remolque (solo si es URL de API)
-        ProcessPhotoField(operationId, photos.TrailerPlate2, "trailerPlate2", photoList);
-
-        // Procesar foto de carga (solo si es URL de API)
-        ProcessPhotoField(operationId, photos.Cargo, "cargoEntry", photoList);
-
-        // Procesar foto de remolque 1 (solo si es URL de API)
-        ProcessPhotoField(operationId, photos.Remolque1Plate, "remolque1Plate", photoList);
-
-        // Procesar foto de remolque 2 (solo si es URL de API)
-        ProcessPhotoField(operationId, photos.Remolque2Plate, "remolque2Plate", photoList);
-
-        // Procesar foto de carga remolque 2 (solo si es URL de API)
-        ProcessPhotoField(operationId, photos.CargoRemolque2, "cargoRemolque2", photoList);
-
-        return photoList;
+        // Procesar todas las fotos de forma asíncrona
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate");
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate2, "trailerPlate2");
+        await ProcessPhotoFieldAsync(operationId, photos.Cargo, "cargoEntry");
+        await ProcessPhotoFieldAsync(operationId, photos.Remolque1Plate, "remolque1Plate");
+        await ProcessPhotoFieldAsync(operationId, photos.Remolque2Plate, "remolque2Plate");
+        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque2, "cargoRemolque2");
     }
 
-    private void ProcessPhotoField(Guid operationId, string? photoUrl, string photoType, List<WeighingPhoto> photoList)
+    private async Task ProcessDoubleTrailerPhotosAsync(Guid operationId, CreateDoubleTrailerEntryRequest request)
+    {
+        _logger.LogInformation("Procesando fotos para entrada de doble remolque - OperationId: {OperationId}", operationId);
+
+        // Procesar foto del tráiler (si existe)
+        if (!string.IsNullOrEmpty(request.TrailerPlacaFoto))
+        {
+            _logger.LogInformation("Procesando foto del tráiler: {TrailerPlacaFoto}", request.TrailerPlacaFoto);
+            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate");
+        }
+        else
+        {
+            _logger.LogWarning("No se proporcionó foto del tráiler en el request");
+        }
+
+        // Procesar fotos de cada remolque
+        foreach (var remolque in request.Remolques)
+        {
+            _logger.LogInformation("Procesando {Count} fotos del remolque {Numero}", remolque.Fotos.Count, remolque.Numero);
+
+            foreach (var fotoUrl in remolque.Fotos)
+            {
+                // Determinar el tipo de foto según la URL
+                string photoType;
+                if (fotoUrl.StartsWith("/api/"))
+                {
+                    // Es una foto ANPR de placa
+                    photoType = $"remolque{remolque.Numero}Plate";
+                }
+                else
+                {
+                    // Es una foto de carga u otro tipo (ignorar por ahora)
+                    _logger.LogInformation("Ignorando foto no-ANPR: {FotoUrl}", fotoUrl);
+                    continue;
+                }
+
+                await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType);
+            }
+        }
+
+        _logger.LogInformation("Finalizado procesamiento de fotos para doble remolque - OperationId: {OperationId}", operationId);
+    }
+
+    private async Task ProcessPhotoFieldAsync(Guid operationId, string? photoUrl, string photoType)
     {
         // Solo procesar si es una URL de API (foto ANPR guardada en BD)
         // Ignorar marcadores de texto como "Foto capturada"
@@ -465,21 +505,23 @@ public class WeighingApplicationService : IWeighingApplicationService
 
         try
         {
-            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photoUrl).Result;
+            _logger.LogInformation("Buscando foto huérfana con URL: {PhotoUrl} para tipo: {PhotoType}", photoUrl, photoType);
+
+            var orphanPhoto = await _photoRepository.GetOrphanPhotoByUrlAsync(photoUrl);
             if (orphanPhoto != null)
             {
-                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                _logger.LogInformation("Foto huérfana {PhotoType} vinculada: {PhotoId} -> {OperationId}",
+                await _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId);
+                _logger.LogInformation("✅ Foto huérfana {PhotoType} vinculada exitosamente: {PhotoId} -> {OperationId}",
                     photoType, orphanPhoto.Id, operationId);
             }
             else
             {
-                _logger.LogWarning("No se encontró foto huérfana con URL: {PhotoUrl}", photoUrl);
+                _logger.LogWarning("❌ No se encontró foto huérfana con URL: {PhotoUrl} para tipo: {PhotoType}", photoUrl, photoType);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error al vincular foto huérfana {PhotoType}, se omitirá", photoType);
+            _logger.LogError(ex, "❌ Error al vincular foto huérfana {PhotoType} con URL {PhotoUrl}, se omitirá", photoType, photoUrl);
         }
     }
 
