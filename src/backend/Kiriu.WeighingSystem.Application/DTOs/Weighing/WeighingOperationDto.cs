@@ -8,6 +8,11 @@ public class WeighingOperationDto
     public string OperationType { get; set; } = string.Empty;
     public string TrailerPlate { get; set; } = string.Empty;
     public string? TrailerPlate2 { get; set; }
+    public string? TrailerPlateContenedor { get; set; }
+    public string? RemolquePlateContenedor { get; set; }
+    public string? PlacaRemolque1 { get; set; }
+    public string? PlacaRemolque2 { get; set; }
+    public string TipoUnidad { get; set; } = string.Empty;
     public string Product { get; set; } = string.Empty;
     public string ClientProviderName { get; set; } = string.Empty;
     public decimal? EntryWeight { get; set; }

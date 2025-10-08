@@ -368,15 +368,15 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     return {
       id: operation.folio, // Usar el folio en lugar del id para mostrarlo en la UI
       createdAt: new Date(operation.createdAt),
-      tipoUnidad: this.mapTipoUnidad(operation.unitType, operation.trailerPlate2),
+      tipoUnidad: this.mapTipoUnidad(operation.tipoUnidad, operation.placaRemolque1, operation.placaRemolque2),
       clientProviderName: operation.clientProviderName,
       product: operation.product,
       entryWeight: operation.entryWeight || 0,
       status: operation.status,
       placaTrailer: operation.trailerPlate,
       placaRemolque: operation.trailerPlate2,
-      placaRemolque1: this.extractRemolque1Plate(operation.trailerPlate2),
-      placaRemolque2: this.extractRemolque2Plate(operation.trailerPlate2),
+      placaRemolque1: operation.placaRemolque1,
+      placaRemolque2: operation.placaRemolque2,
       placaTrailerContenedor: operation.trailerPlateContenedor,
       placaRemolqueContenedor: operation.remolquePlateContenedor,
       fotos: {
@@ -392,38 +392,31 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   /**
    * Mapea el tipo de unidad basándose en los datos de la operación
    */
-  private mapTipoUnidad(unitType: string, trailerPlate2?: string): 'remolque' | 'contenedor' | 'doble-remolque' {
-    // Si trailerPlate2 contiene " + " es un doble remolque
-    if (trailerPlate2 && trailerPlate2.includes(' + ')) {
+  private mapTipoUnidad(tipoUnidad?: string, placaRemolque1?: string, placaRemolque2?: string): 'remolque' | 'contenedor' | 'doble-remolque' {
+    // Si viene el campo tipoUnidad del backend, usarlo directamente
+    if (tipoUnidad) {
+      if (tipoUnidad === 'doble-remolque') {
+        return 'doble-remolque';
+      }
+      if (tipoUnidad === 'contenedor') {
+        return 'contenedor';
+      }
+      if (tipoUnidad === 'remolque') {
+        return 'remolque';
+      }
+    }
+
+    // Si hay placas de remolques, es doble remolque
+    if (placaRemolque1 && placaRemolque2) {
       return 'doble-remolque';
     }
-    
-    // Determinar basándose en el tipo de unidad de la ruta o datos adicionales
+
+    // Determinar basándose en el tipo de unidad de la ruta
     if (this.unitType === 'contenedor') {
       return 'contenedor';
     }
-    
+
     return 'remolque';
-  }
-
-  /**
-   * Extrae la placa del remolque 1 desde el campo trailerPlate2 si es doble remolque
-   */
-  private extractRemolque1Plate(trailerPlate2?: string): string | undefined {
-    if (trailerPlate2 && trailerPlate2.includes(' + ')) {
-      return trailerPlate2.split(' + ')[0];
-    }
-    return undefined;
-  }
-
-  /**
-   * Extrae la placa del remolque 2 desde el campo trailerPlate2 si es doble remolque
-   */
-  private extractRemolque2Plate(trailerPlate2?: string): string | undefined {
-    if (trailerPlate2 && trailerPlate2.includes(' + ')) {
-      return trailerPlate2.split(' + ')[1];
-    }
-    return undefined;
   }
 
   /**
