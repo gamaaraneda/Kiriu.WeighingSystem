@@ -1,0 +1,64 @@
+.anpr-capture-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .capture-button-wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .captured-info {
+    padding: 1rem;
+    border: 1px solid var(--surface-border);
+    border-radius: var(--border-radius);
+    background: var(--surface-card);
+
+    .plate-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+
+      .plate-number {
+        display: flex;
+        align-items: center;
+        font-size: 1.2rem;
+        color: var(--primary-color);
+      }
+
+      .confidence-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius);
+        background: var(--orange-500);
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+
+        &.high-confidence {
+          background: var(--green-500);
+        }
+      }
+    }
+
+    .image-preview {
+      display: flex;
+      justify-content: center;
+    }
+  }
+
+  .connection-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    background: var(--yellow-50);
+    color: var(--yellow-700);
+    font-size: 0.9rem;
+
+    i {
+      font-size: 1.2rem;
+    }
+  }
+}

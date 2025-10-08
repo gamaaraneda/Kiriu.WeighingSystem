@@ -552,4 +552,7 @@ packer_cache/
 # Local development
 local/
 temp/
-tmp/ 
+tmp/
+
+# ASP.NET Core wwwroot uploads
+**/wwwroot/uploads/ 

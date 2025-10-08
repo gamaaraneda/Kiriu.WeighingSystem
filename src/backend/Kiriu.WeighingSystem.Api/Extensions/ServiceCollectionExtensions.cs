@@ -13,7 +13,7 @@ namespace Kiriu.WeighingSystem.Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Application Services
         services.AddScoped<IUsuarioApplicationService, UsuarioApplicationService>();
@@ -23,6 +23,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IWeighingQueryService, WeighingQueryService>();
         services.AddScoped<IExcelExportService, ExcelExportService>();
         services.AddScoped<IAdminApplicationService, AdminApplicationService>();
+
+        // ANPR Services
+        var imageStoragePath = configuration["AnprCamera:ImageStoragePath"] ?? "uploads/plates";
+        services.AddScoped<AnprApplicationService>(sp =>
+            new AnprApplicationService(
+                sp.GetRequiredService<ILogger<AnprApplicationService>>(),
+                imageStoragePath));
+        services.AddScoped<AnprParserService>();
 
         // Peso Real-time Service
         services.AddHostedService<PesoRealtimeService>();
@@ -47,8 +55,9 @@ public static class ServiceCollectionExtensions
         
         // Weighing Services
         services.AddScoped<IWeighingOperationRepository, WeighingOperationRepository>();
+        services.AddScoped<IWeighingPhotoRepository, WeighingPhotoRepository>();
         services.AddScoped<IWeighingService, WeighingService>();
-        
+
         // Audit Services
         services.AddScoped<IAuditLogger, AuditLoggerService>();
 

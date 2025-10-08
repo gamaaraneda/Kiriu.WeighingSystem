@@ -358,4 +358,46 @@ public class WeighingController : ControllerBase
             return "Sistema";
         }
     }
+
+    /// <summary>
+    /// Obtener imagen de una foto de pesaje desde la base de datos
+    /// </summary>
+    /// <param name="photoId">ID de la foto</param>
+    /// <returns>Imagen en formato binario</returns>
+    [HttpGet("photos/{photoId}")]
+    [AllowAnonymous] // Permitir acceso sin autenticación para mostrar imágenes
+    public async Task<IActionResult> GetPhoto(Guid photoId)
+    {
+        try
+        {
+            Console.WriteLine($"\n🔍 ===== SOLICITANDO IMAGEN =====");
+            Console.WriteLine($"📷 Photo ID: {photoId}");
+            _logger.LogInformation("Obteniendo imagen de foto: {PhotoId}", photoId);
+
+            var photoData = await _weighingService.GetPhotoDataAsync(photoId);
+
+            if (photoData == null)
+            {
+                Console.WriteLine($"❌ Foto NO encontrada en BD");
+                _logger.LogWarning("Foto no encontrada: {PhotoId}", photoId);
+                return NotFound(new { success = false, message = "Foto no encontrada" });
+            }
+
+            Console.WriteLine($"✅ Foto encontrada:");
+            Console.WriteLine($"   - ContentType: {photoData.ContentType}");
+            Console.WriteLine($"   - ImageData size: {photoData.ImageData.Length} bytes");
+            Console.WriteLine($"🔍 ===== FIN SOLICITUD IMAGEN =====\n");
+
+            // Retornar la imagen con el content-type correcto
+            var contentType = photoData.ContentType ?? "image/jpeg";
+            return File(photoData.ImageData, contentType);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ ERROR obteniendo imagen: {ex.Message}");
+            Console.WriteLine($"   StackTrace: {ex.StackTrace}");
+            _logger.LogError(ex, "Error al obtener imagen de foto: {PhotoId}", photoId);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
 }

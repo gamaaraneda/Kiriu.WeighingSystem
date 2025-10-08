@@ -25,7 +25,7 @@ builder.Services
     .ConfigureSignalR()
     .AddPersistence(builder.Configuration)
     .AddDomainServices()
-    .AddApplicationServices()
+    .AddApplicationServices(builder.Configuration)
     .AddControllers();
 
 var app = builder.Build();
@@ -41,6 +41,9 @@ if (app.Environment.IsDevelopment())
 
 // CORS debe ir primero - usar política que permite credenciales
 app.UseCors("AllowAngular");
+
+// Servir archivos estáticos (imágenes de placas)
+app.UseStaticFiles();
 
 // Authentication y Authorization
 app.UseAuthentication();

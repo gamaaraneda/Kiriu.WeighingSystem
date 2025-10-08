@@ -14,7 +14,12 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: actualizar componente de consulta de pesajes con control de permisos\n\n- Agregar verificación de permisos REPORTES.READ, REPORTES.EXPORT y REPORTES.PRINT\n- Implementar mensaje de acceso restringido para usuarios sin permisos\n- Eliminar componente de ejemplos de permisos obsoleto\n- Actualizar servidor de base de datos a 192.168.110.202\n- Añadir estilos para pantalla de acceso denegado\n- Agregar documentación de permisos de reportes\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(dir:*)",
+      "Bash(ipconfig)",
+      "Bash(findstr:*)",
+      "Bash(git log:*)",
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []

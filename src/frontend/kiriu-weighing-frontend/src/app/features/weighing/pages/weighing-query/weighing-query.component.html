@@ -64,7 +64,7 @@
       <!-- Filtros de búsqueda -->
       <p-card
         *appHasPermission="'REPORTES.READ'"
-        styleClass="search-filters-card"
+        styleClass="search-filters-card kiriu-card"
       >
         <ng-template pTemplate="header">
           <div class="filters-header">
@@ -76,10 +76,12 @@
           </div>
         </ng-template>
         <form [formGroup]="filtersForm" class="filters-form">
-          <div class="filters-grid">
+          <div class="filters-grid kiriu-grid kiriu-grid-3">
             <!-- Fecha desde -->
             <div class="filter-group">
-              <label for="fechaDesde" class="filter-label">Fecha Desde</label>
+              <label for="fechaDesde" class="filter-label kiriu-text-semibold"
+                >Fecha Desde</label
+              >
               <p-datepicker
                 id="fechaDesde"
                 formControlName="fechaDesde"
@@ -89,12 +91,15 @@
                 dateFormat="dd/mm/yy"
                 [maxDate]="today"
                 [showButtonBar]="true"
+                styleClass="kiriu-datepicker"
               ></p-datepicker>
             </div>
 
             <!-- Fecha hasta -->
             <div class="filter-group">
-              <label for="fechaHasta" class="filter-label">Fecha Hasta</label>
+              <label for="fechaHasta" class="filter-label kiriu-text-semibold"
+                >Fecha Hasta</label
+              >
               <p-datepicker
                 id="fechaHasta"
                 formControlName="fechaHasta"
@@ -104,66 +109,85 @@
                 dateFormat="dd/mm/yy"
                 [maxDate]="today"
                 [showButtonBar]="true"
+                styleClass="kiriu-datepicker"
               ></p-datepicker>
             </div>
 
             <!-- Folio -->
             <div class="filter-group">
-              <label for="folio" class="filter-label">Folio</label>
-              <input
-                pInputText
-                type="text"
-                id="folio"
-                formControlName="folio"
-                placeholder="F001"
-              />
+              <label for="folio" class="filter-label kiriu-text-semibold"
+                >Folio</label
+              >
+              <div class="kiriu-input">
+                <input
+                  pInputText
+                  type="text"
+                  id="folio"
+                  formControlName="folio"
+                  placeholder="F001"
+                />
+              </div>
             </div>
 
             <!-- Placas -->
             <div class="filter-group">
-              <label for="placas" class="filter-label">Placas</label>
-              <input
-                pInputText
-                type="text"
-                id="placas"
-                formControlName="placas"
-                placeholder="ABC-123"
-              />
+              <label for="placas" class="filter-label kiriu-text-semibold"
+                >Placas</label
+              >
+              <div class="kiriu-input">
+                <input
+                  pInputText
+                  type="text"
+                  id="placas"
+                  formControlName="placas"
+                  placeholder="ABC-123"
+                />
+              </div>
             </div>
 
             <!-- Estado -->
             <div class="filter-group">
-              <label for="estado" class="filter-label">Estado</label>
-              <p-select
-                id="estado"
-                formControlName="estado"
-                [options]="estadoOptions"
-                placeholder="Todos"
-                optionLabel="label"
-                optionValue="value"
-                [showClear]="true"
-              ></p-select>
+              <label for="estado" class="filter-label kiriu-text-semibold"
+                >Estado</label
+              >
+              <div class="kiriu-select">
+                <p-select
+                  id="estado"
+                  formControlName="estado"
+                  [options]="estadoOptions"
+                  placeholder="Todos"
+                  optionLabel="label"
+                  optionValue="value"
+                  [showClear]="true"
+                ></p-select>
+              </div>
             </div>
 
             <!-- Edición posterior -->
             <div class="filter-group">
-              <label for="edicionPosterior" class="filter-label"
+              <label
+                for="edicionPosterior"
+                class="filter-label kiriu-text-semibold"
                 >Edición Posterior</label
               >
-              <p-select
-                id="edicionPosterior"
-                formControlName="edicionPosterior"
-                [options]="edicionPosteriorOptions"
-                placeholder="Todos"
-                optionLabel="label"
-                optionValue="value"
-                [showClear]="true"
-              ></p-select>
+              <div class="kiriu-select">
+                <p-select
+                  id="edicionPosterior"
+                  formControlName="edicionPosterior"
+                  [options]="edicionPosteriorOptions"
+                  placeholder="Todos"
+                  optionLabel="label"
+                  optionValue="value"
+                  [showClear]="true"
+                ></p-select>
+              </div>
             </div>
           </div>
 
           <!-- Botones de filtros -->
-          <div class="filters-actions">
+          <div
+            class="filters-actions kiriu-flex kiriu-flex-end kiriu-flex-responsive"
+          >
             <p-button
               type="button"
               severity="secondary"
@@ -171,7 +195,7 @@
               label="Limpiar Filtros"
               icon="pi pi-times"
               (click)="onClearFilters()"
-              styleClass="clear-btn"
+              styleClass="clear-btn kiriu-button"
             ></p-button>
             <p-button
               *appHasPermission="'REPORTES.READ'"
@@ -181,7 +205,7 @@
               [icon]="isLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
               [disabled]="isLoading"
               (click)="onSearch()"
-              styleClass="search-btn"
+              styleClass="search-btn kiriu-button"
             ></p-button>
           </div>
         </form>
@@ -197,7 +221,10 @@
         </div>
 
         <!-- Tabla de resultados -->
-        <p-card *ngIf="queryResults.length > 0" styleClass="results-card">
+        <p-card
+          *ngIf="queryResults.length > 0"
+          styleClass="results-card kiriu-card"
+        >
           <p-table
             [value]="queryResults"
             [paginator]="true"
@@ -208,7 +235,7 @@
             [loading]="isLoading"
             [scrollable]="true"
             scrollHeight="500px"
-            styleClass="p-datatable-striped p-datatable-gridlines"
+            styleClass="p-datatable-striped p-datatable-gridlines kiriu-table"
             [showCurrentPageReport]="true"
             currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
           >
@@ -235,7 +262,7 @@
                       *ngIf="operation.fueEditado"
                       severity="danger"
                       value="Editado"
-                      styleClass="edited-tag"
+                      styleClass="edited-tag kiriu-tag"
                     ></p-tag>
                   </div>
                 </td>
@@ -254,12 +281,12 @@
                       [severity]="
                         operation.tipo === 'client' ? 'success' : 'info'
                       "
-                      styleClass="tipo-tag"
+                      styleClass="tipo-tag kiriu-tag"
                     ></p-tag>
                     <p-tag
                       [value]="getUnidadLabel(operation.tipoUnidad)"
                       severity="secondary"
-                      styleClass="unidad-tag"
+                      styleClass="unidad-tag kiriu-tag"
                     ></p-tag>
                   </div>
                 </td>
@@ -283,7 +310,7 @@
                         ? 'warning'
                         : 'success'
                     "
-                    styleClass="estado-tag"
+                    styleClass="estado-tag kiriu-tag"
                   ></p-tag>
                 </td>
                 <td>
@@ -298,7 +325,7 @@
                       (click)="onViewDetail(operation)"
                       pTooltip="Ver detalle"
                       tooltipPosition="top"
-                      styleClass="action-btn view-btn"
+                      styleClass="action-btn view-btn kiriu-button"
                     ></p-button>
                     <p-button
                       *appHasPermission="'REPORTES.PRINT'"
@@ -313,7 +340,7 @@
                       (click)="onReprint(operation)"
                       pTooltip="Reimprimir ticket"
                       tooltipPosition="top"
-                      styleClass="action-btn print-btn"
+                      styleClass="action-btn print-btn kiriu-button"
                     ></p-button>
                   </div>
                 </td>
@@ -341,7 +368,7 @@
         <!-- Estado sin resultados inicial -->
         <p-card
           *ngIf="queryResults.length === 0 && !hasSearched && !isLoading"
-          styleClass="no-search-card"
+          styleClass="no-search-card kiriu-card"
         >
           <div class="no-search-content">
             <i class="pi pi-search no-search-icon"></i>
@@ -364,7 +391,7 @@
     [draggable]="false"
     [closeOnEscape]="true"
     [dismissableMask]="true"
-    styleClass="detail-modal"
+    styleClass="detail-modal kiriu-dialog"
     [style]="{ width: '90vw', maxWidth: '800px' }"
   >
     <div *ngIf="selectedOperation" class="operation-detail">
@@ -380,11 +407,13 @@
                   ? 'warning'
                   : 'success'
               "
+              styleClass="kiriu-tag"
             ></p-tag>
             <p-tag
               *ngIf="selectedOperation.fueEditado"
               value="Editado"
               severity="danger"
+              styleClass="kiriu-tag"
             ></p-tag>
           </div>
         </div>
@@ -418,6 +447,7 @@
                     ? 'warning'
                     : 'success'
                 "
+                styleClass="kiriu-tag"
               ></p-tag>
             </div>
             <div
@@ -451,6 +481,7 @@
                 [severity]="
                   selectedOperation.tipo === 'client' ? 'success' : 'info'
                 "
+                styleClass="kiriu-tag"
               ></p-tag>
             </div>
           </div>
@@ -469,6 +500,7 @@
               <p-tag
                 [value]="getUnidadLabel(selectedOperation.tipoUnidad)"
                 severity="secondary"
+                styleClass="kiriu-tag"
               ></p-tag>
             </div>
             <div class="detail-item">
@@ -534,6 +566,7 @@
           label="Cerrar"
           icon="pi pi-times"
           (click)="onCloseDetailModal()"
+          styleClass="kiriu-button"
         ></p-button>
       </div>
     </ng-template>

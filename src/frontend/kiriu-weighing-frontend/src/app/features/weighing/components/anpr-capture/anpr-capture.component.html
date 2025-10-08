@@ -1,0 +1,64 @@
+<div class="anpr-capture-container">
+  <!-- Botón de captura -->
+  <div class="capture-button-wrapper">
+    <p-button
+      [label]="isCapturing ? 'Esperando placa...' : label"
+      [icon]="isCapturing ? 'pi pi-spin pi-spinner' : icon"
+      [disabled]="disabled || isCapturing || !isConnected"
+      [severity]="isCapturing ? 'info' : 'primary'"
+      (onClick)="onCapture()"
+      [pTooltip]="!isConnected ? 'Conexión con servidor no disponible' : ''"
+      tooltipPosition="top"
+      styleClass="w-full"
+    />
+
+    <!-- Botón de cancelar (solo visible durante captura) -->
+    <p-button
+      *ngIf="isCapturing"
+      label="Cancelar"
+      icon="pi pi-times"
+      severity="danger"
+      [text]="true"
+      (onClick)="onCancel()"
+      styleClass="mt-2 w-full"
+    />
+  </div>
+
+  <!-- Preview de imagen y placa capturada -->
+  <div *ngIf="showPreview && capturedPlate" class="captured-info mt-3">
+    <div class="plate-display">
+      <div class="plate-number">
+        <i class="pi pi-car mr-2"></i>
+        <strong>{{ capturedPlate }}</strong>
+      </div>
+      <div class="confidence-badge" [class.high-confidence]="confidenceLevel >= 80">
+        {{ confidenceLevel }}% confianza
+      </div>
+    </div>
+
+    <div *ngIf="capturedImageUrl" class="image-preview mt-2">
+      <p-image
+        [src]="capturedImageUrl"
+        alt="Placa capturada"
+        width="200"
+        [preview]="true"
+      />
+    </div>
+
+    <p-button
+      label="Limpiar"
+      icon="pi pi-trash"
+      severity="secondary"
+      [text]="true"
+      size="small"
+      (onClick)="clearCapture()"
+      styleClass="mt-2"
+    />
+  </div>
+
+  <!-- Indicador de estado de conexión -->
+  <div *ngIf="!isConnected" class="connection-warning mt-2">
+    <i class="pi pi-exclamation-triangle"></i>
+    <span>Conexión no disponible</span>
+  </div>
+</div>

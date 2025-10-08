@@ -16,10 +16,10 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
-import { 
-  WeighingQueryService, 
-  WeighingQueryFilters, 
-  WeighingQueryResult 
+import {
+  WeighingQueryService,
+  WeighingQueryFilters,
+  WeighingQueryResult,
 } from '../../services/weighing-query.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
@@ -44,11 +44,14 @@ import { PermissionsService } from '../../../../core/services/permissions.servic
     TooltipModule,
     HeaderComponent,
     BreadcrumbComponent,
-    HasPermissionDirective
+    HasPermissionDirective,
   ],
   providers: [MessageService],
   templateUrl: './weighing-query.component.html',
-  styleUrls: ['./weighing-query.component.scss']
+  styleUrls: [
+    './weighing-query.component.scss',
+    './weighing-query-professional.styles.scss',
+  ],
 })
 export class WeighingQueryComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -72,13 +75,13 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   estadoOptions = [
     { label: 'Todos', value: '' },
     { label: 'Entrada', value: 'ENTRADA_REGISTRADA' },
-    { label: 'Salida', value: 'SALIDA_REGISTRADA' }
+    { label: 'Salida', value: 'SALIDA_REGISTRADA' },
   ];
 
   edicionPosteriorOptions = [
     { label: 'Todos', value: 'Todos' },
     { label: 'Editado', value: 'Editado' },
-    { label: 'No Editado', value: 'NoEditado' }
+    { label: 'No Editado', value: 'NoEditado' },
   ];
 
   constructor(
@@ -98,15 +101,16 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   }
 
   private checkPermissions(): void {
-    this.hasReportsPermission = this.permissionsService.hasPermission('REPORTES.READ');
-    
+    this.hasReportsPermission =
+      this.permissionsService.hasPermission('REPORTES.READ');
+
     // Si no tiene permisos, mostrar mensaje de error
     if (!this.hasReportsPermission) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Acceso Restringido',
         detail: 'No tienes permisos para acceder a los reportes del sistema',
-        key: 'top-right'
+        key: 'top-right',
       });
     }
   }
@@ -123,14 +127,15 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       folio: [''],
       placas: [''],
       estado: [''],
-      edicionPosterior: ['Todos']
+      edicionPosterior: ['Todos'],
     });
   }
 
   private setupFormSubscriptions(): void {
     // Auto-búsqueda con debounce en campos de texto
-    this.filtersForm.get('folio')?.valueChanges
-      .pipe(
+    this.filtersForm
+      .get('folio')
+      ?.valueChanges.pipe(
         debounceTime(500),
         distinctUntilChanged(),
         takeUntil(this.destroy$)
@@ -141,8 +146,9 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         }
       });
 
-    this.filtersForm.get('placas')?.valueChanges
-      .pipe(
+    this.filtersForm
+      .get('placas')
+      ?.valueChanges.pipe(
         debounceTime(500),
         distinctUntilChanged(),
         takeUntil(this.destroy$)
@@ -169,35 +175,39 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
   private executeSearch(): void {
     this.isLoading = true;
-    
+
     const filters: WeighingQueryFilters = {
       ...this.filtersForm.value,
       page: this.currentPage,
-      size: this.pageSize
+      size: this.pageSize,
     };
 
     // Limpiar campos vacíos
-    Object.keys(filters).forEach(key => {
-      if (filters[key as keyof WeighingQueryFilters] === '' || 
-          filters[key as keyof WeighingQueryFilters] === null) {
+    Object.keys(filters).forEach((key) => {
+      if (
+        filters[key as keyof WeighingQueryFilters] === '' ||
+        filters[key as keyof WeighingQueryFilters] === null
+      ) {
         delete filters[key as keyof WeighingQueryFilters];
       }
     });
 
-    this.weighingQueryService.queryOperations(filters)
+    this.weighingQueryService
+      .queryOperations(filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.isLoading = false;
           this.queryResults = response.resultados;
           this.totalResults = response.pagination.total;
-          
+
           if (this.queryResults.length === 0 && this.currentPage === 1) {
             this.messageService.add({
               severity: 'info',
               summary: 'Sin resultados',
-              detail: 'No se encontraron operaciones que coincidan con los filtros especificados',
-              key: 'top-right'
+              detail:
+                'No se encontraron operaciones que coincidan con los filtros especificados',
+              key: 'top-right',
             });
           }
         },
@@ -206,7 +216,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           const errorMessage = extractErrorMessage(error);
           this.handleError('Error al consultar operaciones: ' + errorMessage);
           console.error('Error en búsqueda:', error);
-        }
+        },
       });
   }
 
@@ -217,7 +227,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       folio: '',
       placas: '',
       estado: '',
-      edicionPosterior: 'Todos'
+      edicionPosterior: 'Todos',
     });
     this.queryResults = [];
     this.totalResults = 0;
@@ -231,7 +241,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         severity: 'error',
         summary: 'Acceso Denegado',
         detail: 'No tienes permisos para exportar reportes',
-        key: 'top-right'
+        key: 'top-right',
       });
       return;
     }
@@ -241,45 +251,48 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         severity: 'warn',
         summary: 'Sin datos',
         detail: 'No hay resultados para exportar',
-        key: 'top-right'
+        key: 'top-right',
       });
       return;
     }
 
     const filters: WeighingQueryFilters = {
-      ...this.filtersForm.value
+      ...this.filtersForm.value,
     };
 
     // Limpiar campos vacíos
-    Object.keys(filters).forEach(key => {
-      if (filters[key as keyof WeighingQueryFilters] === '' || 
-          filters[key as keyof WeighingQueryFilters] === null) {
+    Object.keys(filters).forEach((key) => {
+      if (
+        filters[key as keyof WeighingQueryFilters] === '' ||
+        filters[key as keyof WeighingQueryFilters] === null
+      ) {
         delete filters[key as keyof WeighingQueryFilters];
       }
     });
 
     this.isLoading = true;
 
-    this.weighingQueryService.exportToExcel(filters)
+    this.weighingQueryService
+      .exportToExcel(filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (blob) => {
           this.isLoading = false;
           const filename = `Operaciones_Pesaje_${new Date().getTime()}.xlsx`;
           this.weighingQueryService.downloadFile(blob, filename);
-          
+
           this.messageService.add({
             severity: 'success',
             summary: 'Exportación exitosa',
             detail: 'El archivo Excel ha sido descargado',
-            key: 'top-right'
+            key: 'top-right',
           });
         },
         error: (error) => {
           this.isLoading = false;
           this.handleError('Error al exportar datos');
           console.error('Error en exportación:', error);
-        }
+        },
       });
   }
 
@@ -300,7 +313,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         severity: 'error',
         summary: 'Acceso Denegado',
         detail: 'No tienes permisos para imprimir tickets',
-        key: 'top-right'
+        key: 'top-right',
       });
       return;
     }
@@ -310,26 +323,29 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         severity: 'warn',
         summary: 'No disponible',
         detail: 'Solo se pueden reimprimir operaciones de salida completadas',
-        key: 'top-right'
+        key: 'top-right',
       });
       return;
     }
 
     this.isLoading = true;
 
-    this.weighingQueryService.reprintTicket(operation.id)
+    this.weighingQueryService
+      .reprintTicket(operation.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (blob) => {
           this.isLoading = false;
-          const filename = `Ticket_${operation.folio}_${new Date().getTime()}.txt`;
+          const filename = `Ticket_${
+            operation.folio
+          }_${new Date().getTime()}.txt`;
           this.weighingQueryService.downloadFile(blob, filename);
-          
+
           this.messageService.add({
             severity: 'success',
             summary: '🎫 Ticket generado',
             detail: `Ticket de ${operation.folio} listo para imprimir`,
-            key: 'top-right'
+            key: 'top-right',
           });
         },
         error: (error) => {
@@ -337,7 +353,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           const errorMessage = extractErrorMessage(error);
           this.handleError('Error al generar ticket: ' + errorMessage);
           console.error('Error en reimpresión:', error);
-        }
+        },
       });
   }
 
@@ -356,17 +372,17 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
   getUnidadLabel(tipoUnidad: string): string {
     const labels: { [key: string]: string } = {
-      'remolque': 'Remolque',
-      'contenedor': 'Contenedor',
-      'doble-remolque': '2 Remolques'
+      remolque: 'Remolque',
+      contenedor: 'Contenedor',
+      'doble-remolque': '2 Remolques',
     };
     return labels[tipoUnidad] || tipoUnidad;
   }
 
   getEstadoLabel(estado: string): string {
     const labels: { [key: string]: string } = {
-      'ENTRADA_REGISTRADA': 'Entrada',
-      'SALIDA_REGISTRADA': 'Salida'
+      ENTRADA_REGISTRADA: 'Entrada',
+      SALIDA_REGISTRADA: 'Salida',
     };
     return labels[estado] || estado;
   }
@@ -383,7 +399,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       severity: 'error',
       summary: 'Error',
       detail: message,
-      key: 'top-right'
+      key: 'top-right',
     });
   }
 }

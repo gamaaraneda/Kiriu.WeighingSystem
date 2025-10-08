@@ -24,12 +24,14 @@ import {
 import { WeighingFlowService } from '../../services/weighing-flow.service';
 import { ManualEditDetectorService, ManualEditEvent } from '../../services/manual-edit-detector.service';
 import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/peso-realtime.service';
+import { AnprService, AnprEvent } from '../../services/anpr.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { ProcessStepsComponent } from '../../../../shared/components/process-steps';
 import { MessageService } from '../../../../shared/services/message.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ToastModule } from 'primeng/toast';
 import { WeightData, PhotoData } from '../../types/weighing.types';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-weighing-form',
@@ -55,6 +57,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private manualEditDetector = inject(ManualEditDetectorService);
   private pesoRealtimeService = inject(PesoRealtimeService);
+  private anprService = inject(AnprService);
   private cdr = inject(ChangeDetectorRef);
 
   unitType = '';
@@ -812,22 +815,83 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     return plate;
   }
 
-  onPhotoCapture(photoType: keyof PhotoData): void {
-    // TODO: Implementar captura de fotos con cámara real
-    console.log('Capturando foto:', photoType);
+  async onPhotoCapture(photoType: keyof PhotoData): Promise<void> {
+    console.log('Capturando foto con ANPR:', photoType);
 
-    // Mock: simular captura de foto y detección automática de placa
+    // Mapear photoType a cameraType de ANPR
+    const cameraTypeMap: Record<string, 'trailer' | 'remolque' | 'cargo'> = {
+      'trailerPlate': 'trailer',
+      'trailerPlate2': 'trailer',
+      'remolque1Plate': 'remolque',
+      'remolque2Plate': 'remolque',
+      'cargo': 'cargo',
+      'cargoRemolque2': 'cargo'
+    };
+
+    const cameraType = cameraTypeMap[photoType];
+
+    // Si es un tipo de placa, usar ANPR
+    if (photoType === 'trailerPlate' && cameraType) {
+      try {
+        this.messageService.showInfo({
+          title: 'Esperando lectura',
+          message: 'Esperando lectura de placa del tráiler desde la cámara ANPR...',
+          duration: 30000
+        });
+
+        // Capturar placa con ANPR (30 segundos de timeout)
+        const anprEvent: AnprEvent = await this.anprService.capturePlate(cameraType, 30000);
+
+        // Guardar la imagen URL
+        this.photoData.trailerPlate = anprEvent.imageUrl;
+
+        // Marcar el siguiente cambio como automático (ANPR)
+        this.manualEditDetector.markNextChangeAsAutomatic();
+        this.weighingForm.patchValue({ trailerPlate: anprEvent.licensePlate });
+
+        console.log('Placa detectada por ANPR:', anprEvent.licensePlate);
+        console.log('Imagen guardada en:', anprEvent.imageUrl);
+        console.log('Confianza:', anprEvent.confidenceLevel + '%');
+
+        this.messageService.showSuccess({
+          title: 'Placa capturada',
+          message: `Placa ${anprEvent.licensePlate} detectada con ${anprEvent.confidenceLevel}% de confianza`,
+          duration: 3000
+        });
+
+        // Si es doble remolque, actualizar el estado
+        if (this.weighingForm.get('doubleTrailer')?.value) {
+          this.doubleTrailerState.trailerPlaca = anprEvent.licensePlate;
+          this.doubleTrailerState.currentStep = 'remolque1';
+        }
+
+      } catch (error: any) {
+        console.error('Error capturando placa con ANPR:', error);
+
+        const errorMessage = error.name === 'TimeoutError'
+          ? 'Tiempo de espera agotado (30s). No se detectó ninguna placa.'
+          : 'Error al capturar placa desde la cámara ANPR';
+
+        this.messageService.showError({
+          title: 'Error de captura',
+          message: errorMessage,
+          duration: 5000
+        });
+      }
+
+      // Actualizar el estado de los pasos del proceso
+      setTimeout(() => this.updateProcessStepsStatus(), 0);
+      return;
+    }
+
+    // Para otros tipos de foto, mantener el comportamiento mock actual
     if (photoType === 'trailerPlate') {
       this.photoData.trailerPlate = 'Foto capturada';
-      // Generar placa aleatoria en lugar de estática
       const randomPlate = this.generateRandomPlate();
-      
-      // Marcar el siguiente cambio como automático (OCR)
       this.manualEditDetector.markNextChangeAsAutomatic();
       this.weighingForm.patchValue({ trailerPlate: randomPlate });
       console.log('Placa detectada automáticamente:', randomPlate);
 
-      // Si es doble remolque, actualizar el estado
       if (this.weighingForm.get('doubleTrailer')?.value) {
         this.doubleTrailerState.trailerPlaca = randomPlate;
         this.doubleTrailerState.currentStep = 'remolque1';
@@ -1838,5 +1902,21 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           });
         }
       });
+  }
+
+  /**
+   * Construye la URL completa para una imagen desde el servidor
+   */
+  getFullImageUrl(relativeUrl: string): string {
+    if (!relativeUrl) return '';
+
+    // Si ya es una URL completa, retornarla tal cual
+    if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+      return relativeUrl;
+    }
+
+    // Construir URL completa desde environment
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}${relativeUrl}`;
   }
 }
