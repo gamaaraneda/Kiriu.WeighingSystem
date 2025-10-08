@@ -432,30 +432,55 @@ public class WeighingApplicationService : IWeighingApplicationService
     private List<WeighingPhoto> CreatePhotosFromRequest(Guid operationId, PhotoDataDto photos)
     {
         var photoList = new List<WeighingPhoto>();
-        var createdAt = DateTime.UtcNow;
 
-        // Solo procesar foto de placa del tráiler si es una URL de API (foto ANPR guardada)
-        if (!string.IsNullOrEmpty(photos.TrailerPlate) && photos.TrailerPlate.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.TrailerPlate).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana trailerPlate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana trailerPlate, se omitirá");
-            }
-        }
+        // Procesar foto de placa del tráiler (solo si es URL de API - foto ANPR)
+        ProcessPhotoField(operationId, photos.TrailerPlate, "trailerPlate", photoList);
 
-        // Ignorar trailerPlate2 y cargo si no son URLs de API (son solo marcadores "Foto capturada")
-        // No crear registros en BD para estos marcadores
+        // Procesar foto de placa del tráiler 2 / remolque (solo si es URL de API)
+        ProcessPhotoField(operationId, photos.TrailerPlate2, "trailerPlate2", photoList);
+
+        // Procesar foto de carga (solo si es URL de API)
+        ProcessPhotoField(operationId, photos.Cargo, "cargoEntry", photoList);
+
+        // Procesar foto de remolque 1 (solo si es URL de API)
+        ProcessPhotoField(operationId, photos.Remolque1Plate, "remolque1Plate", photoList);
+
+        // Procesar foto de remolque 2 (solo si es URL de API)
+        ProcessPhotoField(operationId, photos.Remolque2Plate, "remolque2Plate", photoList);
+
+        // Procesar foto de carga remolque 2 (solo si es URL de API)
+        ProcessPhotoField(operationId, photos.CargoRemolque2, "cargoRemolque2", photoList);
 
         return photoList;
+    }
+
+    private void ProcessPhotoField(Guid operationId, string? photoUrl, string photoType, List<WeighingPhoto> photoList)
+    {
+        // Solo procesar si es una URL de API (foto ANPR guardada en BD)
+        // Ignorar marcadores de texto como "Foto capturada"
+        if (string.IsNullOrEmpty(photoUrl) || !photoUrl.StartsWith("/api/"))
+        {
+            return;
+        }
+
+        try
+        {
+            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photoUrl).Result;
+            if (orphanPhoto != null)
+            {
+                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
+                _logger.LogInformation("Foto huérfana {PhotoType} vinculada: {PhotoId} -> {OperationId}",
+                    photoType, orphanPhoto.Id, operationId);
+            }
+            else
+            {
+                _logger.LogWarning("No se encontró foto huérfana con URL: {PhotoUrl}", photoUrl);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error al vincular foto huérfana {PhotoType}, se omitirá", photoType);
+        }
     }
 
     private List<WeighingPhoto> CreateExitPhotosFromRequest(Guid operationId, ExitPhotoDataDto photos)

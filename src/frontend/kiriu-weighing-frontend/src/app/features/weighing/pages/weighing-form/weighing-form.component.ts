@@ -829,23 +829,64 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const cameraType = cameraTypeMap[photoType];
 
     // Si es un tipo de placa, usar ANPR
-    if (photoType === 'trailerPlate' && cameraType) {
+    if ((photoType === 'trailerPlate' || photoType === 'trailerPlate2' || photoType === 'remolque1Plate' || photoType === 'remolque2Plate') && cameraType) {
       try {
+        const plateTypeLabel = photoType === 'trailerPlate' ? 'tráiler' :
+                               photoType === 'trailerPlate2' ? 'remolque' :
+                               photoType === 'remolque1Plate' ? 'remolque 1' : 'remolque 2';
+
         this.messageService.showInfo({
           title: 'Esperando lectura',
-          message: 'Esperando lectura de placa del tráiler desde la cámara ANPR...',
+          message: `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`,
           duration: 30000
         });
 
         // Capturar placa con ANPR (30 segundos de timeout)
         const anprEvent: AnprEvent = await this.anprService.capturePlate(cameraType, 30000);
 
-        // Guardar la imagen URL
-        this.photoData.trailerPlate = anprEvent.imageUrl;
+        // Guardar la imagen URL según el tipo de foto
+        if (photoType === 'trailerPlate') {
+          this.photoData.trailerPlate = anprEvent.imageUrl;
+          this.manualEditDetector.markNextChangeAsAutomatic();
+          this.weighingForm.patchValue({ trailerPlate: anprEvent.licensePlate });
 
-        // Marcar el siguiente cambio como automático (ANPR)
-        this.manualEditDetector.markNextChangeAsAutomatic();
-        this.weighingForm.patchValue({ trailerPlate: anprEvent.licensePlate });
+          // Si es doble remolque, actualizar el estado
+          if (this.weighingForm.get('doubleTrailer')?.value) {
+            this.doubleTrailerState.trailerPlaca = anprEvent.licensePlate;
+            this.doubleTrailerState.currentStep = 'remolque1';
+          }
+        } else if (photoType === 'trailerPlate2') {
+          // Placa del remolque en flujo de remolque único
+          this.photoData.trailerPlate2 = anprEvent.imageUrl;
+          this.manualEditDetector.markNextChangeAsAutomatic();
+          this.weighingForm.patchValue({ trailerPlate2: anprEvent.licensePlate });
+        } else if (photoType === 'remolque1Plate') {
+          this.photoData.remolque1Plate = anprEvent.imageUrl;
+          this.manualEditDetector.markNextChangeAsAutomatic();
+          this.weighingForm.patchValue({ remolque1Plate: anprEvent.licensePlate });
+
+          // Si es doble remolque, actualizar el estado del remolque 1
+          if (this.weighingForm.get('doubleTrailer')?.value) {
+            this.doubleTrailerState.remolque1.placa = anprEvent.licensePlate;
+            this.doubleTrailerState.remolque1.fotos = [anprEvent.imageUrl];
+            this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
+
+            if (this.doubleTrailerState.currentStep === 'trailer') {
+              this.doubleTrailerState.currentStep = 'remolque1';
+            }
+          }
+        } else if (photoType === 'remolque2Plate') {
+          this.photoData.remolque2Plate = anprEvent.imageUrl;
+          this.manualEditDetector.markNextChangeAsAutomatic();
+          this.weighingForm.patchValue({ remolque2Plate: anprEvent.licensePlate });
+
+          // Si es doble remolque, actualizar el estado del remolque 2
+          if (this.weighingForm.get('doubleTrailer')?.value) {
+            this.doubleTrailerState.remolque2.placa = anprEvent.licensePlate;
+            this.doubleTrailerState.remolque2.fotos = [anprEvent.imageUrl];
+            this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
+          }
+        }
 
         console.log('Placa detectada por ANPR:', anprEvent.licensePlate);
         console.log('Imagen guardada en:', anprEvent.imageUrl);
@@ -853,15 +894,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
         this.messageService.showSuccess({
           title: 'Placa capturada',
-          message: `Placa ${anprEvent.licensePlate} detectada con ${anprEvent.confidenceLevel}% de confianza`,
+          message: `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`,
           duration: 3000
         });
-
-        // Si es doble remolque, actualizar el estado
-        if (this.weighingForm.get('doubleTrailer')?.value) {
-          this.doubleTrailerState.trailerPlaca = anprEvent.licensePlate;
-          this.doubleTrailerState.currentStep = 'remolque1';
-        }
 
       } catch (error: any) {
         console.error('Error capturando placa con ANPR:', error);
