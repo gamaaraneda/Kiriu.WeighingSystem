@@ -434,139 +434,26 @@ public class WeighingApplicationService : IWeighingApplicationService
         var photoList = new List<WeighingPhoto>();
         var createdAt = DateTime.UtcNow;
 
-        // Vincular o crear foto de placa del tráiler
-        if (!string.IsNullOrEmpty(photos.TrailerPlate))
+        // Solo procesar foto de placa del tráiler si es una URL de API (foto ANPR guardada)
+        if (!string.IsNullOrEmpty(photos.TrailerPlate) && photos.TrailerPlate.StartsWith("/api/"))
         {
-            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.TrailerPlate).Result;
-            if (orphanPhoto != null)
+            try
             {
-                // Vincular foto huérfana existente (ANPR)
-                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                _logger.LogInformation("Foto huérfana trailerPlate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-            }
-            else
-            {
-                // Crear nueva foto (no es ANPR, es manual)
-                photoList.Add(new WeighingPhoto
+                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.TrailerPlate).Result;
+                if (orphanPhoto != null)
                 {
-                    Id = Guid.NewGuid(),
-                    WeighingOperationId = operationId,
-                    PhotoType = "trailerPlate",
-                    PhotoUrl = photos.TrailerPlate,
-                    CreatedAt = createdAt
-                });
+                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
+                    _logger.LogInformation("Foto huérfana trailerPlate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error al vincular foto huérfana trailerPlate, se omitirá");
             }
         }
 
-        // Vincular o crear foto de placa del tráiler 2
-        if (!string.IsNullOrEmpty(photos.TrailerPlate2))
-        {
-            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.TrailerPlate2).Result;
-            if (orphanPhoto != null)
-            {
-                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                _logger.LogInformation("Foto huérfana trailerPlate2 vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-            }
-            else
-            {
-                photoList.Add(new WeighingPhoto
-                {
-                    Id = Guid.NewGuid(),
-                    WeighingOperationId = operationId,
-                    PhotoType = "trailerPlate2",
-                    PhotoUrl = photos.TrailerPlate2,
-                    CreatedAt = createdAt
-                });
-            }
-        }
-
-        // Vincular o crear foto de carga
-        if (!string.IsNullOrEmpty(photos.Cargo))
-        {
-            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.Cargo).Result;
-            if (orphanPhoto != null)
-            {
-                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                _logger.LogInformation("Foto huérfana cargo vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-            }
-            else
-            {
-                photoList.Add(new WeighingPhoto
-                {
-                    Id = Guid.NewGuid(),
-                    WeighingOperationId = operationId,
-                    PhotoType = "cargoEntry",
-                    PhotoUrl = photos.Cargo,
-                    CreatedAt = createdAt
-                });
-            }
-        }
-
-        // Vincular o crear foto de remolque 1
-        if (!string.IsNullOrEmpty(photos.Remolque1Plate))
-        {
-            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.Remolque1Plate).Result;
-            if (orphanPhoto != null)
-            {
-                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                _logger.LogInformation("Foto huérfana remolque1Plate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-            }
-            else
-            {
-                photoList.Add(new WeighingPhoto
-                {
-                    Id = Guid.NewGuid(),
-                    WeighingOperationId = operationId,
-                    PhotoType = "remolque1Plate",
-                    PhotoUrl = photos.Remolque1Plate,
-                    CreatedAt = createdAt
-                });
-            }
-        }
-
-        // Vincular o crear foto de remolque 2
-        if (!string.IsNullOrEmpty(photos.Remolque2Plate))
-        {
-            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.Remolque2Plate).Result;
-            if (orphanPhoto != null)
-            {
-                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                _logger.LogInformation("Foto huérfana remolque2Plate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-            }
-            else
-            {
-                photoList.Add(new WeighingPhoto
-                {
-                    Id = Guid.NewGuid(),
-                    WeighingOperationId = operationId,
-                    PhotoType = "remolque2Plate",
-                    PhotoUrl = photos.Remolque2Plate,
-                    CreatedAt = createdAt
-                });
-            }
-        }
-
-        // Vincular o crear foto de carga remolque 2
-        if (!string.IsNullOrEmpty(photos.CargoRemolque2))
-        {
-            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.CargoRemolque2).Result;
-            if (orphanPhoto != null)
-            {
-                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                _logger.LogInformation("Foto huérfana cargoRemolque2 vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-            }
-            else
-            {
-                photoList.Add(new WeighingPhoto
-                {
-                    Id = Guid.NewGuid(),
-                    WeighingOperationId = operationId,
-                    PhotoType = "cargoRemolque2",
-                    PhotoUrl = photos.CargoRemolque2,
-                    CreatedAt = createdAt
-                });
-            }
-        }
+        // Ignorar trailerPlate2 y cargo si no son URLs de API (son solo marcadores "Foto capturada")
+        // No crear registros en BD para estos marcadores
 
         return photoList;
     }
@@ -574,29 +461,23 @@ public class WeighingApplicationService : IWeighingApplicationService
     private List<WeighingPhoto> CreateExitPhotosFromRequest(Guid operationId, ExitPhotoDataDto photos)
     {
         var photoList = new List<WeighingPhoto>();
-        var createdAt = DateTime.UtcNow;
 
-        // Vincular o crear foto de estado de carga en salida
-        if (!string.IsNullOrEmpty(photos.CargoState))
+        // Solo procesar fotos si son URLs de API (fotos ANPR guardadas)
+        // Ignorar marcadores como "Foto capturada" que no son URLs
+        if (!string.IsNullOrEmpty(photos.CargoState) && photos.CargoState.StartsWith("/api/"))
         {
-            var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.CargoState).Result;
-            if (orphanPhoto != null)
+            try
             {
-                // Vincular foto huérfana existente (ANPR)
-                _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                _logger.LogInformation("Foto huérfana cargoExit vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-            }
-            else
-            {
-                // Crear nueva foto (no es ANPR, es manual)
-                photoList.Add(new WeighingPhoto
+                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.CargoState).Result;
+                if (orphanPhoto != null)
                 {
-                    Id = Guid.NewGuid(),
-                    WeighingOperationId = operationId,
-                    PhotoType = "cargoExit",
-                    PhotoUrl = photos.CargoState,
-                    CreatedAt = createdAt
-                });
+                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
+                    _logger.LogInformation("Foto huérfana cargoExit vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error al vincular foto huérfana cargoExit, se omitirá");
             }
         }
 

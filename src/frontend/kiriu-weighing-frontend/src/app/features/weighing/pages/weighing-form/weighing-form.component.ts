@@ -202,7 +202,6 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         '',
         [
           Validators.required,
-          Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
         ],
       ],
       trailerPlate2: [''],
@@ -603,7 +602,6 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         .get('trailerPlate')
         ?.setValidators([
           Validators.required,
-          Validators.pattern(/^[A-Z]{3}-[0-9]{3}-[A-Z0-9]{2}$/),
         ]);
       this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
     }
