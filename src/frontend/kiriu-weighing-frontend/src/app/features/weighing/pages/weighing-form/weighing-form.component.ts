@@ -25,6 +25,7 @@ import { WeighingFlowService } from '../../services/weighing-flow.service';
 import { ManualEditDetectorService, ManualEditEvent } from '../../services/manual-edit-detector.service';
 import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/peso-realtime.service';
 import { AnprService, AnprEvent } from '../../services/anpr.service';
+import { CargoCameraService } from '../../services/cargo-camera.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { ProcessStepsComponent } from '../../../../shared/components/process-steps';
 import { MessageService } from '../../../../shared/services/message.service';
@@ -58,6 +59,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private manualEditDetector = inject(ManualEditDetectorService);
   private pesoRealtimeService = inject(PesoRealtimeService);
   private anprService = inject(AnprService);
+  private cargoCameraService = inject(CargoCameraService);
   private cdr = inject(ChangeDetectorRef);
 
   unitType = '';
@@ -973,44 +975,90 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         // this.doubleTrailerState.remolque2.fotosCapturadas = true;
       }
     } else if (photoType === 'cargo') {
-      this.photoData.cargo = 'Foto capturada';
+      // Capturar foto real desde la cámara de carga
+      try {
+        this.messageService.showInfo({
+          title: 'Capturando foto',
+          message: 'Capturando foto de carga desde la cámara...',
+          duration: 5000
+        });
 
-      // Si es doble remolque y estamos en el paso del remolque 1,
-      // actualizar el estado para indicar que se capturó la foto de carga
-      if (
-        this.weighingForm.get('doubleTrailer')?.value &&
-        this.doubleTrailerState.currentStep === 'remolque1'
-      ) {
-        // Marcar que se capturó la foto de carga del remolque 1
-        if (!this.doubleTrailerState.remolque1.fotos) {
-          this.doubleTrailerState.remolque1.fotos = [];
+        const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoEntry');
+        this.photoData.cargo = photoUrl;
+
+        // Si es doble remolque y estamos en el paso del remolque 1,
+        // actualizar el estado para indicar que se capturó la foto de carga
+        if (
+          this.weighingForm.get('doubleTrailer')?.value &&
+          this.doubleTrailerState.currentStep === 'remolque1'
+        ) {
+          // Marcar que se capturó la foto de carga del remolque 1
+          if (!this.doubleTrailerState.remolque1.fotos) {
+            this.doubleTrailerState.remolque1.fotos = [];
+          }
+          this.doubleTrailerState.remolque1.fotos = [
+            ...this.doubleTrailerState.remolque1.fotos,
+            photoUrl,
+          ];
+          // También marcar que se capturó la foto de carga del remolque 1
+          this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
         }
-        this.doubleTrailerState.remolque1.fotos = [
-          ...this.doubleTrailerState.remolque1.fotos,
-          'foto_carga_remolque1.jpg',
-        ];
-        // También marcar que se capturó la foto de carga del remolque 1
-        this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
+
+        this.messageService.showSuccess({
+          title: 'Foto capturada',
+          message: 'Foto de carga capturada exitosamente',
+          duration: 3000
+        });
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
+      } catch (error) {
+        console.error('Error capturando foto de carga:', error);
+        this.messageService.showError({
+          title: 'Error de captura',
+          message: 'Error al capturar foto de carga desde la cámara',
+          duration: 5000
+        });
       }
     } else if (photoType === 'cargoRemolque2') {
-      this.photoData.cargoRemolque2 = 'Foto capturada';
+      // Capturar foto real desde la cámara de carga para remolque 2
+      try {
+        this.messageService.showInfo({
+          title: 'Capturando foto',
+          message: 'Capturando foto de carga del remolque 2 desde la cámara...',
+          duration: 5000
+        });
 
-      // Si es doble remolque, actualizar el estado del remolque 2
-      if (this.weighingForm.get('doubleTrailer')?.value) {
-        if (!this.doubleTrailerState.remolque2.fotos) {
-          this.doubleTrailerState.remolque2.fotos = [];
+        const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoRemolque2');
+        this.photoData.cargoRemolque2 = photoUrl;
+
+        // Si es doble remolque, actualizar el estado del remolque 2
+        if (this.weighingForm.get('doubleTrailer')?.value) {
+          if (!this.doubleTrailerState.remolque2.fotos) {
+            this.doubleTrailerState.remolque2.fotos = [];
+          }
+          this.doubleTrailerState.remolque2.fotos = [
+            ...this.doubleTrailerState.remolque2.fotos,
+            photoUrl,
+          ];
+          this.doubleTrailerState.remolque2.fotosCapturadas = true;
         }
-        this.doubleTrailerState.remolque2.fotos = [
-          ...this.doubleTrailerState.remolque2.fotos,
-          'foto_carga_remolque2.jpg',
-        ];
-        this.doubleTrailerState.remolque2.fotosCapturadas = true;
+
+        this.messageService.showSuccess({
+          title: 'Foto capturada',
+          message: 'Foto de carga del remolque 2 capturada exitosamente',
+          duration: 3000
+        });
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
+      } catch (error) {
+        console.error('Error capturando foto de carga del remolque 2:', error);
+        this.messageService.showError({
+          title: 'Error de captura',
+          message: 'Error al capturar foto de carga desde la cámara',
+          duration: 5000
+        });
       }
     } else if (photoType === 'trailerPlate2') {
       this.photoData.trailerPlate2 = 'Foto capturada';

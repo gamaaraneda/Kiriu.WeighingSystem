@@ -24,6 +24,7 @@ import { extractErrorMessage } from '../../../../shared/utils/error.utils';
 import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/peso-realtime.service';
 import { AnprService, AnprEvent } from '../../services/anpr.service';
 import { PdfGeneratorService, WeighingReceiptData } from '../../services/pdf-generator.service';
+import { CargoCameraService } from '../../services/cargo-camera.service';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
@@ -49,6 +50,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private pesoRealtimeService = inject(PesoRealtimeService);
   private anprService = inject(AnprService);
   private pdfGeneratorService = inject(PdfGeneratorService);
+  private cargoCameraService = inject(CargoCameraService);
   private cdr = inject(ChangeDetectorRef);
 
   unitType = '';
@@ -617,20 +619,38 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   /**
    * Captura foto para campos que no requieren OCR
    */
-  onPhotoCapture(fieldName: string): void {
-    // MOCK: Marcar la foto como capturada sin hacer nada
-    this.photoData[fieldName as keyof ExitPhotoData] = 'MOCK_CAPTURED';
+  async onPhotoCapture(fieldName: string): Promise<void> {
+    try {
+      this.messageService.showInfo({
+        title: 'Capturando foto',
+        message: `Capturando foto de ${fieldName} desde la cámara...`,
+        duration: 5000
+      });
 
-    // Actualizar estado de doble remolque si es necesario
-    if (fieldName === 'cargoRemolque1') {
-      this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
-    } else if (fieldName === 'cargoRemolque2') {
-      this.doubleTrailerState.remolque2.fotoCargaCapturada = true;
+      // Capturar foto real desde la cámara de carga
+      const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync(fieldName);
+      this.photoData[fieldName as keyof ExitPhotoData] = photoUrl;
+
+      // Actualizar estado de doble remolque si es necesario
+      if (fieldName === 'cargoRemolque1') {
+        this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
+      } else if (fieldName === 'cargoRemolque2') {
+        this.doubleTrailerState.remolque2.fotoCargaCapturada = true;
+      }
+
+      this.messageService.showSuccess({
+        title: 'Foto capturada',
+        message: `Foto de ${fieldName} capturada exitosamente`,
+        duration: 3000
+      });
+    } catch (error) {
+      console.error(`Error capturando foto de ${fieldName}:`, error);
+      this.messageService.showError({
+        title: 'Error de captura',
+        message: `Error al capturar foto de ${fieldName} desde la cámara`,
+        duration: 5000
+      });
     }
-
-    this.messageService.showSuccess({
-      message: `Foto de ${fieldName} capturada (mock)`,
-    });
   }
 
   /**

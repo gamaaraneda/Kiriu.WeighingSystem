@@ -28,6 +28,9 @@ builder.Services
     .AddApplicationServices(builder.Configuration)
     .AddControllers();
 
+// Add HttpClient for cargo camera
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 // Database will be created manually
