@@ -34,8 +34,10 @@
     "@angular/router": "^20.1.0",
     "@angular/ssr": "^20.1.4",
     "express": "^5.1.0",
+    "jspdf": "^3.0.3",
     "primeicons": "^7.0.0",
     "primeng": "^20.0.1",
+    "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -47,6 +49,7 @@
     "@types/express": "^5.0.1",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^20.17.19",
+    "@types/qrcode": "^1.5.5",
     "angular-eslint": "20.1.1",
     "eslint": "^9.29.0",
     "jasmine-core": "~5.8.0",

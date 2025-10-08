@@ -23,6 +23,7 @@ import {
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
 import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/peso-realtime.service';
 import { AnprService, AnprEvent } from '../../services/anpr.service';
+import { PdfGeneratorService, WeighingReceiptData } from '../../services/pdf-generator.service';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
@@ -47,6 +48,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private pesoRealtimeService = inject(PesoRealtimeService);
   private anprService = inject(AnprService);
+  private pdfGeneratorService = inject(PdfGeneratorService);
   private cdr = inject(ChangeDetectorRef);
 
   unitType = '';
@@ -875,6 +877,64 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Genera el PDF con los datos de la salida registrada
+   */
+  private async generatePDF(response: any): Promise<void> {
+    if (!this.entryData) return;
+
+    try {
+      const receiptData: WeighingReceiptData = {
+        folio: response.folio || this.entryFolio,
+        fecha: new Date(response.fechaSalida || new Date()),
+        tipoUnidad: this.entryData.tipoUnidad,
+        clienteProveedor: this.entryData.clientProviderName || '',
+        tipo: 'client', // Por defecto, ya que EntrySearchData no tiene este campo
+        producto: this.entryData.product || '',
+
+        // Datos de entrada
+        fechaEntrada: this.entryData.createdAt ? new Date(this.entryData.createdAt) : new Date(),
+        pesoBrutoEntrada: this.entryData.entryWeight || 0,
+        placaTrailer: this.entryData.placaTrailer || '',
+        placaRemolque: this.entryData.placaRemolque || this.entryData.placaRemolque1 || '',
+
+        // Datos de salida
+        fechaSalida: new Date(response.fechaSalida || new Date()),
+        pesoBrutoSalida: this.exitForm.get('exitWeight')?.value || 0,
+        pesoTara: this.exitForm.get('exitWeight')?.value || 0,
+        pesoNeto: response.pesoNeto || 0,
+      };
+
+      // Si es doble remolque, agregar datos de los remolques
+      if (this.entryData.tipoUnidad === 'doble-remolque') {
+        const pesoBrutoR1 = this.entryData.entryWeight || 0; // Usar entryWeight como aproximación
+        const pesoTaraR1 = this.exitForm.get('pesoTaraRemolque1')?.value || 0;
+        const pesoBrutoR2 = this.entryData.entryWeight || 0; // Usar entryWeight como aproximación
+        const pesoTaraR2 = this.exitForm.get('pesoTaraRemolque2')?.value || 0;
+
+        receiptData.remolque1 = {
+          placa: this.entryData.placaRemolque1 || '',
+          pesoBruto: pesoBrutoR1,
+          pesoTara: pesoTaraR1,
+          pesoNeto: Math.abs(pesoBrutoR1 - pesoTaraR1),
+        };
+
+        receiptData.remolque2 = {
+          placa: this.entryData.placaRemolque2 || '',
+          pesoBruto: pesoBrutoR2,
+          pesoTara: pesoTaraR2,
+          pesoNeto: Math.abs(pesoBrutoR2 - pesoTaraR2),
+        };
+      }
+
+      await this.pdfGeneratorService.generateWeighingReceipt(receiptData);
+      console.log('✅ PDF generado exitosamente');
+    } catch (error) {
+      console.error('❌ Error generando PDF:', error);
+      // No mostrar error al usuario, el PDF es opcional
+    }
+  }
+
+  /**
    * Verifica si el formulario es válido
    */
   get isFormValid(): boolean {
@@ -992,7 +1052,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     };
 
     this.weighingService.createExitOperation(exitRequest).subscribe({
-      next: (response) => {
+      next: async (response) => {
         this.isLoading = false;
         this.isExitRegistered = true;
         console.log('✅ Exit saved successfully:', response);
@@ -1001,6 +1061,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           'Salida registrada',
           `Salida registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`
         );
+
+        // Generar PDF con los datos de la operación
+        await this.generatePDF(response);
 
         // Navegar después de 3 segundos
         setTimeout(() => {
@@ -1062,7 +1125,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     };
 
     this.weighingService.createDoubleTrailerExit(exitRequest).subscribe({
-      next: (response) => {
+      next: async (response) => {
         this.isLoading = false;
         this.isExitRegistered = true;
 
@@ -1070,6 +1133,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           'Salida registrada',
           `Salida con doble remolque registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`
         );
+
+        // Generar PDF con los datos de la operación
+        await this.generatePDF(response);
 
         // Navegar después de 3 segundos
         setTimeout(() => {

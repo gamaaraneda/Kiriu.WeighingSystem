@@ -19,7 +19,8 @@
       "Bash(ipconfig)",
       "Bash(findstr:*)",
       "Bash(git log:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
