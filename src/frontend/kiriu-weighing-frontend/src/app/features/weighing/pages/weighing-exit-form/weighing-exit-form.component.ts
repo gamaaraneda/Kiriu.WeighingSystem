@@ -22,6 +22,8 @@ import {
 } from '../../types/weighing.types';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
 import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/peso-realtime.service';
+import { AnprService, AnprEvent } from '../../services/anpr.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-weighing-exit-form',
@@ -44,6 +46,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private messageService = inject(MessageService);
   private notificationService = inject(NotificationService);
   private pesoRealtimeService = inject(PesoRealtimeService);
+  private anprService = inject(AnprService);
   private cdr = inject(ChangeDetectorRef);
 
   unitType = '';
@@ -509,51 +512,112 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   /**
    * Captura foto con OCR para una placa específica
    */
-  onPhotoCaptureWithOCR(fieldName: string): void {
-    // Simular captura de foto con OCR
-    const mockPlate = this.generateMockPlate(fieldName);
+  async onPhotoCaptureWithOCR(fieldName: string): Promise<void> {
+    console.log('🎯 Capturando foto con ANPR para campo:', fieldName);
 
-    if (mockPlate) {
-      this.detectedPlates[fieldName] = mockPlate;
-      this.exitForm.get(fieldName)?.setValue(mockPlate);
-
-      // Simular foto capturada
-      this.photoData[
-        fieldName as keyof ExitPhotoData
-      ] = `https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Foto+${fieldName}`;
-
-      // Validar placa
-      this.onPlateManualEdit(fieldName);
-
-      this.messageService.showSuccess({
-        message: `Placa ${fieldName} detectada: ${mockPlate}`,
-      });
-    }
-  }
-
-  /**
-   * Genera una placa mock para simulación
-   */
-  private generateMockPlate(fieldName: string): string {
-    const plates: Record<string, string> = {
-      trailerPlate: 'TRAILER-001',
-      remolque1Plate: 'REM1-001',
-      remolque2Plate: 'REM2-001',
-      trailerPlate2: 'REMOLQUE-001',
-      containerPlate: 'CONT-001',
+    // Mapear fieldName a cameraType
+    const cameraTypeMap: Record<string, 'trailer' | 'remolque' | 'cargo'> = {
+      'trailerPlate': 'trailer',
+      'trailerPlate2': 'remolque',
+      'remolque1Plate': 'remolque',
+      'remolque2Plate': 'remolque',
+      'containerPlate': 'trailer'
     };
 
-    return plates[fieldName] || 'MOCK-001';
+    const cameraType = cameraTypeMap[fieldName];
+    if (!cameraType) {
+      console.error('Tipo de cámara no encontrado para:', fieldName);
+      return;
+    }
+
+    const plateTypeLabel = fieldName === 'trailerPlate' ? 'tráiler' :
+                           fieldName === 'trailerPlate2' ? 'remolque' :
+                           fieldName === 'remolque1Plate' ? 'remolque 1' :
+                           fieldName === 'remolque2Plate' ? 'remolque 2' : 'vehículo';
+
+    try {
+      this.messageService.showInfo({
+        title: 'Esperando lectura',
+        message: `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`,
+        duration: 30000
+      });
+
+      // Capturar placa con ANPR (30 segundos de timeout)
+      const anprEvent: AnprEvent = await this.anprService.capturePlate(cameraType, 30000);
+
+      // Guardar la imagen URL
+      this.photoData[fieldName as keyof ExitPhotoData] = anprEvent.imageUrl;
+
+      // Guardar la placa detectada
+      this.detectedPlates[fieldName] = anprEvent.licensePlate;
+
+      // Actualizar el formulario con la placa detectada
+      this.exitForm.get(fieldName)?.setValue(anprEvent.licensePlate);
+
+      console.log('✅ Placa detectada por ANPR:', anprEvent.licensePlate);
+      console.log('Imagen guardada en:', anprEvent.imageUrl);
+      console.log('Confianza:', anprEvent.confidenceLevel + '%');
+
+      // Validar placa contra la entrada (si existe)
+      if (this.entryData) {
+        const expectedPlate = this.getExpectedPlate(fieldName);
+        const isMatch = anprEvent.licensePlate === expectedPlate;
+
+        if (!isMatch && expectedPlate) {
+          // Placa no coincide - marcar error
+          this.plateValidations[fieldName] = {
+            isValid: false,
+            errorMessage: `Placa detectada (${anprEvent.licensePlate}) no coincide con la entrada (${expectedPlate})`
+          };
+
+          this.messageService.showWarning({
+            title: 'Placa no coincide',
+            message: `La placa detectada "${anprEvent.licensePlate}" no coincide con la de entrada "${expectedPlate}". Puede editar manualmente si es correcto.`,
+            duration: 5000
+          });
+        } else {
+          // Placa coincide - marcar válida
+          this.plateValidations[fieldName] = {
+            isValid: true,
+            errorMessage: ''
+          };
+
+          this.messageService.showSuccess({
+            title: 'Placa verificada',
+            message: `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} verificada correctamente`,
+            duration: 3000
+          });
+        }
+      } else {
+        // No hay datos de entrada aún, solo mostrar éxito
+        this.messageService.showSuccess({
+          title: 'Placa capturada',
+          message: `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`,
+          duration: 3000
+        });
+      }
+
+    } catch (error: any) {
+      console.error('❌ Error capturando placa con ANPR:', error);
+
+      const errorMessage = error.name === 'TimeoutError'
+        ? 'Tiempo de espera agotado (30s). No se detectó ninguna placa.'
+        : 'Error al capturar placa desde la cámara ANPR';
+
+      this.messageService.showError({
+        title: 'Error de captura',
+        message: errorMessage,
+        duration: 5000
+      });
+    }
   }
 
   /**
    * Captura foto para campos que no requieren OCR
    */
   onPhotoCapture(fieldName: string): void {
-    // Simular captura de foto
-    this.photoData[
-      fieldName as keyof ExitPhotoData
-    ] = `https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Foto+${fieldName}`;
+    // MOCK: Marcar la foto como capturada sin hacer nada
+    this.photoData[fieldName as keyof ExitPhotoData] = 'MOCK_CAPTURED';
 
     // Actualizar estado de doble remolque si es necesario
     if (fieldName === 'cargoRemolque1') {
@@ -563,17 +627,28 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     }
 
     this.messageService.showSuccess({
-      message: `Foto de ${fieldName} capturada`,
+      message: `Foto de ${fieldName} capturada (mock)`,
     });
   }
 
   /**
    * Habilita la edición manual de una placa
+   * Al habilitar edición manual, se deshabilita la validación de error
    */
   onEnableManualEdit(fieldName: string): void {
     this.manualEditEnabled[fieldName] = true;
+
+    // Al habilitar edición manual, consideramos que el usuario está corrigiendo
+    // Por lo tanto, deshabilitamos la validación de error
+    this.plateValidations[fieldName] = {
+      isValid: true,
+      errorMessage: ''
+    };
+
     this.messageService.showInfo({
-      message: `Edición manual habilitada para ${fieldName}`,
+      title: 'Edición manual habilitada',
+      message: `Puede editar manualmente la placa. La validación automática ha sido deshabilitada.`,
+      duration: 3000
     });
   }
 
@@ -781,6 +856,15 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       if (field.errors['min']) return 'El valor debe ser mayor a 0';
     }
     return '';
+  }
+
+  /**
+   * Construye la URL completa de una imagen ANPR
+   */
+  getFullImageUrl(imageUrl: string): string {
+    if (!imageUrl) return '';
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `${environment.apiUrl}${imageUrl}`;
   }
 
   /**
