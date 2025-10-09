@@ -108,37 +108,18 @@ export class CargoCameraService {
     try {
       console.log(`📸 Capturando y guardando foto de ${photoType}...`);
 
-      // Capturar la foto desde la cámara
-      const blob = await this.http.get(`${this.apiUrl}/capture`, {
-        responseType: 'blob'
-      }).toPromise();
-
-      if (!blob) {
-        throw new Error('No se recibió imagen de la cámara');
-      }
-
-      console.log('✅ Foto capturada, guardando en servidor...');
-
-      // Crear FormData para subir la foto
-      const formData = new FormData();
-      const fileName = `${photoType}_${Date.now()}.jpg`;
-      const file = new File([blob], fileName, { type: 'image/jpeg' });
-
-      formData.append('file', file);
-      formData.append('photoType', photoType);
-
-      // Subir al endpoint de fotos del backend
-      const uploadResponse = await this.http.post<{ photoUrl: string }>(
-        `${environment.apiUrl}/weighing/photos/upload`,
-        formData
+      // Llamar al endpoint que captura y guarda la foto en un solo paso
+      const response = await this.http.post<{ photoUrl: string; success: boolean }>(
+        `${this.apiUrl}/capture-and-save`,
+        { photoType }
       ).toPromise();
 
-      if (!uploadResponse || !uploadResponse.photoUrl) {
-        throw new Error('Error al guardar la foto en el servidor');
+      if (!response || !response.success || !response.photoUrl) {
+        throw new Error('Error al capturar y guardar la foto en el servidor');
       }
 
-      console.log('✅ Foto guardada exitosamente:', uploadResponse.photoUrl);
-      return uploadResponse.photoUrl;
+      console.log('✅ Foto capturada y guardada exitosamente:', response.photoUrl);
+      return response.photoUrl;
     } catch (error) {
       console.error('❌ Error capturando y guardando foto:', error);
       throw error;

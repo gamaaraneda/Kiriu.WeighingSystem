@@ -37,6 +37,7 @@ export interface PhotoData {
   cargo: string;
   remolque1Plate?: string;
   remolque2Plate?: string;
+  cargoRemolque1?: string;
   cargoRemolque2?: string;
 }
 

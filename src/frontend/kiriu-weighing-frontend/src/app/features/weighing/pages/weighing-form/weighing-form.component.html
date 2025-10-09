@@ -101,10 +101,17 @@
                     [class.has-photo]="photoData.cargo"
                   >
                     <span *ngIf="!photoData.cargo" class="photo-placeholder">
-                      📷
+                      📷 Sin captura
                     </span>
-                    <span *ngIf="photoData.cargo" class="photo-captured">
-                      ✅
+                    <img
+                      *ngIf="photoData.cargo && photoData.cargo.startsWith('/')"
+                      [src]="getFullImageUrl(photoData.cargo)"
+                      alt="Foto de carga"
+                      class="captured-plate-image"
+                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                    />
+                    <span *ngIf="photoData.cargo && !photoData.cargo.startsWith('/')" class="photo-captured">
+                      ✅ Foto capturada
                     </span>
                   </div>
                 </div>
@@ -286,7 +293,7 @@
                   <button
                     type="button"
                     class="btn btn-outline photo-capture-btn"
-                    (click)="onPhotoCapture('cargo')"
+                    (click)="onPhotoCapture('cargoRemolque1')"
                     title="Capturar foto de la carga del remolque 1"
                   >
                     📷 Capturar Foto
@@ -303,6 +310,34 @@
                       class="photo-pending"
                     >
                       ⏳
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Preview de la foto de carga del remolque 1 -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.cargoRemolque1"
+                  >
+                    <span
+                      *ngIf="!photoData.cargoRemolque1"
+                      class="photo-placeholder"
+                    >
+                      📷 Sin captura
+                    </span>
+                    <img
+                      *ngIf="photoData.cargoRemolque1 && photoData.cargoRemolque1.startsWith('/')"
+                      [src]="getFullImageUrl(photoData.cargoRemolque1)"
+                      alt="Foto de carga del remolque 1"
+                      class="captured-plate-image"
+                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                    />
+                    <span
+                      *ngIf="photoData.cargoRemolque1 && !photoData.cargoRemolque1.startsWith('/')"
+                      class="photo-captured"
+                    >
+                      ✅ Foto capturada
                     </span>
                   </div>
                 </div>
@@ -482,16 +517,44 @@
                   </button>
                   <div class="photo-status">
                     <span
-                      *ngIf="doubleTrailerState.remolque2.fotosCapturadas"
+                      *ngIf="doubleTrailerState.remolque2.fotoCargaCapturada"
                       class="photo-captured"
                     >
                       ✅
                     </span>
                     <span
-                      *ngIf="!doubleTrailerState.remolque2.fotosCapturadas"
+                      *ngIf="!doubleTrailerState.remolque2.fotoCargaCapturada"
                       class="photo-pending"
                     >
                       ⏳
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Preview de la foto de carga del remolque 2 -->
+                <div class="photo-display-group">
+                  <div
+                    class="photo-preview"
+                    [class.has-photo]="photoData.cargoRemolque2"
+                  >
+                    <span
+                      *ngIf="!photoData.cargoRemolque2"
+                      class="photo-placeholder"
+                    >
+                      📷 Sin captura
+                    </span>
+                    <img
+                      *ngIf="photoData.cargoRemolque2 && photoData.cargoRemolque2.startsWith('/')"
+                      [src]="getFullImageUrl(photoData.cargoRemolque2)"
+                      alt="Foto de carga del remolque 2"
+                      class="captured-plate-image"
+                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                    />
+                    <span
+                      *ngIf="photoData.cargoRemolque2 && !photoData.cargoRemolque2.startsWith('/')"
+                      class="photo-captured"
+                    >
+                      ✅ Foto capturada
                     </span>
                   </div>
                 </div>
@@ -777,10 +840,17 @@
                     [class.has-photo]="photoData.cargo"
                   >
                     <span *ngIf="!photoData.cargo" class="photo-placeholder">
-                      📷
+                      📷 Sin captura
                     </span>
-                    <span *ngIf="photoData.cargo" class="photo-captured">
-                      ✅
+                    <img
+                      *ngIf="photoData.cargo && photoData.cargo.startsWith('/')"
+                      [src]="getFullImageUrl(photoData.cargo)"
+                      alt="Foto de carga"
+                      class="captured-plate-image"
+                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                    />
+                    <span *ngIf="photoData.cargo && !photoData.cargo.startsWith('/')" class="photo-captured">
+                      ✅ Foto capturada
                     </span>
                   </div>
                 </div>

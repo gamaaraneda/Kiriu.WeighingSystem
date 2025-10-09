@@ -81,6 +81,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     cargo: '',
     remolque1Plate: '',
     remolque2Plate: '',
+    cargoRemolque1: '',
     cargoRemolque2: '',
   };
 
@@ -825,6 +826,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       'remolque1Plate': 'remolque',
       'remolque2Plate': 'remolque',
       'cargo': 'cargo',
+      'cargoRemolque1': 'cargo',
       'cargoRemolque2': 'cargo'
     };
 
@@ -1020,6 +1022,46 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           duration: 5000
         });
       }
+    } else if (photoType === 'cargoRemolque1') {
+      // Capturar foto real desde la cámara de carga para remolque 1
+      try {
+        this.messageService.showInfo({
+          title: 'Capturando foto',
+          message: 'Capturando foto de carga del remolque 1 desde la cámara...',
+          duration: 5000
+        });
+
+        const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoRemolque1');
+        this.photoData.cargoRemolque1 = photoUrl;
+
+        // Actualizar el estado del remolque 1
+        if (this.weighingForm.get('doubleTrailer')?.value) {
+          if (!this.doubleTrailerState.remolque1.fotos) {
+            this.doubleTrailerState.remolque1.fotos = [];
+          }
+          this.doubleTrailerState.remolque1.fotos = [
+            ...this.doubleTrailerState.remolque1.fotos,
+            photoUrl,
+          ];
+          this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
+        }
+
+        this.messageService.showSuccess({
+          title: 'Foto capturada',
+          message: 'Foto de carga del remolque 1 capturada exitosamente',
+          duration: 3000
+        });
+
+        // Actualizar el estado de los pasos del proceso
+        setTimeout(() => this.updateProcessStepsStatus(), 0);
+      } catch (error) {
+        console.error('Error capturando foto de carga del remolque 1:', error);
+        this.messageService.showError({
+          title: 'Error de captura',
+          message: 'Error al capturar foto de carga del remolque 1 desde la cámara',
+          duration: 5000
+        });
+      }
     } else if (photoType === 'cargoRemolque2') {
       // Capturar foto real desde la cámara de carga para remolque 2
       try {
@@ -1041,7 +1083,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             ...this.doubleTrailerState.remolque2.fotos,
             photoUrl,
           ];
-          this.doubleTrailerState.remolque2.fotosCapturadas = true;
+          this.doubleTrailerState.remolque2.fotoCargaCapturada = true;
         }
 
         this.messageService.showSuccess({
@@ -1429,7 +1471,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         trailerPlate: this.photoData.trailerPlate || '',
         remolque1Plate: this.photoData.remolque1Plate || '',
         remolque2Plate: this.photoData.remolque2Plate || '',
-        cargoRemolque1: this.photoData.cargo || '',
+        cargoRemolque1: this.photoData.cargoRemolque1 || '',
         cargoRemolque2: this.photoData.cargoRemolque2 || '',
       },
     };
@@ -1552,6 +1594,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       cargo: '',
       remolque1Plate: '',
       remolque2Plate: '',
+      cargoRemolque1: '',
       cargoRemolque2: '',
     };
 
@@ -1652,12 +1695,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       case 'remolque1':
         return !!(
           this.doubleTrailerState.remolque1.pesoCapturado &&
-          this.doubleTrailerState.remolque1.fotosCapturadas
+          this.doubleTrailerState.remolque1.fotoCargaCapturada
         );
       case 'remolque2':
         return !!(
           this.doubleTrailerState.remolque2.pesoCapturado &&
-          this.doubleTrailerState.remolque2.fotosCapturadas
+          this.doubleTrailerState.remolque2.fotoCargaCapturada
         );
       default:
         return false;
@@ -1757,7 +1800,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           'remolque2-plate':
             !!this.doubleTrailerState.remolque2.fotoPlacaCapturada,
           'remolque2-cargo':
-            !!this.doubleTrailerState.remolque2.fotosCapturadas,
+            !!this.doubleTrailerState.remolque2.fotoCargaCapturada,
           weight: this.doubleTrailerState.isComplete,
         };
         break;
@@ -1846,7 +1889,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     );
     this.processStepsComponent?.updateStepStatus(
       'remolque2-cargo',
-      !!this.doubleTrailerState.remolque2.fotosCapturadas
+      !!this.doubleTrailerState.remolque2.fotoCargaCapturada
     );
     this.processStepsComponent?.updateStepStatus(
       'weight',
