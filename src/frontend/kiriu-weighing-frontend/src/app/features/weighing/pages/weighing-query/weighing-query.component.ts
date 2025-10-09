@@ -25,6 +25,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import { PermissionsService } from '../../../../core/services/permissions.service';
+import { PdfGeneratorService, WeighingReceiptData } from '../../services/pdf-generator.service';
 
 @Component({
   selector: 'app-weighing-query',
@@ -90,7 +91,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private weighingQueryService: WeighingQueryService,
     private authService: AuthService,
-    private permissionsService: PermissionsService
+    private permissionsService: PermissionsService,
+    private pdfGeneratorService: PdfGeneratorService
   ) {
     this.initializeForm();
   }
@@ -306,7 +308,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     this.selectedOperation = null;
   }
 
-  onReprint(operation: WeighingQueryResult): void {
+  async onReprint(operation: WeighingQueryResult): Promise<void> {
     // Verificar permisos antes de reimprimir
     if (!this.permissionsService.hasPermission('REPORTES.PRINT')) {
       this.messageService.add({
@@ -330,31 +332,66 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
 
-    this.weighingQueryService
-      .reprintTicket(operation.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (blob) => {
-          this.isLoading = false;
-          const filename = `Ticket_${
-            operation.folio
-          }_${new Date().getTime()}.txt`;
-          this.weighingQueryService.downloadFile(blob, filename);
+    try {
+      // Construir los datos para el PDF
+      const receiptData: WeighingReceiptData = {
+        folio: operation.folio,
+        fecha: new Date(operation.fecha),
+        tipoUnidad: operation.tipoUnidad || 'remolque',
+        clienteProveedor: operation.clienteProveedor,
+        tipo: operation.tipo || 'cliente',
+        producto: operation.producto,
 
-          this.messageService.add({
-            severity: 'success',
-            summary: '🎫 Ticket generado',
-            detail: `Ticket de ${operation.folio} listo para imprimir`,
-            key: 'top-right',
-          });
-        },
-        error: (error) => {
-          this.isLoading = false;
-          const errorMessage = extractErrorMessage(error);
-          this.handleError('Error al generar ticket: ' + errorMessage);
-          console.error('Error en reimpresión:', error);
-        },
+        // Datos de entrada (solo disponibles: fecha)
+        fechaEntrada: new Date(operation.fecha),
+        pesoBrutoEntrada: 0, // No disponible en WeighingQueryResult
+        placaTrailer: operation.placas,
+        placaRemolque: '', // No disponible en WeighingQueryResult
+
+        // Datos de salida
+        fechaSalida: new Date(operation.fecha), // Usar fecha general
+        pesoBrutoSalida: operation.pesoBruto || 0,
+        pesoTara: operation.pesoBruto || 0, // La tara es el peso de salida
+        pesoNeto: operation.pesoNeto || 0,
+      };
+
+      // Si es doble remolque y tiene datos de remolques
+      if (operation.tipoUnidad === 'doble-remolque') {
+        // Los datos de remolques individuales no están disponibles en WeighingQueryResult
+        // Se puede mejorar si el backend los proporciona
+        receiptData.remolque1 = {
+          placa: '',
+          pesoBruto: 0,
+          pesoTara: 0,
+          pesoNeto: 0,
+        };
+
+        receiptData.remolque2 = {
+          placa: '',
+          pesoBruto: 0,
+          pesoTara: 0,
+          pesoNeto: 0,
+        };
+      }
+
+      await this.pdfGeneratorService.generateWeighingReceipt(receiptData);
+
+      this.isLoading = false;
+
+      this.messageService.add({
+        severity: 'success',
+        summary: '📄 PDF generado',
+        detail: `PDF del folio ${operation.folio} generado exitosamente`,
+        key: 'top-right',
       });
+
+      console.log('✅ PDF generado exitosamente');
+    } catch (error) {
+      this.isLoading = false;
+      const errorMessage = extractErrorMessage(error);
+      this.handleError('Error al generar PDF: ' + errorMessage);
+      console.error('❌ Error generando PDF:', error);
+    }
   }
 
   onGoBack(): void {
