@@ -2,10 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
-import { HeaderComponent } from '../../../../layout/header/header.component';
-import { CardSelectorComponent } from '../../../../shared/components/card-selector/card-selector.component';
 import { WeighingFlowService } from '../../../weighing/services/weighing-flow.service';
-import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 
 export interface UnitType {
   id: string;
@@ -21,12 +18,7 @@ export interface UnitType {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    HeaderComponent,
-    CardSelectorComponent,
-    BreadcrumbComponent,
-  ],
+  imports: [CommonModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })

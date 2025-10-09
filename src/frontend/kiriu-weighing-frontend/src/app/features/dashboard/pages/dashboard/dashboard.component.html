@@ -1,36 +1,76 @@
-<div class="dashboard-container">
-  <!-- Header -->
-  <app-header
-    (queriesClick)="onQueries()"
-    [showAdminButton]="canAccessAdmin()"
-    (adminClick)="onAdmin()"
-    (logoutClick)="onLogout()"
-  ></app-header>
+<!-- Topbar -->
+<header class="topbar" role="banner">
+  <div class="brand">
+    <strong class="logo">KIRIU</strong>
+    <span class="app">Sistema de Pesaje</span>
+  </div>
+  <div class="spacer"></div>
 
-  <!-- Contenido principal -->
-  <main class="dashboard-content">
-    <div class="container">
-      <!-- Breadcrumb -->
-      <app-breadcrumb></app-breadcrumb>
+  <div class="topbar-actions">
+    <button class="btn-menu" aria-label="Ir a Consultas" (click)="onQueries()">
+      Consultas
+    </button>
+    <button
+      class="btn-menu"
+      aria-label="Ir a Administración"
+      *ngIf="canAccessAdmin()"
+      (click)="onAdmin()"
+    >
+      Administración
+    </button>
+    <button class="btn-logout" aria-label="Cerrar sesión" (click)="onLogout()">
+      Salir
+    </button>
+  </div>
+</header>
 
-      <!-- Título y subtítulo -->
-      <div class="dashboard-header">
-        <h1 class="dashboard-title">¿Qué tipo de unidad estás registrando?</h1>
-        <p class="dashboard-subtitle">
-          Selecciona el tipo de unidad para continuar con el registro
-        </p>
+<!-- Content -->
+<main class="page-container">
+  <span class="crumb">Inicio</span>
+  <h1 class="page-title">¿Qué tipo de unidad estás registrando?</h1>
+  <p class="page-subtitle">
+    Selecciona el tipo de unidad para continuar con el registro
+  </p>
+
+  <section class="choice-grid">
+    <!-- Cliente -->
+    <article class="choice-card" tabindex="0" aria-labelledby="cliente-title">
+      <div class="icon-bubble" aria-hidden="true">📦</div>
+      <h2 id="cliente-title" class="choice-title">Cliente</h2>
+      <p class="choice-subtitle">Unidad que entra vacía</p>
+      <p class="choice-desc">
+        Registra vehículos que llegan vacíos para cargar material o productos
+      </p>
+      <div class="choice-cta">
+        <button
+          type="button"
+          class="p-button"
+          aria-label="Seleccionar Cliente"
+          (click)="onUnitTypeSelected(unitTypes[0])"
+        >
+          Seleccionar Cliente
+        </button>
       </div>
+    </article>
 
-      <!-- Tarjetas de selección -->
-      <div class="cards-container">
-        <div class="grid grid-2">
-          <app-card-selector
-            *ngFor="let unitType of unitTypes"
-            [card]="unitType"
-            (cardSelected)="onUnitTypeSelected($event)"
-          ></app-card-selector>
-        </div>
+    <!-- Proveedor -->
+    <article class="choice-card" tabindex="0" aria-labelledby="proveedor-title">
+      <div class="icon-bubble success" aria-hidden="true">🚚</div>
+      <h2 id="proveedor-title" class="choice-title">Proveedor</h2>
+      <p class="choice-subtitle">Unidad que entra cargada</p>
+      <p class="choice-desc">
+        Registra vehículos que llegan con material o productos para descargar
+      </p>
+      <div class="choice-cta">
+        <button
+          type="button"
+          class="p-button"
+          aria-label="Seleccionar Proveedor"
+          (click)="onUnitTypeSelected(unitTypes[1])"
+        >
+          Seleccionar Proveedor
+        </button>
       </div>
-    </div>
-  </main>
-</div>
+    </article>
+  </section>
+</main>

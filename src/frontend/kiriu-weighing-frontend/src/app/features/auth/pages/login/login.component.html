@@ -1,46 +1,48 @@
-<div class="login-container">
-  <div class="login-card fade-in">
-    <!-- Logo y título -->
-    <div class="login-header">
-      <div class="logo">
-        <span class="logo-text">KIRIU</span>
-      </div>
-      <h1 class="login-title">Sistema de Pesaje</h1>
-      <p class="login-subtitle">
-        Ingresa tus credenciales para acceder al sistema
-      </p>
+<main class="auth-shell">
+  <section class="auth-card" role="region" aria-label="Inicio de sesión">
+    <!-- Brand y título -->
+    <div class="brand">
+      <span class="logo">KIRIU</span>
     </div>
+    <h1 class="auth-title">Sistema de Pesaje</h1>
+    <p class="auth-subtitle">
+      Ingresa tus credenciales para acceder al sistema
+    </p>
 
     <!-- Formulario de login -->
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
       <!-- Campo Email -->
-      <div class="form-group">
-        <label for="email" class="form-label">Email</label>
+      <div class="field">
+        <label class="label" for="email">Email</label>
         <input
           type="email"
           id="email"
           formControlName="email"
-          class="form-input"
+          class="p-inputtext"
+          [class.filled]="loginForm.get('email')?.value"
           [class.error]="
             loginForm.get('email')?.invalid && loginForm.get('email')?.touched
           "
           placeholder="Ingresa tu email"
           autocomplete="email"
           [disabled]="isLoading"
+          aria-describedby="email-desc"
         />
+        <small id="email-desc" class="sr-only" aria-hidden="true"></small>
         <div *ngIf="getFieldError('email')" class="error-message">
           {{ getFieldError("email") }}
         </div>
       </div>
 
       <!-- Campo Contraseña -->
-      <div class="form-group">
-        <label for="password" class="form-label">Contraseña</label>
+      <div class="field">
+        <label class="label" for="password">Contraseña</label>
         <input
           type="password"
           id="password"
           formControlName="password"
-          class="form-input"
+          class="p-inputtext"
+          [class.filled]="loginForm.get('password')?.value"
           [class.error]="
             loginForm.get('password')?.invalid &&
             loginForm.get('password')?.touched
@@ -62,13 +64,17 @@
       <!-- Botón de login -->
       <button
         type="submit"
-        class="btn w-100"
+        class="p-button"
         [class.btn-loading]="isLoading"
         [disabled]="isLoading || loginForm.invalid"
+        aria-label="Iniciar sesión"
       >
         <span *ngIf="!isLoading">Iniciar sesión</span>
         <span *ngIf="isLoading">Iniciando sesión...</span>
       </button>
+
+      <!-- Helper text -->
+      <div class="helper">© 2025 KIRIU</div>
     </form>
-  </div>
-</div>
+  </section>
+</main>

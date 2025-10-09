@@ -20,7 +20,8 @@
       "Bash(findstr:*)",
       "Bash(git log:*)",
       "Bash(del nul)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(netstat:*)"
     ],
     "deny": [],
     "ask": []
