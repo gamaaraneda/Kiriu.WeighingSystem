@@ -6,55 +6,85 @@
   ></app-header>
 
   <!-- Contenido principal -->
-  <main class="operation-selection-content">
-    <div class="container">
-      <!-- Breadcrumb -->
-      <app-breadcrumb></app-breadcrumb>
+  <main class="page">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumbs" aria-label="breadcrumbs">
+      <a href="#" (click)="onGoBack()">Inicio</a>
+      <span class="sep">›</span>
+      <span class="pill pill--cliente">{{ unitTypeTitle }}</span>
+    </nav>
 
-      <!-- Título y subtítulo -->
-      <div class="operation-selection-header">
-        <h1 class="operation-selection-title">
-          ¿Qué operación vas a registrar?
-        </h1>
-        <p class="operation-selection-subtitle">
-          Selecciona el tipo de operación para continuar con el registro de
-          {{ unitTypeTitle.toLowerCase() }}
-        </p>
-      </div>
+    <h1 class="title">¿Qué operación vas a registrar?</h1>
+    <p class="subtitle">
+      Selecciona el tipo de operación para continuar con el registro de
+      {{ unitTypeTitle.toLowerCase() }}.
+    </p>
 
-      <!-- Tarjetas de operación -->
-      <div class="operations-container">
-        <div class="grid grid-2">
-          <div
-            *ngFor="let operation of operations"
-            class="operation-card"
-            [class.disabled]="!operation.isEnabled"
-          >
-            <div class="operation-icon" [class]="operation.iconClass">
-              <span class="icon">{{ operation.icon }}</span>
-            </div>
-
-            <div class="operation-content">
-              <h3 class="operation-title">{{ operation.title }}</h3>
-              <p class="operation-description">{{ operation.description }}</p>
-
-              <button
-                [class]="operation.buttonClass"
-                [disabled]="!operation.isEnabled"
-                (click)="onOperationSelected(operation)"
-                class="operation-button"
-              >
-                {{ operation.buttonText }}
-              </button>
-            </div>
-          </div>
+    <section class="operation-grid">
+      <!-- Entrada -->
+      <article
+        class="operation-card in"
+        [class.disabled]="!operations[0].isEnabled"
+        tabindex="0"
+        aria-labelledby="entrada-title"
+        (click)="onOperationSelected(operations[0])"
+        (keydown.enter)="onOperationSelected(operations[0])"
+        (keydown.space)="onOperationSelected(operations[0])"
+      >
+        <div class="icon-wrap">
+          <div class="operation-icon" aria-hidden="true">{{ operations[0].icon }}</div>
         </div>
-      </div>
+        <h2 id="entrada-title">{{ operations[0].title }}</h2>
+        <p>{{ operations[0].description }}</p>
+        <div class="cta">
+          <button
+            type="button"
+            class="operation-button"
+            [disabled]="!operations[0].isEnabled"
+            aria-label="Elegir Entrada"
+          >
+            Elegir Entrada
+          </button>
+        </div>
+      </article>
 
-      <!-- Botón regresar -->
-      <div class="back-button-container">
-        <button class="btn btn-outline" (click)="onGoBack()">← Regresar</button>
-      </div>
+      <!-- Salida -->
+      <article
+        class="operation-card out"
+        [class.disabled]="!operations[1].isEnabled"
+        tabindex="0"
+        aria-labelledby="salida-title"
+        (click)="onOperationSelected(operations[1])"
+        (keydown.enter)="onOperationSelected(operations[1])"
+        (keydown.space)="onOperationSelected(operations[1])"
+      >
+        <div class="icon-wrap">
+          <div class="operation-icon" aria-hidden="true">{{ operations[1].icon }}</div>
+        </div>
+        <h2 id="salida-title">{{ operations[1].title }}</h2>
+        <p>{{ operations[1].description }}</p>
+        <div class="cta">
+          <button
+            type="button"
+            class="operation-button"
+            [disabled]="!operations[1].isEnabled"
+            aria-label="Elegir Salida"
+          >
+            Elegir Salida
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <div class="actions">
+      <button
+        type="button"
+        class="btn-back"
+        (click)="onGoBack()"
+        aria-label="Regresar"
+      >
+        ← Regresar
+      </button>
     </div>
   </main>
 </div>

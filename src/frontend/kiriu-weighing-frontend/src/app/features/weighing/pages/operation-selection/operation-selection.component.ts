@@ -4,7 +4,6 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { WeighingService } from '../../services/weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
-import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 
 export interface OperationType {
   id: 'entry' | 'exit';
@@ -20,7 +19,7 @@ export interface OperationType {
 @Component({
   selector: 'app-operation-selection',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, BreadcrumbComponent],
+  imports: [CommonModule, HeaderComponent],
   templateUrl: './operation-selection.component.html',
   styleUrls: ['./operation-selection.component.scss'],
 })
