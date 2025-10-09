@@ -1,38 +1,13 @@
-<header class="header">
-  <div class="header-content">
-    <!-- Logo y título -->
-    <div class="header-brand">
-      <div class="logo">
-        <span class="logo-text">KIRIU</span>
-      </div>
-      <h1 class="header-title">Sistema de Pesaje</h1>
-    </div>
+<header class="topbar" role="banner">
+  <div class="brand">
+    <strong class="logo">KIRIU</strong>
+    <span class="app">Sistema de Pesaje</span>
+  </div>
+  <div class="spacer"></div>
 
-    <!-- Botones de acción -->
-    <div class="header-actions">
-      <button
-        *ngIf="showQueriesButton"
-        class="btn btn-secondary"
-        (click)="onQueriesClick()"
-      >
-        Consultas
-      </button>
-
-      <button
-        *ngIf="showAdminButton"
-        class="btn btn-primary"
-        (click)="onAdminClick()"
-      >
-        Administración
-      </button>
-
-      <button
-        *ngIf="showLogoutButton"
-        class="btn btn-danger"
-        (click)="onLogoutClick()"
-      >
-        Salir
-      </button>
-    </div>
+  <div class="topbar-actions">
+    <button class="btn-menu" aria-label="Ir a Consultas" *ngIf="showQueriesButton" (click)="onQueriesClick()">Consultas</button>
+    <button class="btn-menu" aria-label="Ir a Administración" *ngIf="showAdminButton" (click)="onAdminClick()">Administración</button>
+    <button class="btn-logout" aria-label="Cerrar sesión" *ngIf="showLogoutButton" (click)="onLogoutClick()">Salir</button>
   </div>
 </header>
