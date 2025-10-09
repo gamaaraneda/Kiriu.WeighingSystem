@@ -1,19 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { MessageService } from 'primeng/api';
-import { ToastModule } from 'primeng/toast';
-import { DatePickerModule } from 'primeng/datepicker';
-import { SelectModule } from 'primeng/select';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { DialogModule } from 'primeng/dialog';
-import { CardModule } from 'primeng/card';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import {
@@ -25,7 +14,10 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
 import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import { PermissionsService } from '../../../../core/services/permissions.service';
-import { PdfGeneratorService, WeighingReceiptData } from '../../services/pdf-generator.service';
+import {
+  PdfGeneratorService,
+  WeighingReceiptData,
+} from '../../services/pdf-generator.service';
 
 @Component({
   selector: 'app-weighing-query',
@@ -33,26 +25,12 @@ import { PdfGeneratorService, WeighingReceiptData } from '../../services/pdf-gen
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    ToastModule,
-    DatePickerModule,
-    SelectModule,
-    TableModule,
-    ButtonModule,
-    InputTextModule,
-    DialogModule,
-    CardModule,
-    TagModule,
-    TooltipModule,
     HeaderComponent,
     BreadcrumbComponent,
     HasPermissionDirective,
   ],
-  providers: [MessageService],
   templateUrl: './weighing-query.component.html',
-  styleUrls: [
-    './weighing-query.component.scss',
-    './weighing-query-professional.styles.scss',
-  ],
+  styleUrls: ['./weighing-query.component.scss'],
 })
 export class WeighingQueryComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -88,17 +66,20 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private messageService: MessageService,
     private weighingQueryService: WeighingQueryService,
     private authService: AuthService,
     private permissionsService: PermissionsService,
-    private pdfGeneratorService: PdfGeneratorService
+    private pdfGeneratorService: PdfGeneratorService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initializeForm();
   }
 
   ngOnInit(): void {
-    this.checkPermissions();
+    // Usar setTimeout para evitar el error NG0100
+    setTimeout(() => {
+      this.checkPermissions();
+    }, 0);
     this.setupFormSubscriptions();
   }
 
@@ -108,18 +89,21 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
     // Si no tiene permisos, mostrar mensaje de error
     if (!this.hasReportsPermission) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Acceso Restringido',
-        detail: 'No tienes permisos para acceder a los reportes del sistema',
-        key: 'top-right',
-      });
+      this.showToast(
+        'warn',
+        'Acceso Restringido',
+        'No tienes permisos para acceder a los reportes del sistema'
+      );
     }
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    // Limpiar scroll lock si el modal está abierto
+    if (this.showDetailModal) {
+      document.body.classList.remove('km-scroll-lock');
+    }
   }
 
   private initializeForm(): void {
@@ -168,11 +152,29 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     this.executeSearch();
   }
 
-  onLazyLoad(event: any): void {
-    if (this.hasSearched) {
-      this.currentPage = Math.floor(event.first / event.rows) + 1;
+  // Métodos de paginación nativa
+  goToPage(page: number): void {
+    if (
+      page >= 1 &&
+      page <= this.getTotalPages() &&
+      page !== this.currentPage
+    ) {
+      this.currentPage = page;
       this.executeSearch();
     }
+  }
+
+  getTotalPages(): number {
+    return Math.ceil(this.totalResults / this.pageSize);
+  }
+
+  getStartRecord(): number {
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  getEndRecord(): number {
+    const end = this.currentPage * this.pageSize;
+    return Math.min(end, this.totalResults);
   }
 
   private executeSearch(): void {
@@ -204,13 +206,11 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           this.totalResults = response.pagination.total;
 
           if (this.queryResults.length === 0 && this.currentPage === 1) {
-            this.messageService.add({
-              severity: 'info',
-              summary: 'Sin resultados',
-              detail:
-                'No se encontraron operaciones que coincidan con los filtros especificados',
-              key: 'top-right',
-            });
+            this.showToast(
+              'info',
+              'Sin resultados',
+              'No se encontraron operaciones que coincidan con los filtros especificados'
+            );
           }
         },
         error: (error) => {
@@ -239,22 +239,16 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   onExportExcel(): void {
     // Verificar permisos antes de exportar
     if (!this.permissionsService.hasPermission('REPORTES.EXPORT')) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Acceso Denegado',
-        detail: 'No tienes permisos para exportar reportes',
-        key: 'top-right',
-      });
+      this.showToast(
+        'error',
+        'Acceso Denegado',
+        'No tienes permisos para exportar reportes'
+      );
       return;
     }
 
     if (this.queryResults.length === 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Sin datos',
-        detail: 'No hay resultados para exportar',
-        key: 'top-right',
-      });
+      this.showToast('warn', 'Sin datos', 'No hay resultados para exportar');
       return;
     }
 
@@ -283,12 +277,11 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           const filename = `Operaciones_Pesaje_${new Date().getTime()}.xlsx`;
           this.weighingQueryService.downloadFile(blob, filename);
 
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Exportación exitosa',
-            detail: 'El archivo Excel ha sido descargado',
-            key: 'top-right',
-          });
+          this.showToast(
+            'success',
+            'Exportación exitosa',
+            'El archivo Excel ha sido descargado'
+          );
         },
         error: (error) => {
           this.isLoading = false;
@@ -301,32 +294,34 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   onViewDetail(operation: WeighingQueryResult): void {
     this.selectedOperation = operation;
     this.showDetailModal = true;
+    // Bloquear scroll del body
+    document.body.classList.add('km-scroll-lock');
   }
 
   onCloseDetailModal(): void {
     this.showDetailModal = false;
     this.selectedOperation = null;
+    // Desbloquear scroll del body
+    document.body.classList.remove('km-scroll-lock');
   }
 
   async onReprint(operation: WeighingQueryResult): Promise<void> {
     // Verificar permisos antes de reimprimir
     if (!this.permissionsService.hasPermission('REPORTES.PRINT')) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Acceso Denegado',
-        detail: 'No tienes permisos para imprimir tickets',
-        key: 'top-right',
-      });
+      this.showToast(
+        'error',
+        'Acceso Denegado',
+        'No tienes permisos para imprimir tickets'
+      );
       return;
     }
 
     if (!operation.puedeReimprimir) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'No disponible',
-        detail: 'Solo se pueden reimprimir operaciones de salida completadas',
-        key: 'top-right',
-      });
+      this.showToast(
+        'warn',
+        'No disponible',
+        'Solo se pueden reimprimir operaciones de salida completadas'
+      );
       return;
     }
 
@@ -378,12 +373,11 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
       this.isLoading = false;
 
-      this.messageService.add({
-        severity: 'success',
-        summary: '📄 PDF generado',
-        detail: `PDF del folio ${operation.folio} generado exitosamente`,
-        key: 'top-right',
-      });
+      this.showToast(
+        'success',
+        '📄 PDF generado',
+        `PDF del folio ${operation.folio} generado exitosamente`
+      );
 
       console.log('✅ PDF generado exitosamente');
     } catch (error) {
@@ -432,11 +426,46 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   }
 
   private handleError(message: string): void {
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: message,
-      key: 'top-right',
-    });
+    this.showToast('error', 'Error', message);
+  }
+
+  // Sistema de notificaciones nativo
+  private showToast(
+    severity: 'success' | 'error' | 'warn' | 'info',
+    summary: string,
+    detail: string
+  ): void {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${severity}`;
+
+    const icons = {
+      success: '✅',
+      error: '❌',
+      warn: '⚠️',
+      info: 'ℹ️',
+    };
+
+    toast.innerHTML = `
+      <div class="toast-content">
+        <div class="toast-icon">${icons[severity]}</div>
+        <div class="toast-text">
+          <div class="toast-summary">${summary}</div>
+          <div class="toast-detail">${detail}</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Auto-remove después de 5 segundos
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.remove();
+      }
+    }, 5000);
   }
 }

@@ -1,6 +1,6 @@
 <div class="weighing-query-container">
   <!-- Toast para notificaciones -->
-  <p-toast key="top-right" position="top-right"></p-toast>
+  <div class="toast-container" id="toast-container"></div>
 
   <!-- Header -->
   <app-header
@@ -16,9 +16,9 @@
 
       <!-- Mensaje de acceso denegado -->
       <div *ngIf="!hasReportsPermission" class="access-denied">
-        <p-card styleClass="access-denied-card">
+        <div class="access-denied-card">
           <div class="access-denied-content">
-            <i class="pi pi-lock access-denied-icon"></i>
+            <div class="access-denied-icon">🔒</div>
             <h2 class="access-denied-title">Acceso Restringido</h2>
             <p class="access-denied-text">
               No tienes permisos para acceder a la sección de reportes.
@@ -26,549 +26,465 @@
               Contacta al administrador del sistema para solicitar los permisos
               necesarios.
             </p>
-            <p-button
+            <button
               type="button"
-              severity="secondary"
-              outlined="true"
-              label="Regresar al Dashboard"
-              icon="pi pi-arrow-left"
+              class="btn btn-ghost back-to-dashboard-btn"
               (click)="onGoBack()"
-              styleClass="back-to-dashboard-btn"
-            ></p-button>
+            >
+              ← Regresar al Dashboard
+            </button>
           </div>
-        </p-card>
+        </div>
       </div>
 
       <!-- Header de la página -->
-      <div *appHasPermission="'REPORTES.READ'" class="page-header">
-        <div class="header-left">
-          <div class="page-title-group">
-            <h1 class="page-title">Consulta y Reimpresión</h1>
-            <p class="page-subtitle">Buscar y gestionar registros existentes</p>
-          </div>
+      <section *appHasPermission="'REPORTES.READ'" class="hero">
+        <div>
+          <h1>Consulta y Reimpresión</h1>
+          <p>Buscar y gestionar registros existentes</p>
         </div>
-        <div class="header-right">
-          <p-button
+        <div class="cta">
+          <button
             *appHasPermission="'REPORTES.EXPORT'"
             type="button"
-            severity="success"
-            label="Exportar Excel"
-            icon="pi pi-file-excel"
+            class="btn-success"
             [disabled]="!queryResults.length || isLoading"
             (click)="onExportExcel()"
-            styleClass="export-btn"
-          ></p-button>
+          >
+            ⬇️ Exportar Excel
+          </button>
         </div>
-      </div>
+      </section>
 
       <!-- Filtros de búsqueda -->
-      <p-card
-        *appHasPermission="'REPORTES.READ'"
-        styleClass="search-filters-card kiriu-card"
-      >
-        <ng-template pTemplate="header">
-          <div class="filters-header">
-            <i
-              class="pi pi-search"
-              style="margin-right: 0.5rem; color: var(--primary-color)"
-            ></i>
-            <span class="filters-title">Filtros de Búsqueda</span>
-          </div>
-        </ng-template>
-        <form [formGroup]="filtersForm" class="filters-form">
-          <div class="filters-grid kiriu-grid kiriu-grid-3">
-            <!-- Fecha desde -->
-            <div class="filter-group">
-              <label for="fechaDesde" class="filter-label kiriu-text-semibold"
-                >Fecha Desde</label
-              >
-              <p-datepicker
+      <section *appHasPermission="'REPORTES.READ'" class="filters">
+        <form [formGroup]="filtersForm">
+          <div class="filters-grid">
+            <div>
+              <label class="label">Fecha Desde</label>
+              <input
+                type="date"
                 id="fechaDesde"
                 formControlName="fechaDesde"
-                [showIcon]="true"
-                inputId="fechaDesde"
-                placeholder="dd/mm/aaaa"
-                dateFormat="dd/mm/yy"
-                [maxDate]="today"
-                [showButtonBar]="true"
-                styleClass="kiriu-datepicker"
-              ></p-datepicker>
+                class="input date-input"
+                [max]="today | date : 'yyyy-MM-dd'"
+              />
             </div>
-
-            <!-- Fecha hasta -->
-            <div class="filter-group">
-              <label for="fechaHasta" class="filter-label kiriu-text-semibold"
-                >Fecha Hasta</label
-              >
-              <p-datepicker
+            <div>
+              <label class="label">Fecha Hasta</label>
+              <input
+                type="date"
                 id="fechaHasta"
                 formControlName="fechaHasta"
-                [showIcon]="true"
-                inputId="fechaHasta"
-                placeholder="dd/mm/aaaa"
-                dateFormat="dd/mm/yy"
-                [maxDate]="today"
-                [showButtonBar]="true"
-                styleClass="kiriu-datepicker"
-              ></p-datepicker>
+                class="input date-input"
+                [max]="today | date : 'yyyy-MM-dd'"
+              />
             </div>
-
-            <!-- Folio -->
-            <div class="filter-group">
-              <label for="folio" class="filter-label kiriu-text-semibold"
-                >Folio</label
-              >
-              <div class="kiriu-input">
-                <input
-                  pInputText
-                  type="text"
-                  id="folio"
-                  formControlName="folio"
-                  placeholder="F001"
-                />
-              </div>
+            <div>
+              <label class="label">Folio</label>
+              <input
+                type="text"
+                id="folio"
+                formControlName="folio"
+                placeholder="F001"
+                class="input"
+              />
             </div>
-
-            <!-- Placas -->
-            <div class="filter-group">
-              <label for="placas" class="filter-label kiriu-text-semibold"
-                >Placas</label
-              >
-              <div class="kiriu-input">
-                <input
-                  pInputText
-                  type="text"
-                  id="placas"
-                  formControlName="placas"
-                  placeholder="ABC-123"
-                />
-              </div>
+            <div>
+              <label class="label">Placas</label>
+              <input
+                type="text"
+                id="placas"
+                formControlName="placas"
+                placeholder="ABC-123"
+                class="input"
+              />
             </div>
-
-            <!-- Estado -->
-            <div class="filter-group">
-              <label for="estado" class="filter-label kiriu-text-semibold"
-                >Estado</label
+            <div>
+              <label class="label">Estado</label>
+              <select
+                id="estado"
+                formControlName="estado"
+                class="input select-input"
               >
-              <div class="kiriu-select">
-                <p-select
-                  id="estado"
-                  formControlName="estado"
-                  [options]="estadoOptions"
-                  placeholder="Todos"
-                  optionLabel="label"
-                  optionValue="value"
-                  [showClear]="true"
-                ></p-select>
-              </div>
+                <option value="">Todos</option>
+                <option
+                  *ngFor="let option of estadoOptions"
+                  [value]="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
-
-            <!-- Edición posterior -->
-            <div class="filter-group">
-              <label
-                for="edicionPosterior"
-                class="filter-label kiriu-text-semibold"
-                >Edición Posterior</label
+            <div>
+              <label class="label">Edición Posterior</label>
+              <select
+                id="edicionPosterior"
+                formControlName="edicionPosterior"
+                class="input select-input"
               >
-              <div class="kiriu-select">
-                <p-select
-                  id="edicionPosterior"
-                  formControlName="edicionPosterior"
-                  [options]="edicionPosteriorOptions"
-                  placeholder="Todos"
-                  optionLabel="label"
-                  optionValue="value"
-                  [showClear]="true"
-                ></p-select>
-              </div>
+                <option
+                  *ngFor="let option of edicionPosteriorOptions"
+                  [value]="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
           </div>
 
-          <!-- Botones de filtros -->
-          <div
-            class="filters-actions kiriu-flex kiriu-flex-end kiriu-flex-responsive"
-          >
-            <p-button
+          <div class="filters-actions">
+            <button
               type="button"
-              severity="secondary"
-              outlined="true"
-              label="Limpiar Filtros"
-              icon="pi pi-times"
+              class="btn btn-ghost"
               (click)="onClearFilters()"
-              styleClass="clear-btn kiriu-button"
-            ></p-button>
-            <p-button
+            >
+              ✕ Limpiar Filtros
+            </button>
+            <button
               *appHasPermission="'REPORTES.READ'"
               type="button"
-              severity="primary"
-              [label]="isLoading ? 'Buscando...' : 'Buscar'"
-              [icon]="isLoading ? 'pi pi-spin pi-spinner' : 'pi pi-search'"
+              class="btn btn-primary"
               [disabled]="isLoading"
               (click)="onSearch()"
-              styleClass="search-btn kiriu-button"
-            ></p-button>
+            >
+              <span *ngIf="isLoading" class="spinner"></span>
+              {{ isLoading ? "Buscando..." : "🔍 Buscar" }}
+            </button>
           </div>
         </form>
-      </p-card>
+      </section>
 
       <!-- Resultados -->
       <div *appHasPermission="'REPORTES.READ'" class="results-section">
-        <div class="results-header">
-          <h2 class="results-title">
-            <i class="pi pi-chart-bar" style="margin-right: 0.5rem"></i>
-            Resultados ({{ totalResults }})
-          </h2>
+        <div class="results-head">
+          <div class="results-title">📊 Resultados</div>
+          <div class="results-count">({{ totalResults }})</div>
         </div>
 
         <!-- Tabla de resultados -->
-        <p-card
-          *ngIf="queryResults.length > 0"
-          styleClass="results-card kiriu-card"
-        >
-          <p-table
-            [value]="queryResults"
-            [paginator]="true"
-            [rows]="pageSize"
-            [totalRecords]="totalResults"
-            [lazy]="true"
-            (onLazyLoad)="onLazyLoad($event)"
-            [loading]="isLoading"
-            [scrollable]="true"
-            scrollHeight="500px"
-            styleClass="p-datatable-striped p-datatable-gridlines kiriu-table"
-            [showCurrentPageReport]="true"
-            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Folio</th>
-                <th>Fecha</th>
-                <th>Placas</th>
-                <th>Cliente/Proveedor</th>
-                <th>Producto</th>
-                <th>Tipo</th>
-                <th>Peso Bruto</th>
-                <th>Peso Neto</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-operation>
-              <tr [class.edited-row]="operation.fueEditado">
-                <td>
-                  <div class="folio-cell">
-                    <span class="folio-text">{{ operation.folio }}</span>
-                    <p-tag
-                      *ngIf="operation.fueEditado"
-                      severity="danger"
-                      value="Editado"
-                      styleClass="edited-tag kiriu-tag"
-                    ></p-tag>
-                  </div>
-                </td>
-                <td>{{ operation.fecha | date : "dd/MM/yyyy" }}</td>
-                <td>
-                  <span class="placas-text">{{ operation.placas }}</span>
-                </td>
-                <td>{{ operation.clienteProveedor }}</td>
-                <td>{{ operation.producto }}</td>
-                <td>
-                  <div class="tipo-badges">
-                    <p-tag
-                      [value]="
-                        operation.tipo === 'client' ? 'cliente' : 'proveedor'
-                      "
-                      [severity]="
-                        operation.tipo === 'client' ? 'success' : 'info'
-                      "
-                      styleClass="tipo-tag kiriu-tag"
-                    ></p-tag>
-                    <p-tag
-                      [value]="getUnidadLabel(operation.tipoUnidad)"
-                      severity="secondary"
-                      styleClass="unidad-tag kiriu-tag"
-                    ></p-tag>
-                  </div>
-                </td>
-                <td>
-                  <span *ngIf="operation.pesoBruto" class="peso-value">
-                    {{ operation.pesoBruto | number : "1.0-0" }} kg
-                  </span>
-                  <span *ngIf="!operation.pesoBruto" class="peso-empty">-</span>
-                </td>
-                <td>
-                  <span *ngIf="operation.pesoNeto" class="peso-value">
-                    {{ operation.pesoNeto | number : "1.0-0" }} kg
-                  </span>
-                  <span *ngIf="!operation.pesoNeto" class="peso-empty">-</span>
-                </td>
-                <td>
-                  <p-tag
-                    [value]="getEstadoLabel(operation.estado)"
-                    [severity]="
-                      operation.estado === 'ENTRADA_REGISTRADA'
-                        ? 'warning'
-                        : 'success'
-                    "
-                    styleClass="estado-tag kiriu-tag"
-                  ></p-tag>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <p-button
-                      *appHasPermission="'REPORTES.READ'"
-                      type="button"
-                      severity="info"
-                      outlined="true"
-                      size="small"
-                      icon="pi pi-eye"
-                      (click)="onViewDetail(operation)"
-                      pTooltip="Ver detalle"
-                      tooltipPosition="top"
-                      styleClass="action-btn view-btn kiriu-button"
-                    ></p-button>
-                    <p-button
-                      *appHasPermission="'REPORTES.PRINT'"
-                      type="button"
-                      severity="secondary"
-                      outlined="true"
-                      size="small"
-                      [icon]="
-                        isLoading ? 'pi pi-spin pi-spinner' : 'pi pi-print'
-                      "
-                      [disabled]="!operation.puedeReimprimir || isLoading"
-                      (click)="onReprint(operation)"
-                      pTooltip="Reimprimir ticket"
-                      tooltipPosition="top"
-                      styleClass="action-btn print-btn kiriu-button"
-                    ></p-button>
-                  </div>
-                </td>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="emptymessage">
-              <tr>
-                <td colspan="10" class="empty-message">
-                  <div class="empty-state">
-                    <div class="empty-icon">📄</div>
-                    <div class="empty-text">
-                      <p class="empty-title">No se encontraron resultados</p>
-                      <p class="empty-subtitle">
-                        Ajusta los filtros de búsqueda o verifica los criterios
-                        ingresados
-                      </p>
+        <div *ngIf="queryResults.length > 0" class="table-wrap">
+          <div class="table-container">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Folio</th>
+                  <th>Fecha</th>
+                  <th>Placas</th>
+                  <th>Cliente/Proveedor</th>
+                  <th>Producto</th>
+                  <th>Tipo</th>
+                  <th>Peso Bruto</th>
+                  <th>Peso Neto</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="let operation of queryResults"
+                  [class.edited-row]="operation.fueEditado"
+                >
+                  <td>
+                    <a href="#" class="pill-link">{{ operation.folio }}</a>
+                  </td>
+                  <td>{{ operation.fecha | date : "dd/MM/yyyy" }}</td>
+                  <td>
+                    <span class="badge gray">{{ operation.placas }}</span>
+                  </td>
+                  <td>{{ operation.clienteProveedor }}</td>
+                  <td>{{ operation.producto }}</td>
+                  <td>
+                    <span class="badge blue">{{
+                      operation.tipo === "client" ? "CLIENTE" : "PROVEEDOR"
+                    }}</span>
+                    <div class="hint">
+                      {{ getUnidadLabel(operation.tipoUnidad) }}
                     </div>
-                  </div>
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </p-card>
+                  </td>
+                  <td>
+                    <span *ngIf="operation.pesoBruto" class="badge green">
+                      {{ operation.pesoBruto | number : "1.0-0" }} kg
+                    </span>
+                    <span *ngIf="!operation.pesoBruto" class="peso-empty"
+                      >-</span
+                    >
+                  </td>
+                  <td>
+                    <span *ngIf="operation.pesoNeto" class="badge green">
+                      {{ operation.pesoNeto | number : "1.0-0" }} kg
+                    </span>
+                    <span *ngIf="!operation.pesoNeto" class="peso-empty"
+                      >-</span
+                    >
+                  </td>
+                  <td>
+                    <span
+                      class="badge"
+                      [class.green]="operation.estado !== 'ENTRADA_REGISTRADA'"
+                      [class.blue]="operation.estado === 'ENTRADA_REGISTRADA'"
+                    >
+                      {{ getEstadoLabel(operation.estado) }}
+                    </span>
+                  </td>
+                  <td class="actions-cell">
+                    <button
+                      class="btn-mini"
+                      title="Ver"
+                      (click)="onViewDetail(operation)"
+                    >
+                      👁
+                    </button>
+                    <button
+                      class="btn-mini"
+                      title="Reimprimir"
+                      (click)="onReprint(operation)"
+                      [disabled]="!operation.puedeReimprimir || isLoading"
+                    >
+                      🖨
+                    </button>
+                    <button class="btn-mini" title="Opciones">⚙</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Paginación nativa -->
+          <div class="pagination">
+            <div class="pagination-info">
+              Mostrando {{ getStartRecord() }} a {{ getEndRecord() }} de
+              {{ totalResults }} registros
+            </div>
+            <div class="pagination-controls">
+              <button
+                class="btn-mini"
+                title="Primera página"
+                [disabled]="currentPage === 1"
+                (click)="goToPage(1)"
+              >
+                «
+              </button>
+              <button
+                class="btn-mini"
+                title="Página anterior"
+                [disabled]="currentPage === 1"
+                (click)="goToPage(currentPage - 1)"
+              >
+                ‹
+              </button>
+              <span class="page-info"
+                >Página {{ currentPage }} de {{ getTotalPages() }}</span
+              >
+              <button
+                class="btn-mini"
+                title="Página siguiente"
+                [disabled]="currentPage === getTotalPages()"
+                (click)="goToPage(currentPage + 1)"
+              >
+                ›
+              </button>
+              <button
+                class="btn-mini"
+                title="Última página"
+                [disabled]="currentPage === getTotalPages()"
+                (click)="goToPage(getTotalPages())"
+              >
+                »
+              </button>
+            </div>
+          </div>
+        </div>
 
         <!-- Estado sin resultados inicial -->
-        <p-card
+        <div
           *ngIf="queryResults.length === 0 && !hasSearched && !isLoading"
-          styleClass="no-search-card kiriu-card"
+          class="no-search-card"
         >
           <div class="no-search-content">
-            <i class="pi pi-search no-search-icon"></i>
+            <div class="no-search-icon">🔍</div>
             <h3 class="no-search-title">Buscar registros</h3>
             <p class="no-search-text">
               Utiliza los filtros de arriba para buscar operaciones de pesaje
             </p>
           </div>
-        </p-card>
+        </div>
       </div>
     </div>
   </main>
 
   <!-- Modal de detalle de operación -->
-  <p-dialog
-    header="Detalle de Operación"
-    [(visible)]="showDetailModal"
-    [modal]="true"
-    [resizable]="false"
-    [draggable]="false"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    styleClass="detail-modal kiriu-dialog"
-    [style]="{ width: '90vw', maxWidth: '800px' }"
+  <div
+    class="km-backdrop"
+    [class.is-open]="showDetailModal"
+    role="presentation"
   >
-    <div *ngIf="selectedOperation" class="operation-detail">
-      <!-- Header del modal -->
-      <div class="detail-header">
-        <div class="detail-title">
-          <h2>{{ selectedOperation.folio }}</h2>
-          <div class="detail-badges">
-            <p-tag
-              [value]="getEstadoLabel(selectedOperation.estado)"
-              [severity]="
-                selectedOperation.estado === 'ENTRADA_REGISTRADA'
-                  ? 'warning'
-                  : 'success'
-              "
-              styleClass="kiriu-tag"
-            ></p-tag>
-            <p-tag
-              *ngIf="selectedOperation.fueEditado"
-              value="Editado"
-              severity="danger"
-              styleClass="kiriu-tag"
-            ></p-tag>
+    <section
+      class="km-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="m-title"
+    >
+      <header class="km-modal__header">
+        <h3 id="m-title" class="km-modal__title">Detalle de Operación</h3>
+        <button
+          class="km-modal__close"
+          aria-label="Cerrar"
+          (click)="onCloseDetailModal()"
+        >
+          ✕
+        </button>
+      </header>
+      <div class="km-modal__body" *ngIf="selectedOperation">
+        <!-- Información del folio y estado -->
+        <div class="km-field">
+          <div class="km-label">Folio</div>
+          <div
+            style="
+              font-family: 'Courier New', monospace;
+              font-weight: 700;
+              color: var(--k-brand-700);
+            "
+          >
+            {{ selectedOperation.folio }}
           </div>
         </div>
-        <div class="detail-date">
-          {{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}
-        </div>
-      </div>
 
-      <!-- Contenido del modal -->
-      <div class="detail-content">
-        <!-- Información básica -->
-        <div class="detail-section">
-          <h3 class="section-title">Información General</h3>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Folio:</label>
-              <span>{{ selectedOperation.folio }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Fecha:</label>
-              <span>{{
-                selectedOperation.fecha | date : "dd/MM/yyyy HH:mm"
-              }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Estado:</label>
-              <p-tag
-                [value]="getEstadoLabel(selectedOperation.estado)"
-                [severity]="
-                  selectedOperation.estado === 'ENTRADA_REGISTRADA'
-                    ? 'warning'
-                    : 'success'
-                "
-                styleClass="kiriu-tag"
-              ></p-tag>
-            </div>
-            <div
-              class="detail-item"
-              *ngIf="
-                selectedOperation.fueEditado && selectedOperation.fechaEdicion
-              "
+        <div class="km-field">
+          <div class="km-label">Estado</div>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <span
+              class="badge"
+              [class.green]="selectedOperation.estado !== 'ENTRADA_REGISTRADA'"
+              [class.blue]="selectedOperation.estado === 'ENTRADA_REGISTRADA'"
             >
-              <label>Fecha de Edición:</label>
-              <span>{{
-                selectedOperation.fechaEdicion | date : "dd/MM/yyyy HH:mm"
-              }}</span>
-            </div>
+              {{ getEstadoLabel(selectedOperation.estado) }}
+            </span>
+            <span
+              *ngIf="selectedOperation.fueEditado"
+              class="badge"
+              style="background: #fef2f2; border-color: #fecaca; color: #dc2626"
+            >
+              Editado
+            </span>
           </div>
         </div>
+
+        <div class="km-field">
+          <div class="km-label">Fecha</div>
+          <div>{{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}</div>
+        </div>
+
+        <div class="km-divider"></div>
 
         <!-- Cliente/Proveedor -->
-        <div class="detail-section">
-          <h3 class="section-title">Cliente/Proveedor</h3>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Nombre:</label>
-              <span>{{ selectedOperation.clienteProveedor }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Tipo:</label>
-              <p-tag
-                [value]="
-                  selectedOperation.tipo === 'client' ? 'Cliente' : 'Proveedor'
-                "
-                [severity]="
-                  selectedOperation.tipo === 'client' ? 'success' : 'info'
-                "
-                styleClass="kiriu-tag"
-              ></p-tag>
-            </div>
-          </div>
+        <div class="km-field">
+          <div class="km-label">Cliente/Proveedor</div>
+          <div>{{ selectedOperation.clienteProveedor }}</div>
         </div>
+
+        <div class="km-field">
+          <div class="km-label">Tipo</div>
+          <span class="badge blue">{{
+            selectedOperation.tipo === "client" ? "CLIENTE" : "PROVEEDOR"
+          }}</span>
+        </div>
+
+        <div class="km-divider"></div>
 
         <!-- Vehículo y Producto -->
-        <div class="detail-section">
-          <h3 class="section-title">Vehículo y Producto</h3>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Placas:</label>
-              <span class="placas-text">{{ selectedOperation.placas }}</span>
-            </div>
-            <div class="detail-item">
-              <label>Tipo de Unidad:</label>
-              <p-tag
-                [value]="getUnidadLabel(selectedOperation.tipoUnidad)"
-                severity="secondary"
-                styleClass="kiriu-tag"
-              ></p-tag>
-            </div>
-            <div class="detail-item">
-              <label>Producto:</label>
-              <span>{{ selectedOperation.producto }}</span>
-            </div>
+        <div class="km-field">
+          <div class="km-label">Placas</div>
+          <div
+            style="
+              font-family: 'Courier New', monospace;
+              font-weight: 700;
+              background: #f3f4f6;
+              padding: 8px;
+              border-radius: 8px;
+              border: 1px solid #e5e7eb;
+            "
+          >
+            {{ selectedOperation.placas }}
           </div>
         </div>
+
+        <div class="km-field">
+          <div class="km-label">Tipo de Unidad</div>
+          <span class="badge gray">{{
+            getUnidadLabel(selectedOperation.tipoUnidad)
+          }}</span>
+        </div>
+
+        <div class="km-field">
+          <div class="km-label">Producto</div>
+          <div>{{ selectedOperation.producto }}</div>
+        </div>
+
+        <div class="km-divider"></div>
 
         <!-- Información de Pesaje -->
-        <div class="detail-section">
-          <h3 class="section-title">Pesaje</h3>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <label>Peso Bruto:</label>
-              <span *ngIf="selectedOperation.pesoBruto" class="peso-value">
-                {{ selectedOperation.pesoBruto | number : "1.0-0" }} kg
-              </span>
-              <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty"
-                >No registrado</span
-              >
-            </div>
-            <div class="detail-item">
-              <label>Peso Neto:</label>
-              <span *ngIf="selectedOperation.pesoNeto" class="peso-value">
-                {{ selectedOperation.pesoNeto | number : "1.0-0" }} kg
-              </span>
-              <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty"
-                >No registrado</span
-              >
-            </div>
-            <div
-              class="detail-item"
-              *ngIf="
-                getTaraWeight(
-                  selectedOperation.pesoBruto,
-                  selectedOperation.pesoNeto
-                )
-              "
-            >
-              <label>Tara:</label>
-              <span class="peso-value">
-                {{
-                  getTaraWeight(
-                    selectedOperation.pesoBruto,
-                    selectedOperation.pesoNeto
-                  ) | number : "1.0-0"
-                }}
-                kg
-              </span>
-            </div>
+        <div class="km-field">
+          <div class="km-label">Peso Bruto</div>
+          <div *ngIf="selectedOperation.pesoBruto" class="badge green">
+            {{ selectedOperation.pesoBruto | number : "1.0-0" }} kg
+          </div>
+          <div *ngIf="!selectedOperation.pesoBruto" class="peso-empty">
+            No registrado
+          </div>
+        </div>
+
+        <div class="km-field">
+          <div class="km-label">Peso Neto</div>
+          <div *ngIf="selectedOperation.pesoNeto" class="badge green">
+            {{ selectedOperation.pesoNeto | number : "1.0-0" }} kg
+          </div>
+          <div *ngIf="!selectedOperation.pesoNeto" class="peso-empty">
+            No registrado
+          </div>
+        </div>
+
+        <div
+          class="km-field"
+          *ngIf="
+            getTaraWeight(
+              selectedOperation.pesoBruto,
+              selectedOperation.pesoNeto
+            )
+          "
+        >
+          <div class="km-label">Tara</div>
+          <div class="badge green">
+            {{
+              getTaraWeight(
+                selectedOperation.pesoBruto,
+                selectedOperation.pesoNeto
+              ) | number : "1.0-0"
+            }}
+            kg
+          </div>
+        </div>
+
+        <div
+          class="km-field"
+          *ngIf="selectedOperation.fueEditado && selectedOperation.fechaEdicion"
+        >
+          <div class="km-label">Fecha de Edición</div>
+          <div>
+            {{ selectedOperation.fechaEdicion | date : "dd/MM/yyyy HH:mm" }}
           </div>
         </div>
       </div>
-    </div>
 
-    <ng-template pTemplate="footer">
-      <div class="modal-footer">
-        <p-button
+      <footer class="km-modal__footer">
+        <button
           type="button"
-          severity="secondary"
-          outlined="true"
-          label="Cerrar"
-          icon="pi pi-times"
+          class="btn btn-ghost"
           (click)="onCloseDetailModal()"
-          styleClass="kiriu-button"
-        ></p-button>
-      </div>
-    </ng-template>
-  </p-dialog>
+        >
+          ✕ Cerrar
+        </button>
+      </footer>
+    </section>
+  </div>
 </div>
