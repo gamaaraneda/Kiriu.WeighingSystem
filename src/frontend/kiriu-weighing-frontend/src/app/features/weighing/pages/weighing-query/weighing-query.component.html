@@ -326,171 +326,200 @@
     role="presentation"
   >
     <section
-      class="km-modal"
+      class="km-modal km-modal--lg"
       role="dialog"
       aria-modal="true"
       aria-labelledby="m-title"
     >
       <header class="km-modal__header">
         <h3 id="m-title" class="km-modal__title">Detalle de Operación</h3>
-        <button
-          class="km-modal__close"
-          aria-label="Cerrar"
-          (click)="onCloseDetailModal()"
-        >
-          ✕
-        </button>
+        <div class="km-modal__actions">
+          <button
+            *appHasPermission="'REPORTES.PRINT'"
+            type="button"
+            class="btn-modal-action btn-reprint-modal"
+            title="Reimprimir"
+            (click)="onReprint(selectedOperation!)"
+            [disabled]="!selectedOperation || !selectedOperation.puedeReimprimir || isLoading"
+          >
+            🖨 Reimprimir
+          </button>
+          <button
+            class="km-modal__close"
+            aria-label="Cerrar"
+            (click)="onCloseDetailModal()"
+          >
+            ✕
+          </button>
+        </div>
       </header>
       <div class="km-modal__body" *ngIf="selectedOperation">
-        <!-- Información del folio y estado -->
-        <div class="km-field">
-          <div class="km-label">Folio</div>
-          <div
-            style="
-              font-family: 'Courier New', monospace;
-              font-weight: 700;
-              color: var(--k-brand-700);
-            "
-          >
-            {{ selectedOperation.folio }}
+        <!-- Grid de 2 columnas -->
+        <div class="modal-grid">
+          <!-- Columna izquierda -->
+          <div class="modal-col">
+            <!-- Información básica -->
+            <div class="info-row">
+              <span class="info-label">Folio</span>
+              <span class="info-value folio-value">{{ selectedOperation.folio }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Estado</span>
+              <span class="info-value">
+                <span
+                  class="badge-status"
+                  [class.status-entrada]="selectedOperation.estado === 'ENTRADA_REGISTRADA'"
+                  [class.status-salida]="selectedOperation.estado === 'SALIDA_REGISTRADA'"
+                >
+                  {{ getEstadoLabel(selectedOperation.estado) }}
+                </span>
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Fecha</span>
+              <span class="info-value">{{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Cliente/Proveedor</span>
+              <span class="info-value">{{ selectedOperation.clienteProveedor }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Tipo</span>
+              <span class="info-value">
+                <span class="badge-tipo">
+                  {{ selectedOperation.tipo === "client" ? "CLIENTE" : "PROVEEDOR" }}
+                </span>
+              </span>
+            </div>
+
+            <!-- Sección de Pesaje de Entrada -->
+            <div class="section-header">Pesaje de Entrada</div>
+            <div class="pesaje-card entrada-card">
+              <div class="pesaje-row">
+                <span class="pesaje-label">Fecha</span>
+                <span class="pesaje-value">{{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}</span>
+              </div>
+              <div class="pesaje-row">
+                <span class="pesaje-label">Peso Bruto</span>
+                <span class="pesaje-value peso-highlight">
+                  <span *ngIf="selectedOperation.pesoBruto">{{ selectedOperation.pesoBruto | number : "1.0-0" }} kg</span>
+                  <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty">—</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna derecha -->
+          <div class="modal-col">
+            <div class="info-row">
+              <span class="info-label">Tipo de Unidad</span>
+              <span class="info-value">
+                <span class="badge-unidad">{{ getUnidadLabel(selectedOperation.tipoUnidad) }}</span>
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Producto</span>
+              <span class="info-value">{{ selectedOperation.producto }}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Placas</span>
+              <span class="info-value">
+                <div class="placas-container">
+                  <span class="placa-badge">{{ selectedOperation.placas }}</span>
+                </div>
+              </span>
+            </div>
+
+            <!-- Sección de Pesaje de Salida -->
+            <div class="section-header">Pesaje de Salida</div>
+            <div class="pesaje-card salida-card">
+              <div class="pesaje-row">
+                <span class="pesaje-label">Fecha</span>
+                <span class="pesaje-value">
+                  <span *ngIf="selectedOperation.estado === 'SALIDA_REGISTRADA'">{{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}</span>
+                  <span *ngIf="selectedOperation.estado !== 'SALIDA_REGISTRADA'" class="peso-empty">—</span>
+                </span>
+              </div>
+              <div class="pesaje-row">
+                <span class="pesaje-label">Peso Bruto</span>
+                <span class="pesaje-value peso-highlight">
+                  <span *ngIf="selectedOperation.pesoBruto">{{ selectedOperation.pesoBruto | number : "1.0-0" }} kg</span>
+                  <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty">—</span>
+                </span>
+              </div>
+              <div class="pesaje-row">
+                <span class="pesaje-label">Peso Neto</span>
+                <span class="pesaje-value peso-highlight">
+                  <span *ngIf="selectedOperation.pesoNeto">{{ selectedOperation.pesoNeto | number : "1.0-0" }} kg</span>
+                  <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty">—</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Total Neto -->
+            <div class="total-neto-card">
+              <span class="total-label">Total Neto</span>
+              <span class="total-value">
+                <span *ngIf="selectedOperation.pesoNeto">{{ selectedOperation.pesoNeto | number : "1.0-0" }} kg</span>
+                <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty">—</span>
+              </span>
+            </div>
           </div>
         </div>
 
-        <div class="km-field">
-          <div class="km-label">Estado</div>
-          <div style="display: flex; gap: 8px; align-items: center">
-            <span
-              class="badge"
-              [class.green]="selectedOperation.estado !== 'ENTRADA_REGISTRADA'"
-              [class.blue]="selectedOperation.estado === 'ENTRADA_REGISTRADA'"
-            >
-              {{ getEstadoLabel(selectedOperation.estado) }}
-            </span>
-            <span
-              *ngIf="selectedOperation.fueEditado"
-              class="badge"
-              style="background: #fef2f2; border-color: #fecaca; color: #dc2626"
-            >
-              Editado
-            </span>
+        <!-- Checklist de Flujo -->
+        <div class="checklist-section">
+          <div class="section-header">Checklist de Flujo</div>
+          <div class="checklist-grid">
+            <div class="checklist-item checklist-item--completed">
+              <span class="checklist-icon">✓</span>
+              <span class="checklist-text">Placa del Tráiler</span>
+            </div>
+            <div class="checklist-item checklist-item--completed">
+              <span class="checklist-icon">✓</span>
+              <span class="checklist-text">Placa del Remolque</span>
+            </div>
+            <div class="checklist-item checklist-item--completed">
+              <span class="checklist-icon">✓</span>
+              <span class="checklist-text">Producto/Material</span>
+            </div>
+            <div class="checklist-item" [class.checklist-item--completed]="selectedOperation.clienteProveedor">
+              <span class="checklist-icon">{{ selectedOperation.clienteProveedor ? '✓' : '○' }}</span>
+              <span class="checklist-text">Nombre del Cliente</span>
+            </div>
+            <div class="checklist-item" [class.checklist-item--pending]="!selectedOperation.pesoNeto">
+              <span class="checklist-icon">{{ selectedOperation.pesoNeto ? '○' : '○' }}</span>
+              <span class="checklist-text">Foto de la Carga</span>
+            </div>
+            <div class="checklist-item" [class.checklist-item--pending]="!selectedOperation.pesoNeto">
+              <span class="checklist-icon">{{ selectedOperation.pesoNeto ? '○' : '○' }}</span>
+              <span class="checklist-text">Peso Neto</span>
+            </div>
           </div>
         </div>
 
-        <div class="km-field">
-          <div class="km-label">Fecha</div>
-          <div>{{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}</div>
-        </div>
-
-        <div class="km-divider"></div>
-
-        <!-- Cliente/Proveedor -->
-        <div class="km-field">
-          <div class="km-label">Cliente/Proveedor</div>
-          <div>{{ selectedOperation.clienteProveedor }}</div>
-        </div>
-
-        <div class="km-field">
-          <div class="km-label">Tipo</div>
-          <span class="badge blue">{{
-            selectedOperation.tipo === "client" ? "CLIENTE" : "PROVEEDOR"
-          }}</span>
-        </div>
-
-        <div class="km-divider"></div>
-
-        <!-- Vehículo y Producto -->
-        <div class="km-field">
-          <div class="km-label">Placas</div>
-          <div
-            style="
-              font-family: 'Courier New', monospace;
-              font-weight: 700;
-              background: #f3f4f6;
-              padding: 8px;
-              border-radius: 8px;
-              border: 1px solid #e5e7eb;
-            "
-          >
-            {{ selectedOperation.placas }}
+        <!-- Información de edición -->
+        <div class="edit-info" *ngIf="selectedOperation.fueEditado && selectedOperation.fechaEdicion">
+          <div class="edit-info-row">
+            <span class="edit-info-label">Creado por:</span>
+            <span class="edit-info-value">operador@kiriu.com</span>
           </div>
-        </div>
-
-        <div class="km-field">
-          <div class="km-label">Tipo de Unidad</div>
-          <span class="badge gray">{{
-            getUnidadLabel(selectedOperation.tipoUnidad)
-          }}</span>
-        </div>
-
-        <div class="km-field">
-          <div class="km-label">Producto</div>
-          <div>{{ selectedOperation.producto }}</div>
-        </div>
-
-        <div class="km-divider"></div>
-
-        <!-- Información de Pesaje -->
-        <div class="km-field">
-          <div class="km-label">Peso Bruto</div>
-          <div *ngIf="selectedOperation.pesoBruto" class="badge green">
-            {{ selectedOperation.pesoBruto | number : "1.0-0" }} kg
+          <div class="edit-info-row">
+            <span class="edit-info-label">Origen:</span>
+            <span class="edit-info-value">Báscula 02</span>
           </div>
-          <div *ngIf="!selectedOperation.pesoBruto" class="peso-empty">
-            No registrado
-          </div>
-        </div>
-
-        <div class="km-field">
-          <div class="km-label">Peso Neto</div>
-          <div *ngIf="selectedOperation.pesoNeto" class="badge green">
-            {{ selectedOperation.pesoNeto | number : "1.0-0" }} kg
-          </div>
-          <div *ngIf="!selectedOperation.pesoNeto" class="peso-empty">
-            No registrado
-          </div>
-        </div>
-
-        <div
-          class="km-field"
-          *ngIf="
-            getTaraWeight(
-              selectedOperation.pesoBruto,
-              selectedOperation.pesoNeto
-            )
-          "
-        >
-          <div class="km-label">Tara</div>
-          <div class="badge green">
-            {{
-              getTaraWeight(
-                selectedOperation.pesoBruto,
-                selectedOperation.pesoNeto
-              ) | number : "1.0-0"
-            }}
-            kg
-          </div>
-        </div>
-
-        <div
-          class="km-field"
-          *ngIf="selectedOperation.fueEditado && selectedOperation.fechaEdicion"
-        >
-          <div class="km-label">Fecha de Edición</div>
-          <div>
-            {{ selectedOperation.fechaEdicion | date : "dd/MM/yyyy HH:mm" }}
+          <div class="edit-info-row">
+            <span class="edit-info-label">Última edición:</span>
+            <span class="edit-info-value">{{ selectedOperation.fechaEdicion | date : "dd/MM/yyyy HH:mm" }}</span>
           </div>
         </div>
       </div>
-
-      <footer class="km-modal__footer">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          (click)="onCloseDetailModal()"
-        >
-          ✕ Cerrar
-        </button>
-      </footer>
     </section>
   </div>
 </div>
