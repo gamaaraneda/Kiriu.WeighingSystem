@@ -122,9 +122,7 @@ export class OperationSelectionComponent implements OnInit {
   }
 
   onQueries(): void {
-    console.log('Navegando a consultas...');
-    // TODO: Implementar navegación a consultas
-    alert('Funcionalidad de consultas en desarrollo');
+    this.router.navigate(['/weighing-query']);
   }
 
   onLogout(): void {

@@ -142,7 +142,7 @@ export class AdminDashboardComponent implements OnInit {
 
   // Header handlers
   onQueries(): void {
-    this.router.navigate(['/weighing/query']);
+    this.router.navigate(['/weighing-query']);
   }
 
   onLogout(): void {

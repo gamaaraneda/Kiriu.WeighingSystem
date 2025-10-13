@@ -504,7 +504,7 @@ export class RolesComponent implements OnInit {
 
   // Navigation methods
   onQueries(): void {
-    this.router.navigate(['/weighing/query']);
+    this.router.navigate(['/weighing-query']);
   }
 
   onLogout(): void {
