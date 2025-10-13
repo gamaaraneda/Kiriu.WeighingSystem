@@ -439,23 +439,23 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     if (!toastContainer) return;
 
     const toast = document.createElement('div');
-    toast.className = `toast toast-${severity}`;
+    toast.className = `toast toast--${severity}`;
 
     const icons = {
-      success: '✅',
-      error: '❌',
-      warn: '⚠️',
-      info: 'ℹ️',
+      success: '✓',
+      error: '✕',
+      warn: '!',
+      info: 'i',
     };
 
     toast.innerHTML = `
-      <div class="toast-content">
-        <div class="toast-icon">${icons[severity]}</div>
-        <div class="toast-text">
-          <div class="toast-summary">${summary}</div>
-          <div class="toast-detail">${detail}</div>
+      <div class="toast__body">
+        <div class="toast__icon">${icons[severity]}</div>
+        <div>
+          <div class="toast__title">${summary}</div>
+          <div class="toast__msg">${detail}</div>
         </div>
-        <button class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        <button class="toast__close" onclick="this.parentElement.parentElement.remove()">×</button>
       </div>
     `;
 
@@ -464,7 +464,10 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     // Auto-remove después de 5 segundos
     setTimeout(() => {
       if (toast.parentElement) {
-        toast.remove();
+        toast.style.animation = 'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
+        setTimeout(() => {
+          toast.remove();
+        }, 180);
       }
     }, 5000);
   }
