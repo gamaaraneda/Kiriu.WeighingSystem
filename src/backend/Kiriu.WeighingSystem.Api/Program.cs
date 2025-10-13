@@ -37,10 +37,9 @@ var app = builder.Build();
 Console.WriteLine("API starting - Database should be configured manually using the provided SQL script.");
 
 // Configure Middleware Pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseDevelopmentMiddlewares();
-}
+// Habilitar Swagger en todos los entornos (para pruebas de integración)
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // CORS debe ir primero - usar política que permite credenciales
 app.UseCors("AllowAngular");

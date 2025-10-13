@@ -3,4 +3,9 @@ export const environment = {
   apiUrl: 'https://tu-dominio-produccion.com/api',
   hubUrl: 'https://tu-dominio-produccion.com/hubs',
   apiTimeout: 30000,
+  cargoCamera: {
+    url: 'http://192.168.1.49/ISAPI/Streaming/channels/1/picture',
+    username: 'admin',
+    password: 'Admin123',
+  },
 };

@@ -21,7 +21,14 @@
       "Bash(git log:*)",
       "Bash(del nul)",
       "Bash(npm install:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(dotnet publish:*)",
+      "Bash(xcopy:*)",
+      "Bash(robocopy:*)",
+      "Bash(if not exist publishfrontend mkdir publishfrontend)",
+      "Bash(cmd:*)",
+      "Bash(powershell:*)",
+      "Bash(ng build:*)"
     ],
     "deny": [],
     "ask": []
