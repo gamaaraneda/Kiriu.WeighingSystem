@@ -9,15 +9,17 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { apiResponseInterceptor } from './core/interceptors/api-response.interceptor';
 import { tokenRefreshInterceptor } from './core/interceptors/token-refresh.interceptor';
+import { spinnerInterceptor } from './core/interceptors/spinner-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(
       withInterceptors([
-        tokenRefreshInterceptor, // Primero verificar si necesita refresh
-        authInterceptor, // Luego agregar el token
-        apiResponseInterceptor, // Finalmente procesar la respuesta
+        spinnerInterceptor, // Primero mostrar spinner
+        tokenRefreshInterceptor, // Verificar si necesita refresh
+        authInterceptor, // Agregar el token
+        apiResponseInterceptor, // Procesar la respuesta
       ])
     ),
     provideAnimations(),

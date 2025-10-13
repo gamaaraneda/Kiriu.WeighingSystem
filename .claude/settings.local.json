@@ -28,7 +28,11 @@
       "Bash(if not exist publishfrontend mkdir publishfrontend)",
       "Bash(cmd:*)",
       "Bash(powershell:*)",
-      "Bash(ng build:*)"
+      "Bash(ng build:*)",
+      "Bash(ng generate service:*)",
+      "Bash(ng generate interceptor:*)",
+      "Bash(ng generate component:*)",
+      "Bash(del srcappcoreservicesspinner.ts srcappsharedcomponentsglobal-spinnerglobal-spinner.ts)"
     ],
     "deny": [],
     "ask": []
