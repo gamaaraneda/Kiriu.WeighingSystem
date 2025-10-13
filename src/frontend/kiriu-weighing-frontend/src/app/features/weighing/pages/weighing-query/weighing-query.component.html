@@ -43,17 +43,6 @@
           <h1>Consulta y Reimpresión</h1>
           <p>Buscar y gestionar registros existentes</p>
         </div>
-        <div class="cta">
-          <button
-            *appHasPermission="'REPORTES.EXPORT'"
-            type="button"
-            class="btn-success"
-            [disabled]="!queryResults.length || isLoading"
-            (click)="onExportExcel()"
-          >
-            ⬇️ Exportar Excel
-          </button>
-        </div>
       </section>
 
       <!-- Filtros de búsqueda -->
@@ -157,27 +146,40 @@
 
       <!-- Resultados -->
       <div *appHasPermission="'REPORTES.READ'" class="results-section">
-        <div class="results-head">
-          <div class="results-title">📊 Resultados</div>
-          <div class="results-count">({{ totalResults }})</div>
-        </div>
-
         <!-- Tabla de resultados -->
         <div *ngIf="queryResults.length > 0" class="table-wrap">
+          <!-- Toolbar encima de la tabla -->
+          <div class="table-toolbar">
+            <div class="toolbar-left">
+              <span class="toolbar-title">📊 Resultados</span>
+              <span class="toolbar-count">({{ totalResults }})</span>
+            </div>
+            <div class="toolbar-right">
+              <button
+                *appHasPermission="'REPORTES.EXPORT'"
+                type="button"
+                class="btn-export"
+                [disabled]="!queryResults.length || isLoading"
+                (click)="onExportExcel()"
+              >
+                ⬇️ Exportar Excel
+              </button>
+            </div>
+          </div>
           <div class="table-container">
             <table class="results-table">
               <thead>
                 <tr>
-                  <th>Folio</th>
-                  <th>Fecha</th>
-                  <th>Placas</th>
-                  <th>Cliente/Proveedor</th>
-                  <th>Producto</th>
-                  <th>Tipo</th>
-                  <th>Peso Bruto</th>
-                  <th>Peso Neto</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
+                  <th class="col-folio">Folio</th>
+                  <th class="col-fecha">Fecha</th>
+                  <th class="col-placas">Placas</th>
+                  <th class="col-cliente">Cliente/Proveedor</th>
+                  <th class="col-producto">Producto</th>
+                  <th class="col-tipo">Tipo</th>
+                  <th class="col-peso">Peso Bruto</th>
+                  <th class="col-peso">Peso Neto</th>
+                  <th class="col-estado">Estado</th>
+                  <th class="col-acciones">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,16 +187,16 @@
                   *ngFor="let operation of queryResults"
                   [class.edited-row]="operation.fueEditado"
                 >
-                  <td>
-                    <a href="#" class="pill-link">{{ operation.folio }}</a>
+                  <td class="col-folio">
+                    <a href="#" class="pill-link" (click)="$event.preventDefault(); onViewDetail(operation)">{{ operation.folio }}</a>
                   </td>
-                  <td>{{ operation.fecha | date : "dd/MM/yyyy" }}</td>
-                  <td>
+                  <td class="col-fecha">{{ operation.fecha | date : "dd/MM/yyyy" }}</td>
+                  <td class="col-placas">
                     <span class="badge gray">{{ operation.placas }}</span>
                   </td>
-                  <td>{{ operation.clienteProveedor }}</td>
-                  <td>{{ operation.producto }}</td>
-                  <td>
+                  <td class="col-cliente">{{ operation.clienteProveedor }}</td>
+                  <td class="col-producto">{{ operation.producto }}</td>
+                  <td class="col-tipo">
                     <span class="badge blue">{{
                       operation.tipo === "client" ? "CLIENTE" : "PROVEEDOR"
                     }}</span>
@@ -202,48 +204,50 @@
                       {{ getUnidadLabel(operation.tipoUnidad) }}
                     </div>
                   </td>
-                  <td>
-                    <span *ngIf="operation.pesoBruto" class="badge green">
+                  <td class="col-peso">
+                    <span *ngIf="operation.pesoBruto" class="badge badge-peso green">
                       {{ operation.pesoBruto | number : "1.0-0" }} kg
                     </span>
                     <span *ngIf="!operation.pesoBruto" class="peso-empty"
                       >-</span
                     >
                   </td>
-                  <td>
-                    <span *ngIf="operation.pesoNeto" class="badge green">
+                  <td class="col-peso">
+                    <span *ngIf="operation.pesoNeto" class="badge badge-peso green">
                       {{ operation.pesoNeto | number : "1.0-0" }} kg
                     </span>
                     <span *ngIf="!operation.pesoNeto" class="peso-empty"
                       >-</span
                     >
                   </td>
-                  <td>
+                  <td class="col-estado">
                     <span
-                      class="badge"
+                      class="badge badge-estado"
                       [class.green]="operation.estado !== 'ENTRADA_REGISTRADA'"
                       [class.blue]="operation.estado === 'ENTRADA_REGISTRADA'"
                     >
                       {{ getEstadoLabel(operation.estado) }}
                     </span>
                   </td>
-                  <td class="actions-cell">
-                    <button
-                      class="btn-mini"
-                      title="Ver"
-                      (click)="onViewDetail(operation)"
-                    >
-                      👁
-                    </button>
-                    <button
-                      class="btn-mini"
-                      title="Reimprimir"
-                      (click)="onReprint(operation)"
-                      [disabled]="!operation.puedeReimprimir || isLoading"
-                    >
-                      🖨
-                    </button>
-                    <button class="btn-mini" title="Opciones">⚙</button>
+                  <td class="col-acciones">
+                    <div class="actions-group">
+                      <button
+                        class="btn-mini"
+                        title="Ver"
+                        (click)="onViewDetail(operation)"
+                      >
+                        👁
+                      </button>
+                      <button
+                        class="btn-mini"
+                        title="Reimprimir"
+                        (click)="onReprint(operation)"
+                        [disabled]="!operation.puedeReimprimir || isLoading"
+                      >
+                        🖨
+                      </button>
+                      <button class="btn-mini" title="Opciones">⚙</button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -258,7 +262,7 @@
             </div>
             <div class="pagination-controls">
               <button
-                class="btn-mini"
+                class="btn-page"
                 title="Primera página"
                 [disabled]="currentPage === 1"
                 (click)="goToPage(1)"
@@ -266,18 +270,20 @@
                 «
               </button>
               <button
-                class="btn-mini"
+                class="btn-page"
                 title="Página anterior"
                 [disabled]="currentPage === 1"
                 (click)="goToPage(currentPage - 1)"
               >
                 ‹
               </button>
-              <span class="page-info"
-                >Página {{ currentPage }} de {{ getTotalPages() }}</span
-              >
+              <button class="btn-page btn-page--current" disabled>
+                {{ currentPage }}
+              </button>
+              <span class="page-separator">de</span>
+              <span class="page-total">{{ getTotalPages() }}</span>
               <button
-                class="btn-mini"
+                class="btn-page"
                 title="Página siguiente"
                 [disabled]="currentPage === getTotalPages()"
                 (click)="goToPage(currentPage + 1)"
@@ -285,7 +291,7 @@
                 ›
               </button>
               <button
-                class="btn-mini"
+                class="btn-page"
                 title="Última página"
                 [disabled]="currentPage === getTotalPages()"
                 (click)="goToPage(getTotalPages())"
