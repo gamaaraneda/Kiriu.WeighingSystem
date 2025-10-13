@@ -33,6 +33,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { ToastModule } from 'primeng/toast';
 import { WeightData, PhotoData } from '../../types/weighing.types';
 import { environment } from '../../../../../environments/environment';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-weighing-form',
@@ -61,6 +62,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private anprService = inject(AnprService);
   private cargoCameraService = inject(CargoCameraService);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
 
   unitType = '';
   operationType = '';
@@ -1626,8 +1628,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   onLogout(): void {
-    // TODO: Implementar logout
-    console.log('Logout...');
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Error en logout:', error);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   // Getters para validaciones

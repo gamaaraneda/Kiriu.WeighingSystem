@@ -4,6 +4,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { WeighingService } from '../../services/weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 export interface OperationType {
   id: 'entry' | 'exit';
@@ -28,6 +29,7 @@ export class OperationSelectionComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private weighingService = inject(WeighingService);
   private weighingFlowService = inject(WeighingFlowService);
+  private authService = inject(AuthService);
 
   unitType = '';
   unitTypeTitle = '';
@@ -126,7 +128,14 @@ export class OperationSelectionComponent implements OnInit {
   }
 
   onLogout(): void {
-    // TODO: Implementar logout
-    console.log('Logout...');
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Error en logout:', error);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }

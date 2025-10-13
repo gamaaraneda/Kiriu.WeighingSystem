@@ -26,6 +26,7 @@ import { AnprService, AnprEvent } from '../../services/anpr.service';
 import { PdfGeneratorService, WeighingReceiptData } from '../../services/pdf-generator.service';
 import { CargoCameraService } from '../../services/cargo-camera.service';
 import { environment } from '../../../../../environments/environment';
+import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-weighing-exit-form',
@@ -52,6 +53,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private pdfGeneratorService = inject(PdfGeneratorService);
   private cargoCameraService = inject(CargoCameraService);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
 
   unitType = '';
   unitTypeTitle = '';
@@ -1262,8 +1264,15 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    * Maneja clic en logout
    */
   onLogout(): void {
-    // Implementar logout
-    this.messageService.showInfo({ message: 'Cerrando sesión...' });
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Error en logout:', error);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   /**

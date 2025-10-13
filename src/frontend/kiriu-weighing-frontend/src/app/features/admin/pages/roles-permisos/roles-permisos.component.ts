@@ -28,6 +28,7 @@ import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/br
 
 // Services and Types
 import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import {
   RolDto,
   ModuloDto,
@@ -82,7 +83,8 @@ export class RolesPermisosComponent implements OnInit {
     private adminService: AdminService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -308,6 +310,14 @@ export class RolesPermisosComponent implements OnInit {
   }
 
   onLogout(): void {
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Error en logout:', error);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }

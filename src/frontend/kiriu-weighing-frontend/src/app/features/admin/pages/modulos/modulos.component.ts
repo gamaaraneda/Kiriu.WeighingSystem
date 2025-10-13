@@ -31,6 +31,7 @@ import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/br
 
 // Services and Types
 import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import {
   ModuloDto,
   CreateModuloRequest,
@@ -140,7 +141,8 @@ export class ModulosComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService
   ) {
     this.initializeForm();
   }
@@ -557,7 +559,15 @@ export class ModulosComponent implements OnInit {
   }
 
   onLogout(): void {
-    this.router.navigate(['/auth/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Error en logout:', error);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   onGoBack(): void {

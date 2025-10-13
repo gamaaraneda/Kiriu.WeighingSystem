@@ -16,6 +16,7 @@ import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/br
 
 // Services and Types
 import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { UsuarioDto, RolDto, PermisoDto, ModuloDto, AdminStatsDto } from '../../types/admin.types';
 
 @Component({
@@ -43,7 +44,8 @@ export class AdminDashboardComponent implements OnInit {
   constructor(
     private adminService: AdminService,
     private router: Router,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -146,8 +148,15 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   onLogout(): void {
-    // Handle logout logic
-    this.router.navigate(['/auth/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Error en logout:', error);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   onGoBack(): void {
