@@ -60,7 +60,13 @@ public class WeighingQueryService : IWeighingQueryService
                 Estado = op.Status,
                 FueEditado = op.FueEditado,
                 FechaEdicion = op.FechaUltimaEdicion,
-                PuedeReimprimir = op.Status == "SALIDA_REGISTRADA"
+                PuedeReimprimir = op.Status == "SALIDA_REGISTRADA",
+                Photos = op.Photos?.Select(p => new WeighingPhotoDto
+                {
+                    Id = p.Id.ToString(),
+                    PhotoType = p.PhotoType,
+                    Description = p.Description
+                }).ToList() ?? new List<WeighingPhotoDto>()
             }).ToList();
 
             var response = new WeighingQueryResponseDto

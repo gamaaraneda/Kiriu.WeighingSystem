@@ -14,6 +14,12 @@ export interface WeighingQueryFilters {
   size?: number;
 }
 
+export interface WeighingPhotoDto {
+  id: string;
+  photoType: string;
+  description?: string;
+}
+
 export interface WeighingQueryResult {
   id: string;
   folio: string;
@@ -29,6 +35,7 @@ export interface WeighingQueryResult {
   fueEditado: boolean;
   fechaEdicion?: Date;
   puedeReimprimir: boolean;
+  photos: WeighingPhotoDto[];
 }
 
 export interface WeighingQueryResponse {

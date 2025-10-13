@@ -18,6 +18,7 @@ import {
   PdfGeneratorService,
   WeighingReceiptData,
 } from '../../services/pdf-generator.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-weighing-query',
@@ -47,6 +48,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   // Modal state
   showDetailModal = false;
   selectedOperation: WeighingQueryResult | null = null;
+  photosExpanded = false;
 
   // Permission state
   hasReportsPermission = false;
@@ -275,8 +277,54 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   onCloseDetailModal(): void {
     this.showDetailModal = false;
     this.selectedOperation = null;
+    this.photosExpanded = false;
     // Desbloquear scroll del body
     document.body.classList.remove('km-scroll-lock');
+  }
+
+  togglePhotosExpanded(): void {
+    this.photosExpanded = !this.photosExpanded;
+  }
+
+  getPhotosCount(): number {
+    if (!this.selectedOperation || !this.selectedOperation.photos) return 0;
+    return this.selectedOperation.photos.length;
+  }
+
+  getPhotosByType(photoType: string): any[] {
+    if (!this.selectedOperation || !this.selectedOperation.photos) return [];
+    return this.selectedOperation.photos.filter(p => p.photoType === photoType);
+  }
+
+  getPhotoUrl(photoId: string): string {
+    // URL del endpoint de fotos del backend usando el ID de la foto
+    return `${environment.apiUrl}/weighing/photos/${photoId}`;
+  }
+
+  hasPhotoType(photoType: string): boolean {
+    if (!this.selectedOperation || !this.selectedOperation.photos) return false;
+    return this.selectedOperation.photos.some(p => p.photoType === photoType);
+  }
+
+  getPhotoLabel(photoType: string): string {
+    const labels: { [key: string]: string } = {
+      'trailerPlate': 'Placa del Tráiler',
+      'trailerPlate2': 'Placa del Remolque',
+      'cargo': 'Carga',
+      'cargoState': 'Estado de Carga',
+      'containerPlate': 'Placa del Contenedor',
+      'remolque1Plate': 'Placa Remolque 1',
+      'remolque2Plate': 'Placa Remolque 2',
+      'cargoRemolque1': 'Carga Remolque 1',
+      'cargoRemolque2': 'Carga Remolque 2'
+    };
+    return labels[photoType] || photoType;
+  }
+
+  onPhotoError(event: Event): void {
+    // Si la foto no existe, mostrar placeholder
+    const img = event.target as HTMLImageElement;
+    img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"%3E%3Crect width="200" height="150" fill="%23f1f5f9"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%2394a3b8"%3ENo disponible%3C/text%3E%3C/svg%3E';
   }
 
   async onReprint(operation: WeighingQueryResult): Promise<void> {

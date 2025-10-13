@@ -436,6 +436,9 @@
               </span>
             </div>
 
+            <!-- Espaciador para alinear con columna izquierda -->
+            <div style="height: 68px;"></div>
+
             <!-- Sección de Pesaje de Salida -->
             <div class="section-header">Pesaje de Salida</div>
             <div class="pesaje-card salida-card">
@@ -453,13 +456,6 @@
                   <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty">—</span>
                 </span>
               </div>
-              <div class="pesaje-row">
-                <span class="pesaje-label">Peso Neto</span>
-                <span class="pesaje-value peso-highlight">
-                  <span *ngIf="selectedOperation.pesoNeto">{{ selectedOperation.pesoNeto | number : "1.0-0" }} kg</span>
-                  <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty">—</span>
-                </span>
-              </div>
             </div>
 
             <!-- Total Neto -->
@@ -473,33 +469,35 @@
           </div>
         </div>
 
-        <!-- Checklist de Flujo -->
-        <div class="checklist-section">
-          <div class="section-header">Checklist de Flujo</div>
-          <div class="checklist-grid">
-            <div class="checklist-item checklist-item--completed">
-              <span class="checklist-icon">✓</span>
-              <span class="checklist-text">Placa del Tráiler</span>
+        <!-- Sección de Fotos (Expandible) -->
+        <div class="photos-section">
+          <button
+            class="photos-toggle"
+            type="button"
+            (click)="togglePhotosExpanded()"
+          >
+            <span class="photos-toggle-icon">{{ photosExpanded ? '▼' : '▶' }}</span>
+            <span class="photos-toggle-text">Fotos de Placas y Carga</span>
+            <span class="photos-toggle-badge">{{ getPhotosCount() }}</span>
+          </button>
+
+          <div class="photos-content" [class.photos-content--expanded]="photosExpanded">
+            <div class="photos-grid" *ngIf="selectedOperation && selectedOperation.photos && selectedOperation.photos.length > 0">
+              <!-- Iterar sobre todas las fotos disponibles -->
+              <div class="photo-item" *ngFor="let photo of selectedOperation.photos">
+                <div class="photo-label">{{ getPhotoLabel(photo.photoType) }}</div>
+                <div class="photo-frame">
+                  <img
+                    [src]="getPhotoUrl(photo.id)"
+                    [alt]="photo.description || getPhotoLabel(photo.photoType)"
+                    class="photo-img"
+                    (error)="onPhotoError($event)"
+                  />
+                </div>
+              </div>
             </div>
-            <div class="checklist-item checklist-item--completed">
-              <span class="checklist-icon">✓</span>
-              <span class="checklist-text">Placa del Remolque</span>
-            </div>
-            <div class="checklist-item checklist-item--completed">
-              <span class="checklist-icon">✓</span>
-              <span class="checklist-text">Producto/Material</span>
-            </div>
-            <div class="checklist-item" [class.checklist-item--completed]="selectedOperation.clienteProveedor">
-              <span class="checklist-icon">{{ selectedOperation.clienteProveedor ? '✓' : '○' }}</span>
-              <span class="checklist-text">Nombre del Cliente</span>
-            </div>
-            <div class="checklist-item" [class.checklist-item--pending]="!selectedOperation.pesoNeto">
-              <span class="checklist-icon">{{ selectedOperation.pesoNeto ? '○' : '○' }}</span>
-              <span class="checklist-text">Foto de la Carga</span>
-            </div>
-            <div class="checklist-item" [class.checklist-item--pending]="!selectedOperation.pesoNeto">
-              <span class="checklist-icon">{{ selectedOperation.pesoNeto ? '○' : '○' }}</span>
-              <span class="checklist-text">Peso Neto</span>
+            <div class="no-photos" *ngIf="!selectedOperation || !selectedOperation.photos || selectedOperation.photos.length === 0">
+              <p class="no-photos-text">No hay fotos disponibles para esta operación</p>
             </div>
           </div>
         </div>
