@@ -67,10 +67,16 @@ export class WeighingQueryService {
     let params = new HttpParams();
 
     if (filters.fechaDesde) {
-      params = params.set('fechaDesde', filters.fechaDesde.toISOString());
+      const fechaDesde = typeof filters.fechaDesde === 'string'
+        ? filters.fechaDesde
+        : filters.fechaDesde.toISOString();
+      params = params.set('fechaDesde', fechaDesde);
     }
     if (filters.fechaHasta) {
-      params = params.set('fechaHasta', filters.fechaHasta.toISOString());
+      const fechaHasta = typeof filters.fechaHasta === 'string'
+        ? filters.fechaHasta
+        : filters.fechaHasta.toISOString();
+      params = params.set('fechaHasta', fechaHasta);
     }
     if (filters.folio) {
       params = params.set('folio', filters.folio);

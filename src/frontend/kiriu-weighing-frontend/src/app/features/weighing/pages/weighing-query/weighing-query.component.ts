@@ -52,7 +52,6 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   hasReportsPermission = false;
 
   estadoOptions = [
-    { label: 'Todos', value: '' },
     { label: 'Entrada', value: 'ENTRADA_REGISTRADA' },
     { label: 'Salida', value: 'SALIDA_REGISTRADA' },
   ];
@@ -118,32 +117,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   }
 
   private setupFormSubscriptions(): void {
-    // Auto-búsqueda con debounce en campos de texto
-    this.filtersForm
-      .get('folio')
-      ?.valueChanges.pipe(
-        debounceTime(500),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
-        if (this.hasSearched) {
-          this.onSearch();
-        }
-      });
-
-    this.filtersForm
-      .get('placas')
-      ?.valueChanges.pipe(
-        debounceTime(500),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
-        if (this.hasSearched) {
-          this.onSearch();
-        }
-      });
+    // No hay suscripciones automáticas - la búsqueda solo se dispara con el botón
   }
 
   onSearch(): void {
