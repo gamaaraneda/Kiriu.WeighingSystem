@@ -38,27 +38,6 @@
         </div>
       </section>
 
-      <!-- Estadísticas de permisos por tipo -->
-      <section class="stats-section">
-        <div class="stats-card">
-          <div class="stats-grid">
-            <div
-              *ngFor="let stat of permissionStats"
-              class="stat-item"
-              [class]="'stat-' + stat.tipo.toLowerCase()"
-            >
-              <div class="stat-icon">
-                {{ getIconEmojiForPermissionType(stat.tipo) }}
-              </div>
-              <div class="stat-details">
-                <span class="stat-count">{{ stat.count }}</span>
-                <span class="stat-label">{{ getPermissionTypeLabel(stat.tipo) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- Filtros de búsqueda -->
       <section class="filters">
         <form>
