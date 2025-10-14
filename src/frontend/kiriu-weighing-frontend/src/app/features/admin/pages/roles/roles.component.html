@@ -1,6 +1,6 @@
 <div class="roles-container">
   <!-- Toast para notificaciones -->
-  <p-toast key="top-right" position="top-right"></p-toast>
+  <div class="toast-stack" id="toast-container"></div>
 
   <!-- Header -->
   <app-header
@@ -15,485 +15,432 @@
       <app-breadcrumb></app-breadcrumb>
 
       <!-- Header de la página -->
-      <div class="page-header">
-        <div class="header-left">
-          <p-button
-            type="button"
-            severity="secondary"
-            outlined="true"
-            label="Regresar"
-            icon="pi pi-arrow-left"
-            (click)="onGoBack()"
-            styleClass="back-btn"
-          ></p-button>
-          <div class="page-title-group">
-            <h1 class="page-title">Gestión de Roles</h1>
-            <p class="page-subtitle">Definir y configurar roles de usuario</p>
-          </div>
+      <section class="hero">
+        <div>
+          <h1>Gestión de Roles</h1>
+          <p>Definir y configurar roles de usuario</p>
         </div>
-        <div class="header-right">
-          <p-button
+        <div class="hero-actions">
+          <button
             type="button"
-            severity="primary"
-            label="Nuevo Rol"
-            icon="pi pi-plus"
+            class="btn btn-success"
             (click)="openCreateModal()"
-            styleClass="create-btn"
-          ></p-button>
+          >
+            + Nuevo Rol
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            (click)="onGoBack()"
+          >
+            ← Regresar
+          </button>
         </div>
-      </div>
+      </section>
 
       <!-- Filtros de búsqueda -->
-      <p-card styleClass="search-filters-card">
-        <ng-template pTemplate="header">
-          <div class="filters-header">
-            <i
-              class="pi pi-filter"
-              style="margin-right: 0.5rem; color: white"
-            ></i>
-            <span class="filters-title">Filtros de Búsqueda</span>
-          </div>
-        </ng-template>
-        <div class="filters-form">
+      <section class="filters">
+        <form>
           <div class="filters-grid">
-            <div class="filter-group">
-              <label for="searchName" class="filter-label"
-                >Nombre del Rol</label
-              >
+            <div>
+              <label class="label">Nombre del Rol</label>
               <input
-                pInputText
                 type="text"
                 id="searchName"
                 [(ngModel)]="searchFilters.search"
+                [ngModelOptions]="{standalone: true}"
                 placeholder="Buscar por nombre..."
+                class="input"
+                (keyup.enter)="searchRoles()"
               />
             </div>
 
-            <div class="filter-group">
-              <label for="estadoFilter" class="filter-label">Estado</label>
-              <p-select
+            <div>
+              <label class="label">Estado</label>
+              <select
                 id="estadoFilter"
                 [(ngModel)]="searchFilters.activo"
-                [options]="estadoOptions"
-                placeholder="Todos los estados"
-                optionLabel="label"
-                optionValue="value"
-                [showClear]="true"
-              ></p-select>
+                [ngModelOptions]="{standalone: true}"
+                class="input select-input"
+              >
+                <option value="">Todos los estados</option>
+                <option *ngFor="let option of estadoOptions" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
           </div>
 
           <div class="filters-actions">
-            <p-button
+            <button
               type="button"
-              severity="primary"
-              label="Buscar"
-              icon="pi pi-search"
-              (click)="searchRoles()"
-              [loading]="isSearching"
-              styleClass="search-btn"
-            ></p-button>
-            <p-button
-              type="button"
-              severity="secondary"
-              outlined="true"
-              label="Limpiar"
-              icon="pi pi-times"
+              class="btn btn-ghost"
               (click)="clearFilters()"
-              styleClass="clear-btn"
-            ></p-button>
+            >
+              ✕ Limpiar
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="isSearching"
+              (click)="searchRoles()"
+            >
+              <span *ngIf="isSearching" class="spinner"></span>
+              {{ isSearching ? "Buscando..." : "🔍 Buscar" }}
+            </button>
           </div>
-        </div>
-      </p-card>
+        </form>
+      </section>
 
-      <!-- Tabla de roles -->
-      <p-card styleClass="results-card">
-        <ng-template pTemplate="header">
-          <div class="results-header">
-            <h2 class="results-title">
-              Roles ({{ searchResult?.totalCount || filteredRoles.length }})
-            </h2>
-            <div class="pagination-info" *ngIf="searchResult">
-              <span
-                >Página {{ searchResult.pageNumber }} de
-                {{ searchResult.totalPages }}</span
-              >
+      <!-- Resultados -->
+      <div class="results-section">
+        <div class="table-wrap">
+          <!-- Toolbar -->
+          <div class="table-toolbar">
+            <div class="toolbar-left">
+              <span class="toolbar-title">🛡️ Roles</span>
+              <span class="toolbar-count">({{ searchResult?.totalCount || filteredRoles.length }} registros)</span>
             </div>
           </div>
-        </ng-template>
 
-        <p-table
-          [value]="filteredRoles"
-          [paginator]="true"
-          [rows]="pageSize"
-          [loading]="isLoading"
-          [scrollable]="true"
-          scrollHeight="500px"
-          styleClass="p-datatable-striped p-datatable-gridlines"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} roles"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Rol</th>
-              <th>Descripción</th>
-              <th>Usuarios Asignados</th>
-              <th>Fecha Creación</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-rol>
-            <tr [class.inactive-role]="!rol.activo">
-              <td>
-                <div class="role-cell">
-                  <div class="role-icon">
-                    <i class="pi pi-shield"></i>
-                  </div>
-                  <div class="role-info">
-                    <span class="role-name">{{ rol.nombre }}</span>
-                  </div>
+          <!-- Tabla -->
+          <div class="table-container">
+            <table class="results-table" *ngIf="filteredRoles.length > 0; else emptyState">
+              <thead>
+                <tr>
+                  <th>Rol</th>
+                  <th>Descripción</th>
+                  <th>Usuarios</th>
+                  <th>Fecha Creación</th>
+                  <th>Estado</th>
+                  <th style="text-align: center;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let rol of filteredRoles" [class.inactive-role]="!rol.activo">
+                  <td>
+                    <div class="role-cell">
+                      <div class="role-icon">🛡️</div>
+                      <div class="role-info">
+                        <span class="role-name">{{ rol.nombre }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="role-description" [title]="rol.descripcion">
+                      {{ rol.descripcion || "Sin descripción" }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [class.blue]="rol.usuariosAsignados > 0" [class.gray]="rol.usuariosAsignados === 0">
+                      👥 {{ rol.usuariosAsignados }}
+                    </span>
+                  </td>
+                  <td>{{ rol.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}</td>
+                  <td>
+                    <span class="badge badge-estado" [class.green]="rol.activo" [class.red]="!rol.activo">
+                      {{ rol.activo ? "Activo" : "Inactivo" }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="actions-group">
+                      <button
+                        type="button"
+                        class="btn-mini"
+                        (click)="viewRolePermissions(rol)"
+                        title="Ver permisos"
+                      >
+                        👁️
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-mini"
+                        (click)="openEditModal(rol)"
+                        title="Editar rol"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-mini btn-danger"
+                        *ngIf="rol.activo"
+                        [disabled]="rol.usuariosAsignados > 0"
+                        (click)="confirmDeactivate(rol)"
+                        [title]="rol.usuariosAsignados > 0 ? 'No se puede desactivar: tiene usuarios asignados' : 'Desactivar rol'"
+                      >
+                        🗑️
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-mini btn-success"
+                        *ngIf="!rol.activo"
+                        (click)="confirmReactivate(rol)"
+                        title="Reactivar rol"
+                      >
+                        ✓
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <ng-template #emptyState>
+              <div class="empty-state-card">
+                <div class="empty-icon">🛡️</div>
+                <div class="empty-text">
+                  <p class="empty-title">No se encontraron roles</p>
+                  <p class="empty-subtitle">Crea un nuevo rol para comenzar</p>
                 </div>
-              </td>
-              <td>
-                <span class="role-description" [title]="rol.descripcion">
-                  {{ rol.descripcion || "Sin descripción" }}
-                </span>
-              </td>
-              <td>
-                <div class="users-count">
-                  <p-tag
-                    [value]="rol.usuariosAsignados.toString()"
-                    [severity]="
-                      rol.usuariosAsignados > 0 ? 'info' : 'secondary'
-                    "
-                    icon="pi pi-users"
-                  ></p-tag>
-                </div>
-              </td>
-              <td>{{ rol.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}</td>
-              <td>
-                <p-tag
-                  [value]="rol.activo ? 'Activo' : 'Inactivo'"
-                  [severity]="rol.activo ? 'success' : 'danger'"
-                ></p-tag>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <p-button
-                    type="button"
-                    severity="info"
-                    outlined="true"
-                    size="small"
-                    icon="pi pi-eye"
-                    (click)="viewRolePermissions(rol)"
-                    pTooltip="Ver permisos"
-                    tooltipPosition="top"
-                    styleClass="action-btn view-btn"
-                  ></p-button>
-                  <p-button
-                    type="button"
-                    severity="help"
-                    outlined="true"
-                    size="small"
-                    icon="pi pi-pencil"
-                    (click)="openEditModal(rol)"
-                    pTooltip="Editar rol"
-                    tooltipPosition="top"
-                    styleClass="action-btn edit-btn"
-                  ></p-button>
+              </div>
+            </ng-template>
+          </div>
 
-                  <!-- Botón de desactivar para roles activos -->
-                  <p-button
-                    type="button"
-                    severity="danger"
-                    outlined="true"
-                    size="small"
-                    icon="pi pi-trash"
-                    *ngIf="rol.activo"
-                    [disabled]="rol.usuariosAsignados > 0"
-                    (click)="confirmDeactivate(rol)"
-                    pTooltip="Desactivar rol"
-                    tooltipPosition="top"
-                    styleClass="action-btn delete-btn"
-                  ></p-button>
-
-                  <!-- Botón de reactivar para roles inactivos -->
-                  <p-button
-                    type="button"
-                    severity="success"
-                    outlined="true"
-                    size="small"
-                    icon="pi pi-check"
-                    *ngIf="!rol.activo"
-                    (click)="confirmReactivate(rol)"
-                    pTooltip="Reactivar rol"
-                    tooltipPosition="top"
-                    styleClass="action-btn reactivate-btn"
-                  ></p-button>
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="6" class="empty-message">
-                <div class="empty-state">
-                  <div class="empty-icon">🛡️</div>
-                  <div class="empty-text">
-                    <p class="empty-title">No se encontraron roles</p>
-                    <p class="empty-subtitle">
-                      Crea un nuevo rol para comenzar
-                    </p>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-
-        <!-- Controles de paginación personalizados -->
-        <div
-          class="custom-pagination"
-          *ngIf="searchResult && searchResult.totalPages > 1"
-        >
-          <p-button
-            type="button"
-            severity="secondary"
-            outlined="true"
-            icon="pi pi-angle-left"
-            [disabled]="!searchResult.hasPreviousPage"
-            (click)="goToPreviousPage()"
-            pTooltip="Página anterior"
-          ></p-button>
-
-          <span class="pagination-text">
-            Página {{ searchResult.pageNumber }} de
-            {{ searchResult.totalPages }}
-          </span>
-
-          <p-button
-            type="button"
-            severity="secondary"
-            outlined="true"
-            icon="pi pi-angle-right"
-            [disabled]="!searchResult.hasNextPage"
-            (click)="goToNextPage()"
-            pTooltip="Página siguiente"
-          ></p-button>
+          <!-- Paginación -->
+          <div class="pagination" *ngIf="searchResult && searchResult.totalPages > 1">
+            <div class="pagination-info">
+              Mostrando {{ (searchResult.pageNumber - 1) * pageSize + 1 }}
+              a {{ Math.min(searchResult.pageNumber * pageSize, searchResult.totalCount) }}
+              de {{ searchResult.totalCount }} roles
+            </div>
+            <div class="pagination-controls">
+              <button
+                type="button"
+                class="btn-page"
+                [disabled]="searchResult.pageNumber === 1"
+                (click)="goToPage(1)"
+                title="Primera página"
+              >
+                ⟪
+              </button>
+              <button
+                type="button"
+                class="btn-page"
+                [disabled]="!searchResult.hasPreviousPage"
+                (click)="goToPreviousPage()"
+                title="Anterior"
+              >
+                ‹
+              </button>
+              <span class="page-separator">
+                Página <span class="page-total">{{ searchResult.pageNumber }}</span> de {{ searchResult.totalPages }}
+              </span>
+              <button
+                type="button"
+                class="btn-page"
+                [disabled]="!searchResult.hasNextPage"
+                (click)="goToNextPage()"
+                title="Siguiente"
+              >
+                ›
+              </button>
+              <button
+                type="button"
+                class="btn-page"
+                [disabled]="searchResult.pageNumber === searchResult.totalPages"
+                (click)="goToPage(searchResult.totalPages)"
+                title="Última página"
+              >
+                ⟫
+              </button>
+            </div>
+          </div>
         </div>
-      </p-card>
+      </div>
     </div>
   </main>
 
   <!-- Modal de creación/edición de rol -->
-  <p-dialog
-    [header]="selectedRole ? 'Editar Rol' : 'Nuevo Rol'"
-    [(visible)]="showModal"
-    [modal]="true"
-    [resizable]="false"
-    [draggable]="false"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    styleClass="rol-modal"
-    [style]="{ width: '90vw', maxWidth: '600px' }"
-  >
-    <form [formGroup]="rolForm" (ngSubmit)="onSubmit()" class="rol-form">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="nombre" class="form-label">Nombre del Rol *</label>
-          <input
-            pInputText
-            type="text"
-            id="nombre"
-            formControlName="nombre"
-            placeholder="Ej: Administrador, Operador, Supervisor"
-            [class.ng-invalid]="
-              rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched
-            "
-          />
-          <small
-            class="field-error"
-            *ngIf="
-              rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched
-            "
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">{{ selectedRole ? 'Editar Rol' : 'Nuevo Rol' }}</h2>
+        <button type="button" class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <form [formGroup]="rolForm" (ngSubmit)="onSubmit()" class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="nombre" class="label">Nombre del Rol *</label>
+            <input
+              type="text"
+              id="nombre"
+              formControlName="nombre"
+              placeholder="Ej: Administrador, Operador, Supervisor"
+              class="input"
+              [class.input-error]="rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched"
+            />
+            <small
+              class="field-error"
+              *ngIf="rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched"
+            >
+              El nombre del rol es requerido
+            </small>
+          </div>
+
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="descripcion" class="label">Descripción</label>
+            <textarea
+              id="descripcion"
+              formControlName="descripcion"
+              placeholder="Descripción detallada del rol y sus responsabilidades"
+              rows="3"
+              class="input"
+              style="resize: vertical; line-height: 1.5; padding: 8px 12px;"
+            ></textarea>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                id="activo"
+                formControlName="activo"
+                class="checkbox-input"
+              />
+              Rol activo
+            </label>
+            <small class="field-help">
+              Los roles inactivos no pueden ser asignados a usuarios
+            </small>
+          </div>
+
+          <!-- Sección de permisos (solo para edición) -->
+          <div
+            class="form-group"
+            style="grid-column: 1 / -1;"
+            *ngIf="selectedRole && availablePermisos.length > 0"
           >
-            El nombre del rol es requerido
-          </small>
-        </div>
-
-        <div class="form-group full-width">
-          <label for="descripcion" class="form-label">Descripción</label>
-          <textarea
-            pInputTextarea
-            id="descripcion"
-            formControlName="descripcion"
-            placeholder="Descripción detallada del rol y sus responsabilidades"
-            rows="3"
-            [autoResize]="true"
-          ></textarea>
-        </div>
-
-        <div class="form-group checkbox-group">
-          <p-checkbox
-            id="activo"
-            formControlName="activo"
-            binary="true"
-            label="Rol activo"
-          ></p-checkbox>
-          <small class="field-help">
-            Los roles inactivos no pueden ser asignados a usuarios
-          </small>
-        </div>
-
-        <!-- Sección de permisos (solo para edición) -->
-        <div
-          class="form-group full-width"
-          *ngIf="selectedRole && availablePermisos.length > 0"
-        >
-          <label class="form-label">Permisos Asignados</label>
-          <div class="permisos-section">
-            <div class="permisos-grid">
-              <div
-                *ngFor="let permiso of availablePermisos"
-                class="permiso-item"
-              >
-                <p-checkbox
-                  [id]="'permiso-' + permiso.id"
-                  [value]="permiso.id"
-                  formControlName="permisosIds"
-                  binary="false"
-                ></p-checkbox>
-                <label [for]="'permiso-' + permiso.id" class="permiso-label">
-                  {{ permiso.nombre }}
-                </label>
-                <small class="permiso-description" *ngIf="permiso.descripcion">
-                  {{ permiso.descripcion }}
-                </small>
+            <label class="label">Permisos Asignados</label>
+            <div class="permisos-section">
+              <div class="permisos-grid">
+                <div
+                  *ngFor="let permiso of availablePermisos"
+                  class="permiso-item"
+                >
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      [id]="'permiso-' + permiso.id"
+                      [value]="permiso.id"
+                      class="checkbox-input"
+                      (change)="onPermisoChange($event, permiso.id)"
+                      [checked]="isPermisoSelected(permiso.id)"
+                    />
+                    {{ permiso.nombre }}
+                  </label>
+                  <small class="permiso-description" *ngIf="permiso.descripcion">
+                    {{ permiso.descripcion }}
+                  </small>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </form>
-
-    <ng-template pTemplate="footer">
+      </form>
       <div class="modal-footer">
-        <p-button
+        <button
           type="button"
-          severity="secondary"
-          outlined="true"
-          label="Cancelar"
-          icon="pi pi-times"
+          class="btn btn-ghost"
           (click)="closeModal()"
-        ></p-button>
-        <p-button
-          type="submit"
-          severity="primary"
-          [label]="selectedRole ? 'Actualizar' : 'Crear'"
-          [icon]="
-            isLoading
-              ? 'pi pi-spin pi-spinner'
-              : selectedRole
-              ? 'pi pi-check'
-              : 'pi pi-plus'
-          "
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
           [disabled]="rolForm.invalid || isLoading"
           (click)="onSubmit()"
-        ></p-button>
+        >
+          <span *ngIf="isLoading" class="spinner"></span>
+          {{ isLoading ? "Guardando..." : (selectedRole ? "Actualizar" : "Crear") }}
+        </button>
       </div>
-    </ng-template>
-  </p-dialog>
+    </div>
+  </div>
 
   <!-- Modal para ver permisos del rol -->
-  <p-dialog
-    header="Permisos del Rol"
-    [(visible)]="showPermissionsModal"
-    [modal]="true"
-    [resizable]="false"
-    [draggable]="false"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    styleClass="permissions-modal"
-    [style]="{ width: '90vw', maxWidth: '800px' }"
-  >
-    <div class="permissions-content" *ngIf="selectedRolePermissions">
-      <div class="role-info-header">
-        <h3>{{ selectedRole?.nombre }}</h3>
-        <p class="role-description">
-          {{ selectedRole?.descripcion || "Sin descripción" }}
-        </p>
+  <div class="modal-overlay" *ngIf="showPermissionsModal" (click)="closePermissionsModal()">
+    <div class="modal-content modal-content-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Permisos del Rol</h2>
+        <button type="button" class="modal-close" (click)="closePermissionsModal()">✕</button>
       </div>
+      <div class="modal-body" *ngIf="selectedRolePermissions">
+        <div class="role-info-header">
+          <h3>{{ selectedRole?.nombre }}</h3>
+          <p class="role-description">
+            {{ selectedRole?.descripcion || "Sin descripción" }}
+          </p>
+        </div>
 
-      <div
-        class="permissions-list"
-        *ngIf="selectedRolePermissions.length > 0; else noPermissions"
-      >
-        <h4 class="permissions-title">
-          Permisos Asignados ({{ selectedRolePermissions.length }})
-        </h4>
-        <div class="permissions-grid">
-          <div
-            *ngFor="let permiso of selectedRolePermissions"
-            class="permission-card"
-          >
-            <div class="permission-header">
-              <i class="pi pi-key permission-icon"></i>
-              <span class="permission-name">{{ permiso.permiso.nombre }}</span>
-              <p-tag
-                [value]="permiso.permiso.tipo"
-                severity="info"
-                styleClass="permission-type-tag"
-              ></p-tag>
-            </div>
-            <p
-              class="permission-description"
-              *ngIf="permiso.permiso.descripcion"
+        <div
+          class="permissions-list"
+          *ngIf="selectedRolePermissions.length > 0; else noPermissions"
+        >
+          <h4 class="permissions-title">
+            Permisos Asignados ({{ selectedRolePermissions.length }})
+          </h4>
+          <div class="permissions-grid">
+            <div
+              *ngFor="let permiso of selectedRolePermissions"
+              class="permission-card"
             >
-              {{ permiso.permiso.descripcion }}
-            </p>
-            <small class="permission-code">
-              Código: {{ permiso.codigo }}
-            </small>
+              <div class="permission-header">
+                <span class="permission-icon">🔑</span>
+                <span class="permission-name">{{ permiso.permiso.nombre }}</span>
+                <span class="badge blue">{{ permiso.permiso.tipo }}</span>
+              </div>
+              <p
+                class="permission-description"
+                *ngIf="permiso.permiso.descripcion"
+              >
+                {{ permiso.permiso.descripcion }}
+              </p>
+              <small class="permission-code">
+                Código: {{ permiso.codigo }}
+              </small>
+            </div>
           </div>
         </div>
+
+        <ng-template #noPermissions>
+          <div class="no-permissions">
+            <div class="no-permissions-icon">🔐</div>
+            <h4>Sin permisos asignados</h4>
+            <p>Este rol no tiene permisos asignados actualmente.</p>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="goToAssignPermissions()"
+              style="margin-top: 16px;"
+            >
+              + Asignar Permisos
+            </button>
+          </div>
+        </ng-template>
       </div>
-
-      <ng-template #noPermissions>
-        <div class="no-permissions">
-          <div class="no-permissions-icon">🔐</div>
-          <h4>Sin permisos asignados</h4>
-          <p>Este rol no tiene permisos asignados actualmente.</p>
-          <p-button
-            label="Asignar Permisos"
-            icon="pi pi-plus"
-            (click)="goToAssignPermissions()"
-            styleClass="mt-3"
-          ></p-button>
-        </div>
-      </ng-template>
-    </div>
-
-    <ng-template pTemplate="footer">
       <div class="modal-footer">
-        <p-button
+        <button
           type="button"
-          severity="secondary"
-          outlined="true"
-          label="Cerrar"
-          icon="pi pi-times"
+          class="btn btn-ghost"
           (click)="closePermissionsModal()"
-        ></p-button>
-        <p-button
+        >
+          Cerrar
+        </button>
+        <button
           type="button"
-          severity="primary"
-          label="Gestionar Permisos"
-          icon="pi pi-cog"
+          class="btn btn-primary"
           (click)="goToAssignPermissions()"
-        ></p-button>
+        >
+          ⚙️ Gestionar Permisos
+        </button>
       </div>
-    </ng-template>
-  </p-dialog>
+    </div>
+  </div>
+
+  <!-- Toast notifications managed by MessageService -->
+  <p-toast key="top-right" position="top-right"></p-toast>
 
   <!-- Dialog de confirmación de eliminación -->
   <p-confirmDialog></p-confirmDialog>

@@ -524,4 +524,38 @@ export class RolesComponent implements OnInit {
   onGoBack(): void {
     this.router.navigate(['/admin']);
   }
+
+  // Pagination methods
+  goToPage(page: number): void {
+    this.currentPage = page;
+    if (this.isUsingServerSearch) {
+      this.searchRoles();
+    }
+  }
+
+  // Math helper for templates
+  Math = Math;
+
+  // Checkbox handling for permisos
+  onPermisoChange(event: Event, permisoId: string): void {
+    const checkbox = event.target as HTMLInputElement;
+    const currentPermisos = this.rolForm.get('permisosIds')?.value || [];
+
+    if (checkbox.checked) {
+      if (!currentPermisos.includes(permisoId)) {
+        this.rolForm.patchValue({
+          permisosIds: [...currentPermisos, permisoId]
+        });
+      }
+    } else {
+      this.rolForm.patchValue({
+        permisosIds: currentPermisos.filter((id: string) => id !== permisoId)
+      });
+    }
+  }
+
+  isPermisoSelected(permisoId: string): boolean {
+    const currentPermisos = this.rolForm.get('permisosIds')?.value || [];
+    return currentPermisos.includes(permisoId);
+  }
 }
