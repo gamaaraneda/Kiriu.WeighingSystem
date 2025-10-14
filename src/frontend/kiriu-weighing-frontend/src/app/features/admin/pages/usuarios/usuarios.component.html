@@ -78,8 +78,8 @@
                 [ngModelOptions]="{standalone: true}"
                 class="input select-input"
               >
-                <option value="">Todos los estados</option>
-                <option *ngFor="let option of estadoOptions" [value]="option.value">
+                <option [ngValue]="null">Todos los estados</option>
+                <option *ngFor="let option of estadoOptions" [ngValue]="option.value">
                   {{ option.label }}
                 </option>
               </select>
@@ -198,9 +198,9 @@
           </div>
 
           <!-- Paginación -->
-          <div class="pagination" *ngIf="totalPages > 1">
+          <div class="pagination">
             <div class="pagination-info">
-              Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} de {{ totalCount }} usuarios
+              Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} de {{ totalCount }} registros
             </div>
             <div class="pagination-controls">
               <button
