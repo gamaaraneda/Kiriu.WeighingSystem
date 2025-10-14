@@ -8,7 +8,7 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { ConfirmationService } from 'primeng/api';
 
 // PrimeNG Imports
 import { ButtonModule } from 'primeng/button';
@@ -22,7 +22,6 @@ import { PasswordModule } from 'primeng/password';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 
 // Shared Components
@@ -72,12 +71,11 @@ interface EstadoOption {
     SelectModule,
     TableModule,
     TagModule,
-    ToastModule,
     TooltipModule,
     HeaderComponent,
     BreadcrumbComponent,
   ],
-  providers: [MessageService, ConfirmationService],
+  providers: [ConfirmationService],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
 })
@@ -92,7 +90,7 @@ export class UsuariosComponent implements OnInit {
   isLoading = false;
   showModal = false;
   showRolesModal = false;
-  pageSize = 50;
+  pageSize = 10;
 
   // Pagination state
   currentPage = 1;
@@ -100,6 +98,14 @@ export class UsuariosComponent implements OnInit {
   totalPages = 0;
   hasPreviousPage = false;
   hasNextPage = false;
+
+  // Page size options
+  pageSizeOptions = [
+    { label: '5', value: 5 },
+    { label: '10', value: 10 },
+    { label: '50', value: 50 },
+    { label: '100', value: 100 },
+  ];
 
   // Forms
   usuarioForm!: FormGroup;
@@ -132,7 +138,6 @@ export class UsuariosComponent implements OnInit {
     private adminService: AdminService,
     private router: Router,
     private fb: FormBuilder,
-    private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private authService: AuthService
   ) {
@@ -200,22 +205,12 @@ export class UsuariosComponent implements OnInit {
             hasData: !!response?.data,
             dataLength: response?.data?.length,
           });
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al cargar la lista de usuarios',
-            key: 'top-right',
-          });
+          this.showToast('error', 'Error', 'Error al cargar la lista de usuarios');
         }
       },
       error: (error) => {
         console.error('Error loading usuarios:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cargar la lista de usuarios',
-          key: 'top-right',
-        });
+        this.showToast('error', 'Error', 'Error al cargar la lista de usuarios');
       },
       complete: () => {
         this.isLoading = false;
@@ -303,22 +298,12 @@ export class UsuariosComponent implements OnInit {
           });
         } else {
           console.error('❌ Search - Failed to load users');
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al realizar la búsqueda',
-            key: 'top-right',
-          });
+          this.showToast('error', 'Error', 'Error al realizar la búsqueda');
         }
       },
       error: (error) => {
         console.error('Error al realizar búsqueda:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al realizar la búsqueda',
-          key: 'top-right',
-        });
+        this.showToast('error', 'Error', 'Error al realizar la búsqueda');
       },
       complete: () => {
         this.isLoading = false;
@@ -437,23 +422,12 @@ export class UsuariosComponent implements OnInit {
       const response = await this.adminService.deleteUsuario(id).toPromise();
 
       if (response?.success) {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Usuario desactivado exitosamente',
-          key: 'top-right',
-        });
-
+        this.showToast('success', 'Éxito', 'Usuario desactivado exitosamente');
         this.onSearch();
       }
     } catch (error) {
       console.error('Error al eliminar usuario:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Error al desactivar el usuario',
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', 'Error al desactivar el usuario');
     } finally {
       this.isLoading = false;
     }
@@ -476,13 +450,7 @@ export class UsuariosComponent implements OnInit {
         .toPromise();
 
       if (response?.success) {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Usuario reactivado exitosamente',
-          key: 'top-right',
-        });
-
+        this.showToast('success', 'Éxito', 'Usuario reactivado exitosamente');
         this.onSearch();
       }
     } catch (error: any) {
@@ -496,12 +464,7 @@ export class UsuariosComponent implements OnInit {
         errorMessage = error.error.errors[0];
       }
 
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: errorMessage,
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -538,13 +501,7 @@ export class UsuariosComponent implements OnInit {
           .toPromise();
 
         if (response?.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Usuario actualizado exitosamente',
-            key: 'top-right',
-          });
-
+          this.showToast('success', 'Éxito', 'Usuario actualizado exitosamente');
           this.onSearch();
           this.closeModal();
         }
@@ -564,34 +521,30 @@ export class UsuariosComponent implements OnInit {
           .toPromise();
 
         if (response?.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Usuario creado exitosamente',
-            key: 'top-right',
-          });
-
+          this.showToast('success', 'Éxito', 'Usuario creado exitosamente');
           this.onSearch();
           this.closeModal();
         }
       }
     } catch (error: any) {
       console.error('Error saving user:', error);
+      console.error('Error structure:', {
+        error: error,
+        errorError: error?.error,
+        message: error?.error?.message,
+        errors: error?.error?.errors,
+      });
 
       let errorMessage = 'Error al guardar el usuario';
 
-      if (error?.error?.message) {
-        errorMessage = error.error.message;
-      } else if (error?.error?.errors?.length > 0) {
+      // Priorizar el array de errores sobre el mensaje general
+      if (error?.error?.errors && Array.isArray(error.error.errors) && error.error.errors.length > 0) {
         errorMessage = error.error.errors[0];
+      } else if (error?.error?.message) {
+        errorMessage = error.error.message;
       }
 
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: errorMessage,
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -629,13 +582,7 @@ export class UsuariosComponent implements OnInit {
         .toPromise();
 
       if (response?.success) {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Roles asignados exitosamente',
-          key: 'top-right',
-        });
-
+        this.showToast('success', 'Éxito', 'Roles asignados exitosamente');
         this.onSearch();
         this.closeRolesModal();
       }
@@ -650,12 +597,7 @@ export class UsuariosComponent implements OnInit {
         errorMessage = error.error.errors[0];
       }
 
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: errorMessage,
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -689,15 +631,7 @@ export class UsuariosComponent implements OnInit {
             .toPromise();
 
           if (response?.success) {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: `Usuario ${
-                newStatus ? 'activado' : 'desactivado'
-              } exitosamente`,
-              key: 'top-right',
-            });
-
+            this.showToast('success', 'Éxito', `Usuario ${newStatus ? 'activado' : 'desactivado'} exitosamente`);
             this.onSearch();
           }
         } catch (error: any) {
@@ -711,12 +645,7 @@ export class UsuariosComponent implements OnInit {
             errorMessage = error.error.errors[0];
           }
 
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: errorMessage,
-            key: 'top-right',
-          });
+          this.showToast('error', 'Error', errorMessage);
         } finally {
           this.isLoading = false;
         }
@@ -794,5 +723,55 @@ export class UsuariosComponent implements OnInit {
       this.currentPage = page;
       this.onSearch();
     }
+  }
+
+  onPageSizeChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.pageSize = Number(select.value);
+    this.currentPage = 1;
+    this.onSearch();
+  }
+
+  // Sistema de notificaciones nativo
+  private showToast(
+    severity: 'success' | 'error' | 'warn' | 'info',
+    summary: string,
+    detail: string
+  ): void {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${severity}`;
+
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warn: '!',
+      info: 'i',
+    };
+
+    toast.innerHTML = `
+      <div class="toast__body">
+        <div class="toast__icon">${icons[severity]}</div>
+        <div>
+          <div class="toast__title">${summary}</div>
+          <div class="toast__msg">${detail}</div>
+        </div>
+        <button class="toast__close" onclick="this.parentElement.parentElement.remove()">×</button>
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Auto-remove después de 5 segundos
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.style.animation = 'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
+        setTimeout(() => {
+          toast.remove();
+        }, 180);
+      }
+    }, 5000);
   }
 }

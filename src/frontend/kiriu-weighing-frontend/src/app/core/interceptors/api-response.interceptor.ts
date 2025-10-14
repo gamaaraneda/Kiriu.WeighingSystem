@@ -78,11 +78,15 @@ export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
               finalMessage: errorMessage,
             });
 
-            // Crear un error personalizado que preserve información adicional
-            const customError = new Error(errorMessage);
-            (customError as any).isApiError = true;
-            (customError as any).originalResponse = body;
-            throw customError;
+            // Crear un error HTTP que preserve la estructura completa del backend
+            const httpError = {
+              error: body, // Preservar la estructura completa del backend
+              status: 400,
+              statusText: 'Bad Request',
+              message: errorMessage,
+              url: req.url
+            };
+            throw httpError;
           }
         }
       }
@@ -108,7 +112,9 @@ export const apiResponseInterceptor: HttpInterceptorFn = (req, next) => {
               originalErrors: apiError.errors,
               finalMessage: errorMessage,
             });
-            throw new Error(errorMessage);
+            // Preservar el error HTTP completo con la estructura del backend
+            error.message = errorMessage;
+            throw error;
           }
         }
       }

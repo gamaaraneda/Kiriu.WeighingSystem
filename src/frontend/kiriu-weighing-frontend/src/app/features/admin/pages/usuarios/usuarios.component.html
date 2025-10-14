@@ -199,8 +199,25 @@
 
           <!-- Paginación -->
           <div class="pagination">
-            <div class="pagination-info">
-              Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} de {{ totalCount }} registros
+            <div class="pagination-info" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>Mostrar</span>
+                <select
+                  id="pageSizeFilter"
+                  [value]="pageSize"
+                  (change)="onPageSizeChange($event)"
+                  class="input select-input"
+                  style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.875rem;"
+                >
+                  <option *ngFor="let option of pageSizeOptions" [value]="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <span>registros</span>
+              </div>
+              <span>
+                Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} de {{ totalCount }} registros
+              </span>
             </div>
             <div class="pagination-controls">
               <button
@@ -391,6 +408,5 @@
   </div>
 
   <!-- Modal de confirmación nativo -->
-  <p-toast></p-toast>
   <p-confirmDialog></p-confirmDialog>
 </div>
