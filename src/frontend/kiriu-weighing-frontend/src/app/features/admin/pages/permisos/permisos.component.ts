@@ -513,4 +513,20 @@ export class PermisosComponent implements OnInit {
   onGoBack(): void {
     this.router.navigate(['/admin']);
   }
+
+  // Helper method for emoji icons
+  getIconEmojiForPermissionType(tipo: string): string {
+    switch (tipo.toUpperCase()) {
+      case 'READ':
+        return '📖';
+      case 'WRITE':
+        return '✏️';
+      case 'DELETE':
+        return '🗑️';
+      case 'ADMIN':
+        return '⚙️';
+      default:
+        return '🔑';
+    }
+  }
 }
