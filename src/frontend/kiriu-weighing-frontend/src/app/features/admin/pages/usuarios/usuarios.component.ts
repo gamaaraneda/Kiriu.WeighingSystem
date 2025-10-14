@@ -787,4 +787,12 @@ export class UsuariosComponent implements OnInit {
   onGoBack(): void {
     this.router.navigate(['/admin']);
   }
+
+  // Pagination methods
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.onSearch();
+    }
+  }
 }
