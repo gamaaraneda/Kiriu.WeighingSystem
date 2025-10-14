@@ -14,79 +14,55 @@
       <!-- Breadcrumb -->
       <app-breadcrumb></app-breadcrumb>
 
-      <!-- Header de la página -->
-      <div class="page-header">
-        <div class="header-left">
-          <p-button
-            type="button"
-            severity="secondary"
-            outlined="true"
-            label="Regresar"
-            icon="pi pi-arrow-left"
-            (click)="onGoBack()"
-            styleClass="back-btn"
-          ></p-button>
-          <div class="page-title-group">
-            <h1 class="page-title">Gestión de Módulos</h1>
-            <p class="page-subtitle">
-              Configurar módulos del sistema y sus permisos
-            </p>
-          </div>
+      <!-- Hero Section -->
+      <section class="hero">
+        <div>
+          <h1>Gestión de Módulos</h1>
+          <p>Configurar módulos del sistema y sus permisos</p>
         </div>
-        <div class="header-right">
-          <p-button
-            type="button"
-            severity="primary"
-            label="Nuevo Módulo"
-            icon="pi pi-plus"
-            (click)="openCreateModal()"
-            styleClass="create-btn"
-          ></p-button>
+        <div class="hero-actions">
+          <button type="button" class="btn btn-success" (click)="openCreateModal()">
+            + Nuevo Módulo
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="onGoBack()">
+            ← Regresar
+          </button>
         </div>
-      </div>
+      </section>
 
       <!-- Vista de módulos ordenables -->
-      <div class="modules-overview">
-        <p-card styleClass="overview-card">
-          <ng-template pTemplate="header">
-            <div class="overview-header">
-              <i
-                class="pi pi-sitemap"
-                style="margin-right: 0.5rem; color: white"
-              ></i>
+      <section class="modules-overview">
+        <div class="overview-card">
+          <div class="overview-header">
+            <div class="overview-title-group">
+              <span class="overview-icon">🗂️</span>
               <span class="overview-title">Estructura del Sistema</span>
-              <p-button
-                *ngIf="!reorderMode"
-                type="button"
-                severity="help"
-                size="small"
-                label="Reordenar"
-                icon="pi pi-sort"
-                (click)="enableReorderMode()"
-                styleClass="reorder-btn"
-              ></p-button>
-              <div *ngIf="reorderMode" class="reorder-actions">
-                <p-button
-                  type="button"
-                  severity="success"
-                  size="small"
-                  label="Guardar"
-                  icon="pi pi-check"
-                  (click)="saveOrder()"
-                  styleClass="save-order-btn"
-                ></p-button>
-                <p-button
-                  type="button"
-                  severity="secondary"
-                  size="small"
-                  label="Cancelar"
-                  icon="pi pi-times"
-                  (click)="cancelReorder()"
-                  styleClass="cancel-order-btn"
-                ></p-button>
-              </div>
             </div>
-          </ng-template>
+            <button
+              *ngIf="!reorderMode"
+              type="button"
+              class="btn btn-secondary btn-sm"
+              (click)="enableReorderMode()"
+            >
+              ↕️ Reordenar
+            </button>
+            <div *ngIf="reorderMode" class="reorder-actions">
+              <button
+                type="button"
+                class="btn btn-success btn-sm"
+                (click)="saveOrder()"
+              >
+                ✓ Guardar
+              </button>
+              <button
+                type="button"
+                class="btn btn-ghost btn-sm"
+                (click)="cancelReorder()"
+              >
+                ✕ Cancelar
+              </button>
+            </div>
+          </div>
 
           <div class="modules-grid" *ngIf="!reorderMode">
             <div
@@ -115,45 +91,42 @@
                   <span class="stat-label">Permisos</span>
                 </div>
                 <div class="stat-item">
-                  <p-tag
-                    [value]="modulo.activo ? 'Activo' : 'Inactivo'"
-                    [severity]="modulo.activo ? 'success' : 'danger'"
-                  ></p-tag>
+                  <span
+                    class="badge"
+                    [class.badge-success]="modulo.activo"
+                    [class.badge-danger]="!modulo.activo"
+                  >
+                    {{ modulo.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
                 </div>
               </div>
 
               <div class="module-actions">
-                <p-button
+                <button
                   type="button"
-                  severity="info"
-                  size="small"
-                  icon="pi pi-eye"
+                  class="btn-icon btn-info"
                   (click)="viewModuleDetails(modulo)"
-                  pTooltip="Ver permisos"
-                  tooltipPosition="top"
-                  styleClass="action-btn"
-                ></p-button>
-                <p-button
+                  title="Ver permisos"
+                >
+                  👁️
+                </button>
+                <button
                   type="button"
-                  severity="help"
-                  size="small"
-                  icon="pi pi-pencil"
+                  class="btn-icon btn-warning"
                   (click)="openEditModal(modulo)"
-                  pTooltip="Editar módulo"
-                  tooltipPosition="top"
-                  styleClass="action-btn"
-                ></p-button>
-                <p-button
+                  title="Editar módulo"
+                >
+                  ✏️
+                </button>
+                <button
                   type="button"
-                  severity="danger"
-                  size="small"
-                  icon="pi pi-trash"
+                  class="btn-icon btn-danger"
                   [disabled]="!modulo.activo"
                   (click)="confirmDelete(modulo)"
-                  pTooltip="Eliminar módulo"
-                  tooltipPosition="top"
-                  styleClass="action-btn"
-                ></p-button>
+                  title="Eliminar módulo"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           </div>
@@ -170,9 +143,9 @@
               draggable="true"
             >
               <div class="drag-handle">
-                <i class="pi pi-bars"></i>
+                <span>☰</span>
               </div>
-              <div class="module-icon">
+              <div class="module-icon-small">
                 <i [class]="modulo.icono || 'pi pi-th-large'"></i>
               </div>
               <div class="module-info">
@@ -182,42 +155,37 @@
                 }}</span>
               </div>
               <div class="order-controls">
-                <p-button
+                <button
                   type="button"
-                  severity="secondary"
-                  size="small"
-                  icon="pi pi-chevron-up"
+                  class="btn-icon btn-sm"
                   [disabled]="i === 0"
                   (click)="moveUp(i)"
-                  styleClass="order-btn"
-                ></p-button>
+                  title="Subir"
+                >
+                  ▲
+                </button>
                 <span class="order-number">{{ i + 1 }}</span>
-                <p-button
+                <button
                   type="button"
-                  severity="secondary"
-                  size="small"
-                  icon="pi pi-chevron-down"
+                  class="btn-icon btn-sm"
                   [disabled]="i === reorderList.length - 1"
                   (click)="moveDown(i)"
-                  styleClass="order-btn"
-                ></p-button>
+                  title="Bajar"
+                >
+                  ▼
+                </button>
               </div>
             </div>
           </div>
-        </p-card>
-      </div>
+        </div>
+      </section>
 
       <!-- Filtros de búsqueda -->
-      <p-card styleClass="search-filters-card">
-        <ng-template pTemplate="header">
-          <div class="filters-header">
-            <i
-              class="pi pi-filter"
-              style="margin-right: 0.5rem; color: white"
-            ></i>
-            <span class="filters-title">Filtros de Búsqueda</span>
-          </div>
-        </ng-template>
+      <section class="search-filters">
+        <div class="filters-header">
+          <span class="filters-icon">🔍</span>
+          <span class="filters-title">Filtros de Búsqueda</span>
+        </div>
         <div class="filters-form">
           <div class="filters-grid">
             <div class="filter-group">
@@ -225,9 +193,9 @@
                 >Nombre del Módulo</label
               >
               <input
-                pInputText
                 type="text"
                 id="searchName"
+                class="input"
                 [(ngModel)]="searchFilters.search"
                 placeholder="Buscar por nombre..."
                 (input)="onFilterChange()"
@@ -236,472 +204,421 @@
 
             <div class="filter-group">
               <label for="estadoFilter" class="filter-label">Estado</label>
-              <p-select
+              <select
                 id="estadoFilter"
+                class="select"
                 [(ngModel)]="searchFilters.activo"
-                [options]="estadoOptions"
-                placeholder="Todos los estados"
-                optionLabel="label"
-                optionValue="value"
-                [showClear]="true"
-                (onChange)="onFilterChange()"
-              ></p-select>
+                (change)="onFilterChange()"
+              >
+                <option [ngValue]="undefined">Todos los estados</option>
+                <option [ngValue]="true">Activo</option>
+                <option [ngValue]="false">Inactivo</option>
+              </select>
             </div>
           </div>
 
           <div class="filters-actions">
-            <p-button
+            <button
               type="button"
-              severity="secondary"
-              outlined="true"
-              label="Limpiar"
-              icon="pi pi-times"
+              class="btn btn-ghost"
               (click)="clearFilters()"
-              styleClass="clear-btn"
-            ></p-button>
+            >
+              ✕ Limpiar
+            </button>
           </div>
         </div>
-      </p-card>
+      </section>
 
       <!-- Tabla de módulos -->
-      <p-card styleClass="results-card">
-        <ng-template pTemplate="header">
-          <div class="results-header">
-            <h2 class="results-title">
-              Lista de Módulos ({{ filteredModulos.length }})
-            </h2>
-          </div>
-        </ng-template>
+      <section class="results-section">
+        <div class="results-header">
+          <h2 class="results-title">
+            Lista de Módulos ({{ filteredModulos.length }})
+          </h2>
+        </div>
 
-        <p-table
-          [value]="filteredModulos"
-          [paginator]="true"
-          [rows]="pageSize"
-          [loading]="isLoading"
-          [scrollable]="true"
-          scrollHeight="400px"
-          styleClass="p-datatable-striped p-datatable-gridlines"
-          [showCurrentPageReport]="true"
-          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} módulos"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Orden</th>
-              <th>Módulo</th>
-              <th>Descripción</th>
-              <th>Permisos Asociados</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-modulo>
-            <tr>
-              <td>
-                <div class="order-cell">
-                  <span class="order-number">{{ modulo.orden }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="module-cell">
-                  <div class="module-icon">
-                    <i [class]="modulo.icono || 'pi pi-th-large'"></i>
+        <div class="table-container">
+          <table class="results-table" *ngIf="filteredModulos.length > 0; else emptyState">
+            <thead>
+              <tr>
+                <th>Orden</th>
+                <th>Módulo</th>
+                <th>Descripción</th>
+                <th>Permisos Asociados</th>
+                <th>Estado</th>
+                <th style="text-align: center;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let modulo of filteredModulos">
+                <td>
+                  <div class="order-cell">
+                    <span class="order-number">{{ modulo.orden }}</span>
                   </div>
-                  <div class="module-info">
-                    <span class="module-name">{{ modulo.nombre }}</span>
+                </td>
+                <td>
+                  <div class="module-cell">
+                    <div class="module-icon">
+                      <i [class]="modulo.icono || 'pi pi-th-large'"></i>
+                    </div>
+                    <div class="module-info">
+                      <span class="module-name">{{ modulo.nombre }}</span>
+                    </div>
                   </div>
-                </div>
-              </td>
-              <td>
-                <span
-                  class="module-description"
-                  [title]="modulo.descripcion"
-                  *ngIf="modulo.descripcion; else noDescription"
-                >
-                  {{ modulo.descripcion }}
-                </span>
-                <ng-template #noDescription>
-                  <span class="no-description">Sin descripción</span>
-                </ng-template>
-              </td>
-              <td>
-                <div class="permissions-count">
-                  <p-tag
-                    [value]="modulo.permisos.length.toString()"
-                    [severity]="
-                      modulo.permisos.length > 0 ? 'info' : 'secondary'
-                    "
-                    icon="pi pi-key"
-                  ></p-tag>
-                  <small
-                    class="permissions-label"
-                    *ngIf="modulo.permisos.length > 0"
+                </td>
+                <td>
+                  <span
+                    class="module-description"
+                    [title]="modulo.descripcion"
+                    *ngIf="modulo.descripcion; else noDescription"
                   >
-                    permisos configurados
-                  </small>
-                </div>
-              </td>
-              <td>
-                <p-tag
-                  [value]="modulo.activo ? 'Activo' : 'Inactivo'"
-                  [severity]="modulo.activo ? 'success' : 'danger'"
-                ></p-tag>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <p-button
-                    type="button"
-                    severity="info"
-                    outlined="true"
-                    size="small"
-                    icon="pi pi-eye"
-                    (click)="viewModuleDetails(modulo)"
-                    pTooltip="Ver permisos"
-                    tooltipPosition="top"
-                    styleClass="action-btn view-btn"
-                  ></p-button>
-                  <p-button
-                    type="button"
-                    severity="help"
-                    outlined="true"
-                    size="small"
-                    icon="pi pi-pencil"
-                    (click)="openEditModal(modulo)"
-                    pTooltip="Editar módulo"
-                    tooltipPosition="top"
-                    styleClass="action-btn edit-btn"
-                  ></p-button>
-                  <p-button
-                    type="button"
-                    severity="danger"
-                    outlined="true"
-                    size="small"
-                    icon="pi pi-trash"
-                    [disabled]="!modulo.activo"
-                    (click)="confirmDelete(modulo)"
-                    pTooltip="Eliminar módulo"
-                    tooltipPosition="top"
-                    styleClass="action-btn delete-btn"
-                  ></p-button>
-                </div>
-              </td>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="6" class="empty-message">
-                <div class="empty-state">
-                  <div class="empty-icon">🧩</div>
-                  <div class="empty-text">
-                    <p class="empty-title">No se encontraron módulos</p>
-                    <p class="empty-subtitle">
-                      Crea un nuevo módulo para comenzar
-                    </p>
+                    {{ modulo.descripcion }}
+                  </span>
+                  <ng-template #noDescription>
+                    <span class="no-description">Sin descripción</span>
+                  </ng-template>
+                </td>
+                <td>
+                  <div class="permissions-count">
+                    <span
+                      class="badge"
+                      [class.badge-info]="modulo.permisos.length > 0"
+                      [class.badge-secondary]="modulo.permisos.length === 0"
+                    >
+                      🔑 {{ modulo.permisos.length }}
+                    </span>
+                    <small
+                      class="permissions-label"
+                      *ngIf="modulo.permisos.length > 0"
+                    >
+                      permisos configurados
+                    </small>
                   </div>
-                </div>
-              </td>
-            </tr>
+                </td>
+                <td>
+                  <span
+                    class="badge"
+                    [class.badge-success]="modulo.activo"
+                    [class.badge-danger]="!modulo.activo"
+                  >
+                    {{ modulo.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button
+                      type="button"
+                      class="btn-icon btn-info"
+                      (click)="viewModuleDetails(modulo)"
+                      title="Ver permisos"
+                    >
+                      👁️
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-icon btn-warning"
+                      (click)="openEditModal(modulo)"
+                      title="Editar módulo"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-icon btn-danger"
+                      [disabled]="!modulo.activo"
+                      (click)="confirmDelete(modulo)"
+                      title="Eliminar módulo"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <ng-template #emptyState>
+            <div class="empty-state">
+              <div class="empty-icon">🧩</div>
+              <div class="empty-text">
+                <p class="empty-title">No se encontraron módulos</p>
+                <p class="empty-subtitle">
+                  Crea un nuevo módulo para comenzar
+                </p>
+              </div>
+            </div>
           </ng-template>
-        </p-table>
-      </p-card>
+        </div>
+      </section>
     </div>
   </main>
 
   <!-- Modal de creación/edición de módulo -->
-  <p-dialog
-    [header]="selectedModulo ? 'Editar Módulo' : 'Nuevo Módulo'"
-    [(visible)]="showModal"
-    [modal]="true"
-    [resizable]="false"
-    [draggable]="false"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    styleClass="modulo-modal"
-    [style]="{ width: '90vw', maxWidth: '700px' }"
-  >
-    <form [formGroup]="moduloForm" (ngSubmit)="onSubmit()" class="modulo-form">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="nombre" class="form-label">Nombre del Módulo *</label>
-          <input
-            pInputText
-            type="text"
-            id="nombre"
-            formControlName="nombre"
-            placeholder="Ej: Pesajes de Entrada, Reportes, Configuración"
-            [class.ng-invalid]="
-              moduloForm.get('nombre')?.invalid &&
-              moduloForm.get('nombre')?.touched
-            "
-          />
-          <small
-            class="field-error"
-            *ngIf="
-              moduloForm.get('nombre')?.invalid &&
-              moduloForm.get('nombre')?.touched
-            "
-          >
-            El nombre del módulo es requerido
-          </small>
-        </div>
-
-        <div class="form-group">
-          <label for="orden" class="form-label">Orden *</label>
-          <p-inputNumber
-            id="orden"
-            formControlName="orden"
-            [min]="1"
-            [max]="100"
-            [showButtons]="true"
-            buttonLayout="horizontal"
-            spinnerMode="horizontal"
-            [step]="1"
-            decrementButtonClass="p-button-secondary"
-            incrementButtonClass="p-button-secondary"
-            incrementButtonIcon="pi pi-plus"
-            decrementButtonIcon="pi pi-minus"
-            [class.ng-invalid]="
-              moduloForm.get('orden')?.invalid &&
-              moduloForm.get('orden')?.touched
-            "
-          ></p-inputNumber>
-          <small class="field-help">
-            Define el orden de aparición en el menú (1-100)
-          </small>
-        </div>
-
-        <div class="form-group">
-          <label for="icono" class="form-label">Ícono</label>
-          <p-select
-            id="icono"
-            formControlName="icono"
-            [options]="iconOptions"
-            placeholder="Seleccionar ícono"
-            optionLabel="label"
-            optionValue="value"
-            [showClear]="true"
-          >
-            <ng-template let-item pTemplate="selectedItem">
-              <div class="icon-option" *ngIf="item">
-                <i [class]="item.value"></i>
-                <span>{{ item.label }}</span>
-              </div>
-            </ng-template>
-            <ng-template let-item pTemplate="item">
-              <div class="icon-option">
-                <i [class]="item.value"></i>
-                <span>{{ item.label }}</span>
-              </div>
-            </ng-template>
-          </p-select>
-          <small class="field-help">
-            Ícono que se mostrará en el menú del sistema
-          </small>
-        </div>
-
-        <div class="form-group checkbox-group">
-          <p-checkbox
-            id="activo"
-            formControlName="activo"
-            binary="true"
-            label="Módulo activo"
-          ></p-checkbox>
-          <small class="field-help">
-            Los módulos inactivos no aparecen en el menú
-          </small>
-        </div>
-
-        <div class="form-group full-width">
-          <label for="descripcion" class="form-label">Descripción</label>
-          <textarea
-            pInputTextarea
-            id="descripcion"
-            formControlName="descripcion"
-            placeholder="Descripción detallada del módulo y su funcionalidad"
-            rows="3"
-            [autoResize]="true"
-          ></textarea>
-          <small class="field-help">
-            Descripción que ayude a entender el propósito del módulo
-          </small>
-        </div>
-
-        <!-- Preview del ícono -->
-        <div
-          class="form-group full-width"
-          *ngIf="moduloForm.get('icono')?.value"
-        >
-          <div class="icon-preview">
-            <h4 class="preview-title">Vista Previa</h4>
-            <div class="preview-card">
-              <div class="preview-icon">
-                <i [class]="moduloForm.get('icono')?.value"></i>
-              </div>
-              <div class="preview-info">
-                <span class="preview-name">{{
-                  moduloForm.get("nombre")?.value || "Nombre del módulo"
-                }}</span>
-                <span class="preview-description">{{
-                  moduloForm.get("descripcion")?.value ||
-                    "Descripción del módulo"
-                }}</span>
-              </div>
-              <span class="preview-order">{{
-                moduloForm.get("orden")?.value
-              }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
-
-    <ng-template pTemplate="footer">
-      <div class="modal-footer">
-        <p-button
-          type="button"
-          severity="secondary"
-          outlined="true"
-          label="Cancelar"
-          icon="pi pi-times"
-          (click)="closeModal()"
-        ></p-button>
-        <p-button
-          type="submit"
-          severity="primary"
-          [label]="selectedModulo ? 'Actualizar' : 'Crear'"
-          [icon]="
-            isLoading
-              ? 'pi pi-spin pi-spinner'
-              : selectedModulo
-              ? 'pi pi-check'
-              : 'pi pi-plus'
-          "
-          [disabled]="moduloForm.invalid || isLoading"
-          (click)="onSubmit()"
-        ></p-button>
-      </div>
-    </ng-template>
-  </p-dialog>
-
-  <!-- Modal para ver detalles del módulo -->
-  <p-dialog
-    header="Detalles del Módulo"
-    [(visible)]="showDetailsModal"
-    [modal]="true"
-    [resizable]="false"
-    [draggable]="false"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    styleClass="details-modal"
-    [style]="{ width: '90vw', maxWidth: '900px' }"
-  >
-    <div class="module-details" *ngIf="selectedModulo">
-      <div class="module-info-header">
-        <div class="module-title-group">
-          <div class="module-icon-large">
-            <i [class]="selectedModulo.icono || 'pi pi-th-large'"></i>
-          </div>
-          <div class="module-details-info">
-            <h3>{{ selectedModulo.nombre }}</h3>
-            <p class="module-order">
-              Orden: <strong>{{ selectedModulo.orden }}</strong>
-            </p>
-            <p class="module-description" *ngIf="selectedModulo.descripcion">
-              {{ selectedModulo.descripcion }}
-            </p>
-          </div>
-        </div>
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ selectedModulo ? 'Editar Módulo' : 'Nuevo Módulo' }}</h3>
+        <button type="button" class="modal-close" (click)="closeModal()">✕</button>
       </div>
 
-      <div class="permissions-section">
-        <div class="permissions-header">
-          <h4 class="permissions-title">
-            Permisos Asociados ({{ selectedModulo.permisos.length }})
-          </h4>
-          <p-button
-            type="button"
-            severity="success"
-            size="small"
-            label="Gestionar Permisos"
-            icon="pi pi-cog"
-            (click)="manageModulePermissions()"
-            styleClass="manage-permissions-btn"
-          ></p-button>
-        </div>
-
-        <div
-          class="permissions-list"
-          *ngIf="selectedModulo.permisos.length > 0; else noPermissions"
-        >
-          <div class="permissions-grid">
-            <div
-              *ngFor="let moduloPermiso of selectedModulo.permisos"
-              class="permission-item"
-            >
-              <div class="permission-header">
-                <i
-                  [class]="getIconForPermissionType(moduloPermiso.permiso.tipo)"
-                  class="permission-icon"
-                ></i>
-                <span class="permission-name">{{
-                  moduloPermiso.permiso.nombre
-                }}</span>
-                <p-tag
-                  [value]="moduloPermiso.permiso.tipo"
-                  [severity]="
-                    getPermissionTypeSeverity(moduloPermiso.permiso.tipo)
-                  "
-                  styleClass="permission-type-tag"
-                ></p-tag>
-              </div>
-              <p
-                class="permission-description"
-                *ngIf="moduloPermiso.permiso.descripcion"
+      <div class="modal-body">
+        <form [formGroup]="moduloForm" (ngSubmit)="onSubmit()" class="modulo-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="nombre" class="form-label">Nombre del Módulo *</label>
+              <input
+                type="text"
+                id="nombre"
+                class="input"
+                formControlName="nombre"
+                placeholder="Ej: Pesajes de Entrada, Reportes, Configuración"
+                [class.input-error]="
+                  moduloForm.get('nombre')?.invalid &&
+                  moduloForm.get('nombre')?.touched
+                "
+              />
+              <small
+                class="field-error"
+                *ngIf="
+                  moduloForm.get('nombre')?.invalid &&
+                  moduloForm.get('nombre')?.touched
+                "
               >
-                {{ moduloPermiso.permiso.descripcion }}
-              </p>
-              <small class="permission-code">
-                Código: {{ moduloPermiso.codigo }}
+                El nombre del módulo es requerido
               </small>
             </div>
-          </div>
-        </div>
 
-        <ng-template #noPermissions>
-          <div class="no-permissions">
-            <div class="no-permissions-icon">🔒</div>
-            <h4>Sin permisos configurados</h4>
-            <p>Este módulo no tiene permisos asociados actualmente.</p>
-            <p-button
-              label="Configurar Permisos"
-              icon="pi pi-plus"
-              (click)="manageModulePermissions()"
-              styleClass="mt-3"
-            ></p-button>
+            <div class="form-group">
+              <label for="orden" class="form-label">Orden *</label>
+              <input
+                type="number"
+                id="orden"
+                class="input"
+                formControlName="orden"
+                min="1"
+                max="100"
+                [class.input-error]="
+                  moduloForm.get('orden')?.invalid &&
+                  moduloForm.get('orden')?.touched
+                "
+              />
+              <small class="field-help">
+                Define el orden de aparición en el menú (1-100)
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="icono" class="form-label">Ícono</label>
+              <select
+                id="icono"
+                class="select"
+                formControlName="icono"
+              >
+                <option value="">Seleccionar ícono</option>
+                <option *ngFor="let icon of iconOptions" [value]="icon.value">
+                  {{ icon.label }}
+                </option>
+              </select>
+              <small class="field-help">
+                Ícono que se mostrará en el menú del sistema
+              </small>
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  id="activo"
+                  formControlName="activo"
+                  class="checkbox"
+                />
+                <span>Módulo activo</span>
+              </label>
+              <small class="field-help">
+                Los módulos inactivos no aparecen en el menú
+              </small>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="descripcion" class="form-label">Descripción</label>
+              <textarea
+                id="descripcion"
+                class="textarea"
+                formControlName="descripcion"
+                placeholder="Descripción detallada del módulo y su funcionalidad"
+                rows="3"
+              ></textarea>
+              <small class="field-help">
+                Descripción que ayude a entender el propósito del módulo
+              </small>
+            </div>
+
+            <!-- Preview del ícono -->
+            <div
+              class="form-group full-width"
+              *ngIf="moduloForm.get('icono')?.value"
+            >
+              <div class="icon-preview">
+                <h4 class="preview-title">Vista Previa</h4>
+                <div class="preview-card">
+                  <div class="preview-icon">
+                    <i [class]="moduloForm.get('icono')?.value"></i>
+                  </div>
+                  <div class="preview-info">
+                    <span class="preview-name">{{
+                      moduloForm.get("nombre")?.value || "Nombre del módulo"
+                    }}</span>
+                    <span class="preview-description">{{
+                      moduloForm.get("descripcion")?.value ||
+                        "Descripción del módulo"
+                    }}</span>
+                  </div>
+                  <span class="preview-order">{{
+                    moduloForm.get("orden")?.value
+                  }}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        </ng-template>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="closeModal()"
+        >
+          ✕ Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="moduloForm.invalid || isLoading"
+          (click)="onSubmit()"
+        >
+          {{ isLoading ? '⏳ Guardando...' : (selectedModulo ? '✓ Actualizar' : '+ Crear') }}
+        </button>
       </div>
     </div>
+  </div>
 
-    <ng-template pTemplate="footer">
-      <div class="modal-footer">
-        <p-button
-          type="button"
-          severity="secondary"
-          outlined="true"
-          label="Cerrar"
-          icon="pi pi-times"
-          (click)="closeDetailsModal()"
-        ></p-button>
-        <p-button
-          type="button"
-          severity="primary"
-          label="Editar Módulo"
-          icon="pi pi-pencil"
-          (click)="editFromDetails()"
-        ></p-button>
+  <!-- Modal para ver detalles del módulo -->
+  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Detalles del Módulo</h3>
+        <button type="button" class="modal-close" (click)="closeDetailsModal()">✕</button>
       </div>
-    </ng-template>
-  </p-dialog>
+
+      <div class="modal-body" *ngIf="selectedModulo">
+        <div class="module-details">
+          <div class="module-info-header">
+            <div class="module-title-group">
+              <div class="module-icon-large">
+                <i [class]="selectedModulo.icono || 'pi pi-th-large'"></i>
+              </div>
+              <div class="module-details-info">
+                <h3>{{ selectedModulo.nombre }}</h3>
+                <p class="module-order">
+                  Orden: <strong>{{ selectedModulo.orden }}</strong>
+                </p>
+                <p class="module-description" *ngIf="selectedModulo.descripcion">
+                  {{ selectedModulo.descripcion }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="permissions-section">
+            <div class="permissions-header">
+              <h4 class="permissions-title">
+                Permisos Asociados ({{ selectedModulo.permisos.length }})
+              </h4>
+              <button
+                type="button"
+                class="btn btn-success btn-sm"
+                (click)="manageModulePermissions()"
+              >
+                ⚙️ Gestionar Permisos
+              </button>
+            </div>
+
+            <div
+              class="permissions-list"
+              *ngIf="selectedModulo.permisos.length > 0; else noPermissions"
+            >
+              <div class="permissions-grid">
+                <div
+                  *ngFor="let moduloPermiso of selectedModulo.permisos"
+                  class="permission-item"
+                >
+                  <div class="permission-header">
+                    <span class="permission-icon">
+                      {{ getIconEmojiForPermissionType(moduloPermiso.permiso.tipo) }}
+                    </span>
+                    <span class="permission-name">{{
+                      moduloPermiso.permiso.nombre
+                    }}</span>
+                    <span
+                      class="badge badge-sm"
+                      [class.badge-info]="moduloPermiso.permiso.tipo === 'READ'"
+                      [class.badge-success]="moduloPermiso.permiso.tipo === 'WRITE'"
+                      [class.badge-danger]="moduloPermiso.permiso.tipo === 'DELETE'"
+                      [class.badge-warning]="moduloPermiso.permiso.tipo === 'ADMIN'"
+                    >
+                      {{ moduloPermiso.permiso.tipo }}
+                    </span>
+                  </div>
+                  <p
+                    class="permission-description"
+                    *ngIf="moduloPermiso.permiso.descripcion"
+                  >
+                    {{ moduloPermiso.permiso.descripcion }}
+                  </p>
+                  <small class="permission-code">
+                    Código: {{ moduloPermiso.codigo }}
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #noPermissions>
+              <div class="no-permissions">
+                <div class="no-permissions-icon">🔒</div>
+                <h4>Sin permisos configurados</h4>
+                <p>Este módulo no tiene permisos asociados actualmente.</p>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="manageModulePermissions()"
+                >
+                  + Configurar Permisos
+                </button>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="closeDetailsModal()"
+        >
+          ✕ Cerrar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="editFromDetails()"
+        >
+          ✏️ Editar Módulo
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Dialog de confirmación de eliminación -->
   <p-confirmDialog></p-confirmDialog>

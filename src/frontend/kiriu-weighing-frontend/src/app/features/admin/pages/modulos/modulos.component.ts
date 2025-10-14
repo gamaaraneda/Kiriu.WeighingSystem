@@ -475,6 +475,26 @@ export class ModulosComponent implements OnInit {
     return iconMap[tipo] || 'pi pi-key';
   }
 
+  // Helper method for emoji icons
+  getIconEmojiForPermissionType(tipo: string): string {
+    switch (tipo.toUpperCase()) {
+      case 'READ':
+        return '📖';
+      case 'WRITE':
+      case 'UPDATE':
+      case 'CREATE':
+        return '✏️';
+      case 'DELETE':
+        return '🗑️';
+      case 'ADMIN':
+        return '⚙️';
+      case 'EXPORT':
+        return '📥';
+      default:
+        return '🔑';
+    }
+  }
+
   getPermissionTypeSeverity(
     tipo: string
   ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
