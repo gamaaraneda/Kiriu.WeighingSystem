@@ -8,20 +8,17 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { MessageService, ConfirmationService } from 'primeng/api';
 
 // PrimeNG Imports
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 
 // Shared Components
@@ -61,19 +58,17 @@ interface EstadoOption {
     ButtonModule,
     CardModule,
     CheckboxModule,
-    ConfirmDialogModule,
     DialogModule,
     InputTextModule,
     TextareaModule,
     SelectModule,
     TableModule,
     TagModule,
-    ToastModule,
     TooltipModule,
     HeaderComponent,
     BreadcrumbComponent,
   ],
-  providers: [MessageService, ConfirmationService],
+  providers: [],
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
 })
@@ -91,9 +86,28 @@ export class RolesComponent implements OnInit {
   isSearching = false;
   showModal = false;
   showPermissionsModal = false;
+  showConfirmModal = false;
   pageSize = 10;
   currentPage = 1;
+  totalCount = 0;
+  totalPages = 0;
   isUsingServerSearch = false;
+
+  // Confirmation modal state
+  confirmModalData: {
+    message: string;
+    title: string;
+    acceptLabel: string;
+    rejectLabel: string;
+    acceptCallback: () => void;
+  } | null = null;
+
+  // Page size options
+  pageSizeOptions = [
+    { label: '10', value: 10 },
+    { label: '50', value: 50 },
+    { label: '100', value: 100 },
+  ];
 
   // Forms
   rolForm!: FormGroup;
@@ -113,15 +127,13 @@ export class RolesComponent implements OnInit {
     private adminService: AdminService,
     private router: Router,
     private fb: FormBuilder,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
     private authService: AuthService
   ) {
     this.initializeForm();
   }
 
   ngOnInit(): void {
-    this.loadRoles();
+    this.searchRoles(); // Use search endpoint for initial load
     this.loadPermisos();
   }
 
@@ -143,6 +155,8 @@ export class RolesComponent implements OnInit {
       if (response?.success && response.data) {
         this.roles = response.data;
         this.filteredRoles = response.data;
+        this.totalCount = response.data.length;
+        this.totalPages = Math.ceil(this.totalCount / this.pageSize);
 
         // Reset search state when loading all roles
         this.searchResult = null;
@@ -153,12 +167,7 @@ export class RolesComponent implements OnInit {
       }
     } catch (error) {
       console.error('Error loading roles:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Error al cargar la lista de roles',
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', 'Error al cargar la lista de roles');
     } finally {
       this.isLoading = false;
     }
@@ -198,24 +207,15 @@ export class RolesComponent implements OnInit {
       if (response?.success && response.data) {
         this.searchResult = response.data;
         this.filteredRoles = response.data.roles;
-
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Búsqueda completada',
-          detail: `Se encontraron ${response.data.totalCount} roles`,
-          key: 'top-right',
-        });
+        this.totalCount = response.data.totalCount;
+        this.totalPages = response.data.totalPages;
+        this.currentPage = response.data.pageNumber;
       } else {
         throw new Error('Error en la búsqueda de roles');
       }
     } catch (error) {
       console.error('Error searching roles:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Error al buscar roles',
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', 'Error al buscar roles');
     } finally {
       this.isSearching = false;
     }
@@ -311,13 +311,7 @@ export class RolesComponent implements OnInit {
           .toPromise();
 
         if (response?.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Rol actualizado exitosamente',
-            key: 'top-right',
-          });
-
+          this.showToast('success', 'Éxito', 'Rol actualizado exitosamente');
           await this.loadRoles();
           this.closeModal();
         }
@@ -335,13 +329,7 @@ export class RolesComponent implements OnInit {
           .toPromise();
 
         if (response?.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Rol creado exitosamente',
-            key: 'top-right',
-          });
-
+          this.showToast('success', 'Éxito', 'Rol creado exitosamente');
           await this.loadRoles();
           this.closeModal();
         }
@@ -357,12 +345,7 @@ export class RolesComponent implements OnInit {
         errorMessage = error.error.errors[0];
       }
 
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: errorMessage,
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -414,35 +397,32 @@ export class RolesComponent implements OnInit {
   // Deactivate role (soft delete)
   confirmDeactivate(rol: RolDto): void {
     if (rol.usuariosAsignados > 0) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Advertencia',
-        detail: `No se puede desactivar el rol "${rol.nombre}" porque tiene ${rol.usuariosAsignados} usuario(s) asignado(s)`,
-        key: 'top-right',
-      });
+      this.showToast(
+        'warn',
+        'Advertencia',
+        `No se puede desactivar el rol "${rol.nombre}" porque tiene ${rol.usuariosAsignados} usuario(s) asignado(s)`
+      );
       return;
     }
 
-    this.confirmationService.confirm({
-      message: `¿Está seguro de que desea desactivar el rol "${rol.nombre}"?`,
-      header: 'Confirmar Desactivación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, Desactivar',
-      rejectLabel: 'Cancelar',
-      accept: () => this.toggleRoleStatus(rol, false),
-    });
+    this.showConfirmDialog(
+      `¿Está seguro de que desea desactivar el rol "${rol.nombre}"?`,
+      'Confirmar Desactivación',
+      'Sí, desactivar',
+      'Cancelar',
+      () => this.toggleRoleStatus(rol, false)
+    );
   }
 
   // Reactivate role
   confirmReactivate(rol: RolDto): void {
-    this.confirmationService.confirm({
-      message: `¿Está seguro de que desea reactivar el rol "${rol.nombre}"?`,
-      header: 'Confirmar Reactivación',
-      icon: 'pi pi-question-circle',
-      acceptLabel: 'Sí, Reactivar',
-      rejectLabel: 'Cancelar',
-      accept: () => this.toggleRoleStatus(rol, true),
-    });
+    this.showConfirmDialog(
+      `¿Está seguro de que desea reactivar el rol "${rol.nombre}"?`,
+      'Confirmar Reactivación',
+      'Sí, reactivar',
+      'Cancelar',
+      () => this.toggleRoleStatus(rol, true)
+    );
   }
 
   // Toggle role status (activate/deactivate)
@@ -466,14 +446,11 @@ export class RolesComponent implements OnInit {
         .toPromise();
 
       if (response?.success) {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: `Rol "${rol.nombre}" ${
-            newStatus ? 'activado' : 'desactivado'
-          } exitosamente`,
-          key: 'top-right',
-        });
+        this.showToast(
+          'success',
+          'Éxito',
+          `Rol "${rol.nombre}" ${newStatus ? 'activado' : 'desactivado'} exitosamente`
+        );
 
         // Refresh the data
         if (this.isUsingServerSearch && this.searchResult) {
@@ -493,12 +470,7 @@ export class RolesComponent implements OnInit {
         errorMessage = error.error.errors[0];
       }
 
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: errorMessage,
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -557,5 +529,88 @@ export class RolesComponent implements OnInit {
   isPermisoSelected(permisoId: string): boolean {
     const currentPermisos = this.rolForm.get('permisosIds')?.value || [];
     return currentPermisos.includes(permisoId);
+  }
+
+  // Pagination method
+  onPageSizeChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.pageSize = Number(select.value);
+    this.currentPage = 1;
+    this.searchRoles();
+  }
+
+  // Modal de confirmación nativo
+  showConfirmDialog(
+    message: string,
+    title: string,
+    acceptLabel: string,
+    rejectLabel: string,
+    acceptCallback: () => void
+  ): void {
+    this.confirmModalData = {
+      message,
+      title,
+      acceptLabel,
+      rejectLabel,
+      acceptCallback,
+    };
+    this.showConfirmModal = true;
+    document.body.classList.add('km-scroll-lock');
+  }
+
+  onConfirmAccept(): void {
+    if (this.confirmModalData?.acceptCallback) {
+      this.confirmModalData.acceptCallback();
+    }
+    this.closeConfirmModal();
+  }
+
+  closeConfirmModal(): void {
+    this.showConfirmModal = false;
+    this.confirmModalData = null;
+    document.body.classList.remove('km-scroll-lock');
+  }
+
+  // Sistema de notificaciones nativo
+  private showToast(
+    severity: 'success' | 'error' | 'warn' | 'info',
+    summary: string,
+    detail: string
+  ): void {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${severity}`;
+
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warn: '!',
+      info: 'i',
+    };
+
+    toast.innerHTML = `
+      <div class="toast__body">
+        <div class="toast__icon">${icons[severity]}</div>
+        <div>
+          <div class="toast__title">${summary}</div>
+          <div class="toast__msg">${detail}</div>
+        </div>
+        <button class="toast__close" onclick="this.parentElement.parentElement.remove()">×</button>
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Auto-remove después de 5 segundos
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.style.animation = 'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
+        setTimeout(() => {
+          toast.remove();
+        }, 180);
+      }
+    }, 5000);
   }
 }
