@@ -1,28 +1,11 @@
-<!-- Topbar -->
-<header class="topbar" role="banner">
-  <div class="brand">
-    <strong class="logo">KIRIU</strong>
-    <span class="app">Sistema de Pesaje</span>
-  </div>
-  <div class="spacer"></div>
-
-  <div class="topbar-actions">
-    <button class="btn-menu" aria-label="Ir a Consultas" (click)="onQueries()">
-      Consultas
-    </button>
-    <button
-      class="btn-menu"
-      aria-label="Ir a Administración"
-      *ngIf="canAccessAdmin()"
-      (click)="onAdmin()"
-    >
-      Administración
-    </button>
-    <button class="btn-logout" aria-label="Cerrar sesión" (click)="onLogout()">
-      🚪 Cerrar sesión
-    </button>
-  </div>
-</header>
+<app-header
+  [showQueriesButton]="true"
+  [showAdminButton]="true"
+  [showLogoutButton]="true"
+  (queriesClick)="onQueries()"
+  (adminClick)="onAdmin()"
+  (logoutClick)="onLogout()"
+></app-header>
 
 <!-- Content -->
 <main class="page-container">

@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PermissionsService } from '../../core/services/permissions.service';
+import { AuthService } from '../../core/services/auth.service';
+import { UserInfo } from '../../core/models/auth.models';
 
 @Component({
   selector: 'app-header',
@@ -19,12 +21,19 @@ export class HeaderComponent implements OnInit {
 
   // Control automático basado en permisos
   hasAdminPermissions = false;
+  currentUser: UserInfo | null = null;
 
-  constructor(private permissionsService: PermissionsService) {}
+  constructor(
+    private permissionsService: PermissionsService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     // Verificar si tiene permisos para el área de administración
     this.hasAdminPermissions = this.permissionsService.hasPermission('USUARIOS.READ');
+
+    // Obtener usuario actual
+    this.currentUser = this.authService.getCurrentUser();
   }
 
   /**

@@ -395,11 +395,75 @@ h2,
   box-shadow: var(--focus-ring), 0 0 0 2px rgba(239, 68, 68, 0.25); /* ring rojizo */
 }
 
+/* Control de usuario en navbar */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--brand-50);
+  border: 1px solid #e6f0ff;
+}
+
+.user-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
+  color: #fff;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(47, 106, 246, 0.25);
+}
+
+.user-email {
+  color: var(--brand-700);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+/* Ajustes del botón de logout dentro de user-info */
+.user-info .btn-logout {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logout-icon {
+  display: inline;
+}
+
+.logout-text {
+  display: inline;
+}
+
 /* Variante compacta si el header es muy estrecho */
+@media (max-width: 768px) {
+  .user-email {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .logout-text {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
   .btn-menu,
   .btn-logout {
     padding: 0 8px;
+  }
+
+  .user-info {
+    padding: 6px 8px;
+    gap: 8px;
   }
 }
 

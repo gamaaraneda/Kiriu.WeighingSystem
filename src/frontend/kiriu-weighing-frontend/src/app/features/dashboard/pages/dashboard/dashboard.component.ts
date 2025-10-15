@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { WeighingFlowService } from '../../../weighing/services/weighing-flow.service';
+import { HeaderComponent } from '../../../../layout/header/header.component';
 
 export interface UnitType {
   id: string;
@@ -18,7 +19,7 @@ export interface UnitType {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HeaderComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
