@@ -318,34 +318,78 @@
             </small>
           </div>
 
-          <!-- Sección de permisos (solo para edición) -->
+          <!-- Sección de permisos por módulo -->
           <div
             class="form-group"
             style="grid-column: 1 / -1;"
-            *ngIf="selectedRole && availablePermisos.length > 0"
+            *ngIf="availableModuloPermisos.length > 0"
           >
-            <label class="label">Permisos Asignados</label>
-            <div class="permisos-section">
-              <div class="permisos-grid">
+            <label class="label">
+              <span class="permissions-header-title">🔐 Permisos del Rol</span>
+              <small class="permissions-help">Seleccione los permisos organizados por módulo que tendrá este rol</small>
+            </label>
+
+            <div class="permissions-selector">
+              <!-- Grouped permissions by module -->
+              <div class="permission-groups">
                 <div
-                  *ngFor="let permiso of availablePermisos"
-                  class="permiso-item"
+                  *ngFor="let moduloNombre of moduleNames"
+                  class="permission-group-card"
+                  [class.permission-group-card--selected]="isModuleFullySelected(moduloNombre)"
+                  [class.permission-group-card--partial]="isModulePartiallySelected(moduloNombre)"
                 >
-                  <label class="checkbox-label">
-                    <input
-                      type="checkbox"
-                      [id]="'permiso-' + permiso.id"
-                      [value]="permiso.id"
-                      class="checkbox-input"
-                      (change)="onPermisoChange($event, permiso.id)"
-                      [checked]="isPermisoSelected(permiso.id)"
-                    />
-                    {{ permiso.nombre }}
-                  </label>
-                  <small class="permiso-description" *ngIf="permiso.descripcion">
-                    {{ permiso.descripcion }}
-                  </small>
+                  <!-- Module Header -->
+                  <div class="permission-group-header">
+                    <label class="permission-group-label">
+                      <input
+                        type="checkbox"
+                        class="permission-group-checkbox"
+                        [checked]="isModuleFullySelected(moduloNombre)"
+                        [indeterminate]="isModulePartiallySelected(moduloNombre)"
+                        (change)="selectAllInModule(moduloNombre, $event)"
+                      />
+                      <span class="permission-group-icon">{{ getModuleIcon(moduloNombre) }}</span>
+                      <span class="permission-group-name">{{ moduloNombre }}</span>
+                      <span class="permission-group-count">({{ groupedModuloPermisos[moduloNombre].length }})</span>
+                    </label>
+                  </div>
+
+                  <!-- ModuloPermisos in this module -->
+                  <div class="permission-items">
+                    <div
+                      *ngFor="let moduloPermiso of groupedModuloPermisos[moduloNombre]"
+                      class="permission-item"
+                    >
+                      <label class="permission-checkbox-label">
+                        <input
+                          type="checkbox"
+                          [id]="'mp-' + moduloPermiso.id"
+                          [value]="moduloPermiso.id"
+                          class="permission-checkbox-input"
+                          (change)="onModuloPermisoChange($event, moduloPermiso.id)"
+                          [checked]="isModuloPermisoSelected(moduloPermiso.id)"
+                        />
+                        <div class="permission-info">
+                          <span class="permission-name">
+                            <span class="permission-icon">{{ getPermissionTypeIcon(moduloPermiso.permiso.tipo) }}</span>
+                            {{ moduloPermiso.codigo }}
+                          </span>
+                          <span class="permission-description" *ngIf="moduloPermiso.descripcion">
+                            {{ moduloPermiso.descripcion }}
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              <!-- Quick stats -->
+              <div class="permissions-stats" *ngIf="rolForm.get('permisosIds')?.value?.length > 0">
+                <div class="stats-icon">✓</div>
+                <span class="stats-text">
+                  {{ rolForm.get('permisosIds')?.value?.length }} permiso(s) seleccionado(s) de {{ availableModuloPermisos.length }}
+                </span>
               </div>
             </div>
           </div>

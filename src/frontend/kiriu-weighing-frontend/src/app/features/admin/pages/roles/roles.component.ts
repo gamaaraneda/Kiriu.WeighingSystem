@@ -33,6 +33,7 @@ import {
   CreateRolRequest,
   UpdateRolRequest,
   PermisoDto,
+  ModuloDto,
   ModuloPermisoDto,
   SearchRolesRequest,
   SearchRolesResponse,
@@ -76,10 +77,14 @@ export class RolesComponent implements OnInit {
   // Data properties
   roles: RolDto[] = [];
   filteredRoles: RolDto[] = [];
-  availablePermisos: PermisoDto[] = [];
+  availableModulos: ModuloDto[] = [];
+  availableModuloPermisos: ModuloPermisoDto[] = [];
   selectedRole: RolDto | null = null;
   selectedRolePermissions: ModuloPermisoDto[] = [];
   searchResult: SearchRolesResponse | null = null;
+
+  // Grouped ModuloPermisos by module for better UX
+  groupedModuloPermisos: { [moduloNombre: string]: ModuloPermisoDto[] } = {};
 
   // UI state
   isLoading = false;
@@ -134,7 +139,7 @@ export class RolesComponent implements OnInit {
 
   ngOnInit(): void {
     this.searchRoles(); // Use search endpoint for initial load
-    this.loadPermisos();
+    this.loadModuloPermisos(); // Load module-permissions combinations
   }
 
   private initializeForm(): void {
@@ -173,16 +178,74 @@ export class RolesComponent implements OnInit {
     }
   }
 
-  private async loadPermisos(): Promise<void> {
+  private async loadModuloPermisos(): Promise<void> {
     try {
-      const response = await this.adminService.getAllPermisos().toPromise();
+      const response = await this.adminService.getAllModulos().toPromise();
 
       if (response?.success && response.data) {
-        this.availablePermisos = response.data.filter((p) => p.activo);
+        this.availableModulos = response.data.filter((m) => m.activo);
+
+        // Extract all ModuloPermisos from all modules
+        this.availableModuloPermisos = [];
+        this.availableModulos.forEach(modulo => {
+          if (modulo.permisos && modulo.permisos.length > 0) {
+            this.availableModuloPermisos.push(...modulo.permisos);
+          }
+        });
+
+        this.groupPermissionsByModule();
       }
     } catch (error) {
-      console.error('Error loading permisos:', error);
+      console.error('Error loading module permissions:', error);
     }
+  }
+
+  private groupPermissionsByModule(): void {
+    this.groupedModuloPermisos = {};
+
+    this.availableModulos.forEach(modulo => {
+      if (modulo.permisos && modulo.permisos.length > 0) {
+        this.groupedModuloPermisos[modulo.nombre] = modulo.permisos;
+      }
+    });
+  }
+
+  get moduleNames(): string[] {
+    return Object.keys(this.groupedModuloPermisos).sort();
+  }
+
+  getModuleIcon(moduloNombre: string): string {
+    const modulo = this.availableModulos.find(m => m.nombre === moduloNombre);
+    return modulo?.icono || '📦';
+  }
+
+  selectAllInModule(moduloNombre: string, event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const currentPermisos = this.rolForm.get('permisosIds')?.value || [];
+    const modulePermisos = this.groupedModuloPermisos[moduloNombre].map(mp => mp.id);
+
+    if (checkbox.checked) {
+      // Add all ModuloPermisos of this module
+      const newPermisos = [...new Set([...currentPermisos, ...modulePermisos])];
+      this.rolForm.patchValue({ permisosIds: newPermisos });
+    } else {
+      // Remove all ModuloPermisos of this module
+      const newPermisos = currentPermisos.filter((id: string) => !modulePermisos.includes(id));
+      this.rolForm.patchValue({ permisosIds: newPermisos });
+    }
+  }
+
+  isModuleFullySelected(moduloNombre: string): boolean {
+    const currentPermisos = this.rolForm.get('permisosIds')?.value || [];
+    const modulePermisos = this.groupedModuloPermisos[moduloNombre].map(mp => mp.id);
+    return modulePermisos.length > 0 && modulePermisos.every(id => currentPermisos.includes(id));
+  }
+
+  isModulePartiallySelected(moduloNombre: string): boolean {
+    const currentPermisos = this.rolForm.get('permisosIds')?.value || [];
+    const modulePermisos = this.groupedModuloPermisos[moduloNombre].map(mp => mp.id);
+    const selectedCount = modulePermisos.filter(id => currentPermisos.includes(id)).length;
+    return selectedCount > 0 && selectedCount < modulePermisos.length;
   }
 
   // Search methods
@@ -264,20 +327,31 @@ export class RolesComponent implements OnInit {
     this.showModal = true;
   }
 
-  openEditModal(rol: RolDto): void {
+  async openEditModal(rol: RolDto): Promise<void> {
     this.selectedRole = rol;
+    this.isLoading = true;
 
-    // Load current permissions for this role
-    this.loadRolePermissions(rol.id);
+    try {
+      // Load current ModuloPermisos for this role
+      await this.loadRolePermissions(rol.id);
 
-    this.rolForm.patchValue({
-      nombre: rol.nombre,
-      descripcion: rol.descripcion,
-      activo: rol.activo,
-      permisosIds: rol.permisos?.map((p) => p.id) || [],
-    });
+      // Extract ModuloPermiso IDs from the loaded permissions
+      const moduloPermisosIds = this.selectedRolePermissions.map((mp) => mp.id);
 
-    this.showModal = true;
+      this.rolForm.patchValue({
+        nombre: rol.nombre,
+        descripcion: rol.descripcion,
+        activo: rol.activo,
+        permisosIds: moduloPermisosIds,
+      });
+
+      this.showModal = true;
+    } catch (error) {
+      console.error('Error loading role for edit:', error);
+      this.showToast('error', 'Error', 'Error al cargar los permisos del rol');
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   closeModal(): void {
@@ -434,11 +508,15 @@ export class RolesComponent implements OnInit {
     const action = newStatus ? 'activar' : 'desactivar';
 
     try {
+      // Load current ModuloPermisos for this role to preserve them
+      await this.loadRolePermissions(rol.id);
+      const moduloPermisosIds = this.selectedRolePermissions.map((mp) => mp.id);
+
       const updateRequest: UpdateRolRequest = {
         nombre: rol.nombre,
         descripcion: rol.descripcion || '',
         activo: newStatus,
-        permisosIds: rol.permisos?.map((p) => p.id) || [],
+        permisosIds: moduloPermisosIds,
       };
 
       const response = await this.adminService
@@ -509,26 +587,38 @@ export class RolesComponent implements OnInit {
   Math = Math;
 
   // Checkbox handling for permisos
-  onPermisoChange(event: Event, permisoId: string): void {
+  onModuloPermisoChange(event: Event, moduloPermisoId: string): void {
     const checkbox = event.target as HTMLInputElement;
     const currentPermisos = this.rolForm.get('permisosIds')?.value || [];
 
     if (checkbox.checked) {
-      if (!currentPermisos.includes(permisoId)) {
+      if (!currentPermisos.includes(moduloPermisoId)) {
         this.rolForm.patchValue({
-          permisosIds: [...currentPermisos, permisoId]
+          permisosIds: [...currentPermisos, moduloPermisoId]
         });
       }
     } else {
       this.rolForm.patchValue({
-        permisosIds: currentPermisos.filter((id: string) => id !== permisoId)
+        permisosIds: currentPermisos.filter((id: string) => id !== moduloPermisoId)
       });
     }
   }
 
-  isPermisoSelected(permisoId: string): boolean {
+  isModuloPermisoSelected(moduloPermisoId: string): boolean {
     const currentPermisos = this.rolForm.get('permisosIds')?.value || [];
-    return currentPermisos.includes(permisoId);
+    return currentPermisos.includes(moduloPermisoId);
+  }
+
+  getPermissionTypeIcon(tipoPermiso: string): string {
+    const icons: { [key: string]: string } = {
+      'CREATE': '➕',
+      'READ': '👁️',
+      'UPDATE': '✏️',
+      'DELETE': '🗑️',
+      'EXPORT': '📥',
+      'PRINT': '🖨️'
+    };
+    return icons[tipoPermiso] || '🔑';
   }
 
   // Pagination method
