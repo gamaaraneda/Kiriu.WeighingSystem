@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/guards/auth.guard';
+import { permissionGuard } from '../../core/guards/permission.guard';
 
 export const adminRoutes: Routes = [
   {
@@ -13,8 +14,11 @@ export const adminRoutes: Routes = [
       import('./pages/admin-dashboard/admin-dashboard.component').then(
         (m) => m.AdminDashboardComponent
       ),
-    canActivate: [authGuard],
-    data: { title: 'Panel de Administración' },
+    canActivate: [authGuard, permissionGuard],
+    data: {
+      title: 'Panel de Administración',
+      requiredPermissions: ['USUARIOS.READ']
+    },
   },
   {
     path: 'usuarios',
@@ -22,15 +26,21 @@ export const adminRoutes: Routes = [
       import('./pages/usuarios/usuarios.component').then(
         (m) => m.UsuariosComponent
       ),
-    canActivate: [authGuard],
-    data: { title: 'Gestión de Usuarios' },
+    canActivate: [authGuard, permissionGuard],
+    data: {
+      title: 'Gestión de Usuarios',
+      requiredPermissions: ['USUARIOS.READ']
+    },
   },
   {
     path: 'roles',
     loadComponent: () =>
       import('./pages/roles/roles.component').then((m) => m.RolesComponent),
-    canActivate: [authGuard],
-    data: { title: 'Gestión de Roles' },
+    canActivate: [authGuard, permissionGuard],
+    data: {
+      title: 'Gestión de Roles',
+      requiredPermissions: ['USUARIOS.READ']
+    },
   },
   {
     path: 'permisos',
@@ -38,8 +48,11 @@ export const adminRoutes: Routes = [
       import('./pages/permisos/permisos.component').then(
         (m) => m.PermisosComponent
       ),
-    canActivate: [authGuard],
-    data: { title: 'Gestión de Permisos' },
+    canActivate: [authGuard, permissionGuard],
+    data: {
+      title: 'Gestión de Permisos',
+      requiredPermissions: ['USUARIOS.READ']
+    },
   },
   {
     path: 'modulos',
@@ -47,8 +60,11 @@ export const adminRoutes: Routes = [
       import('./pages/modulos/modulos.component').then(
         (m) => m.ModulosComponent
       ),
-    canActivate: [authGuard],
-    data: { title: 'Gestión de Módulos' },
+    canActivate: [authGuard, permissionGuard],
+    data: {
+      title: 'Gestión de Módulos',
+      requiredPermissions: ['USUARIOS.READ']
+    },
   },
   {
     path: 'roles-permisos',
@@ -56,7 +72,10 @@ export const adminRoutes: Routes = [
       import('./pages/roles-permisos/roles-permisos.component').then(
         (m) => m.RolesPermisosComponent
       ),
-    canActivate: [authGuard],
-    data: { title: 'Asignación de Permisos' },
+    canActivate: [authGuard, permissionGuard],
+    data: {
+      title: 'Asignación de Permisos',
+      requiredPermissions: ['USUARIOS.READ']
+    },
   },
 ];

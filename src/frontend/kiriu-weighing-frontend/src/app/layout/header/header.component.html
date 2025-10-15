@@ -7,7 +7,7 @@
 
   <div class="topbar-actions">
     <button class="btn-menu" aria-label="Ir a Consultas" *ngIf="showQueriesButton" (click)="onQueriesClick()">Consultas</button>
-    <button class="btn-menu" aria-label="Ir a Administración" *ngIf="showAdminButton" (click)="onAdminClick()">Administración</button>
+    <button class="btn-menu" aria-label="Ir a Administración" *ngIf="shouldShowAdminButton" (click)="onAdminClick()">Administración</button>
     <button class="btn-logout" aria-label="Cerrar sesión" *ngIf="showLogoutButton" (click)="onLogoutClick()">🚪 Cerrar sesión</button>
   </div>
 </header>
