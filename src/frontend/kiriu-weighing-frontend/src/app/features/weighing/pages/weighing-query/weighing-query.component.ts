@@ -50,6 +50,11 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   selectedOperation: WeighingQueryResult | null = null;
   photosExpanded = false;
 
+  // Edit modal state
+  showEditModal = false;
+  operationToEdit: WeighingQueryResult | null = null;
+  editForm!: FormGroup;
+
   // Permission state
   hasReportsPermission = false;
 
@@ -74,6 +79,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {
     this.initializeForm();
+    this.initializeEditForm();
   }
 
   ngOnInit(): void {
@@ -115,6 +121,13 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       placas: [''],
       estado: [''],
       edicionPosterior: ['Todos'],
+    });
+  }
+
+  private initializeEditForm(): void {
+    this.editForm = this.fb.group({
+      entryWeight: [null],
+      exitWeight: [null],
     });
   }
 
@@ -445,6 +458,73 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       return pesoBruto - pesoNeto;
     }
     return null;
+  }
+
+  onEditWeights(operation: WeighingQueryResult): void {
+    // Verificar permisos
+    if (!this.permissionsService.hasPermission('REPORTES.EDIT')) {
+      this.showToast(
+        'error',
+        'Acceso Denegado',
+        'No tienes permisos para editar registros de pesaje'
+      );
+      return;
+    }
+
+    this.operationToEdit = operation;
+
+    // Prellenar el formulario con los valores actuales
+    this.editForm.patchValue({
+      entryWeight: operation.pesoBruto || null,
+      exitWeight: operation.pesoNeto || null,
+    });
+
+    this.showEditModal = true;
+    document.body.classList.add('km-scroll-lock');
+  }
+
+  onCloseEditModal(): void {
+    this.showEditModal = false;
+    this.operationToEdit = null;
+    this.editForm.reset();
+    document.body.classList.remove('km-scroll-lock');
+  }
+
+  onSaveWeights(): void {
+    if (!this.operationToEdit || !this.editForm.valid) {
+      return;
+    }
+
+    const { entryWeight, exitWeight } = this.editForm.value;
+
+    this.isLoading = true;
+
+    this.weighingQueryService
+      .updateWeights(this.operationToEdit.id, entryWeight, exitWeight)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.isLoading = false;
+
+          this.showToast(
+            'success',
+            'Actualización exitosa',
+            `Los pesos del folio ${this.operationToEdit?.folio} han sido actualizados`
+          );
+
+          // Cerrar el modal
+          this.onCloseEditModal();
+
+          // Recargar los resultados
+          this.executeSearch();
+        },
+        error: (error) => {
+          this.isLoading = false;
+          const errorMessage = extractErrorMessage(error);
+          this.handleError('Error al actualizar pesos: ' + errorMessage);
+          console.error('Error en actualización:', error);
+        },
+      });
   }
 
   private handleError(message: string): void {

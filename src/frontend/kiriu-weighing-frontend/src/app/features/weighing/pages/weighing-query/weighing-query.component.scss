@@ -1633,3 +1633,108 @@
     transform: rotate(360deg);
   }
 }
+
+/* ============================================================================
+ * MODAL DE EDICIÓN DE PESOS
+ * ============================================================================ */
+
+.edit-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.edit-info-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.edit-info-content {
+  flex: 1;
+
+  strong {
+    display: block;
+    color: var(--brand-700);
+    font-size: var(--fs-sm);
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    line-height: 1.4;
+  }
+}
+
+.readonly-section {
+  margin-bottom: 28px;
+}
+
+.section-title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--brand-700);
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e9eef5;
+}
+
+.readonly-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.readonly-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.readonly-label {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  font-weight: var(--fw-medium);
+}
+
+.readonly-value {
+  font-size: var(--fs-sm);
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+
+.editable-section {
+  margin-bottom: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-hint {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .readonly-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

@@ -246,6 +246,15 @@
                         👁
                       </button>
                       <button
+                        *appHasPermission="'REPORTES.EDIT'"
+                        class="btn-mini"
+                        title="Editar pesos"
+                        (click)="onEditWeights(operation)"
+                        [disabled]="isLoading"
+                      >
+                        ✏️
+                      </button>
+                      <button
                         class="btn-mini"
                         title="Reimprimir"
                         (click)="onReprint(operation)"
@@ -253,7 +262,6 @@
                       >
                         🖨
                       </button>
-                      <button class="btn-mini" title="Opciones">⚙</button>
                     </div>
                   </td>
                 </tr>
@@ -525,6 +533,118 @@
           </div>
         </div>
       </div>
+    </section>
+  </div>
+
+  <!-- Modal de edición de pesos -->
+  <div
+    class="km-backdrop"
+    [class.is-open]="showEditModal"
+    role="presentation"
+  >
+    <section
+      class="km-modal km-modal--md"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-title"
+    >
+      <header class="km-modal__header">
+        <h3 id="edit-title" class="km-modal__title">Editar Pesos - {{ operationToEdit?.folio }}</h3>
+        <button
+          class="km-modal__close"
+          aria-label="Cerrar"
+          (click)="onCloseEditModal()"
+        >
+          ✕
+        </button>
+      </header>
+      <div class="km-modal__body" *ngIf="operationToEdit">
+        <form [formGroup]="editForm">
+          <div class="edit-info-banner">
+            <span class="edit-info-icon">ℹ️</span>
+            <div class="edit-info-content">
+              <strong>Información:</strong>
+              <p>Solo puedes editar los pesos. Los datos de cliente, producto y fotos no pueden modificarse.</p>
+            </div>
+          </div>
+
+          <!-- Información no editable -->
+          <div class="readonly-section">
+            <h4 class="section-title">Información General (Solo lectura)</h4>
+            <div class="readonly-grid">
+              <div class="readonly-field">
+                <span class="readonly-label">Cliente/Proveedor:</span>
+                <span class="readonly-value">{{ operationToEdit.clienteProveedor }}</span>
+              </div>
+              <div class="readonly-field">
+                <span class="readonly-label">Producto:</span>
+                <span class="readonly-value">{{ operationToEdit.producto }}</span>
+              </div>
+              <div class="readonly-field">
+                <span class="readonly-label">Placas:</span>
+                <span class="readonly-value">{{ operationToEdit.placas }}</span>
+              </div>
+              <div class="readonly-field">
+                <span class="readonly-label">Estado:</span>
+                <span class="readonly-value">{{ getEstadoLabel(operationToEdit.estado) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campos editables -->
+          <div class="editable-section">
+            <h4 class="section-title">Pesos (Editables)</h4>
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="label" for="entryWeight">Peso de Entrada (kg)</label>
+                <input
+                  type="number"
+                  id="entryWeight"
+                  formControlName="entryWeight"
+                  class="input"
+                  placeholder="Ej: 25000"
+                  min="0"
+                  step="0.01"
+                />
+                <span class="field-hint">Peso bruto al entrar</span>
+              </div>
+
+              <div class="form-field">
+                <label class="label" for="exitWeight">Peso de Salida (kg)</label>
+                <input
+                  type="number"
+                  id="exitWeight"
+                  formControlName="exitWeight"
+                  class="input"
+                  placeholder="Ej: 15000"
+                  min="0"
+                  step="0.01"
+                />
+                <span class="field-hint">Peso bruto al salir</span>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <footer class="km-modal__footer">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="onCloseEditModal()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="onSaveWeights()"
+          [disabled]="isLoading || !editForm.valid"
+        >
+          <span *ngIf="isLoading" class="spinner"></span>
+          {{ isLoading ? 'Guardando...' : 'Guardar Cambios' }}
+        </button>
+      </footer>
     </section>
   </div>
 </div>

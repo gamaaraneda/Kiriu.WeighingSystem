@@ -41,11 +41,12 @@ export class PermissionHelperService {
       canRead: () => this.permissionsService.canRead('REPORTES'),
       canExport: () => this.permissionsService.canExport('REPORTES'),
       canPrint: () => this.permissionsService.canPrint('REPORTES'),
+      canEdit: () => this.permissionsService.canUpdate('REPORTES'),
       hasAnyAccess: () => this.permissionsService.hasAnyPermission([
-        'REPORTES.READ', 'REPORTES.EXPORT', 'REPORTES.PRINT'
+        'REPORTES.READ', 'REPORTES.EXPORT', 'REPORTES.PRINT', 'REPORTES.EDIT'
       ]),
       hasFullAccess: () => this.permissionsService.hasAllPermissions([
-        'REPORTES.READ', 'REPORTES.EXPORT', 'REPORTES.PRINT'
+        'REPORTES.READ', 'REPORTES.EXPORT', 'REPORTES.PRINT', 'REPORTES.EDIT'
       ])
     };
   }

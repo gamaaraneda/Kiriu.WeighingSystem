@@ -157,4 +157,14 @@ export class WeighingQueryService {
       responseType: 'blob'
     });
   }
+
+  updateWeights(operationId: string, entryWeight?: number, exitWeight?: number): Observable<any> {
+    const url = `${environment.apiUrl}/weighing/operations/${operationId}`;
+    const payload = {
+      entryWeight: entryWeight,
+      exitWeight: exitWeight,
+      esEdicionManual: true
+    };
+    return this.http.put(url, payload);
+  }
 }
