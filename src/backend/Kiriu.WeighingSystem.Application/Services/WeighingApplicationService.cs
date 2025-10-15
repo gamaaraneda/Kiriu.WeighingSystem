@@ -13,17 +13,20 @@ public class WeighingApplicationService : IWeighingApplicationService
     private readonly IWeighingOperationRepository _weighingRepository;
     private readonly IWeighingPhotoRepository _photoRepository;
     private readonly IWeighingService _weighingService;
+    private readonly IAuditLogger _auditLogger;
     private readonly ILogger<WeighingApplicationService> _logger;
 
     public WeighingApplicationService(
         IWeighingOperationRepository weighingRepository,
         IWeighingPhotoRepository photoRepository,
         IWeighingService weighingService,
+        IAuditLogger auditLogger,
         ILogger<WeighingApplicationService> logger)
     {
         _weighingRepository = weighingRepository;
         _photoRepository = photoRepository;
         _weighingService = weighingService;
+        _auditLogger = auditLogger;
         _logger = logger;
     }
 
@@ -756,15 +759,24 @@ public class WeighingApplicationService : IWeighingApplicationService
                 return ApiResponse<WeighingOperationDto>.CreateError("Operación de pesaje no encontrada");
             }
 
-            // Detectar si se están editando las placas manualmente
+            // Detectar si se están editando las placas o pesos manualmente
             bool plateFieldsChanged = HasPlateFieldsChanged(operation, request);
-            
-            // Solo marcar como editado manualmente si se cambiaron las placas
-            if (request.EsEdicionManual && plateFieldsChanged)
+            bool weightFieldsChanged = HasWeightFieldsChanged(operation, request);
+
+            // Marcar como editado manualmente si se cambiaron las placas o los pesos
+            if (request.EsEdicionManual && (plateFieldsChanged || weightFieldsChanged))
             {
                 operation.FueEditado = true;
                 operation.FechaUltimaEdicion = DateTime.UtcNow;
                 operation.UsuarioEditor = request.UsuarioEditor;
+
+                _logger.LogInformation(
+                    "Registro editado manualmente - OperationId: {OperationId}, Usuario: {Usuario}, PlacasEditadas: {PlacasEditadas}, PesosEditados: {PesosEditados}",
+                    operationId,
+                    request.UsuarioEditor,
+                    plateFieldsChanged,
+                    weightFieldsChanged
+                );
             }
 
             // Actualizar campos si se proporcionan
@@ -805,6 +817,37 @@ public class WeighingApplicationService : IWeighingApplicationService
             operation.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _weighingRepository.UpdateAsync(operation);
+
+            // Registrar en auditoría si fue una edición manual
+            if (request.EsEdicionManual && (plateFieldsChanged || weightFieldsChanged))
+            {
+                var cambios = new List<string>();
+                if (plateFieldsChanged) cambios.Add("Placas modificadas");
+                if (weightFieldsChanged) cambios.Add($"Pesos modificados - Entrada: {request.EntryWeight}, Salida: {request.ExitWeight}");
+
+                await _auditLogger.LogUpdateAsync(
+                    usuarioId: request.UsuarioEditor ?? "Sistema",
+                    nombreUsuario: request.UsuarioEditor,
+                    recurso: "WeighingOperations",
+                    registroId: operationId.ToString(),
+                    payload: System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        Folio = operation.Folio,
+                        EntryWeight = request.EntryWeight,
+                        ExitWeight = request.ExitWeight,
+                        Cambios = string.Join(", ", cambios)
+                    }),
+                    rutaApi: "/api/weighing/operations/{operationId}"
+                );
+
+                _logger.LogInformation(
+                    "Registro de auditoría creado - OperationId: {OperationId}, Folio: {Folio}, Usuario: {Usuario}",
+                    operationId,
+                    operation.Folio,
+                    request.UsuarioEditor
+                );
+            }
+
             var result = updated.Adapt<WeighingOperationDto>();
 
             return ApiResponse<WeighingOperationDto>.CreateSuccess(result, "Operación de pesaje actualizada exitosamente");
@@ -823,6 +866,12 @@ public class WeighingApplicationService : IWeighingApplicationService
                (!string.IsNullOrEmpty(request.RemolquePlateContenedor) && request.RemolquePlateContenedor != original.RemolquePlateContenedor) ||
                (!string.IsNullOrEmpty(request.PlacaRemolque1) && request.PlacaRemolque1 != original.PlacaRemolque1) ||
                (!string.IsNullOrEmpty(request.PlacaRemolque2) && request.PlacaRemolque2 != original.PlacaRemolque2);
+    }
+
+    private bool HasWeightFieldsChanged(WeighingOperation original, UpdateWeighingOperationRequest request)
+    {
+        return (request.EntryWeight.HasValue && request.EntryWeight.Value != original.EntryWeight) ||
+               (request.ExitWeight.HasValue && request.ExitWeight.Value != original.ExitWeight);
     }
 
     public async Task<PhotoBinaryDataDto?> GetPhotoDataAsync(Guid photoId)
