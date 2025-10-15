@@ -147,6 +147,10 @@ export class AdminDashboardComponent implements OnInit {
     this.router.navigate(['/weighing-query']);
   }
 
+  onAdmin(): void {
+    // Ya estamos en admin, no hacer nada
+  }
+
   onLogout(): void {
     this.authService.logout().subscribe({
       next: () => {

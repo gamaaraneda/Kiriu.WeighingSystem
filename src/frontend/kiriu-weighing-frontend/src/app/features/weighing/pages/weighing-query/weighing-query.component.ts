@@ -431,6 +431,10 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     // Ya estamos en queries, no hacer nada
   }
 
+  onAdmin(): void {
+    this.router.navigate(['/admin']);
+  }
+
   onLogout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
