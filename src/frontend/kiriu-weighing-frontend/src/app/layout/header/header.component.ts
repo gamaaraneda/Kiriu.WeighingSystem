@@ -13,35 +13,21 @@ import { UserInfo } from '../../core/models/auth.models';
 })
 export class HeaderComponent implements OnInit {
   @Input() showQueriesButton = true;
-  @Input() showAdminButton = false;
+  @Input() showAdminButton = true; // Siempre visible, guards controlan acceso
   @Input() showLogoutButton = true;
   @Output() queriesClick = new EventEmitter<void>();
   @Output() adminClick = new EventEmitter<void>();
   @Output() logoutClick = new EventEmitter<void>();
 
-  // Control automático basado en permisos
-  hasAdminPermissions = false;
   currentUser: UserInfo | null = null;
 
   constructor(
-    private permissionsService: PermissionsService,
     private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    // Verificar si tiene permisos para el área de administración
-    this.hasAdminPermissions = this.permissionsService.hasPermission('USUARIOS.READ');
-
     // Obtener usuario actual
     this.currentUser = this.authService.getCurrentUser();
-  }
-
-  /**
-   * Determina si debe mostrar el botón de administración
-   * Combina el Input manual con la verificación automática de permisos
-   */
-  get shouldShowAdminButton(): boolean {
-    return this.showAdminButton && this.hasAdminPermissions;
   }
 
   /**
