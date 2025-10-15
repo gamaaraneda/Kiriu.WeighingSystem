@@ -40,7 +40,6 @@ import {
 
 interface FilterOptions {
   search: string;
-  tipo?: string;
   activo?: boolean;
 }
 
@@ -108,7 +107,29 @@ export class PermisosComponent implements OnInit {
   isLoading = false;
   showModal = false;
   showUsageModal = false;
+  showConfirmModal = false;
   pageSize = 10;
+
+  // Confirmation modal state
+  confirmModalData: {
+    message: string;
+    title: string;
+    acceptLabel: string;
+    rejectLabel: string;
+    acceptCallback: () => void;
+  } | null = null;
+
+  // Pagination state
+  currentPage = 1;
+  totalCount = 0;
+  totalPages = 0;
+
+  // Page size options
+  pageSizeOptions = [
+    { label: '10', value: 10 },
+    { label: '50', value: 50 },
+    { label: '100', value: 100 },
+  ];
 
   // Forms
   permisoForm!: FormGroup;
@@ -116,7 +137,6 @@ export class PermisosComponent implements OnInit {
   // Filter options
   searchFilters: FilterOptions = {
     search: '',
-    tipo: undefined,
     activo: undefined,
   };
 
@@ -145,16 +165,7 @@ export class PermisosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadPermisos();
-  }
-
-  private initializeForm(): void {
-    this.permisoForm = this.fb.group({
-      nombre: ['', [Validators.required]],
-      descripcion: [''],
-      tipo: ['', [Validators.required]],
-      activo: [true],
-    });
+    this.onSearch(); // Load data on init
   }
 
   private async loadPermisos(): Promise<void> {
@@ -166,21 +177,25 @@ export class PermisosComponent implements OnInit {
       if (response?.success && response.data) {
         this.permisos = response.data;
         this.calculatePermissionStats();
-        this.applyFilters();
+        this.applyFilters(); // Apply filters after loading
       } else {
         throw new Error('Error al cargar permisos');
       }
     } catch (error) {
       console.error('Error loading permisos:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Error al cargar la lista de permisos',
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', 'Error al cargar la lista de permisos');
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private initializeForm(): void {
+    this.permisoForm = this.fb.group({
+      nombre: ['', [Validators.required]],
+      descripcion: [''],
+      tipo: ['', [Validators.required]],
+      activo: [true],
+    });
   }
 
   private calculatePermissionStats(): void {
@@ -247,12 +262,14 @@ export class PermisosComponent implements OnInit {
   }
 
   // Filter methods
-  onFilterChange(): void {
-    this.applyFilters();
+  onSearch(): void {
+    this.currentPage = 1; // Reset to first page on new search
+    this.loadPermisos(); // Load data from API
   }
 
   private applyFilters(): void {
-    this.filteredPermisos = this.permisos.filter((permiso) => {
+    // First, apply filters to get all matching results
+    let filtered = this.permisos.filter((permiso) => {
       const matchesSearch =
         !this.searchFilters.search ||
         permiso.nombre
@@ -262,24 +279,35 @@ export class PermisosComponent implements OnInit {
           ?.toLowerCase()
           .includes(this.searchFilters.search.toLowerCase());
 
-      const matchesType =
-        !this.searchFilters.tipo || permiso.tipo === this.searchFilters.tipo;
-
       const matchesStatus =
         this.searchFilters.activo === undefined ||
         permiso.activo === this.searchFilters.activo;
 
-      return matchesSearch && matchesType && matchesStatus;
+      return matchesSearch && matchesStatus;
     });
+
+    // Update pagination info based on ALL filtered results
+    this.totalCount = filtered.length;
+    this.totalPages = Math.ceil(this.totalCount / this.pageSize);
+
+    // Reset to first page if current page exceeds total pages
+    if (this.currentPage > this.totalPages && this.totalPages > 0) {
+      this.currentPage = 1;
+    }
+
+    // Apply pagination to get the slice for current page
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.filteredPermisos = filtered.slice(startIndex, endIndex);
   }
 
   clearFilters(): void {
     this.searchFilters = {
       search: '',
-      tipo: undefined,
       activo: undefined,
     };
-    this.applyFilters();
+    this.currentPage = 1;
+    this.onSearch(); // Use onSearch to reload with cleared filters
   }
 
   // Modal methods
@@ -335,13 +363,7 @@ export class PermisosComponent implements OnInit {
           .toPromise();
 
         if (response?.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Permiso actualizado exitosamente',
-            key: 'top-right',
-          });
-
+          this.showToast('success', 'Éxito', 'Permiso actualizado exitosamente');
           await this.loadPermisos();
           this.closeModal();
         }
@@ -352,13 +374,7 @@ export class PermisosComponent implements OnInit {
           .toPromise();
 
         if (response?.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Permiso creado exitosamente',
-            key: 'top-right',
-          });
-
+          this.showToast('success', 'Éxito', 'Permiso creado exitosamente');
           await this.loadPermisos();
           this.closeModal();
         }
@@ -374,12 +390,7 @@ export class PermisosComponent implements OnInit {
         errorMessage = error.error.errors[0];
       }
 
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: errorMessage,
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -443,14 +454,15 @@ export class PermisosComponent implements OnInit {
 
   // Delete method
   confirmDelete(permiso: PermisoDto): void {
-    this.confirmationService.confirm({
-      message: `¿Está seguro de que desea eliminar el permiso "${permiso.nombre}"?`,
-      header: 'Confirmar Eliminación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, Eliminar',
-      rejectLabel: 'Cancelar',
-      accept: () => this.deletePermiso(permiso),
-    });
+    this.showConfirmDialog(
+      `¿Estás seguro de que deseas eliminar el permiso "${permiso.nombre}"? Esta acción no se puede deshacer.`,
+      'Confirmar Eliminación',
+      'Sí, eliminar',
+      'Cancelar',
+      () => {
+        this.deletePermiso(permiso);
+      }
+    );
   }
 
   private async deletePermiso(permiso: PermisoDto): Promise<void> {
@@ -462,13 +474,7 @@ export class PermisosComponent implements OnInit {
         .toPromise();
 
       if (response?.success) {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: `Permiso "${permiso.nombre}" eliminado exitosamente`,
-          key: 'top-right',
-        });
-
+        this.showToast('success', 'Éxito', `Permiso "${permiso.nombre}" eliminado exitosamente`);
         await this.loadPermisos();
       }
     } catch (error: any) {
@@ -482,12 +488,7 @@ export class PermisosComponent implements OnInit {
         errorMessage = error.error.errors[0];
       }
 
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: errorMessage,
-        key: 'top-right',
-      });
+      this.showToast('error', 'Error', errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -528,5 +529,95 @@ export class PermisosComponent implements OnInit {
       default:
         return '🔑';
     }
+  }
+
+  // Pagination methods
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.applyFilters();
+    }
+  }
+
+  onPageSizeChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.pageSize = Number(select.value);
+    this.currentPage = 1;
+    this.onSearch(); // Reload data when page size changes
+  }
+
+  // Modal de confirmación nativo
+  showConfirmDialog(
+    message: string,
+    title: string,
+    acceptLabel: string,
+    rejectLabel: string,
+    acceptCallback: () => void
+  ): void {
+    this.confirmModalData = {
+      message,
+      title,
+      acceptLabel,
+      rejectLabel,
+      acceptCallback,
+    };
+    this.showConfirmModal = true;
+    document.body.classList.add('km-scroll-lock');
+  }
+
+  onConfirmAccept(): void {
+    if (this.confirmModalData?.acceptCallback) {
+      this.confirmModalData.acceptCallback();
+    }
+    this.closeConfirmModal();
+  }
+
+  closeConfirmModal(): void {
+    this.showConfirmModal = false;
+    this.confirmModalData = null;
+    document.body.classList.remove('km-scroll-lock');
+  }
+
+  // Sistema de notificaciones nativo
+  private showToast(
+    severity: 'success' | 'error' | 'warn' | 'info',
+    summary: string,
+    detail: string
+  ): void {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${severity}`;
+
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warn: '!',
+      info: 'i',
+    };
+
+    toast.innerHTML = `
+      <div class="toast__body">
+        <div class="toast__icon">${icons[severity]}</div>
+        <div>
+          <div class="toast__title">${summary}</div>
+          <div class="toast__msg">${detail}</div>
+        </div>
+        <button class="toast__close" onclick="this.parentElement.parentElement.remove()">×</button>
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Auto-remove después de 5 segundos
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.style.animation = 'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
+        setTimeout(() => {
+          toast.remove();
+        }, 180);
+      }
+    }, 5000);
   }
 }
