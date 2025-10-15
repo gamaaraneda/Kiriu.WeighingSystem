@@ -410,20 +410,41 @@ h2,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   box-shadow: 0 2px 8px rgba(47, 106, 246, 0.25);
+  flex-shrink: 0;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .user-email {
   color: var(--brand-700);
   font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.user-role {
+  color: var(--brand-500);
+  font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 /* Ajustes del botón de logout dentro de user-info */
@@ -444,8 +465,12 @@ h2,
 
 /* Variante compacta si el header es muy estrecho */
 @media (max-width: 768px) {
-  .user-email {
-    max-width: 150px;
+  .user-details {
+    max-width: 160px;
+  }
+
+  .user-email,
+  .user-role {
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -464,6 +489,16 @@ h2,
   .user-info {
     padding: 6px 8px;
     gap: 8px;
+  }
+
+  .user-details {
+    max-width: 120px;
+  }
+
+  .user-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
   }
 }
 

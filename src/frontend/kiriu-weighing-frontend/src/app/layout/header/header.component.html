@@ -11,7 +11,10 @@
 
     <div class="user-info" *ngIf="currentUser">
       <span class="user-icon">👤</span>
-      <span class="user-email">{{ currentUser.email }}</span>
+      <div class="user-details">
+        <span class="user-email">{{ currentUser.email }}</span>
+        <span class="user-role">{{ currentUser.rol }}</span>
+      </div>
       <button class="btn-logout" aria-label="Cerrar sesión" *ngIf="showLogoutButton" (click)="onLogoutClick()">
         <span class="logout-icon">🚪</span>
         <span class="logout-text">Cerrar sesión</span>
