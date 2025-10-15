@@ -1,77 +1,98 @@
 .breadcrumb {
   display: flex;
   align-items: center;
-  margin-bottom: 32px;
-  font-size: 14px;
-  color: #545454;
+  margin-bottom: 24px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
   flex-wrap: wrap;
-  gap: 4px;
-  padding: 16px 0;
+  gap: 6px;
+  padding: 12px 0;
 
   .breadcrumb-link {
-    color: #398df1;
+    color: var(--brand-600);
     text-decoration: none;
     cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
+    transition: all var(--duration-2) var(--ease);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: var(--fw-medium);
+    font-size: var(--fs-sm);
 
     &:hover {
-      color: #005bb5;
-      background-color: rgba(57, 141, 241, 0.1);
-      text-decoration: underline;
+      color: var(--brand-700);
+      background-color: var(--brand-50);
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
     }
 
     &.current {
-      color: #005bb5;
-      background-color: rgba(57, 141, 241, 0.15);
-      font-weight: 600;
+      color: var(--brand-700);
+      background-color: var(--brand-100);
+      font-weight: var(--fw-semibold);
     }
   }
 
   .breadcrumb-current {
-    color: #545454;
-    font-weight: 500;
-    padding: 4px 8px;
-    border-radius: 4px;
+    color: var(--text);
+    font-weight: var(--fw-semibold);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: var(--fs-sm);
 
     &.current {
-      color: #398df1;
-      background-color: rgba(57, 141, 241, 0.1);
-      font-weight: 600;
+      color: var(--brand-700);
+      background-color: var(--brand-50);
+      font-weight: var(--fw-semibold);
     }
   }
 
   .breadcrumb-separator {
-    margin: 0 4px;
-    color: #545454;
-    font-weight: 400;
+    margin: 0 2px;
+    color: var(--muted);
+    font-weight: var(--fw-normal);
+    opacity: 0.6;
   }
 }
 
 // Responsive
 @media (max-width: 768px) {
   .breadcrumb {
-    font-size: 12px;
-    margin-bottom: 24px;
-    padding: 12px 0;
+    font-size: var(--fs-xs);
+    margin-bottom: 20px;
+    padding: 10px 0;
+    gap: 4px;
 
     .breadcrumb-link,
     .breadcrumb-current {
-      padding: 3px 6px;
+      padding: 4px 10px;
+      font-size: var(--fs-xs);
+    }
+
+    .breadcrumb-separator {
+      margin: 0 1px;
     }
   }
 }
 
 @media (max-width: 480px) {
   .breadcrumb {
-    font-size: 11px;
-    gap: 2px;
+    font-size: var(--fs-xs);
+    gap: 3px;
+    margin-bottom: 16px;
+    padding: 8px 0;
 
     .breadcrumb-link,
     .breadcrumb-current {
-      padding: 2px 4px;
+      padding: 3px 8px;
+      font-size: var(--fs-xs);
+    }
+
+    .breadcrumb-separator {
+      font-size: 10px;
     }
   }
 }
