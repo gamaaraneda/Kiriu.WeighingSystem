@@ -3,12 +3,29 @@
     <strong class="logo">KIRIU</strong>
     <span class="app">Sistema de Pesaje</span>
   </div>
-  <div class="spacer"></div>
 
-  <div class="topbar-actions">
-    <button class="btn-menu" aria-label="Ir a Consultas" *ngIf="showQueriesButton" (click)="onQueriesClick()">Consultas</button>
-    <button class="btn-menu" aria-label="Ir a Administración" *ngIf="shouldShowAdminButton" (click)="onAdminClick()">Administración</button>
+  <!-- Menú de navegación central -->
+  <nav class="main-nav" role="navigation">
+    <button
+      class="nav-item"
+      aria-label="Ir a Consultas"
+      *ngIf="showQueriesButton"
+      (click)="onQueriesClick()">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Consultas</span>
+    </button>
+    <button
+      class="nav-item"
+      aria-label="Ir a Administración"
+      *ngIf="shouldShowAdminButton"
+      (click)="onAdminClick()">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Administración</span>
+    </button>
+  </nav>
 
+  <!-- Área de usuario -->
+  <div class="user-area">
     <div class="user-info" *ngIf="currentUser">
       <span class="user-icon">👤</span>
       <div class="user-details">
