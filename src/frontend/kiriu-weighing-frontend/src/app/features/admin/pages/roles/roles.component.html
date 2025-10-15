@@ -63,8 +63,8 @@
                 [ngModelOptions]="{standalone: true}"
                 class="input select-input"
               >
-                <option value="">Todos los estados</option>
-                <option *ngFor="let option of estadoOptions" [value]="option.value">
+                <option [ngValue]="undefined">Todos los estados</option>
+                <option *ngFor="let option of estadoOptions" [ngValue]="option.value">
                   {{ option.label }}
                 </option>
               </select>
