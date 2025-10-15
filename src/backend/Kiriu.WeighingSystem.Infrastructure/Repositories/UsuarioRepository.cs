@@ -85,9 +85,10 @@ public class UsuarioRepository : IUsuarioRepository
         // Get total count before pagination
         var totalCount = await query.CountAsync();
 
-        // Apply pagination and ordering
+        // Apply pagination and ordering (activos primero, luego por nombre)
         var usuarios = await query
-            .OrderBy(u => u.Nombre)
+            .OrderByDescending(u => u.Activo)
+            .ThenBy(u => u.Nombre)
             .ThenBy(u => u.Apellidos)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
