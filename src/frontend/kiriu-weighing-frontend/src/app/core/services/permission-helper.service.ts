@@ -43,10 +43,10 @@ export class PermissionHelperService {
       canPrint: () => this.permissionsService.canPrint('REPORTES'),
       canEdit: () => this.permissionsService.canUpdate('REPORTES'),
       hasAnyAccess: () => this.permissionsService.hasAnyPermission([
-        'REPORTES.READ', 'REPORTES.EXPORT', 'REPORTES.PRINT', 'REPORTES.EDIT'
+        'REPORTES.READ', 'REPORTES.EXPORT', 'REPORTES.PRINT', 'REPORTES.UPDATE'
       ]),
       hasFullAccess: () => this.permissionsService.hasAllPermissions([
-        'REPORTES.READ', 'REPORTES.EXPORT', 'REPORTES.PRINT', 'REPORTES.EDIT'
+        'REPORTES.READ', 'REPORTES.EXPORT', 'REPORTES.PRINT', 'REPORTES.UPDATE'
       ])
     };
   }

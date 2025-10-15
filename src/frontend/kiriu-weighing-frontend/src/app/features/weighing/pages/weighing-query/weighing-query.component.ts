@@ -462,7 +462,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
   onEditWeights(operation: WeighingQueryResult): void {
     // Verificar permisos
-    if (!this.permissionsService.hasPermission('REPORTES.EDIT')) {
+    if (!this.permissionsService.hasPermission('REPORTES.UPDATE')) {
       this.showToast(
         'error',
         'Acceso Denegado',
