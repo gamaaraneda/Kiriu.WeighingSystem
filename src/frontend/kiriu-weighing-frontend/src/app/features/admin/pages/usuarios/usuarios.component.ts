@@ -8,13 +8,11 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { ConfirmationService } from 'primeng/api';
 
 // PrimeNG Imports
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -63,7 +61,6 @@ interface EstadoOption {
     ButtonModule,
     CardModule,
     CheckboxModule,
-    ConfirmDialogModule,
     DialogModule,
     InputTextModule,
     MultiSelectModule,
@@ -75,7 +72,7 @@ interface EstadoOption {
     HeaderComponent,
     BreadcrumbComponent,
   ],
-  providers: [ConfirmationService],
+  providers: [],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
 })
@@ -90,7 +87,17 @@ export class UsuariosComponent implements OnInit {
   isLoading = false;
   showModal = false;
   showRolesModal = false;
+  showConfirmModal = false;
   pageSize = 10;
+
+  // Confirmation modal state
+  confirmModalData: {
+    message: string;
+    title: string;
+    acceptLabel: string;
+    rejectLabel: string;
+    acceptCallback: () => void;
+  } | null = null;
 
   // Pagination state
   currentPage = 1;
@@ -138,7 +145,6 @@ export class UsuariosComponent implements OnInit {
     private adminService: AdminService,
     private router: Router,
     private fb: FormBuilder,
-    private confirmationService: ConfirmationService,
     private authService: AuthService
   ) {
     this.initializeForms();
@@ -390,29 +396,27 @@ export class UsuariosComponent implements OnInit {
   }
 
   confirmDelete(usuario: UsuarioDto): void {
-    this.confirmationService.confirm({
-      message: `¿Estás seguro de que deseas desactivar al usuario "${usuario.nombre}"? El usuario no podrá acceder al sistema.`,
-      header: 'Confirmar desactivación',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sí, desactivar',
-      rejectLabel: 'Cancelar',
-      accept: () => {
+    this.showConfirmDialog(
+      `¿Estás seguro de que deseas desactivar al usuario "${usuario.nombre}"? El usuario no podrá acceder al sistema.`,
+      'Confirmar desactivación',
+      'Sí, desactivar',
+      'Cancelar',
+      () => {
         this.deleteUsuario(usuario.id);
-      },
-    });
+      }
+    );
   }
 
   confirmReactivate(usuario: UsuarioDto): void {
-    this.confirmationService.confirm({
-      message: `¿Estás seguro de que deseas reactivar al usuario "${usuario.nombre}"? El usuario podrá acceder nuevamente al sistema.`,
-      header: 'Confirmar reactivación',
-      icon: 'pi pi-question-circle',
-      acceptLabel: 'Sí, reactivar',
-      rejectLabel: 'Cancelar',
-      accept: () => {
+    this.showConfirmDialog(
+      `¿Estás seguro de que deseas reactivar al usuario "${usuario.nombre}"? El usuario podrá acceder nuevamente al sistema.`,
+      'Confirmar reactivación',
+      'Sí, reactivar',
+      'Cancelar',
+      () => {
         this.reactivateUsuario(usuario);
-      },
-    });
+      }
+    );
   }
 
   async deleteUsuario(id: string): Promise<void> {
@@ -608,13 +612,12 @@ export class UsuariosComponent implements OnInit {
     const action = usuario.activo ? 'desactivar' : 'activar';
     const newStatus = !usuario.activo;
 
-    this.confirmationService.confirm({
-      message: `¿Está seguro de que desea ${action} al usuario "${usuario.nombre}"?`,
-      header: `Confirmar ${action.charAt(0).toUpperCase() + action.slice(1)}`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: `Sí, ${action.charAt(0).toUpperCase() + action.slice(1)}`,
-      rejectLabel: 'Cancelar',
-      accept: async () => {
+    this.showConfirmDialog(
+      `¿Está seguro de que desea ${action} al usuario "${usuario.nombre}"?`,
+      `Confirmar ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+      `Sí, ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+      'Cancelar',
+      async () => {
         this.isLoading = true;
 
         try {
@@ -649,8 +652,8 @@ export class UsuariosComponent implements OnInit {
         } finally {
           this.isLoading = false;
         }
-      },
-    });
+      }
+    );
   }
 
   // Utility methods
@@ -730,6 +733,38 @@ export class UsuariosComponent implements OnInit {
     this.pageSize = Number(select.value);
     this.currentPage = 1;
     this.onSearch();
+  }
+
+  // Modal de confirmación nativo
+  showConfirmDialog(
+    message: string,
+    title: string,
+    acceptLabel: string,
+    rejectLabel: string,
+    acceptCallback: () => void
+  ): void {
+    this.confirmModalData = {
+      message,
+      title,
+      acceptLabel,
+      rejectLabel,
+      acceptCallback,
+    };
+    this.showConfirmModal = true;
+    document.body.classList.add('km-scroll-lock');
+  }
+
+  onConfirmAccept(): void {
+    if (this.confirmModalData?.acceptCallback) {
+      this.confirmModalData.acceptCallback();
+    }
+    this.closeConfirmModal();
+  }
+
+  closeConfirmModal(): void {
+    this.showConfirmModal = false;
+    this.confirmModalData = null;
+    document.body.classList.remove('km-scroll-lock');
   }
 
   // Sistema de notificaciones nativo

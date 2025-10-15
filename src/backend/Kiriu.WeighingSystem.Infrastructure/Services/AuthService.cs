@@ -26,7 +26,22 @@ public class AuthService : IAuthService, IPasswordService
     public async Task<string> GenerateJwtTokenAsync(Usuario usuario)
     {
         var permissions = await GetUserPermissionsAsync(usuario.Id);
-        
+
+        // Cargar el rol si no está cargado
+        if (usuario.Rol == null)
+        {
+            var usuarioConRol = await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.Id == usuario.Id);
+
+            if (usuarioConRol?.Rol == null)
+            {
+                throw new InvalidOperationException($"El usuario {usuario.Email} no tiene un rol asignado");
+            }
+
+            usuario = usuarioConRol;
+        }
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),

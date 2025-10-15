@@ -408,5 +408,50 @@
   </div>
 
   <!-- Modal de confirmación nativo -->
-  <p-confirmDialog></p-confirmDialog>
+  <div *ngIf="showConfirmModal" class="modal-overlay" (click)="closeConfirmModal()">
+    <div class="confirm-dialog" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="confirm-dialog__header">
+        <h2 class="confirm-dialog__title">{{ confirmModalData?.title }}</h2>
+        <button
+          type="button"
+          class="confirm-dialog__close"
+          (click)="closeConfirmModal()"
+          aria-label="Cerrar"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Alert banner -->
+      <div class="confirm-dialog__alert">
+        <div class="confirm-dialog__alert-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <p class="confirm-dialog__alert-text">{{ confirmModalData?.message }}</p>
+      </div>
+
+      <!-- Footer -->
+      <div class="confirm-dialog__footer">
+        <button
+          type="button"
+          class="confirm-dialog__btn confirm-dialog__btn--secondary"
+          (click)="closeConfirmModal()"
+        >
+          {{ confirmModalData?.rejectLabel }}
+        </button>
+        <button
+          type="button"
+          class="confirm-dialog__btn confirm-dialog__btn--danger"
+          (click)="onConfirmAccept()"
+        >
+          {{ confirmModalData?.acceptLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
