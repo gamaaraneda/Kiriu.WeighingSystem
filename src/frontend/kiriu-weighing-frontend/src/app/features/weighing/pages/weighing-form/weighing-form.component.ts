@@ -273,11 +273,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           }
           
           // Mostrar indicador visual de edición manual
-          this.messageService.showInfoToast({
-            title: 'Edición manual detectada',
-            message: `Campo ${editEvent.fieldName} fue editado manualmente`,
-            position: 'top-right'
-          });
+          this.showToast(
+            'info',
+            'Edición manual detectada',
+            `Campo ${editEvent.fieldName} fue editado manualmente`
+          );
         }
       }
     );
@@ -319,17 +319,17 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
         // Mostrar notificación de estado de conexión
         if (!status.isConnected && status.lastError) {
-          this.messageService.showWarningToast({
-            title: 'Conexión con báscula',
-            message: 'Se perdió la conexión con la báscula. Reintentando...',
-            position: 'top-right'
-          });
+          this.showToast(
+            'warn',
+            'Conexión con báscula',
+            'Se perdió la conexión con la báscula. Reintentando...'
+          );
         } else if (status.isConnected && status.reconnectAttempts > 0) {
-          this.messageService.showSuccessToast({
-            title: 'Conexión restaurada',
-            message: 'La conexión con la báscula se ha restaurado',
-            position: 'top-right'
-          });
+          this.showToast(
+            'success',
+            'Conexión restaurada',
+            'La conexión con la báscula se ha restaurado'
+          );
         }
 
         // Marcar para detección de cambios
@@ -381,11 +381,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           // Si se puede hacer salida, obtener los datos completos de la operación
           this.loadFullOperationData(plate);
         } else {
-          this.messageService.showWarningToast({
-            title: 'Sin entrada previa',
-            message: validation.message || 'No se encontró entrada previa para esta placa',
-            position: 'top-right',
-          });
+          this.showToast(
+            'warn',
+            'Sin entrada previa',
+            validation.message || 'No se encontró entrada previa para esta placa'
+          );
         }
       },
       error: (error) => {
@@ -402,11 +402,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         // Cargar datos completos de la entrada previa
         this.loadEntryDataForExit(operation);
         
-        this.messageService.showInfoToast({
-          title: 'Entrada encontrada',
-          message: `Entrada previa encontrada. Folio: ${operation.folio}. Peso entrada: ${operation.entryWeight} kg`,
-          position: 'top-right',
-        });
+        this.showToast(
+          'info',
+          'Entrada encontrada',
+          `Entrada previa encontrada. Folio: ${operation.folio}. Peso entrada: ${operation.entryWeight} kg`
+        );
 
         // Mostrar panel de información de entrada
         this.showEntryInfo = true;
@@ -416,11 +416,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error al obtener operación por placa:', error);
-        this.messageService.showErrorToast({
-          title: 'Error de búsqueda',
-          message: 'Error al buscar información de entrada previa',
-          position: 'top-right',
-        });
+        this.showToast(
+          'error',
+          'Error de búsqueda',
+          'Error al buscar información de entrada previa'
+        );
       }
     });
   }
@@ -531,11 +531,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
         // Validar que se haya capturado toda la información del primer remolque
         if (this.canProceedToRemolque2WithWeight()) {
-          this.messageService.showSuccessToast({
-            title: 'Peso capturado',
-            message: `Peso del remolque 1: ${this.weightData.capturedWeight} kg. Ahora suba el segundo remolque.`,
-            position: 'top-right',
-          });
+          this.showToast('success', 'Peso capturado', `Peso del remolque 1: ${this.weightData.capturedWeight} kg. Ahora suba el segundo remolque.`);
 
           // Avanzar al siguiente paso
           this.doubleTrailerState.currentStep = 'remolque2';
@@ -566,11 +562,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.doubleTrailerState.currentStep = 'complete';
         this.doubleTrailerState.isComplete = true;
 
-        this.messageService.showSuccessToast({
-          title: 'Peso total calculado',
-          message: `Peso total: ${this.doubleTrailerState.pesoBrutoTotal} kg. Puede proceder a guardar.`,
-          position: 'top-right',
-        });
+        this.showToast('success', 'Peso total calculado', `Peso total: ${this.doubleTrailerState.pesoBrutoTotal} kg. Puede proceder a guardar.`);
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
@@ -750,12 +742,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       isComplete: false,
     };
 
-    this.messageService.showInfoToast({
-      title: 'Flujo de doble remolque',
-      message:
-        'Seleccione la placa del tráiler y luego proceda con el primer remolque.',
-      position: 'top-right',
-    });
+    this.showToast('info', 'Flujo de doble remolque', 'Seleccione la placa del tráiler y luego proceda con el primer remolque.');
   }
 
   private resetDoubleTrailerState(): void {
@@ -841,11 +828,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                                photoType === 'trailerPlate2' ? 'remolque' :
                                photoType === 'remolque1Plate' ? 'remolque 1' : 'remolque 2';
 
-        this.messageService.showInfo({
-          title: 'Esperando lectura',
-          message: `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`,
-          duration: 30000
-        });
+        this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
 
         // Capturar placa con ANPR (30 segundos de timeout)
         const anprEvent: AnprEvent = await this.anprService.capturePlate(cameraType, 30000);
@@ -898,11 +881,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.log('Imagen guardada en:', anprEvent.imageUrl);
         console.log('Confianza:', anprEvent.confidenceLevel + '%');
 
-        this.messageService.showSuccess({
-          title: 'Placa capturada',
-          message: `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`,
-          duration: 3000
-        });
+        this.showToast('success', 'Placa capturada', `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`);
 
       } catch (error: any) {
         console.error('Error capturando placa con ANPR:', error);
@@ -981,11 +960,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     } else if (photoType === 'cargo') {
       // Capturar foto real desde la cámara de carga
       try {
-        this.messageService.showInfo({
-          title: 'Capturando foto',
-          message: 'Capturando foto de carga desde la cámara...',
-          duration: 5000
-        });
+        this.showToast('info', 'Capturando foto', 'Capturando foto de carga desde la cámara...');
 
         const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoEntry');
         this.photoData.cargo = photoUrl;
@@ -1008,30 +983,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
         }
 
-        this.messageService.showSuccess({
-          title: 'Foto capturada',
-          message: 'Foto de carga capturada exitosamente',
-          duration: 3000
-        });
+        this.showToast('success', 'Foto capturada', 'Foto de carga capturada exitosamente');
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
       } catch (error) {
         console.error('Error capturando foto de carga:', error);
-        this.messageService.showError({
-          title: 'Error de captura',
-          message: 'Error al capturar foto de carga desde la cámara',
-          duration: 5000
-        });
+        this.showToast('error', 'Error de captura', 'Error al capturar foto de carga desde la cámara');
       }
     } else if (photoType === 'cargoRemolque1') {
       // Capturar foto real desde la cámara de carga para remolque 1
       try {
-        this.messageService.showInfo({
-          title: 'Capturando foto',
-          message: 'Capturando foto de carga del remolque 1 desde la cámara...',
-          duration: 5000
-        });
+        this.showToast('info', 'Capturando foto', 'Capturando foto de carga del remolque 1 desde la cámara...');
 
         const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoRemolque1');
         this.photoData.cargoRemolque1 = photoUrl;
@@ -1048,30 +1011,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
         }
 
-        this.messageService.showSuccess({
-          title: 'Foto capturada',
-          message: 'Foto de carga del remolque 1 capturada exitosamente',
-          duration: 3000
-        });
+        this.showToast('success', 'Foto capturada', 'Foto de carga del remolque 1 capturada exitosamente');
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
       } catch (error) {
         console.error('Error capturando foto de carga del remolque 1:', error);
-        this.messageService.showError({
-          title: 'Error de captura',
-          message: 'Error al capturar foto de carga del remolque 1 desde la cámara',
-          duration: 5000
-        });
+        this.showToast('error', 'Error de captura', 'Error al capturar foto de carga del remolque 1 desde la cámara');
       }
     } else if (photoType === 'cargoRemolque2') {
       // Capturar foto real desde la cámara de carga para remolque 2
       try {
-        this.messageService.showInfo({
-          title: 'Capturando foto',
-          message: 'Capturando foto de carga del remolque 2 desde la cámara...',
-          duration: 5000
-        });
+        this.showToast('info', 'Capturando foto', 'Capturando foto de carga del remolque 2 desde la cámara...');
 
         const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoRemolque2');
         this.photoData.cargoRemolque2 = photoUrl;
@@ -1088,21 +1039,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           this.doubleTrailerState.remolque2.fotoCargaCapturada = true;
         }
 
-        this.messageService.showSuccess({
-          title: 'Foto capturada',
-          message: 'Foto de carga del remolque 2 capturada exitosamente',
-          duration: 3000
-        });
+        this.showToast('success', 'Foto capturada', 'Foto de carga del remolque 2 capturada exitosamente');
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
       } catch (error) {
         console.error('Error capturando foto de carga del remolque 2:', error);
-        this.messageService.showError({
-          title: 'Error de captura',
-          message: 'Error al capturar foto de carga desde la cámara',
-          duration: 5000
-        });
+        this.showToast('error', 'Error de captura', 'Error al capturar foto de carga desde la cámara');
       }
     } else if (photoType === 'trailerPlate2') {
       this.photoData.trailerPlate2 = 'Foto capturada';
@@ -1180,12 +1123,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   private saveDoubleTrailerEntry(formData: Record<string, unknown>): void {
     if (!this.doubleTrailerState.isComplete) {
-      this.messageService.showErrorToast({
-        title: 'Datos incompletos',
-        message:
-          'Debe completar el pesaje de ambos remolques antes de guardar.',
-        position: 'top-right',
-      });
+      this.showToast('error', 'Datos incompletos', 'Debe completar el pesaje de ambos remolques antes de guardar.');
       this.isLoading = false;
       return;
     }
@@ -1242,11 +1180,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.currentOperationId = response.id;
 
         // El interceptor ya procesó la respuesta y extrajo solo los datos
-        this.messageService.showSuccessToast({
-          title: 'Entrada registrada',
-          message: `Entrada con doble remolque registrada exitosamente. Folio: ${response.folio}`,
-          position: 'top-right',
-        });
+        this.showToast('success', 'Entrada registrada', `Entrada con doble remolque registrada exitosamente. Folio: ${response.folio}`);
 
         // Generar ticket para entrada con doble remolque
         this.generateTicket('double', response);
@@ -1263,104 +1197,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           errorMessage = error.error.message;
         }
 
-        this.messageService.showErrorToast({
-          title: 'Error al registrar',
-          message: errorMessage,
-          position: 'top-right',
-        });
-      },
-    });
-  }
-
-  private saveNormalEntry(formData: Record<string, unknown>): void {
-    // Determinar tipo de unidad basado en checkboxes
-    const tipoUnidad = formData['containerOnly'] ? 'contenedor' : 'remolque';
-
-    // Crear request para el backend
-    const request: CreateEntryRequest = {
-      unitType: this.unitType as 'client' | 'provider',
-      operationType: 'entry',
-      tipoUnidad: tipoUnidad,
-      trailerPlate: formData['trailerPlate'] as string,
-      trailerPlate2: (formData['trailerPlate2'] as string) || undefined,
-      trailerPlateContenedor: formData['containerOnly']
-        ? (formData['trailerPlate'] as string)
-        : undefined,
-      remolquePlateContenedor: formData['containerOnly']
-        ? (formData['trailerPlate2'] as string)
-        : undefined,
-      product: formData['product'] as string,
-      clientProviderName: formData['clientProviderName'] as string,
-      clientProviderRfc: (formData['clientProviderRfc'] as string) || undefined,
-      entryWeight: this.weightData.capturedWeight || 0,
-      photos: {
-        trailerPlate: this.photoData.trailerPlate || undefined,
-        trailerPlate2: this.photoData.trailerPlate2 || undefined,
-        cargo: this.photoData.cargo || '',
-      },
-      // Incluir información de edición manual
-      tieneEdicionesManuale: this.hasManualEdits,
-      usuarioEditor: this.hasManualEdits ? undefined : undefined, // Se asignará en el backend desde JWT
-    };
-
-    this.weighingService.createEntryOperation(request).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        console.log('Entrada registrada:', response);
-        
-        // Guardar el ID de la operación para futuras ediciones manuales
-        this.currentOperationId = response.id;
-
-        // El interceptor ya procesó la respuesta y extrajo solo los datos
-        this.messageService.showSuccessToast({
-          title: 'Entrada registrada',
-          message: `Entrada registrada exitosamente. Folio: ${response.folio}`,
-          position: 'top-right',
-        });
-
-        // Generar ticket para entrada normal
-        this.generateTicket('normal', response);
-      },
-      error: (error) => {
-        this.isLoading = false;
-        console.error('Error al registrar entrada:', error);
-
-        let errorMessage = 'No se pudo completar la operación.';
-        if (error.status === 409) {
-          errorMessage =
-            'La placa ya tiene una entrada registrada previamente.';
-        } else if (error.error?.message) {
-          errorMessage = error.error.message;
-        }
-
-        this.messageService.showErrorToast({
-          title: 'Error al registrar',
-          message: errorMessage,
-          position: 'top-right',
-        });
-      },
-    });
-  }
-
-  private saveNormalExit(formData: Record<string, unknown>): void {
-    // Validar que haya peso de entrada y de salida
-    if (!this.weightData.hasValidEntry || !this.weightData.entryWeight) {
-      this.isLoading = false;
-      this.messageService.showErrorToast({
-        title: 'Error de validación',
-        message: 'No se encontró entrada previa válida para esta placa.',
-        position: 'top-right',
-      });
+        this.showToast('error', 'Error al registrar', 'No se encontró entrada previa válida para esta placa.');
       return;
     }
 
     if (!this.weightData.capturedWeight) {
       this.isLoading = false;
-      this.messageService.showErrorToast({
-        title: 'Error de validación',
-        message: 'Debe capturar el peso de salida.',
-        position: 'top-right',
-      });
+      this.showToast('error', 'Error de validación', 'Debe capturar el peso de salida.');
       return;
     }
 
@@ -1398,11 +1241,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.log('Salida registrada:', response);
 
         // El interceptor ya procesó la respuesta y extrajo solo los datos
-        this.messageService.showSuccessToast({
-          title: 'Salida registrada',
-          message: `Salida registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`,
-          position: 'top-right',
-        });
+        this.showToast('success', 'Salida registrada', `Salida registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`);
 
         // Generar ticket para salida normal
         this.generateTicket('exit', response);
@@ -1418,23 +1257,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           errorMessage = error.message;
         }
         
-        this.messageService.showErrorToast({
-          title: 'Error al registrar',
-          message: errorMessage,
-          position: 'top-right',
-        });
-      },
-    });
-  }
-
-  private saveDoubleTrailerExit(formData: Record<string, unknown>): void {
-    // Validar que el flujo de doble remolque esté completo
-    if (!this.doubleTrailerState.isComplete) {
-      this.messageService.showErrorToast({
-        title: 'Datos incompletos',
-        message: 'Debe completar el pesaje de ambos remolques antes de guardar la salida.',
-        position: 'top-right',
-      });
+        this.showToast('error', 'Error al registrar', 'Debe completar el pesaje de ambos remolques antes de guardar la salida.');
       this.isLoading = false;
       return;
     }
@@ -1442,11 +1265,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Validar entrada previa
     if (!this.weightData.hasValidEntry || !this.weightData.entryWeight) {
       this.isLoading = false;
-      this.messageService.showErrorToast({
-        title: 'Error de validación',
-        message: 'No se encontró entrada previa válida para esta placa.',
-        position: 'top-right',
-      });
+      this.showToast('error', 'Error de validación', 'No se encontró entrada previa válida para esta placa.');
       return;
     }
 
@@ -1484,11 +1303,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.log('Salida con doble remolque registrada:', response);
 
         // El interceptor ya procesó la respuesta
-        this.messageService.showSuccessToast({
-          title: 'Salida registrada',
-          message: `Salida con doble remolque registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`,
-          position: 'top-right',
-        });
+        this.showToast('success', 'Salida registrada', `Salida con doble remolque registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`);
 
         // Generar ticket para salida con doble remolque
         this.generateTicket('double-exit', response);
@@ -1546,28 +1361,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     }
 
     // Mostrar mensaje de éxito
-    this.messageService.showSuccessToast({
-      title: 'Operación registrada',
-      message: message,
-      position: 'top-right',
-    });
-
-    // Esperar 3 segundos para que el usuario vea el mensaje antes de redirigir
-    setTimeout(() => {
-      console.log('🔄 Redirigiendo después de generar ticket...');
-      this.onGoBack();
-    }, 3000);
-  }
-
-  private showSuccessMessage(): void {
-    console.log('🔔 showSuccessMessage llamado...');
-
-    try {
-      this.messageService.showSuccessToast({
-        title: 'Operación registrada',
-        message: `Operación de ${this.operationTitle.toLowerCase()} registrada exitosamente`,
-        position: 'top-right',
-      });
+    this.showToast('success', 'Operación registrada', `Operación de ${this.operationTitle.toLowerCase()} registrada exitosamente`);
       console.log('✅ Toast de éxito enviado desde showSuccessMessage');
     } catch (error) {
       console.error('❌ Error en showSuccessMessage:', error);
@@ -1976,18 +1770,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   async reconnectToWeightService(): Promise<void> {
     try {
       await this.pesoRealtimeService.reconnect();
-      this.messageService.showInfoToast({
-        title: 'Reconexión',
-        message: 'Intentando reconectar con el servicio de peso...',
-        position: 'top-right'
-      });
+      this.showToast('info', 'Reconexión', 'Intentando reconectar con el servicio de peso...');
     } catch (error) {
       console.error('Error al reconectar:', error);
-      this.messageService.showErrorToast({
-        title: 'Error de reconexión',
-        message: 'No se pudo reconectar con el servicio de peso',
-        position: 'top-right'
-      });
+      this.showToast('error', 'Error de reconexión', 'No se pudo reconectar con el servicio de peso');
     }
   }
 
@@ -2029,11 +1815,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('❌ Error al actualizar operación:', error);
-          this.messageService.showErrorToast({
-            title: 'Error al guardar',
-            message: 'No se pudieron guardar los cambios manuales',
-            position: 'top-right'
-          });
+          this.showToast('error', 'Error al guardar', 'No se pudieron guardar los cambios manuales');
         }
       });
   }
@@ -2052,5 +1834,50 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Construir URL completa desde environment
     const baseUrl = environment.apiUrl.replace('/api', '');
     return `${baseUrl}${relativeUrl}`;
+  }
+
+  /**
+   * Sistema de notificaciones nativo
+   */
+  private showToast(
+    severity: 'success' | 'error' | 'warn' | 'info',
+    summary: string,
+    detail: string
+  ): void {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${severity}`;
+
+    const icons = {
+      success: '✓',
+      error: '✕',
+      warn: '!',
+      info: 'i',
+    };
+
+    toast.innerHTML = `
+      <div class="toast__body">
+        <div class="toast__icon">${icons[severity]}</div>
+        <div>
+          <div class="toast__title">${summary}</div>
+          <div class="toast__msg">${detail}</div>
+        </div>
+        <button class="toast__close" onclick="this.parentElement.parentElement.remove()">×</button>
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Auto-remove después de 5 segundos
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.style.animation = 'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
+        setTimeout(() => {
+          toast.remove();
+        }, 180);
+      }
+    }, 5000);
   }
 }
