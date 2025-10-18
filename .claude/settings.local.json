@@ -32,7 +32,15 @@
       "Bash(ng generate service:*)",
       "Bash(ng generate interceptor:*)",
       "Bash(ng generate component:*)",
-      "Bash(del srcappcoreservicesspinner.ts srcappsharedcomponentsglobal-spinnerglobal-spinner.ts)"
+      "Bash(del srcappcoreservicesspinner.ts srcappsharedcomponentsglobal-spinnerglobal-spinner.ts)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(git rm:*)",
+      "Bash(for file in */*.component.html)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(grep:*)",
+      "Bash(done)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
