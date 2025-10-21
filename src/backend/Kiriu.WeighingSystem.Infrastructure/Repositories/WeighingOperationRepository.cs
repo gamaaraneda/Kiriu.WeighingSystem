@@ -371,4 +371,18 @@ public class WeighingOperationRepository : IWeighingOperationRepository
 
         return products;
     }
+
+    public async Task<List<string>> SearchClientsAsync(string searchTerm, int limit = 10)
+    {
+        // Búsqueda de clientes/proveedores únicos que coincidan con el término (LIKE)
+        var clients = await _context.WeighingOperations
+            .Where(w => !string.IsNullOrEmpty(w.ClientProviderName) && w.ClientProviderName.Contains(searchTerm))
+            .Select(w => w.ClientProviderName)
+            .Distinct()
+            .OrderBy(c => c)
+            .Take(limit)
+            .ToListAsync();
+
+        return clients;
+    }
 }

@@ -422,6 +422,35 @@ public class WeighingController : ControllerBase
     }
 
     /// <summary>
+    /// Buscar clientes/proveedores por texto (autocompletado)
+    /// </summary>
+    /// <param name="searchTerm">Término de búsqueda</param>
+    /// <param name="limit">Límite de resultados (default: 10)</param>
+    /// <returns>Lista de clientes/proveedores que coinciden</returns>
+    [HttpGet("clients/search")]
+    public async Task<IActionResult> SearchClients([FromQuery] string searchTerm, [FromQuery] int limit = 10)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            {
+                return Ok(new { success = true, data = new List<string>() });
+            }
+
+            _logger.LogInformation("Buscando clientes/proveedores con término: {SearchTerm}", searchTerm);
+
+            var result = await _weighingService.SearchClientsAsync(searchTerm, limit);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar clientes/proveedores con término: {SearchTerm}", searchTerm);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
     /// Obtener imagen de una foto de pesaje desde la base de datos
     /// </summary>
     /// <param name="photoId">ID de la foto</param>

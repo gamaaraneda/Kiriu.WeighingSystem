@@ -16,7 +16,7 @@ GO
 -- =====================================================
 -- VARIABLES DE CONTROL
 -- =====================================================
-DECLARE @CurrentVersion INT = 4; -- Versión actual del script
+DECLARE @CurrentVersion INT = 5; -- Versión actual del script
 DECLARE @SchemaVersion INT;
 
 -- Crear tabla de versiones si no existe
@@ -422,6 +422,41 @@ END
 ELSE
 BEGIN
     PRINT 'Versión 4 ya aplicada, saltando...';
+END
+
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 5: ÍNDICE PARA BÚSQUEDA DE CLIENTES/PROVEEDORES
+-- =====================================================
+IF @SchemaVersion < 5
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 5: ÍNDICE PARA BÚSQUEDA DE CLIENTES/PROVEEDORES';
+    PRINT '==========================================';
+
+    -- Crear índice en la columna ClientProviderName para optimizar búsquedas de autocompletado
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_WeighingOperations_ClientProviderName' AND object_id = OBJECT_ID('WeighingOperations'))
+    BEGIN
+        CREATE NONCLUSTERED INDEX [IX_WeighingOperations_ClientProviderName]
+        ON [dbo].[WeighingOperations] ([ClientProviderName])
+        WHERE [ClientProviderName] IS NOT NULL;
+
+        PRINT '✓ Índice IX_WeighingOperations_ClientProviderName creado exitosamente.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Índice IX_WeighingOperations_ClientProviderName ya existe.';
+    END
+
+    -- Registrar migración
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (5, 'Índice para búsqueda de clientes/proveedores', 'manual_migrations.sql');
+
+    PRINT '✓ Versión 5 aplicada exitosamente.';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'Versión 5 ya aplicada, saltando...';
 END
 
 -- Mostrar historial de migraciones

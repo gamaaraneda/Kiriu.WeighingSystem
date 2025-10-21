@@ -136,14 +136,29 @@
                 <label for="clientProviderName" class="form-label"
                   >Nombre/Razón Social *</label
                 >
-                <input
-                  type="text"
-                  id="clientProviderName"
-                  formControlName="clientProviderName"
-                  class="form-input"
-                  [class.error]="getFieldError('clientProviderName')"
-                  placeholder="Buscar por nombre..."
-                />
+                <div class="autocomplete-container">
+                  <input
+                    type="text"
+                    id="clientProviderName"
+                    formControlName="clientProviderName"
+                    class="form-input"
+                    [class.error]="getFieldError('clientProviderName')"
+                    placeholder="Buscar por nombre..."
+                    (focus)="onClientFocus()"
+                    (blur)="onClientBlur()"
+                    autocomplete="off"
+                  />
+                  <!-- Dropdown de sugerencias de clientes -->
+                  <div *ngIf="showClientSuggestions" class="autocomplete-dropdown">
+                    <div
+                      *ngFor="let client of clientSuggestions"
+                      class="autocomplete-item"
+                      (mousedown)="selectClientSuggestion(client)"
+                    >
+                      {{ client }}
+                    </div>
+                  </div>
+                </div>
                 <div
                   *ngIf="getFieldError('clientProviderName')"
                   class="error-message"
@@ -890,14 +905,29 @@
                 <label for="clientProviderName" class="form-label"
                   >Nombre/Razón Social *</label
                 >
-                <input
-                  type="text"
-                  id="clientProviderName"
-                  formControlName="clientProviderName"
-                  class="form-input"
-                  [class.error]="getFieldError('clientProviderName')"
-                  placeholder="Buscar por nombre..."
-                />
+                <div class="autocomplete-container">
+                  <input
+                    type="text"
+                    id="clientProviderName"
+                    formControlName="clientProviderName"
+                    class="form-input"
+                    [class.error]="getFieldError('clientProviderName')"
+                    placeholder="Buscar por nombre..."
+                    (focus)="onClientFocus()"
+                    (blur)="onClientBlur()"
+                    autocomplete="off"
+                  />
+                  <!-- Dropdown de sugerencias de clientes -->
+                  <div *ngIf="showClientSuggestions" class="autocomplete-dropdown">
+                    <div
+                      *ngFor="let client of clientSuggestions"
+                      class="autocomplete-item"
+                      (mousedown)="selectClientSuggestion(client)"
+                    >
+                      {{ client }}
+                    </div>
+                  </div>
+                </div>
                 <div
                   *ngIf="getFieldError('clientProviderName')"
                   class="error-message"

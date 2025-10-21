@@ -23,4 +23,5 @@ public interface IWeighingApplicationService
     Task<ApiResponse<WeighingOperationDto>> UpdateWeighingOperationAsync(Guid operationId, UpdateWeighingOperationRequest request);
     Task<PhotoBinaryDataDto?> GetPhotoDataAsync(Guid photoId);
     Task<ApiResponse<List<string>>> SearchProductsAsync(string searchTerm, int limit = 10);
+    Task<ApiResponse<List<string>>> SearchClientsAsync(string searchTerm, int limit = 10);
 }

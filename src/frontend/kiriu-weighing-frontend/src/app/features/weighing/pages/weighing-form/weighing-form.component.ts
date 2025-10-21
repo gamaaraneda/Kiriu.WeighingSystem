@@ -152,6 +152,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   showProductSuggestions = false;
   productSearchSubscription: Subscription | undefined;
 
+  // Autocompletado de clientes/proveedores
+  clientSuggestions: string[] = [];
+  showClientSuggestions = false;
+  clientSearchSubscription: Subscription | undefined;
+
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       this.unitType = params['unitType'];
@@ -173,6 +178,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     // Configurar búsqueda de productos con debounce
     this.setupProductSearch();
+
+    // Configurar búsqueda de clientes/proveedores con debounce
+    this.setupClientSearch();
   }
 
   ngOnDestroy(): void {
@@ -194,6 +202,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     if (this.productSearchSubscription) {
       this.productSearchSubscription.unsubscribe();
+    }
+
+    if (this.clientSearchSubscription) {
+      this.clientSearchSubscription.unsubscribe();
     }
 
     // Limpiar estado del detector de edición manual
@@ -2090,6 +2102,75 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Delay para permitir click en sugerencias
     setTimeout(() => {
       this.showProductSuggestions = false;
+      this.cdr.detectChanges();
+    }, 200);
+  }
+
+  /**
+   * Configurar búsqueda de clientes/proveedores con debounce
+   */
+  private setupClientSearch(): void {
+    const clientControl = this.weighingForm.get('clientProviderName');
+
+    if (clientControl) {
+      this.clientSearchSubscription = clientControl.valueChanges
+        .pipe(
+          debounceTime(400),
+          distinctUntilChanged(),
+          switchMap((searchTerm: string) => {
+            if (!searchTerm || searchTerm.trim().length < 2) {
+              this.clientSuggestions = [];
+              this.showClientSuggestions = false;
+              this.cdr.detectChanges();
+              return [];
+            }
+
+            return this.weighingService.searchClients(searchTerm.trim());
+          })
+        )
+        .subscribe({
+          next: (clients) => {
+            this.clientSuggestions = clients;
+            this.showClientSuggestions = clients.length > 0;
+            this.cdr.detectChanges();
+          },
+          error: (error) => {
+            console.error('Error buscando clientes:', error);
+            this.clientSuggestions = [];
+            this.showClientSuggestions = false;
+            this.cdr.detectChanges();
+          },
+        });
+    }
+  }
+
+  /**
+   * Seleccionar un cliente/proveedor de las sugerencias
+   */
+  selectClientSuggestion(client: string): void {
+    this.weighingForm.patchValue({ clientProviderName: client }, { emitEvent: false });
+    this.clientSuggestions = [];
+    this.showClientSuggestions = false;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Mostrar sugerencias de clientes al hacer focus
+   */
+  onClientFocus(): void {
+    const clientValue = this.weighingForm.get('clientProviderName')?.value;
+    if (clientValue && clientValue.trim().length >= 2 && this.clientSuggestions.length > 0) {
+      this.showClientSuggestions = true;
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Cerrar sugerencias de clientes al hacer blur
+   */
+  onClientBlur(): void {
+    setTimeout(() => {
+      this.showClientSuggestions = false;
       this.cdr.detectChanges();
     }, 200);
   }

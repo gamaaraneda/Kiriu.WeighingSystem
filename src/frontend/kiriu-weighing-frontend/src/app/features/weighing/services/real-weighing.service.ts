@@ -499,4 +499,22 @@ export class RealWeighingService {
       { params: { searchTerm, limit: limit.toString() } }
     );
   }
+
+  /**
+   * Buscar clientes/proveedores por término (autocompletado)
+   */
+  searchClients(searchTerm: string, limit: number = 10): Observable<string[]> {
+    if (!searchTerm || searchTerm.length < 2) {
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+
+    // El interceptor ya extrae body.data, así que recibimos directamente el array
+    return this.http.get<string[]>(
+      `${this.apiUrl}/clients/search`,
+      { params: { searchTerm, limit: limit.toString() } }
+    );
+  }
 }
