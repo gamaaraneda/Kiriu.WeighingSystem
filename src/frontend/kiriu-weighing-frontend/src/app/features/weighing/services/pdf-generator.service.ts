@@ -38,11 +38,10 @@ export interface WeighingReceiptData {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PdfGeneratorService {
-
-  constructor() { }
+  constructor() {}
 
   /**
    * Genera un PDF con los datos de la operación de pesaje y un código QR
@@ -60,7 +59,13 @@ export class PdfGeneratorService {
     const borderGray = [220, 220, 220];
 
     // Función helper para dibujar caja con borde
-    const drawBox = (x: number, y: number, width: number, height: number, fillColor?: number[]) => {
+    const drawBox = (
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+      fillColor?: number[]
+    ) => {
       if (fillColor) {
         doc.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
         doc.rect(x, y, width, height, 'F');
@@ -71,7 +76,13 @@ export class PdfGeneratorService {
     };
 
     // Función helper para dibujar badge de placa
-    const drawBadge = (text: string, x: number, y: number, width: number, height: number) => {
+    const drawBadge = (
+      text: string,
+      x: number,
+      y: number,
+      width: number,
+      height: number
+    ) => {
       doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.roundedRect(x, y, width, height, 2, 2, 'F');
       doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
@@ -154,7 +165,11 @@ export class PdfGeneratorService {
     doc.setFont('helvetica', 'bold');
     doc.text('Tipo de Unidad', column1X, col1Y);
     doc.setFont('helvetica', 'normal');
-    doc.text(this.getTipoUnidadDisplayName(data.tipoUnidad), column1X + 30, col1Y);
+    doc.text(
+      this.getTipoUnidadDisplayName(data.tipoUnidad),
+      column1X + 30,
+      col1Y
+    );
     col1Y += 6;
 
     // Movimiento
@@ -193,7 +208,11 @@ export class PdfGeneratorService {
     doc.setFont('helvetica', 'bold');
     doc.text('Tipo', column2X, col2Y);
     doc.setFont('helvetica', 'normal');
-    doc.text(data.tipo === 'client' ? 'Cliente' : 'Proveedor', column2X + 20, col2Y);
+    doc.text(
+      data.tipo === 'client' ? 'Cliente' : 'Proveedor',
+      column2X + 20,
+      col2Y
+    );
     col2Y += 6;
 
     // Producto
@@ -211,12 +230,29 @@ export class PdfGeneratorService {
     yPosition += 8;
 
     // Dibujar badges de placas
-    const placas: string[] = [data.placaTrailer];
-    if (data.tipoUnidad === 'remolque' && data.placaRemolque) {
-      placas.push(data.placaRemolque);
+    const placas: string[] = [];
+    if (data.tipoUnidad === 'doble-remolque') {
+      const trailerPlate = data.placaTrailer;
+      const remolque1Plate = data.remolque1?.placa || data.placaRemolque;
+      const remolque2Plate = data.remolque2?.placa;
+
+      if (trailerPlate) {
+        placas.push(`Trailer: ${trailerPlate}`);
+      }
+      if (remolque1Plate) {
+        placas.push(`Remolque 1: ${remolque1Plate}`);
+      }
+      if (remolque2Plate) {
+        placas.push(`Remolque 2: ${remolque2Plate}`);
+      }
+    } else {
+      if (data.placaTrailer) {
+        placas.push(`Trailer: ${data.placaTrailer}`);
+      }
+      if (data.tipoUnidad === 'remolque' && data.placaRemolque) {
+        placas.push(`Remolque: ${data.placaRemolque}`);
+      }
     }
-    if (data.remolque1?.placa) placas.push(data.remolque1.placa);
-    if (data.remolque2?.placa) placas.push(data.remolque2.placa);
 
     const badgeHeight = 8;
     const badgeSpacing = 5;
@@ -226,10 +262,10 @@ export class PdfGeneratorService {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
 
-    placas.forEach(placa => {
+    placas.forEach((placa) => {
       // Calcular ancho dinámico basado en el texto
       const textWidth = doc.getTextWidth(placa);
-      const badgeWidth = textWidth + (badgePadding * 2);
+      const badgeWidth = textWidth + badgePadding * 2;
 
       drawBadge(placa, badgeX, yPosition, badgeWidth, badgeHeight);
       badgeX += badgeWidth + badgeSpacing;
@@ -242,38 +278,103 @@ export class PdfGeneratorService {
     const rowHeight = 8;
 
     // DECISIÓN DE LAYOUT: Para remolque simple, usar tabla horizontal
-    if (data.tipoUnidad === 'remolque') {
+    if (
+      data.tipoUnidad === 'remolque' ||
+      data.tipoUnidad === 'doble-remolque'
+    ) {
       // LAYOUT HORIZONTAL PARA REMOLQUE
       // Tabla única con entrada y salida en la misma fila
-      const colWidths = [tableWidth / 4, tableWidth / 4, tableWidth / 4, tableWidth / 4];
+      const colWidths = [
+        tableWidth / 4,
+        tableWidth / 4,
+        tableWidth / 4,
+        tableWidth / 4,
+      ];
+      const pesoBrutoSalida =
+        data.tipoUnidad === 'doble-remolque'
+          ? this.getDoubleTrailerExitWeight(data)
+          : data.pesoBrutoSalida;
+      const fechaSalidaTexto = this.formatDate(data.fechaSalida);
+      const etiquetaPesoSalida =
+        data.tipoUnidad === 'doble-remolque'
+          ? 'Peso Salida Total'
+          : 'Peso Salida';
 
       // Encabezado
       drawBox(tableX, yPosition, colWidths[0], rowHeight, lightGray);
-      drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight, lightGray);
-      drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, lightGray);
-      drawBox(tableX + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowHeight, lightGray);
+      drawBox(
+        tableX + colWidths[0],
+        yPosition,
+        colWidths[1],
+        rowHeight,
+        lightGray
+      );
+      drawBox(
+        tableX + colWidths[0] + colWidths[1],
+        yPosition,
+        colWidths[2],
+        rowHeight,
+        lightGray
+      );
+      drawBox(
+        tableX + colWidths[0] + colWidths[1] + colWidths[2],
+        yPosition,
+        colWidths[3],
+        rowHeight,
+        lightGray
+      );
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(0, 0, 0);
       doc.text('Fecha Entrada', tableX + 2, yPosition + 5.5);
       doc.text('Peso Entrada', tableX + colWidths[0] + 2, yPosition + 5.5);
-      doc.text('Fecha Salida', tableX + colWidths[0] + colWidths[1] + 2, yPosition + 5.5);
-      doc.text('Peso Salida', tableX + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 5.5);
+      doc.text(
+        'Fecha Salida',
+        tableX + colWidths[0] + colWidths[1] + 2,
+        yPosition + 5.5
+      );
+      doc.text(
+        etiquetaPesoSalida,
+        tableX + colWidths[0] + colWidths[1] + colWidths[2] + 2,
+        yPosition + 5.5
+      );
       yPosition += rowHeight;
 
       // Datos
       drawBox(tableX, yPosition, colWidths[0], rowHeight);
       drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight);
-      drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
-      drawBox(tableX + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowHeight);
+      drawBox(
+        tableX + colWidths[0] + colWidths[1],
+        yPosition,
+        colWidths[2],
+        rowHeight
+      );
+      drawBox(
+        tableX + colWidths[0] + colWidths[1] + colWidths[2],
+        yPosition,
+        colWidths[3],
+        rowHeight
+      );
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.text(this.formatDate(data.fechaEntrada), tableX + 2, yPosition + 5.5);
-      doc.text(`${this.formatWeight(data.pesoBrutoEntrada)} kg`, tableX + colWidths[0] + 2, yPosition + 5.5);
-      doc.text(this.formatDate(data.fechaSalida), tableX + colWidths[0] + colWidths[1] + 2, yPosition + 5.5);
-      doc.text(`${this.formatWeight(data.pesoBrutoSalida)} kg`, tableX + colWidths[0] + colWidths[1] + colWidths[2] + 2, yPosition + 5.5);
+      doc.text(
+        `${this.formatWeight(data.pesoBrutoEntrada)} kg`,
+        tableX + colWidths[0] + 2,
+        yPosition + 5.5
+      );
+      doc.text(
+        fechaSalidaTexto,
+        tableX + colWidths[0] + colWidths[1] + 2,
+        yPosition + 5.5
+      );
+      doc.text(
+        `${this.formatWeight(pesoBrutoSalida)} kg`,
+        tableX + colWidths[0] + colWidths[1] + colWidths[2] + 2,
+        yPosition + 5.5
+      );
       yPosition += rowHeight;
 
       const netRowHeight = 9;
@@ -286,10 +387,13 @@ export class PdfGeneratorService {
       doc.setFont('helvetica', 'normal');
       const pesoNetoText = `${this.formatWeight(data.pesoNeto)} kg`;
       const pesoNetoTextWidth = doc.getTextWidth(pesoNetoText);
-      doc.text(pesoNetoText, tableX + tableWidth - pesoNetoTextWidth - 2, yPosition + 6);
+      doc.text(
+        pesoNetoText,
+        tableX + tableWidth - pesoNetoTextWidth - 2,
+        yPosition + 6
+      );
 
       yPosition += netRowHeight + 8;
-
     } else {
       // LAYOUT VERTICAL PARA OTROS FLUJOS (doble-remolque, contenedor, etc.)
       // TABLA PESAJE - ENTRADA
@@ -302,7 +406,13 @@ export class PdfGeneratorService {
 
       // Encabezado tabla entrada
       drawBox(tableX, yPosition, colWidths[0], rowHeight, lightGray);
-      drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight, lightGray);
+      drawBox(
+        tableX + colWidths[0],
+        yPosition,
+        colWidths[1],
+        rowHeight,
+        lightGray
+      );
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
@@ -317,7 +427,11 @@ export class PdfGeneratorService {
 
       doc.setFont('helvetica', 'normal');
       doc.text(this.formatDate(data.fechaEntrada), tableX + 2, yPosition + 5.5);
-      doc.text(`${this.formatWeight(data.pesoBrutoEntrada)} kg`, tableX + colWidths[0] + 2, yPosition + 5.5);
+      doc.text(
+        `${this.formatWeight(data.pesoBrutoEntrada)} kg`,
+        tableX + colWidths[0] + 2,
+        yPosition + 5.5
+      );
       yPosition += rowHeight + 8;
 
       // TABLA PESAJE - SALIDA
@@ -326,97 +440,288 @@ export class PdfGeneratorService {
       doc.text('PESAJE - SALIDA', margin, yPosition);
       yPosition += 6;
 
-      const colWidthsSalida = [tableWidth / 4, tableWidth / 4, tableWidth / 4, tableWidth / 4];
+      const colWidthsSalida = [
+        tableWidth / 4,
+        tableWidth / 4,
+        tableWidth / 4,
+        tableWidth / 4,
+      ];
 
       // Encabezado tabla salida
       drawBox(tableX, yPosition, colWidthsSalida[0], rowHeight, lightGray);
-      drawBox(tableX + colWidthsSalida[0], yPosition, colWidthsSalida[1], rowHeight, lightGray);
-      drawBox(tableX + colWidthsSalida[0] + colWidthsSalida[1], yPosition, colWidthsSalida[2], rowHeight, lightGray);
-      drawBox(tableX + colWidthsSalida[0] + colWidthsSalida[1] + colWidthsSalida[2], yPosition, colWidthsSalida[3], rowHeight, lightGray);
+      drawBox(
+        tableX + colWidthsSalida[0],
+        yPosition,
+        colWidthsSalida[1],
+        rowHeight,
+        lightGray
+      );
+      drawBox(
+        tableX + colWidthsSalida[0] + colWidthsSalida[1],
+        yPosition,
+        colWidthsSalida[2],
+        rowHeight,
+        lightGray
+      );
+      drawBox(
+        tableX + colWidthsSalida[0] + colWidthsSalida[1] + colWidthsSalida[2],
+        yPosition,
+        colWidthsSalida[3],
+        rowHeight,
+        lightGray
+      );
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.text('Fecha', tableX + 2, yPosition + 5.5);
       doc.text('Bruto', tableX + colWidthsSalida[0] + 2, yPosition + 5.5);
-      doc.text('Tara', tableX + colWidthsSalida[0] + colWidthsSalida[1] + 2, yPosition + 5.5);
-      doc.text('Neto', tableX + colWidthsSalida[0] + colWidthsSalida[1] + colWidthsSalida[2] + 2, yPosition + 5.5);
+      doc.text(
+        'Tara',
+        tableX + colWidthsSalida[0] + colWidthsSalida[1] + 2,
+        yPosition + 5.5
+      );
+      doc.text(
+        'Neto',
+        tableX +
+          colWidthsSalida[0] +
+          colWidthsSalida[1] +
+          colWidthsSalida[2] +
+          2,
+        yPosition + 5.5
+      );
       yPosition += rowHeight;
 
       // Datos salida
       drawBox(tableX, yPosition, colWidthsSalida[0], rowHeight);
-      drawBox(tableX + colWidthsSalida[0], yPosition, colWidthsSalida[1], rowHeight);
-      drawBox(tableX + colWidthsSalida[0] + colWidthsSalida[1], yPosition, colWidthsSalida[2], rowHeight);
-      drawBox(tableX + colWidthsSalida[0] + colWidthsSalida[1] + colWidthsSalida[2], yPosition, colWidthsSalida[3], rowHeight);
+      drawBox(
+        tableX + colWidthsSalida[0],
+        yPosition,
+        colWidthsSalida[1],
+        rowHeight
+      );
+      drawBox(
+        tableX + colWidthsSalida[0] + colWidthsSalida[1],
+        yPosition,
+        colWidthsSalida[2],
+        rowHeight
+      );
+      drawBox(
+        tableX + colWidthsSalida[0] + colWidthsSalida[1] + colWidthsSalida[2],
+        yPosition,
+        colWidthsSalida[3],
+        rowHeight
+      );
 
       doc.setFont('helvetica', 'normal');
       doc.text(this.formatDate(data.fechaSalida), tableX + 2, yPosition + 5.5);
-      doc.text(`${this.formatWeight(data.pesoBrutoSalida)} kg`, tableX + colWidthsSalida[0] + 2, yPosition + 5.5);
-      doc.text(`${this.formatWeight(data.pesoTara)} kg`, tableX + colWidthsSalida[0] + colWidthsSalida[1] + 2, yPosition + 5.5);
-      doc.text(`${this.formatWeight(data.pesoNeto)} kg`, tableX + colWidthsSalida[0] + colWidthsSalida[1] + colWidthsSalida[2] + 2, yPosition + 5.5);
+      doc.text(
+        `${this.formatWeight(data.pesoBrutoSalida)} kg`,
+        tableX + colWidthsSalida[0] + 2,
+        yPosition + 5.5
+      );
+      doc.text(
+        `${this.formatWeight(data.pesoTara)} kg`,
+        tableX + colWidthsSalida[0] + colWidthsSalida[1] + 2,
+        yPosition + 5.5
+      );
+      doc.text(
+        `${this.formatWeight(data.pesoNeto)} kg`,
+        tableX +
+          colWidthsSalida[0] +
+          colWidthsSalida[1] +
+          colWidthsSalida[2] +
+          2,
+        yPosition + 5.5
+      );
       yPosition += rowHeight;
 
       // Total Neto (fila destacada)
       const totalNetoRowHeight = 9;
-      drawBox(tableX, yPosition, tableWidth - colWidthsSalida[3], totalNetoRowHeight);
-      drawBox(tableX + tableWidth - colWidthsSalida[3], yPosition, colWidthsSalida[3], totalNetoRowHeight, lightGray);
+      drawBox(
+        tableX,
+        yPosition,
+        tableWidth - colWidthsSalida[3],
+        totalNetoRowHeight
+      );
+      drawBox(
+        tableX + tableWidth - colWidthsSalida[3],
+        yPosition,
+        colWidthsSalida[3],
+        totalNetoRowHeight,
+        lightGray
+      );
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.text('Total Neto', tableX + 2, yPosition + 6);
-      doc.text(`${this.formatWeight(data.pesoNeto)} kg`, tableX + tableWidth - colWidthsSalida[3] + 2, yPosition + 6);
+      doc.text(
+        `${this.formatWeight(data.pesoNeto)} kg`,
+        tableX + tableWidth - colWidthsSalida[3] + 2,
+        yPosition + 6
+      );
       yPosition += totalNetoRowHeight + 8;
     }
 
     // TABLA REMOLQUES (si aplica)
-    if (data.remolque1 || data.remolque2) {
+    if ((data.remolque1 || data.remolque2) && data.tipoUnidad !== 'doble-remolque') {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('REMOLQUES', margin, yPosition);
       yPosition += 6;
 
-      const colWidthsRemolque = [tableWidth / 4, tableWidth / 4, tableWidth / 4, tableWidth / 4];
+      const colWidthsRemolque = [
+        tableWidth / 4,
+        tableWidth / 4,
+        tableWidth / 4,
+        tableWidth / 4,
+      ];
 
       // Encabezado tabla remolques
       drawBox(tableX, yPosition, colWidthsRemolque[0], rowHeight, lightGray);
-      drawBox(tableX + colWidthsRemolque[0], yPosition, colWidthsRemolque[1], rowHeight, lightGray);
-      drawBox(tableX + colWidthsRemolque[0] + colWidthsRemolque[1], yPosition, colWidthsRemolque[2], rowHeight, lightGray);
-      drawBox(tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + colWidthsRemolque[2], yPosition, colWidthsRemolque[3], rowHeight, lightGray);
+      drawBox(
+        tableX + colWidthsRemolque[0],
+        yPosition,
+        colWidthsRemolque[1],
+        rowHeight,
+        lightGray
+      );
+      drawBox(
+        tableX + colWidthsRemolque[0] + colWidthsRemolque[1],
+        yPosition,
+        colWidthsRemolque[2],
+        rowHeight,
+        lightGray
+      );
+      drawBox(
+        tableX +
+          colWidthsRemolque[0] +
+          colWidthsRemolque[1] +
+          colWidthsRemolque[2],
+        yPosition,
+        colWidthsRemolque[3],
+        rowHeight,
+        lightGray
+      );
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.text('Remolque', tableX + 2, yPosition + 5.5);
-      doc.text('Bruto (kg)', tableX + colWidthsRemolque[0] + 2, yPosition + 5.5);
-      doc.text('Tara (kg)', tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + 2, yPosition + 5.5);
-      doc.text('Neto (kg)', tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + colWidthsRemolque[2] + 2, yPosition + 5.5);
+      doc.text(
+        'Bruto (kg)',
+        tableX + colWidthsRemolque[0] + 2,
+        yPosition + 5.5
+      );
+      doc.text(
+        'Tara (kg)',
+        tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + 2,
+        yPosition + 5.5
+      );
+      doc.text(
+        'Neto (kg)',
+        tableX +
+          colWidthsRemolque[0] +
+          colWidthsRemolque[1] +
+          colWidthsRemolque[2] +
+          2,
+        yPosition + 5.5
+      );
       yPosition += rowHeight;
 
       // Remolque 1
       if (data.remolque1) {
         drawBox(tableX, yPosition, colWidthsRemolque[0], rowHeight);
-        drawBox(tableX + colWidthsRemolque[0], yPosition, colWidthsRemolque[1], rowHeight);
-        drawBox(tableX + colWidthsRemolque[0] + colWidthsRemolque[1], yPosition, colWidthsRemolque[2], rowHeight);
-        drawBox(tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + colWidthsRemolque[2], yPosition, colWidthsRemolque[3], rowHeight);
+        drawBox(
+          tableX + colWidthsRemolque[0],
+          yPosition,
+          colWidthsRemolque[1],
+          rowHeight
+        );
+        drawBox(
+          tableX + colWidthsRemolque[0] + colWidthsRemolque[1],
+          yPosition,
+          colWidthsRemolque[2],
+          rowHeight
+        );
+        drawBox(
+          tableX +
+            colWidthsRemolque[0] +
+            colWidthsRemolque[1] +
+            colWidthsRemolque[2],
+          yPosition,
+          colWidthsRemolque[3],
+          rowHeight
+        );
 
         doc.setFont('helvetica', 'normal');
         doc.text('Remolque 1', tableX + 2, yPosition + 5.5);
-        doc.text(this.formatWeight(data.remolque1.pesoBruto), tableX + colWidthsRemolque[0] + 2, yPosition + 5.5);
-        doc.text(this.formatWeight(data.remolque1.pesoTara), tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + 2, yPosition + 5.5);
-        doc.text(this.formatWeight(data.remolque1.pesoNeto), tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + colWidthsRemolque[2] + 2, yPosition + 5.5);
+        doc.text(
+          this.formatWeight(data.remolque1.pesoBruto),
+          tableX + colWidthsRemolque[0] + 2,
+          yPosition + 5.5
+        );
+        doc.text(
+          this.formatWeight(data.remolque1.pesoTara),
+          tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + 2,
+          yPosition + 5.5
+        );
+        doc.text(
+          this.formatWeight(data.remolque1.pesoNeto),
+          tableX +
+            colWidthsRemolque[0] +
+            colWidthsRemolque[1] +
+            colWidthsRemolque[2] +
+            2,
+          yPosition + 5.5
+        );
         yPosition += rowHeight;
       }
 
       // Remolque 2
       if (data.remolque2) {
         drawBox(tableX, yPosition, colWidthsRemolque[0], rowHeight);
-        drawBox(tableX + colWidthsRemolque[0], yPosition, colWidthsRemolque[1], rowHeight);
-        drawBox(tableX + colWidthsRemolque[0] + colWidthsRemolque[1], yPosition, colWidthsRemolque[2], rowHeight);
-        drawBox(tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + colWidthsRemolque[2], yPosition, colWidthsRemolque[3], rowHeight);
+        drawBox(
+          tableX + colWidthsRemolque[0],
+          yPosition,
+          colWidthsRemolque[1],
+          rowHeight
+        );
+        drawBox(
+          tableX + colWidthsRemolque[0] + colWidthsRemolque[1],
+          yPosition,
+          colWidthsRemolque[2],
+          rowHeight
+        );
+        drawBox(
+          tableX +
+            colWidthsRemolque[0] +
+            colWidthsRemolque[1] +
+            colWidthsRemolque[2],
+          yPosition,
+          colWidthsRemolque[3],
+          rowHeight
+        );
 
         doc.setFont('helvetica', 'normal');
         doc.text('Remolque 2', tableX + 2, yPosition + 5.5);
-        doc.text(this.formatWeight(data.remolque2.pesoBruto), tableX + colWidthsRemolque[0] + 2, yPosition + 5.5);
-        doc.text(this.formatWeight(data.remolque2.pesoTara), tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + 2, yPosition + 5.5);
-        doc.text(this.formatWeight(data.remolque2.pesoNeto), tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + colWidthsRemolque[2] + 2, yPosition + 5.5);
+        doc.text(
+          this.formatWeight(data.remolque2.pesoBruto),
+          tableX + colWidthsRemolque[0] + 2,
+          yPosition + 5.5
+        );
+        doc.text(
+          this.formatWeight(data.remolque2.pesoTara),
+          tableX + colWidthsRemolque[0] + colWidthsRemolque[1] + 2,
+          yPosition + 5.5
+        );
+        doc.text(
+          this.formatWeight(data.remolque2.pesoNeto),
+          tableX +
+            colWidthsRemolque[0] +
+            colWidthsRemolque[1] +
+            colWidthsRemolque[2] +
+            2,
+          yPosition + 5.5
+        );
         yPosition += rowHeight;
       }
 
@@ -424,7 +729,11 @@ export class PdfGeneratorService {
       yPosition += 3;
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(8);
-      doc.text('* Si la unidad tiene un solo remolque, la fila de "Remolque 2" no se muestra.', tableX + 2, yPosition);
+      doc.text(
+        '* Si la unidad tiene un solo remolque, la fila de "Remolque 2" no se muestra.',
+        tableX + 2,
+        yPosition
+      );
       yPosition += 8;
     }
 
@@ -439,7 +748,7 @@ export class PdfGeneratorService {
       placaRemolque: data.placaRemolque,
       pesoNeto: data.pesoNeto,
       fechaEntrada: data.fechaEntrada,
-      fechaSalida: data.fechaSalida
+      fechaSalida: data.fechaSalida,
     });
 
     try {
@@ -448,8 +757,8 @@ export class PdfGeneratorService {
         margin: 1,
         color: {
           dark: '#000000',
-          light: '#FFFFFF'
-        }
+          light: '#FFFFFF',
+        },
       });
 
       // Verificar si hay espacio suficiente
@@ -473,7 +782,6 @@ export class PdfGeneratorService {
       const qrTextWidth = doc.getTextWidth(qrText);
       doc.text(qrText, (pageWidth - qrTextWidth) / 2, yPosition);
       yPosition += 10;
-
     } catch (error) {
       console.error('Error generando código QR:', error);
     }
@@ -488,7 +796,9 @@ export class PdfGeneratorService {
     doc.text(footerText, (pageWidth - footerWidth) / 2, yPosition);
 
     // Guardar el PDF
-    const fileName = `Ticket_${data.folio}_${this.formatDateForFilename(new Date())}.pdf`;
+    const fileName = `Ticket_${data.folio}_${this.formatDateForFilename(
+      new Date()
+    )}.pdf`;
     doc.save(fileName);
   }
 
@@ -517,7 +827,7 @@ export class PdfGeneratorService {
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
     });
 
     // Formato: "20/10/2025, 13:00" -> "20/10/2025 13:00"
@@ -539,20 +849,38 @@ export class PdfGeneratorService {
     }
 
     // Convertir a hora de México
-    const mexicoDateParts = dateObj.toLocaleString('es-MX', {
-      timeZone: 'America/Mexico_City',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).split(/[\s,/:]+/);
+    const mexicoDateParts = dateObj
+      .toLocaleString('es-MX', {
+        timeZone: 'America/Mexico_City',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      })
+      .split(/[\s,/:]+/);
 
     // mexicoDateParts = ['20', '10', '2025', '13', '00', '00']
     const [day, month, year, hours, minutes, seconds] = mexicoDateParts;
     return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+  }
+
+  /**
+   * Obtiene el peso de salida total para doble remolque.
+   * Prefiere la suma de las taras capturadas y, si no existen,
+   * usa el peso de salida general.
+   */
+  private getDoubleTrailerExitWeight(data: WeighingReceiptData): number {
+    const sumaTaraRemolques =
+      (data.remolque1?.pesoTara ?? 0) + (data.remolque2?.pesoTara ?? 0);
+
+    if (sumaTaraRemolques > 0) {
+      return sumaTaraRemolques;
+    }
+
+    return data.pesoBrutoSalida || 0;
   }
 
   /**
@@ -568,10 +896,10 @@ export class PdfGeneratorService {
    */
   private getTipoUnidadDisplayName(tipoUnidad: string): string {
     const displayNames: { [key: string]: string } = {
-      'remolque': 'Remolque',
+      remolque: 'Remolque',
       'doble-remolque': 'Doble Remolque',
-      'contenedor': 'Contenedor',
-      'contenedor-con-remolque': 'Contenedor con Remolque'
+      contenedor: 'Contenedor',
+      'contenedor-con-remolque': 'Contenedor con Remolque',
     };
     return displayNames[tipoUnidad] || tipoUnidad;
   }

@@ -385,7 +385,9 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         fechaEntrada: fullOperation.createdAt,
         pesoBrutoEntrada: fullOperation.entryWeight || 0,
         placaTrailer: fullOperation.trailerPlate || '',
-        placaRemolque: fullOperation.trailerPlate2 || '',
+        placaRemolque: fullOperation.tipoUnidad === 'doble-remolque'
+          ? fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || ''
+          : fullOperation.trailerPlate2 || '',
 
         // Datos de salida - pasar strings directamente del backend
         fechaSalida: fullOperation.updatedAt || fullOperation.createdAt,
@@ -396,25 +398,23 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
       // Si es doble remolque, agregar datos de los remolques
       if (fullOperation.tipoUnidad === 'doble-remolque') {
-        // Nota: Para doble remolque, el backend debería proporcionar datos individuales de remolques
-        // Por ahora, calculamos aproximaciones basadas en los datos disponibles
-        const pesoBrutoR1 = fullOperation.entryWeight || 0;
-        const pesoTaraR1 = (fullOperation.exitWeight || 0) / 2; // Aproximación: dividir peso de salida
-        const pesoBrutoR2 = fullOperation.entryWeight || 0;
-        const pesoTaraR2 = (fullOperation.exitWeight || 0) / 2; // Aproximación: dividir peso de salida
+        const placaRemolque1 = fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || '';
+        const placaRemolque2 = fullOperation.placaRemolque2 || '';
+        const pesoBrutoBase = fullOperation.entryWeight || 0;
+        const pesoTaraBase = (fullOperation.exitWeight || 0) / 2;
 
         receiptData.remolque1 = {
-          placa: fullOperation.trailerPlate2 || '',
-          pesoBruto: pesoBrutoR1,
-          pesoTara: pesoTaraR1,
-          pesoNeto: Math.abs(pesoBrutoR1 - pesoTaraR1),
+          placa: placaRemolque1,
+          pesoBruto: pesoBrutoBase,
+          pesoTara: pesoTaraBase,
+          pesoNeto: Math.abs(pesoBrutoBase - pesoTaraBase),
         };
 
         receiptData.remolque2 = {
-          placa: '', // El backend necesita proporcionar esto
-          pesoBruto: pesoBrutoR2,
-          pesoTara: pesoTaraR2,
-          pesoNeto: Math.abs(pesoBrutoR2 - pesoTaraR2),
+          placa: placaRemolque2,
+          pesoBruto: pesoBrutoBase,
+          pesoTara: pesoTaraBase,
+          pesoNeto: Math.abs(pesoBrutoBase - pesoTaraBase),
         };
       }
 

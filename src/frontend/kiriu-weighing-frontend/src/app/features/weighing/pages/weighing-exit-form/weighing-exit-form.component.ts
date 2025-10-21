@@ -1185,7 +1185,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         fechaEntrada: this.entryData.createdAt || new Date().toISOString(),
         pesoBrutoEntrada: this.entryData.entryWeight || 0,
         placaTrailer: this.entryData.placaTrailer || '',
-        placaRemolque: this.entryData.placaRemolque || this.entryData.placaRemolque1 || '',
+        placaRemolque: this.entryData.tipoUnidad === 'doble-remolque'
+          ? this.entryData.placaRemolque1 || ''
+          : this.entryData.placaRemolque || '',
 
         // Datos de salida - pasar strings directamente del backend
         fechaSalida: response.fechaSalida || new Date().toISOString(),
