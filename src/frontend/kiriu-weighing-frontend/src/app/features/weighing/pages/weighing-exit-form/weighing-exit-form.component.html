@@ -191,14 +191,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.trailerPlate && photoData.trailerPlate.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate &&
+                        photoData.trailerPlate.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.trailerPlate)"
                       alt="Placa del tráiler"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.trailerPlate && !photoData.trailerPlate.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate &&
+                        !photoData.trailerPlate.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -290,14 +302,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.remolque1Plate && photoData.remolque1Plate.startsWith('/')"
+                      *ngIf="
+                        photoData.remolque1Plate &&
+                        photoData.remolque1Plate.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.remolque1Plate)"
                       alt="Placa del remolque 1"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.remolque1Plate && !photoData.remolque1Plate.startsWith('/')"
+                      *ngIf="
+                        photoData.remolque1Plate &&
+                        !photoData.remolque1Plate.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -349,14 +373,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.cargoRemolque1 && photoData.cargoRemolque1.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoRemolque1 &&
+                        photoData.cargoRemolque1.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.cargoRemolque1)"
                       alt="Foto de carga del remolque 1"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.cargoRemolque1 && !photoData.cargoRemolque1.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoRemolque1 &&
+                        !photoData.cargoRemolque1.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -405,10 +441,7 @@
                   <button
                     type="button"
                     class="btn btn-success capture-weight-btn"
-                    [disabled]="
-                      !canCaptureWeight() ||
-                      !weightData.isConnected
-                    "
+                    [disabled]="!canCaptureWeight() || !weightData.isConnected"
                     (click)="onCaptureWeightRemolque1()"
                   >
                     ⚖️ Capturar
@@ -505,14 +538,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.remolque2Plate && photoData.remolque2Plate.startsWith('/')"
+                      *ngIf="
+                        photoData.remolque2Plate &&
+                        photoData.remolque2Plate.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.remolque2Plate)"
                       alt="Placa del remolque 2"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.remolque2Plate && !photoData.remolque2Plate.startsWith('/')"
+                      *ngIf="
+                        photoData.remolque2Plate &&
+                        !photoData.remolque2Plate.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -564,14 +609,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.cargoRemolque2 && photoData.cargoRemolque2.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoRemolque2 &&
+                        photoData.cargoRemolque2.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.cargoRemolque2)"
                       alt="Foto de carga del remolque 2"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.cargoRemolque2 && !photoData.cargoRemolque2.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoRemolque2 &&
+                        !photoData.cargoRemolque2.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -621,8 +678,7 @@
                     type="button"
                     class="btn btn-success capture-weight-btn"
                     [disabled]="
-                      !canCaptureWeightRemolque2() ||
-                      !weightData.isConnected
+                      !canCaptureWeightRemolque2() || !weightData.isConnected
                     "
                     (click)="onCaptureWeightRemolque2()"
                   >
@@ -793,14 +849,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.trailerPlate && photoData.trailerPlate.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate &&
+                        photoData.trailerPlate.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.trailerPlate)"
                       alt="Placa del tráiler"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.trailerPlate && !photoData.trailerPlate.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate &&
+                        !photoData.trailerPlate.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -883,14 +951,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.trailerPlate2 && photoData.trailerPlate2.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate2 &&
+                        photoData.trailerPlate2.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.trailerPlate2)"
                       alt="Placa del remolque"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.trailerPlate2 && !photoData.trailerPlate2.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate2 &&
+                        !photoData.trailerPlate2.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -936,13 +1016,28 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.cargoState && photoData.cargoState.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoState &&
+                        photoData.cargoState.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.cargoState)"
                       alt="Foto del estado de carga"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
-                    <span *ngIf="photoData.cargoState && !photoData.cargoState.startsWith('/')" class="photo-captured">
+                    <span
+                      *ngIf="
+                        photoData.cargoState &&
+                        !photoData.cargoState.startsWith('/')
+                      "
+                      class="photo-captured"
+                    >
                       ✅ Foto capturada
                     </span>
                   </div>
@@ -982,9 +1077,7 @@
                     <span
                       *ngIf="exitForm.get('exitWeight')?.value; else noWeight"
                     >
-                      {{
-                        exitForm.get("exitWeight")?.value | number : "1.0-0"
-                      }}
+                      {{ exitForm.get("exitWeight")?.value | number : "1.0-0" }}
                       kg
                     </span>
                     <ng-template #noWeight>
@@ -1008,10 +1101,7 @@
                   <button
                     type="button"
                     class="btn btn-success capture-weight-btn"
-                    [disabled]="
-                      !canCaptureWeight() ||
-                      !weightData.isConnected
-                    "
+                    [disabled]="!canCaptureWeight() || !weightData.isConnected"
                     (click)="onCaptureWeight()"
                   >
                     ⚖️ Capturar
@@ -1073,9 +1163,7 @@
             <h2 class="section-title">Peso en Tiempo Real</h2>
 
             <div class="weight-display">
-              <div class="weight-value">
-                {{ weightData.currentWeight | number : "1.0-0" }} kg
-              </div>
+              <div class="weight-value">{{ weightData.currentWeight }} kg</div>
               <div
                 class="connection-indicator"
                 [class]="weightData.isConnected ? 'connected' : 'disconnected'"
@@ -1101,36 +1189,49 @@
                   {{ weightData.isConnected ? "Conectado" : "Desconectado" }}
                 </span>
               </div>
-              
+
               <!-- Estado de conexión SignalR -->
               <div class="status-item">
                 <span class="status-label">Estado SignalR:</span>
                 <span
                   class="status-value signalr-status"
-                  [class]="isWeightServiceConnected ? 'connected' : 'disconnected'"
+                  [class]="
+                    isWeightServiceConnected ? 'connected' : 'disconnected'
+                  "
                   [title]="
                     isWeightServiceConnected
-                    ? 'Báscula conectada via SignalR'
-                    : connectionStatus.reconnectAttempts > 0
-                      ? 'Reconectando... (' + connectionStatus.reconnectAttempts + ' intentos)'
+                      ? 'Báscula conectada via SignalR'
+                      : connectionStatus.reconnectAttempts > 0
+                      ? 'Reconectando... (' +
+                        connectionStatus.reconnectAttempts +
+                        ' intentos)'
                       : 'Desconectado - Sistema de peso no disponible'
                   "
                 >
-                  <i 
+                  <i
                     class="pi"
                     [class.pi-check-circle]="isWeightServiceConnected"
-                    [class.pi-times-circle]="!isWeightServiceConnected && connectionStatus.reconnectAttempts === 0"
-                    [class.pi-refresh]="!isWeightServiceConnected && connectionStatus.reconnectAttempts > 0"
-                    [class.pi-spin]="!isWeightServiceConnected && connectionStatus.reconnectAttempts > 0"
+                    [class.pi-times-circle]="
+                      !isWeightServiceConnected &&
+                      connectionStatus.reconnectAttempts === 0
+                    "
+                    [class.pi-refresh]="
+                      !isWeightServiceConnected &&
+                      connectionStatus.reconnectAttempts > 0
+                    "
+                    [class.pi-spin]="
+                      !isWeightServiceConnected &&
+                      connectionStatus.reconnectAttempts > 0
+                    "
                   ></i>
                   {{
                     isWeightServiceConnected
-                      ? 'Conectado'
+                      ? "Conectado"
                       : connectionStatus.reconnectAttempts > 0
-                        ? 'Reconectando...'
-                        : 'Desconectado'
+                      ? "Reconectando..."
+                      : "Desconectado"
                   }}
-                  
+
                   <!-- Botón de reconexión -->
                   <button
                     *ngIf="!isWeightServiceConnected"
@@ -1155,15 +1256,12 @@
               >
                 <i *ngIf="!loadingWeight" class="pi pi-refresh"></i>
                 <i *ngIf="loadingWeight" class="pi pi-spin pi-spinner"></i>
-                {{ loadingWeight ? 'Solicitando...' : 'Solicitar Peso' }}
+                {{ loadingWeight ? "Solicitando..." : "Solicitar Peso" }}
               </button>
 
               <button
                 class="btn btn-success capture-weight-btn"
-                [disabled]="
-                  !weightData.isConnected ||
-                  !canCaptureWeight()
-                "
+                [disabled]="!weightData.isConnected || !canCaptureWeight()"
                 (click)="onCaptureWeight()"
               >
                 Capturar Peso

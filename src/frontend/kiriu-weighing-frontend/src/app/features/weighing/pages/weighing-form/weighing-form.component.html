@@ -909,9 +909,7 @@
             <h2 class="section-title">Peso en Tiempo Real</h2>
 
             <div class="weight-display">
-              <div class="weight-value">
-                {{ weightData.currentWeight | number : "1.0-0" }} kg
-              </div>
+              <div class="weight-value">{{ weightData.currentWeight }} kg</div>
               <div
                 class="connection-indicator"
                 [class]="weightData.isConnected ? 'connected' : 'disconnected'"
