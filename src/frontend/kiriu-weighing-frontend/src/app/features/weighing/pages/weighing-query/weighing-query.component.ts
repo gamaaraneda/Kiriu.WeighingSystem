@@ -18,6 +18,7 @@ import {
   PdfGeneratorService,
   WeighingReceiptData,
 } from '../../services/pdf-generator.service';
+import { RealWeighingService } from '../../services/real-weighing.service';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
@@ -76,6 +77,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private permissionsService: PermissionsService,
     private pdfGeneratorService: PdfGeneratorService,
+    private weighingService: RealWeighingService,
     private cdr: ChangeDetectorRef
   ) {
     this.initializeForm();
@@ -363,44 +365,56 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     try {
-      // Construir los datos para el PDF
-      const receiptData: WeighingReceiptData = {
-        folio: operation.folio,
-        fecha: new Date(operation.fecha),
-        tipoUnidad: operation.tipoUnidad || 'remolque',
-        clienteProveedor: operation.clienteProveedor,
-        tipo: operation.tipo || 'cliente',
-        producto: operation.producto,
+      // Obtener la operación completa desde el backend para tener todos los datos
+      const fullOperation = await this.weighingService.getOperationById(operation.id).toPromise();
 
-        // Datos de entrada (solo disponibles: fecha)
-        fechaEntrada: new Date(operation.fecha),
-        pesoBrutoEntrada: 0, // No disponible en WeighingQueryResult
-        placaTrailer: operation.placas,
-        placaRemolque: '', // No disponible en WeighingQueryResult
+      if (!fullOperation) {
+        throw new Error('No se pudo obtener los datos completos de la operación');
+      }
+
+      // Construir los datos para el PDF usando la misma lógica que en weighing-exit-form
+      const receiptData: WeighingReceiptData = {
+        folio: fullOperation.folio,
+        fecha: new Date(fullOperation.updatedAt || fullOperation.createdAt),
+        tipoUnidad: fullOperation.tipoUnidad || 'remolque',
+        clienteProveedor: fullOperation.clientProviderName,
+        tipo: fullOperation.unitType || 'cliente',
+        producto: fullOperation.product,
+
+        // Datos de entrada
+        fechaEntrada: new Date(fullOperation.createdAt),
+        pesoBrutoEntrada: fullOperation.entryWeight || 0,
+        placaTrailer: fullOperation.trailerPlate || '',
+        placaRemolque: fullOperation.trailerPlate2 || '',
 
         // Datos de salida
-        fechaSalida: new Date(operation.fecha), // Usar fecha general
-        pesoBrutoSalida: operation.pesoBruto || 0,
-        pesoTara: operation.pesoBruto || 0, // La tara es el peso de salida
-        pesoNeto: operation.pesoNeto || 0,
+        fechaSalida: new Date(fullOperation.updatedAt || fullOperation.createdAt),
+        pesoBrutoSalida: fullOperation.exitWeight || 0,
+        pesoTara: fullOperation.exitWeight || 0,
+        pesoNeto: fullOperation.netWeight || 0,
       };
 
-      // Si es doble remolque y tiene datos de remolques
-      if (operation.tipoUnidad === 'doble-remolque') {
-        // Los datos de remolques individuales no están disponibles en WeighingQueryResult
-        // Se puede mejorar si el backend los proporciona
+      // Si es doble remolque, agregar datos de los remolques
+      if (fullOperation.tipoUnidad === 'doble-remolque') {
+        // Nota: Para doble remolque, el backend debería proporcionar datos individuales de remolques
+        // Por ahora, calculamos aproximaciones basadas en los datos disponibles
+        const pesoBrutoR1 = fullOperation.entryWeight || 0;
+        const pesoTaraR1 = (fullOperation.exitWeight || 0) / 2; // Aproximación: dividir peso de salida
+        const pesoBrutoR2 = fullOperation.entryWeight || 0;
+        const pesoTaraR2 = (fullOperation.exitWeight || 0) / 2; // Aproximación: dividir peso de salida
+
         receiptData.remolque1 = {
-          placa: '',
-          pesoBruto: 0,
-          pesoTara: 0,
-          pesoNeto: 0,
+          placa: fullOperation.trailerPlate2 || '',
+          pesoBruto: pesoBrutoR1,
+          pesoTara: pesoTaraR1,
+          pesoNeto: Math.abs(pesoBrutoR1 - pesoTaraR1),
         };
 
         receiptData.remolque2 = {
-          placa: '',
-          pesoBruto: 0,
-          pesoTara: 0,
-          pesoNeto: 0,
+          placa: '', // El backend necesita proporcionar esto
+          pesoBruto: pesoBrutoR2,
+          pesoTara: pesoTaraR2,
+          pesoNeto: Math.abs(pesoBrutoR2 - pesoTaraR2),
         };
       }
 

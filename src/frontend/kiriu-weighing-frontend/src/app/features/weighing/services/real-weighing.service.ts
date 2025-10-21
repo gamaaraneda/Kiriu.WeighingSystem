@@ -313,6 +313,13 @@ export class RealWeighingService {
   }
 
   /**
+   * Obtener operación completa por ID
+   */
+  getOperationById(id: string): Observable<WeighingOperationDto> {
+    return this.http.get<WeighingOperationDto>(`${this.apiUrl}/operations/${id}`);
+  }
+
+  /**
    * Actualizar operación de pesaje (para ediciones manuales)
    */
   updateWeighingOperation(operationId: string, request: UpdateWeighingOperationRequest): Observable<WeighingOperationDto> {
