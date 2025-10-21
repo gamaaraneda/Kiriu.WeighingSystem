@@ -438,29 +438,45 @@ export class PdfGeneratorService {
 
   /**
    * Formatea una fecha para mostrarla en el PDF
+   * Convierte de UTC a hora local de México (America/Mexico_City)
    */
   private formatDate(date: Date): string {
     if (!date) return '-';
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+
+    // Crear fecha y convertir a timezone de México
+    const mexicoDate = new Date(date).toLocaleString('es-MX', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    // Formato: "20/10/2025, 13:00" -> "20/10/2025 13:00"
+    return mexicoDate.replace(',', '');
   }
 
   /**
    * Formatea una fecha para nombre de archivo
+   * Usa hora local de México
    */
   private formatDateForFilename(date: Date): string {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const seconds = String(d.getSeconds()).padStart(2, '0');
+    // Convertir a hora de México
+    const mexicoDateParts = new Date(date).toLocaleString('es-MX', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).split(/[\s,/:]+/);
+
+    // mexicoDateParts = ['20', '10', '2025', '13', '00', '00']
+    const [day, month, year, hours, minutes, seconds] = mexicoDateParts;
     return `${year}${month}${day}_${hours}${minutes}${seconds}`;
   }
 
