@@ -676,8 +676,7 @@
               <div class="info-box">
                 <div class="info-content">
                   <span class="info-text"
-                    ><strong>Modo Solo Contenedor:</strong> las placas son
-                    opcionales y solo se requiere una foto de la carga</span
+                    ><strong>Modo Solo Contenedor:</strong> se requiere placa del tráiler, producto, cliente y peso. La placa del remolque y fotos son opcionales.</span
                   >
                 </div>
               </div>
@@ -692,14 +691,7 @@
 
               <div class="form-group">
                 <label for="trailerPlate" class="form-label"
-                  >Placa Tráiler
-                  <span *ngIf="!weighingForm.get('containerOnly')?.value"
-                    >*</span
-                  ><span
-                    *ngIf="weighingForm.get('containerOnly')?.value"
-                    class="optional-label"
-                    >(Opcional)</span
-                  ></label
+                  >Placa Tráiler *</label
                 >
                 <div class="plate-input-group">
                   <button
@@ -726,7 +718,6 @@
                     [class.error]="getFieldError('trailerPlate')"
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate"
-                    [disabled]="weighingForm.get('containerOnly')?.value"
                   />
                 </div>
                 <div

@@ -663,18 +663,20 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.weighingForm.patchValue({ doubleTrailer: false });
       this.resetDoubleTrailerState();
 
-      // Hacer las placas opcionales cuando es solo contenedor
-      this.weighingForm.get('trailerPlate')?.clearValidators();
+      // Placa del tráiler sigue siendo OBLIGATORIA en modo contenedor
+      this.weighingForm
+        .get('trailerPlate')
+        ?.setValidators([
+          Validators.required,
+        ]);
       this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
 
-      // Limpiar valores de placas ya que son opcionales
+      // Limpiar solo la placa del remolque (opcional en este flujo)
       this.weighingForm.patchValue({
-        trailerPlate: '',
         trailerPlate2: '',
       });
 
-      // Limpiar datos de fotos de placas
-      this.photoData.trailerPlate = '';
+      // Limpiar solo la foto del remolque
       this.photoData.trailerPlate2 = '';
     } else {
       // Si se desmarca "Solo contenedor", restaurar validaciones normales
@@ -1590,12 +1592,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const isContainerOnly = this.weighingForm.get('containerOnly')?.value;
     const isDoubleTrailer = this.weighingForm.get('doubleTrailer')?.value;
 
-    // Si es solo contenedor, las placas son opcionales
+    // FLUJO SOLO CONTENEDOR: placa tráiler, producto, cliente y peso obligatorios
+    // Foto de carga es OPCIONAL
     if (isContainerOnly) {
       return (
         this.weighingForm.valid &&
-        this.weightData.capturedWeight !== undefined &&
-        !!this.photoData.cargo
+        this.weightData.capturedWeight !== undefined
       );
     }
 
