@@ -1608,13 +1608,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       );
     }
 
-    // Si no es solo contenedor ni doble remolque, todas las placas son obligatorias
+    // FLUJO REMOLQUE ÚNICO: Solo campos del formulario + peso capturado
+    // Las fotos son OPCIONALES
     return (
       this.weighingForm.valid &&
-      this.weightData.capturedWeight !== undefined &&
-      !!this.photoData.trailerPlate &&
-      !!this.photoData.trailerPlate2 &&
-      !!this.photoData.cargo
+      this.weightData.capturedWeight !== undefined
     );
   }
 

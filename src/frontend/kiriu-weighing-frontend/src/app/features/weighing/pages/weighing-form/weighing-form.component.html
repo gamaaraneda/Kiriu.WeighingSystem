@@ -952,7 +952,7 @@
               <button
                 type="button"
                 class="btn btn-primary"
-                [disabled]="isLoading"
+                [disabled]="!isFormValid || isLoading"
                 (click)="onSave()"
               >
                 <span *ngIf="!isLoading">Guardar {{ operationTitle }}</span>
