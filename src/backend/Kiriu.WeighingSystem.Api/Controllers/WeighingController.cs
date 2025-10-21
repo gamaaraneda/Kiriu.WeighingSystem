@@ -451,6 +451,36 @@ public class WeighingController : ControllerBase
     }
 
     /// <summary>
+    /// Buscar entradas pendientes de salida por placa o folio (autocompletado)
+    /// </summary>
+    /// <param name="searchTerm">Término de búsqueda (placa o folio)</param>
+    /// <param name="limit">Límite de resultados (default: 10)</param>
+    /// <param name="unitType">Tipo de unidad (client/provider) para filtrar resultados</param>
+    /// <returns>Lista de entradas pendientes que coinciden</returns>
+    [HttpGet("pending-exits/search")]
+    public async Task<IActionResult> SearchPendingExits([FromQuery] string searchTerm, [FromQuery] int limit = 10, [FromQuery] string? unitType = null)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            {
+                return Ok(new { success = true, data = new List<object>() });
+            }
+
+            _logger.LogInformation("Buscando entradas pendientes con término: {SearchTerm}, unitType: {UnitType}", searchTerm, unitType);
+
+            var result = await _weighingService.SearchPendingExitsAsync(searchTerm, limit, unitType);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar entradas pendientes con término: {SearchTerm}", searchTerm);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
     /// Obtener imagen de una foto de pesaje desde la base de datos
     /// </summary>
     /// <param name="photoId">ID de la foto</param>

@@ -517,4 +517,41 @@ export class RealWeighingService {
       { params: { searchTerm, limit: limit.toString() } }
     );
   }
+
+  /**
+   * Buscar entradas pendientes de salida por placa o folio (autocompletado)
+   */
+  searchPendingExits(searchTerm: string, limit: number = 10, unitType?: string): Observable<PendingExitSearchResult[]> {
+    if (!searchTerm || searchTerm.length < 2) {
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
+      });
+    }
+
+    // Construir parámetros de consulta
+    const params: any = { searchTerm, limit: limit.toString() };
+    if (unitType) {
+      params.unitType = unitType;
+    }
+
+    // El interceptor ya extrae body.data, así que recibimos directamente el array
+    return this.http.get<PendingExitSearchResult[]>(
+      `${this.apiUrl}/pending-exits/search`,
+      { params }
+    );
+  }
+}
+
+export interface PendingExitSearchResult {
+  id: string;
+  folio: string;
+  trailerPlate: string;
+  trailerPlate2?: string;
+  product: string;
+  clientProviderName: string;
+  entryWeight: number;
+  createdAt: string;
+  tipoUnidad: string;
+  displayText: string;
 }

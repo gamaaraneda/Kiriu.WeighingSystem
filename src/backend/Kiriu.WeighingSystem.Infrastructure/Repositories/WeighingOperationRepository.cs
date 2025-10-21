@@ -385,4 +385,42 @@ public class WeighingOperationRepository : IWeighingOperationRepository
 
         return clients;
     }
+
+    public async Task<List<WeighingOperation>> SearchPendingExitsAsync(string searchTerm, int limit = 10, string? unitType = null)
+    {
+        // Búsqueda inteligente: detecta si es folio (formato: CLI-ENT-XXXXXX o PRO-ENT-XXXXXX) o placa
+        var isFolioSearch = searchTerm.Contains("-ENT-") || searchTerm.Contains("-SAL-");
+
+        IQueryable<WeighingOperation> query = _context.WeighingOperations
+            .Where(w => w.Status == "ENTRADA_REGISTRADA"); // Solo entradas pendientes de salida
+
+        // Filtrar por tipo de unidad (client/provider) si se especifica
+        if (!string.IsNullOrEmpty(unitType))
+        {
+            query = query.Where(w => w.UnitType == unitType);
+        }
+
+        if (isFolioSearch)
+        {
+            // Búsqueda por folio
+            query = query.Where(w => w.Folio.Contains(searchTerm));
+        }
+        else
+        {
+            // Búsqueda por placa (trailer o remolque)
+            query = query.Where(w =>
+                w.TrailerPlate.Contains(searchTerm) ||
+                (!string.IsNullOrEmpty(w.TrailerPlate2) && w.TrailerPlate2.Contains(searchTerm)) ||
+                (!string.IsNullOrEmpty(w.PlacaRemolque1) && w.PlacaRemolque1.Contains(searchTerm)) ||
+                (!string.IsNullOrEmpty(w.PlacaRemolque2) && w.PlacaRemolque2.Contains(searchTerm))
+            );
+        }
+
+        var results = await query
+            .OrderByDescending(w => w.CreatedAt) // Más recientes primero
+            .Take(limit)
+            .ToListAsync();
+
+        return results;
+    }
 }

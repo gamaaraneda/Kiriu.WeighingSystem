@@ -8,8 +8,9 @@ import {
 } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { HeaderComponent } from '../../../../layout/header/header.component';
-import { RealWeighingService } from '../../services/real-weighing.service';
+import { RealWeighingService, PendingExitSearchResult } from '../../services/real-weighing.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import { MessageService } from '../../../../shared/services/message.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
@@ -150,23 +151,33 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   // Configuración de báscula
   currentBasculaId: number | null = null;
 
+  // Autocompletado de búsqueda de entradas
+  entrySuggestions: any[] = [];
+  showEntrySuggestions = false;
+  entrySearchSubscription: Subscription | undefined;
+
   private subscriptions = new Subscription();
 
   ngOnInit(): void {
     this.initializeForm();
     this.startRealtimeWeightUpdates();
     this.getUnitTypeFromRoute();
+    this.setupEntrySearch();
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
-    
+
     if (this.pesoRealtimeSubscription) {
       this.pesoRealtimeSubscription.unsubscribe();
     }
-    
+
     if (this.connectionStatusSubscription) {
       this.connectionStatusSubscription.unsubscribe();
+    }
+
+    if (this.entrySearchSubscription) {
+      this.entrySearchSubscription.unsubscribe();
     }
   }
 
@@ -1246,5 +1257,90 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    */
   get isFormValid(): boolean {
     return this.exitForm.valid;
+  }
+
+  /**
+   * Configurar búsqueda de entradas pendientes con autocompletado
+   */
+  private setupEntrySearch(): void {
+    const trailerPlateControl = this.exitForm.get('trailerPlate');
+
+    if (trailerPlateControl) {
+      this.entrySearchSubscription = trailerPlateControl.valueChanges
+        .pipe(
+          debounceTime(400), // Esperar 400ms después del último keystroke
+          distinctUntilChanged(), // Solo buscar si el valor cambió
+          switchMap((searchTerm: string) => {
+            console.log('🔍 Buscando entradas pendientes con término:', searchTerm);
+
+            // Solo buscar si hay al menos 2 caracteres y no se ha encontrado una entrada
+            if (!searchTerm || searchTerm.trim().length < 2 || this.isEntryFound) {
+              console.log('❌ Valor muy corto o entrada ya encontrada, limpiando sugerencias');
+              this.entrySuggestions = [];
+              this.showEntrySuggestions = false;
+              this.cdr.detectChanges();
+              return [];
+            }
+
+            // Pasar el unitType actual para filtrar resultados
+            return this.weighingService.searchPendingExits(searchTerm.trim(), 10, this.unitType);
+          })
+        )
+        .subscribe({
+          next: (results: PendingExitSearchResult[]) => {
+            console.log('✅ Entradas pendientes recibidas:', results);
+            this.entrySuggestions = results;
+            this.showEntrySuggestions = results.length > 0;
+            this.cdr.detectChanges();
+          },
+          error: (error) => {
+            console.error('❌ Error buscando entradas pendientes:', error);
+            this.entrySuggestions = [];
+            this.showEntrySuggestions = false;
+            this.cdr.detectChanges();
+          },
+        });
+    }
+  }
+
+  /**
+   * Seleccionar una entrada de las sugerencias
+   */
+  selectEntrySuggestion(entry: PendingExitSearchResult): void {
+    console.log('🎯 Entrada seleccionada:', entry);
+
+    // Actualizar el campo de placa sin disparar eventos
+    this.exitForm.patchValue({ trailerPlate: entry.trailerPlate }, { emitEvent: false });
+
+    // Ocultar sugerencias
+    this.entrySuggestions = [];
+    this.showEntrySuggestions = false;
+
+    // Buscar la entrada completa usando el método existente
+    this.onSearchEntry();
+
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Mostrar sugerencias al hacer focus
+   */
+  onEntrySearchFocus(): void {
+    const plateValue = this.exitForm.get('trailerPlate')?.value;
+    if (plateValue && plateValue.trim().length >= 2 && this.entrySuggestions.length > 0 && !this.isEntryFound) {
+      this.showEntrySuggestions = true;
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Cerrar sugerencias al hacer blur
+   */
+  onEntrySearchBlur(): void {
+    // Delay para permitir click en sugerencias
+    setTimeout(() => {
+      this.showEntrySuggestions = false;
+      this.cdr.detectChanges();
+    }, 200);
   }
 }

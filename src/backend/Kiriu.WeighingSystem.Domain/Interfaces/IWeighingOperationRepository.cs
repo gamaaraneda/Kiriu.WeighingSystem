@@ -38,4 +38,5 @@ public interface IWeighingOperationRepository
         string? edicionPosterior);
     Task<List<string>> SearchProductsAsync(string searchTerm, int limit = 10);
     Task<List<string>> SearchClientsAsync(string searchTerm, int limit = 10);
+    Task<List<WeighingOperation>> SearchPendingExitsAsync(string searchTerm, int limit = 10, string? unitType = null);
 }

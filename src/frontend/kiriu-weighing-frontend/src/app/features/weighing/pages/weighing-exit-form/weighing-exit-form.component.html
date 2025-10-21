@@ -34,26 +34,50 @@
 
               <div class="form-group">
                 <label for="trailerPlate" class="form-label"
-                  >Placa del Tráiler *</label
+                  >Placa del Tráiler o Folio *</label
                 >
-                <div class="search-input-group">
-                  <input
-                    type="text"
-                    id="trailerPlate"
-                    formControlName="trailerPlate"
-                    class="form-input search-input"
-                    placeholder="Ingrese la placa del tráiler para buscar la entrada"
-                    [readonly]="isEntryFound"
-                  />
-                  <button
-                    type="button"
-                    class="btn btn-primary search-btn"
-                    [disabled]="isSearching || isEntryFound"
-                    (click)="onSearchEntry()"
-                  >
-                    <span *ngIf="!isSearching">🔍 Buscar</span>
-                    <span *ngIf="isSearching">⏳ Buscando...</span>
-                  </button>
+                <div class="autocomplete-container">
+                  <div class="search-input-group">
+                    <input
+                      type="text"
+                      id="trailerPlate"
+                      formControlName="trailerPlate"
+                      class="form-input search-input"
+                      placeholder="Ingrese placa o folio para buscar..."
+                      [readonly]="isEntryFound"
+                      (focus)="onEntrySearchFocus()"
+                      (blur)="onEntrySearchBlur()"
+                      autocomplete="off"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-primary search-btn"
+                      [disabled]="isSearching || isEntryFound"
+                      (click)="onSearchEntry()"
+                    >
+                      <span *ngIf="!isSearching">🔍 Buscar</span>
+                      <span *ngIf="isSearching">⏳ Buscando...</span>
+                    </button>
+                  </div>
+                  <!-- Dropdown de sugerencias de entradas -->
+                  <div *ngIf="showEntrySuggestions" class="autocomplete-dropdown entry-dropdown">
+                    <div
+                      *ngFor="let entry of entrySuggestions"
+                      class="autocomplete-item entry-item"
+                      (mousedown)="selectEntrySuggestion(entry)"
+                    >
+                      <div class="entry-suggestion">
+                        <div class="entry-main">
+                          <strong>{{ entry.folio }}</strong> - {{ entry.trailerPlate }}
+                        </div>
+                        <div class="entry-details">
+                          <span class="entry-client">{{ entry.clientProviderName }}</span>
+                          <span class="entry-product">{{ entry.product }}</span>
+                          <span class="entry-weight">{{ entry.entryWeight | number:'1.2-2' }} kg</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div
                   *ngIf="getFieldError('trailerPlate')"

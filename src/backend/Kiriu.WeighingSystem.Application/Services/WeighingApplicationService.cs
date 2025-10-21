@@ -950,4 +950,32 @@ public class WeighingApplicationService : IWeighingApplicationService
             return ApiResponse<List<string>>.CreateError("Error al buscar clientes/proveedores");
         }
     }
+
+    public async Task<ApiResponse<List<PendingExitSearchResultDto>>> SearchPendingExitsAsync(string searchTerm, int limit = 10, string? unitType = null)
+    {
+        try
+        {
+            var results = await _weighingRepository.SearchPendingExitsAsync(searchTerm, limit, unitType);
+
+            var dtos = results.Select(r => new PendingExitSearchResultDto
+            {
+                Id = r.Id.ToString(),
+                Folio = r.Folio,
+                TrailerPlate = r.TrailerPlate,
+                TrailerPlate2 = r.TrailerPlate2,
+                Product = r.Product,
+                ClientProviderName = r.ClientProviderName,
+                EntryWeight = r.EntryWeight ?? 0,
+                CreatedAt = r.CreatedAt,
+                TipoUnidad = r.TipoUnidad
+            }).ToList();
+
+            return ApiResponse<List<PendingExitSearchResultDto>>.CreateSuccess(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar entradas pendientes con término: {SearchTerm}", searchTerm);
+            return ApiResponse<List<PendingExitSearchResultDto>>.CreateError("Error al buscar entradas pendientes");
+        }
+    }
 }
