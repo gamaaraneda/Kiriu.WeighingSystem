@@ -269,11 +269,37 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       setTimeout(() => this.updateProcessStepsStatus(), 0);
     });
 
-    this.weighingForm.get('trailerPlate')?.valueChanges.subscribe(() => {
+    this.weighingForm.get('trailerPlate')?.valueChanges.subscribe((value) => {
+      // Sincronizar con doubleTrailerState si es doble remolque
+      if (this.weighingForm.get('doubleTrailer')?.value && value) {
+        this.doubleTrailerState.trailerPlaca = value;
+        // Avanzar al paso de remolque1 si estamos en el paso trailer
+        if (this.doubleTrailerState.currentStep === 'trailer') {
+          this.doubleTrailerState.currentStep = 'remolque1';
+          console.log('🔄 Paso cambiado a remolque1');
+        }
+      }
       setTimeout(() => this.updateProcessStepsStatus(), 0);
     });
 
     this.weighingForm.get('trailerPlate2')?.valueChanges.subscribe(() => {
+      setTimeout(() => this.updateProcessStepsStatus(), 0);
+    });
+
+    // Suscribirse a cambios en placas de remolques para sincronizar con doubleTrailerState
+    this.weighingForm.get('remolque1Plate')?.valueChanges.subscribe((value) => {
+      if (this.weighingForm.get('doubleTrailer')?.value && value) {
+        this.doubleTrailerState.remolque1.placa = value;
+        console.log('🔄 Sincronizado remolque1.placa:', value);
+      }
+      setTimeout(() => this.updateProcessStepsStatus(), 0);
+    });
+
+    this.weighingForm.get('remolque2Plate')?.valueChanges.subscribe((value) => {
+      if (this.weighingForm.get('doubleTrailer')?.value && value) {
+        this.doubleTrailerState.remolque2.placa = value;
+        console.log('🔄 Sincronizado remolque2.placa:', value);
+      }
       setTimeout(() => this.updateProcessStepsStatus(), 0);
     });
   }
@@ -605,12 +631,24 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private processDoubleTrailerWeight(): void {
     if (!this.weightData.capturedWeight) return;
 
+    console.log('🔍 processDoubleTrailerWeight - currentStep:', this.doubleTrailerState.currentStep);
+    console.log('🔍 doubleTrailerState completo:', this.doubleTrailerState);
+
     switch (this.doubleTrailerState.currentStep) {
       case 'remolque1':
         // Capturar peso del remolque 1
         this.doubleTrailerState.remolque1.pesoBruto =
           this.weightData.capturedWeight;
         this.doubleTrailerState.remolque1.pesoCapturado = true;
+
+        console.log('✅ Peso del remolque 1 capturado:', this.weightData.capturedWeight);
+        console.log('🔍 Estado después de captura:', {
+          trailerPlaca: this.doubleTrailerState.trailerPlaca,
+          remolque1Placa: this.doubleTrailerState.remolque1.placa,
+          product: this.weighingForm.get('product')?.value,
+          client: this.weighingForm.get('clientProviderName')?.value,
+          pesoCapturado: this.doubleTrailerState.remolque1.pesoCapturado
+        });
 
         // Validar que se haya capturado toda la información del primer remolque
         if (this.canProceedToRemolque2WithWeight()) {
@@ -622,6 +660,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           // Actualizar el estado de los pasos del proceso
           setTimeout(() => this.updateProcessStepsStatus(), 0);
         } else {
+          console.error('❌ No se puede proceder al remolque 2 - validación falló');
           // Mostrar error si faltan datos del primer remolque (solo campos obligatorios)
           this.notificationService.showError(
             'Información incompleta',
@@ -1616,8 +1655,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         !!this.doubleTrailerState.trailerPlaca &&
         !!this.doubleTrailerState.remolque1.placa &&
         !!this.doubleTrailerState.remolque2.placa &&
-        this.doubleTrailerState.remolque1.pesoCapturado &&
-        this.doubleTrailerState.remolque2.pesoCapturado
+        !!this.doubleTrailerState.remolque1.pesoCapturado &&
+        !!this.doubleTrailerState.remolque2.pesoCapturado
       );
     }
 
