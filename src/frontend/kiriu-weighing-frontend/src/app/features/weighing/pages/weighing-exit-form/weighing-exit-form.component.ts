@@ -170,6 +170,15 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  private getDoubleTrailerExitWeight(): number {
+    const pesoTaraRemolque1 =
+      Number(this.exitForm.get('pesoTaraRemolque1')?.value) || 0;
+    const pesoTaraRemolque2 =
+      Number(this.exitForm.get('pesoTaraRemolque2')?.value) || 0;
+
+    return pesoTaraRemolque1 + pesoTaraRemolque2;
+  }
+
   /**
    * Inicializa el formulario con validaciones
    */
@@ -414,9 +423,11 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     if (this.entryData.tipoUnidad === 'doble-remolque') {
       // Para doble remolque: peso bruto - suma de pesos tara de ambos remolques
       const pesoTaraRemolque1 =
-        this.exitForm.get('pesoTaraRemolque1')?.value || 0;
+        Number(this.exitForm.get('pesoTaraRemolque1')?.value) || 0;
       const pesoTaraRemolque2 =
-        this.exitForm.get('pesoTaraRemolque2')?.value || 0;
+        Number(this.exitForm.get('pesoTaraRemolque2')?.value) || 0;
+      this.doubleTrailerState.pesoBrutoTotal =
+        pesoTaraRemolque1 + pesoTaraRemolque2;
 
       let pesoNeto: number;
 
@@ -699,7 +710,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         this.entryData.placaRemolque1 || '';
       this.doubleTrailerState.remolque2.placa =
         this.entryData.placaRemolque2 || '';
-      this.doubleTrailerState.pesoBrutoTotal = this.entryData.entryWeight;
+      this.doubleTrailerState.pesoBrutoTotal = this.getDoubleTrailerExitWeight();
 
       // Actualizar validaciones de placas
       this.updatePlateValidationsAfterLoad();
@@ -1101,6 +1112,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private saveDoubleTrailerExit(): void {
     if (!this.entryData) return;
 
+    const exitWeightTotal = this.getDoubleTrailerExitWeight();
+    this.doubleTrailerState.pesoBrutoTotal = exitWeightTotal;
+
     const exitRequest = {
       folio: this.entryFolio, // Usar el folio de la entrada encontrada
       placaTrailer: this.entryData.placaTrailer || '',
@@ -1114,7 +1128,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         pesoTara: this.exitForm.get('pesoTaraRemolque2')?.value || 0,
         fotoCargaCapturada: !!this.photoData.cargoRemolque2,
       },
-      pesoBrutoTotal: this.entryData.entryWeight,
+      pesoBrutoTotal: exitWeightTotal,
       pesoNetoCalculado: Math.abs(this.exitForm.get('netWeight')?.value || 0),
       fechaSalida: new Date().toISOString(),
       fotos: {
