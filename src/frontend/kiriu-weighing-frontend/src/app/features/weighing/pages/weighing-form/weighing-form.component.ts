@@ -129,6 +129,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   stepStatuses: Record<string, boolean> = {};
 
   isLoading = false;
+  loadingWeight = false;
   weightUpdateInterval: Subscription | undefined;
   manualEditSubscription: Subscription | undefined;
   pesoRealtimeSubscription: Subscription | undefined;
@@ -517,6 +518,63 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Actualizar el estado de los pasos del proceso
       setTimeout(() => this.updateProcessStepsStatus(), 0);
     }
+  }
+
+  /**
+   * Solicita el peso actual desde el SerialGateway (bajo demanda)
+   * Este método consulta directamente la báscula a través del SerialGateway
+   */
+  requestCurrentWeight(): void {
+    this.loadingWeight = true;
+
+    this.pesoRealtimeService.getCurrentWeightFromGateway().subscribe({
+      next: (pesoData) => {
+        // Actualizar el peso actual con el valor obtenido
+        this.weightData.currentWeight = pesoData.peso;
+        this.weightData.isStable = true; // Asumimos que el peso solicitado es estable
+
+        // Agregar al historial
+        if (this.weightData.weightHistory.length >= 10) {
+          this.weightData.weightHistory.shift();
+        }
+        this.weightData.weightHistory.push(pesoData.peso);
+
+        this.loadingWeight = false;
+        this.cdr.markForCheck();
+
+        // CAPTURAR AUTOMÁTICAMENTE el peso (igual que el botón Capturar Peso)
+        this.weightData.capturedWeight = pesoData.peso;
+        this.weightData.capturedAt = new Date();
+        console.log('Peso capturado automáticamente:', this.weightData.capturedWeight);
+
+        // Si es doble remolque, procesar el peso según el paso actual
+        if (this.weighingForm.get('doubleTrailer')?.value) {
+          this.processDoubleTrailerWeight();
+        }
+
+        // Actualizar el estado de los pasos del proceso
+        setTimeout(() => this.updateProcessStepsStatus(), 0);
+
+        this.showToast(
+          'success',
+          'Peso capturado',
+          `Peso capturado: ${pesoData.peso.toFixed(2)} kg`
+        );
+      },
+      error: (error) => {
+        console.error('Error al solicitar peso desde SerialGateway:', error);
+        this.loadingWeight = false;
+
+        let errorMessage = 'Error al obtener peso de la báscula';
+        if (error.status === 0) {
+          errorMessage = 'No se pudo conectar con el SerialGateway. Verifique que esté en ejecución.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
+        this.showToast('error', 'Error al solicitar peso', errorMessage);
+      }
+    });
   }
 
   private processDoubleTrailerWeight(): void {
@@ -1197,10 +1255,58 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           errorMessage = error.error.message;
         }
 
-        this.showToast('error', 'Error al registrar', 'No se encontró entrada previa válida para esta placa.');
-      return;
-    }
+        this.showToast('error', 'Error al registrar', errorMessage);
+      },
+    });
+  }
 
+  private saveNormalEntry(formData: Record<string, unknown>): void {
+    const tipoUnidad = formData['containerOnly'] ? 'contenedor' :
+                       formData['doubleTrailer'] ? 'doble-remolque' : 'remolque';
+
+    const entryRequest: CreateEntryRequest = {
+      unitType: this.unitType as 'client' | 'provider',
+      operationType: 'entry',
+      tipoUnidad: tipoUnidad,
+      trailerPlate: formData['trailerPlate'] as string,
+      trailerPlate2: (formData['trailerPlate2'] as string) || undefined,
+      product: formData['product'] as string,
+      clientProviderName: formData['clientProviderName'] as string,
+      entryWeight: this.weightData.capturedWeight || 0,
+      photos: {
+        trailerPlate: this.photoData.trailerPlate || undefined,
+        trailerPlate2: this.photoData.trailerPlate2 || undefined,
+        cargo: this.photoData.cargo || '',
+      },
+      tieneEdicionesManuale: this.hasManualEdits,
+    };
+
+    this.weighingService.createEntryOperation(entryRequest).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        console.log('Entrada registrada:', response);
+
+        this.currentOperationId = response.id;
+        this.showToast('success', 'Entrada registrada', `Entrada registrada exitosamente. Folio: ${response.folio}`);
+        this.generateTicket('normal', response);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error al registrar entrada:', error);
+
+        let errorMessage = 'No se pudo completar la operación.';
+        if (error.status === 409) {
+          errorMessage = 'La placa ya tiene una entrada registrada previamente.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
+        this.showToast('error', 'Error al registrar', errorMessage);
+      },
+    });
+  }
+
+  private saveNormalExit(formData: Record<string, unknown>): void {
     if (!this.weightData.capturedWeight) {
       this.isLoading = false;
       this.showToast('error', 'Error de validación', 'Debe capturar el peso de salida.');
@@ -1209,9 +1315,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     // Determinar tipo de unidad basado en checkboxes
     const tipoUnidad = formData['containerOnly'] ? 'contenedor' : 'remolque';
-    
+
     // Calcular peso neto (peso entrada - peso salida)
-    const pesoNeto = this.weightData.entryWeight - this.weightData.capturedWeight;
+    const pesoNeto = (this.weightData.entryWeight || 0) - (this.weightData.capturedWeight || 0);
     
     // Crear request para el backend
     const exitRequest: CreateExitRequest = {
@@ -1257,11 +1363,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           errorMessage = error.message;
         }
         
-        this.showToast('error', 'Error al registrar', 'Debe completar el pesaje de ambos remolques antes de guardar la salida.');
-      this.isLoading = false;
-      return;
-    }
+        this.showToast('error', 'Error al registrar', errorMessage);
+      },
+    });
+  }
 
+  private saveDoubleTrailerExit(formData: Record<string, unknown>): void {
     // Validar entrada previa
     if (!this.weightData.hasValidEntry || !this.weightData.entryWeight) {
       this.isLoading = false;
@@ -1273,7 +1380,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const pesoNetoCalculado = this.weightData.entryWeight - this.doubleTrailerState.pesoBrutoTotal;
 
     const exitRequest: CreateDoubleTrailerExitRequest = {
-      folio: '', // Se generará en el backend  
+      folio: '', // Se generará en el backend
       placaTrailer: this.doubleTrailerState.trailerPlaca,
       remolque1: {
         placa: this.doubleTrailerState.remolque1.placa || '',
@@ -1361,11 +1468,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     }
 
     // Mostrar mensaje de éxito
-    this.showToast('success', 'Operación registrada', `Operación de ${this.operationTitle.toLowerCase()} registrada exitosamente`);
-      console.log('✅ Toast de éxito enviado desde showSuccessMessage');
-    } catch (error) {
-      console.error('❌ Error en showSuccessMessage:', error);
-    }
+    this.showToast('success', 'Operación registrada', message);
+    console.log('✅ Toast de éxito enviado desde showSuccessMessage');
 
     // Esperar 3 segundos para que el usuario vea el mensaje antes de redirigir
     setTimeout(() => {

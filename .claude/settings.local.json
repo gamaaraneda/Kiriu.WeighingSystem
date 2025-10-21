@@ -43,7 +43,11 @@
       "Bash(node:*)",
       "Bash(mkdir:*)",
       "Bash(dotnet new:*)",
-      "Bash(dotnet add package:*)"
+      "Bash(dotnet add package:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git stash:*)",
+      "Bash(md5sum:*)",
+      "Bash(timeout 30 npm start)"
     ],
     "deny": [],
     "ask": []

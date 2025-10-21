@@ -104,6 +104,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   isSearching = false;
   isLoading = false;
   isExitRegistered = false;
+  loadingWeight = false;
 
   // Control de edición manual de placas
   manualEditEnabled: Record<string, boolean> = {
@@ -261,29 +262,49 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   async onReconnectWeightService(): Promise<void> {
     try {
       await this.pesoRealtimeService.reconnect();
-      this.showToast('success', 'Placa no coincide', `La placa detectada ");
-        } else {
-          // Placa coincide - marcar válida
-          this.plateValidations[fieldName] = {
-            isValid: true,
-            errorMessage: ''
-          };
-
-          this.showToast('success', 'Placa verificada', `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} verificada correctamente`);
-        }
-      } else {
-        // No hay datos de entrada aún, solo mostrar éxito
-        this.showToast('success', 'Placa capturada', `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`);
-      }
-
+      this.showToast('success', 'Reconexión exitosa', 'Servicio de peso reconectado correctamente');
     } catch (error: any) {
-      console.error('❌ Error capturando placa con ANPR:', error);
+      console.error('❌ Error reconectando servicio de peso:', error);
+      this.showToast('error', 'Error de reconexión', 'No se pudo reconectar el servicio de peso');
+    }
+  }
 
-      const errorMessage = error.name === 'TimeoutError'
-        ? 'Tiempo de espera agotado (30s). No se detectó ninguna placa.'
-        : 'Error al capturar placa desde la cámara ANPR';
+  /**
+   * Obtiene el estado actual de la conexión SignalR
+   */
+  get isWeightServiceConnected(): boolean {
+    return this.pesoRealtimeService.isConnected();
+  }
 
-      this.showToast('error', 'Error de captura', `Error al capturar foto de ${fieldName} desde la cámara`);
+  /**
+   * Obtiene el peso actual directamente del servicio
+   */
+  get currentRealtimePeso(): PesoData | null {
+    return this.pesoRealtimeService.getCurrentPeso();
+  }
+
+  /**
+   * Valida que una placa coincida con la esperada
+   */
+  private validatePlate(fieldName: string, expectedPlate?: string): void {
+    const detectedPlate = this.detectedPlates[fieldName];
+
+    if (!expectedPlate || !detectedPlate) {
+      this.plateValidations[fieldName] = {
+        isValid: true,
+        errorMessage: ''
+      };
+      return;
+    }
+
+    const matches = detectedPlate.toLowerCase() === expectedPlate.toLowerCase();
+    this.plateValidations[fieldName] = {
+      isValid: matches,
+      errorMessage: matches ? '' : `Placa detectada no coincide con la esperada: ${expectedPlate}`
+    };
+
+    if (!matches) {
+      this.showToast('warn', 'Placa no coincide', `La placa detectada (${detectedPlate}) no coincide con la esperada (${expectedPlate})`);
     }
   }
 
@@ -345,7 +366,92 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       this.doubleTrailerState.remolque1.pesoTara =
         this.weightData.currentWeight;
 
-      this.showToast('success', 'Error al registrar salida', 'Formulario limpiado');
+      this.showToast('success', 'Peso capturado', `Peso tara del Remolque 1 capturado: ${this.weightData.currentWeight} kg`);
+      this.calculateNetWeight();
+    }
+  }
+
+  /**
+   * Captura peso para remolque 2
+   */
+  onCaptureWeightRemolque2(): void {
+    if (this.canCaptureWeightRemolque2()) {
+      this.currentWeightCaptureType = 'Remolque 2';
+      this.weightData.capturedWeight = this.weightData.currentWeight;
+      this.weightData.capturedAt = new Date();
+
+      this.exitForm
+        .get('pesoTaraRemolque2')
+        ?.setValue(this.weightData.currentWeight);
+      this.doubleTrailerState.remolque2.pesoTara =
+        this.weightData.currentWeight;
+
+      this.showToast('success', 'Peso capturado', `Peso tara del Remolque 2 capturado: ${this.weightData.currentWeight} kg`);
+      this.calculateNetWeight();
+    }
+  }
+
+  /**
+   * Verifica si se puede capturar peso para remolque 2
+   */
+  canCaptureWeightRemolque2(): boolean {
+    return this.weightData.isConnected && this.weightData.isStable;
+  }
+
+  /**
+   * Verifica si se puede capturar peso
+   */
+  canCaptureWeight(): boolean {
+    return this.weightData.isConnected && this.weightData.isStable;
+  }
+
+  /**
+   * Calcula el peso neto basándose en el tipo de unidad y la lógica de negocio
+   */
+  private calculateNetWeight(): void {
+    if (!this.entryData) return;
+
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      // Para doble remolque: peso bruto - suma de pesos tara de ambos remolques
+      const pesoTaraRemolque1 =
+        this.exitForm.get('pesoTaraRemolque1')?.value || 0;
+      const pesoTaraRemolque2 =
+        this.exitForm.get('pesoTaraRemolque2')?.value || 0;
+
+      let pesoNeto: number;
+
+      if (this.unitType === 'provider') {
+        // Proveedor (Entrada con Carga, Salida Vacío)
+        // Peso neto: Peso bruto - Peso tara = Material descargado
+        pesoNeto =
+          this.entryData.entryWeight - (pesoTaraRemolque1 + pesoTaraRemolque2);
+      } else {
+        // Cliente (Entrada Vacío, Salida con Carga)
+        // Peso neto: Peso tara - Peso bruto = Material cargado
+        pesoNeto =
+          pesoTaraRemolque1 + pesoTaraRemolque2 - this.entryData.entryWeight;
+      }
+
+      this.exitForm.get('netWeight')?.setValue(pesoNeto);
+      this.doubleTrailerState.pesoNetoCalculado = pesoNeto;
+    } else {
+      // Para otros tipos: aplicar lógica según tipo de unidad
+      const exitWeight = this.exitForm.get('exitWeight')?.value || 0;
+
+      let pesoNeto: number;
+
+      if (this.unitType === 'provider') {
+        // Proveedor (Entrada con Carga, Salida Vacío)
+        // Peso neto: Peso bruto - Peso tara = Material descargado
+        pesoNeto = this.entryData.entryWeight - exitWeight;
+      } else {
+        // Cliente (Entrada Vacío, Salida con Carga)
+        // Peso neto: Peso tara - Peso bruto = Material cargado
+        pesoNeto = exitWeight - this.entryData.entryWeight;
+      }
+
+      this.exitForm.get('netWeight')?.setValue(pesoNeto);
+    }
   }
 
   /**
@@ -443,5 +549,686 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         }, 180);
       }
     }, 5000);
+  }
+
+  // ============= MÉTODOS AUXILIARES =============
+
+  /**
+   * Busca una entrada por placa del tráiler usando endpoints reales
+   */
+  onSearchEntry(): void {
+    const plate = this.exitForm.get('trailerPlate')?.value;
+
+    // Para contenedor, permitir búsqueda sin placa
+    if (this.unitType === 'contenedor' && !plate) {
+      this.showToast('info', 'Búsqueda de contenedor', 'Para contenedor, la búsqueda se realizará por otros criterios');
+      // TODO: Implementar búsqueda alternativa para contenedor
+      return;
+    }
+
+    // Para otros tipos, validar que se ingrese placa
+    if (!plate) {
+      this.showToast('error', 'Placa requerida', 'Debe ingresar una placa para buscar');
+      return;
+    }
+
+    this.isSearching = true;
+
+    // Paso 1: Validar si se puede registrar salida para esta placa
+    this.weighingService.validateExit(plate).subscribe({
+      next: (validation) => {
+        if (validation.canExit) {
+          // Paso 2: Si se puede registrar salida, obtener datos completos de la operación
+          this.loadOperationData(plate);
+        } else {
+          this.isSearching = false;
+          this.showToast('error', 'Validación fallida', validation.message || 'No se puede registrar salida para esta placa');
+        }
+      },
+      error: (error) => {
+        this.isSearching = false;
+        console.error('Error validating exit:', error);
+        this.showToast('error', 'Error de validación', extractErrorMessage(error));
+      },
+    });
+  }
+
+  /**
+   * Carga los datos completos de la operación por placa
+   */
+  private loadOperationData(plate: string): void {
+    this.weighingService.getOperationByPlate(plate).subscribe({
+      next: (operation) => {
+        this.isSearching = false;
+
+        // Guardar el folio para usar en la salida
+        this.entryFolio = operation.folio;
+
+        // Convertir datos de la operación al formato esperado por el componente
+        this.entryData = this.mapOperationToEntryData(operation);
+        this.isEntryFound = true;
+
+        // Poblar formulario con los datos encontrados
+        this.populateFormWithEntryData();
+
+        this.showToast('success', 'Entrada encontrada', `Entrada encontrada exitosamente. Folio: ${operation.folio}`);
+      },
+      error: (error) => {
+        this.isSearching = false;
+        console.error('Error loading operation data:', error);
+        this.showToast('error', 'Error de búsqueda', extractErrorMessage(error));
+      },
+    });
+  }
+
+  /**
+   * Mapea los datos de WeighingOperationDto al formato EntrySearchData esperado
+   */
+  private mapOperationToEntryData(operation: any): EntrySearchData {
+    return {
+      id: operation.folio, // Usar el folio en lugar del id para mostrarlo en la UI
+      createdAt: new Date(operation.createdAt),
+      tipoUnidad: this.mapTipoUnidad(operation.tipoUnidad, operation.placaRemolque1, operation.placaRemolque2),
+      clientProviderName: operation.clientProviderName,
+      product: operation.product,
+      entryWeight: operation.entryWeight || 0,
+      status: operation.status,
+      placaTrailer: operation.trailerPlate,
+      placaRemolque: operation.trailerPlate2,
+      placaRemolque1: operation.placaRemolque1,
+      placaRemolque2: operation.placaRemolque2,
+      placaTrailerContenedor: operation.trailerPlateContenedor,
+      placaRemolqueContenedor: operation.remolquePlateContenedor,
+      fotos: {
+        fotoEntradaTrailer: '',
+        fotoEntradaRemolque: '',
+        fotoEntradaRemolque1: '',
+        fotoEntradaRemolque2: '',
+        fotoCargaEntrada: '',
+      },
+    };
+  }
+
+  /**
+   * Mapea el tipo de unidad basándose en los datos de la operación
+   */
+  private mapTipoUnidad(tipoUnidad?: string, placaRemolque1?: string, placaRemolque2?: string): 'remolque' | 'contenedor' | 'doble-remolque' {
+    // Si viene el campo tipoUnidad del backend, usarlo directamente
+    if (tipoUnidad) {
+      if (tipoUnidad === 'doble-remolque') {
+        return 'doble-remolque';
+      }
+      if (tipoUnidad === 'contenedor') {
+        return 'contenedor';
+      }
+      if (tipoUnidad === 'remolque') {
+        return 'remolque';
+      }
+    }
+
+    // Si hay placas de remolques, es doble remolque
+    if (placaRemolque1 && placaRemolque2) {
+      return 'doble-remolque';
+    }
+
+    // Determinar basándose en el tipo de unidad de la ruta
+    if (this.unitType === 'contenedor') {
+      return 'contenedor';
+    }
+
+    return 'remolque';
+  }
+
+  /**
+   * Pobla el formulario con los datos de la entrada encontrada
+   */
+  private populateFormWithEntryData(): void {
+    if (!this.entryData) return;
+
+    // Prellenar campos según el tipo de unidad
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      this.exitForm.patchValue({
+        trailerPlate: this.entryData.placaTrailer || '',
+        remolque1Plate: this.entryData.placaRemolque1 || '',
+        remolque2Plate: this.entryData.placaRemolque2 || '',
+      });
+
+      // Actualizar estado de doble remolque
+      this.doubleTrailerState.trailerPlaca = this.entryData.placaTrailer || '';
+      this.doubleTrailerState.remolque1.placa =
+        this.entryData.placaRemolque1 || '';
+      this.doubleTrailerState.remolque2.placa =
+        this.entryData.placaRemolque2 || '';
+      this.doubleTrailerState.pesoBrutoTotal = this.entryData.entryWeight;
+
+      // Actualizar validaciones de placas
+      this.updatePlateValidationsAfterLoad();
+    } else {
+      // Para otros tipos de unidad
+      this.exitForm.patchValue({
+        trailerPlate: this.entryData.placaTrailer || '',
+        trailerPlate2: this.entryData.placaRemolque || '',
+      });
+
+      // Actualizar validaciones de placas
+      this.updatePlateValidationsAfterLoad();
+    }
+  }
+
+  /**
+   * Actualiza las validaciones de placas basándose en los datos de entrada
+   */
+  private updatePlateValidationsAfterLoad(): void {
+    if (!this.entryData) return;
+
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      // Validar placa del tráiler
+      this.validatePlateAfterLoad('trailerPlate', this.entryData.placaTrailer);
+      this.validatePlateAfterLoad('remolque1Plate', this.entryData.placaRemolque1);
+      this.validatePlateAfterLoad('remolque2Plate', this.entryData.placaRemolque2);
+    } else if (this.entryData.tipoUnidad === 'contenedor') {
+      // Para contenedor: no validar placas, solo marcar como válidas
+      this.plateValidations['trailerPlate'] = {
+        isValid: true,
+        errorMessage: '',
+      };
+      this.plateValidations['trailerPlate2'] = {
+        isValid: true,
+        errorMessage: '',
+      };
+    } else {
+      // Validar placas para otros tipos (remolque único)
+      this.validatePlateAfterLoad('trailerPlate', this.entryData.placaTrailer);
+      this.validatePlateAfterLoad('trailerPlate2', this.entryData.placaRemolque);
+    }
+  }
+
+  /**
+   * Valida una placa específica contra el valor de entrada
+   */
+  private validatePlateAfterLoad(fieldName: string, expectedPlate?: string): void {
+    if (!expectedPlate) {
+      this.plateValidations[fieldName] = {
+        isValid: true,
+        errorMessage: '',
+      };
+      return;
+    }
+
+    const currentValue = this.exitForm.get(fieldName)?.value;
+    const isValid = currentValue === expectedPlate;
+
+    this.plateValidations[fieldName] = {
+      isValid,
+      errorMessage: isValid
+        ? ''
+        : `La placa debe coincidir con ${expectedPlate}`,
+    };
+  }
+
+  /**
+   * Obtiene el error de un campo del formulario
+   */
+  getFieldError(fieldName: string): string {
+    const field = this.exitForm.get(fieldName);
+    if (field?.invalid && field?.touched) {
+      if (field.errors?.['required']) return 'Este campo es obligatorio';
+      if (field.errors?.['pattern']) return 'Formato inválido';
+    }
+    return '';
+  }
+
+  /**
+   * Obtiene el nombre para mostrar del tipo de unidad
+   */
+  getUnitTypeDisplayName(unitType?: string): string {
+    if (unitType) {
+      const unitTypeMap: Record<string, string> = {
+        'provider': 'Proveedor',
+        'client': 'Cliente',
+        'internal': 'Interno'
+      };
+      return unitTypeMap[unitType] || unitType;
+    }
+    return this.unitTypeTitle;
+  }
+
+  /**
+   * Captura foto con OCR para una placa específica
+   */
+  async onPhotoCaptureWithOCR(fieldName: string): Promise<void> {
+    console.log('🎯 Capturando foto con ANPR para campo:', fieldName);
+
+    // Mapear fieldName a cameraType
+    const cameraTypeMap: Record<string, 'trailer' | 'remolque' | 'cargo'> = {
+      'trailerPlate': 'trailer',
+      'trailerPlate2': 'remolque',
+      'remolque1Plate': 'remolque',
+      'remolque2Plate': 'remolque',
+      'containerPlate': 'trailer'
+    };
+
+    const cameraType = cameraTypeMap[fieldName];
+    if (!cameraType) {
+      console.error('Tipo de cámara no encontrado para:', fieldName);
+      return;
+    }
+
+    const plateTypeLabel = fieldName === 'trailerPlate' ? 'tráiler' :
+                           fieldName === 'trailerPlate2' ? 'remolque' :
+                           fieldName === 'remolque1Plate' ? 'remolque 1' :
+                           fieldName === 'remolque2Plate' ? 'remolque 2' : 'vehículo';
+
+    try {
+      this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
+
+      // Capturar placa con ANPR (30 segundos de timeout)
+      const anprEvent: AnprEvent = await this.anprService.capturePlate(cameraType, 30000);
+
+      // Guardar la imagen URL
+      this.photoData[fieldName as keyof ExitPhotoData] = anprEvent.imageUrl;
+
+      // Guardar la placa detectada
+      this.detectedPlates[fieldName] = anprEvent.licensePlate;
+
+      // Actualizar el formulario con la placa detectada
+      this.exitForm.get(fieldName)?.setValue(anprEvent.licensePlate);
+
+      console.log('✅ Placa detectada por ANPR:', anprEvent.licensePlate);
+      console.log('Imagen guardada en:', anprEvent.imageUrl);
+      console.log('Confianza:', anprEvent.confidenceLevel + '%');
+
+      // Validar placa contra la entrada (si existe)
+      if (this.entryData) {
+        const expectedPlate = this.getExpectedPlate(fieldName);
+        const isMatch = anprEvent.licensePlate === expectedPlate;
+
+        if (!isMatch && expectedPlate) {
+          // Placa no coincide - marcar error
+          this.plateValidations[fieldName] = {
+            isValid: false,
+            errorMessage: `Placa detectada (${anprEvent.licensePlate}) no coincide con la entrada (${expectedPlate})`
+          };
+
+          this.showToast('warn', 'Placa no coincide', `La placa detectada "${anprEvent.licensePlate}" no coincide con la de entrada "${expectedPlate}". Puede editar manualmente si es correcto.`);
+        } else {
+          // Placa coincide - marcar válida
+          this.plateValidations[fieldName] = {
+            isValid: true,
+            errorMessage: ''
+          };
+
+          this.showToast('success', 'Placa verificada', `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} verificada correctamente`);
+        }
+      } else {
+        // No hay datos de entrada aún, solo mostrar éxito
+        this.showToast('success', 'Placa capturada', `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`);
+      }
+
+    } catch (error: any) {
+      console.error(`❌ Error capturando placa del ${plateTypeLabel}:`, error);
+      const errorMessage = error?.message?.includes('timeout')
+        ? 'Tiempo de espera agotado (30s). No se detectó ninguna placa.'
+        : 'Error al capturar placa desde la cámara ANPR';
+
+      this.showToast('error', 'Error de captura', errorMessage);
+    }
+  }
+
+  /**
+   * Obtiene la URL completa de una imagen
+   */
+  getFullImageUrl(relativeUrl: string): string {
+    if (!relativeUrl) return '';
+    if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+      return relativeUrl;
+    }
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}${relativeUrl}`;
+  }
+
+  /**
+   * Captura foto para campos que no requieren OCR
+   */
+  async onPhotoCapture(fieldName: string): Promise<void> {
+    try {
+      this.showToast('info', 'Capturando foto', `Capturando foto de ${fieldName} desde la cámara...`);
+
+      // Capturar foto real desde la cámara de carga
+      const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync(fieldName);
+      this.photoData[fieldName as keyof ExitPhotoData] = photoUrl;
+
+      // Actualizar estado de doble remolque si es necesario
+      if (fieldName === 'cargoRemolque1') {
+        this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
+      } else if (fieldName === 'cargoRemolque2') {
+        this.doubleTrailerState.remolque2.fotoCargaCapturada = true;
+      }
+
+      this.showToast('success', 'Foto capturada', `Foto de ${fieldName} capturada exitosamente`);
+    } catch (error) {
+      console.error(`Error capturando foto de ${fieldName}:`, error);
+      this.showToast('error', 'Error de captura', `Error al capturar foto de ${fieldName} desde la cámara`);
+    }
+  }
+
+  /**
+   * Verifica si debe mostrar campos de trailer
+   */
+  shouldShowTrailerFields(): boolean {
+    return !this.exitForm.get('containerOnly')?.value;
+  }
+
+  /**
+   * Captura peso para flujos normales
+   */
+  onCaptureWeight(): void {
+    if (this.canCaptureWeight()) {
+      this.currentWeightCaptureType = 'Salida';
+      this.weightData.capturedWeight = this.weightData.currentWeight;
+      this.weightData.capturedAt = new Date();
+
+      this.exitForm.get('exitWeight')?.setValue(this.weightData.currentWeight);
+      this.calculateNetWeight();
+
+      this.showToast('success', 'Peso capturado', `Peso de salida capturado: ${this.weightData.currentWeight} kg`);
+    }
+  }
+
+  /**
+   * Solicita el peso actual desde el SerialGateway
+   */
+  requestCurrentWeight(): void {
+    this.loadingWeight = true;
+
+    this.pesoRealtimeService.getCurrentWeightFromGateway().subscribe({
+      next: (pesoData) => {
+        // Actualizar el peso actual con el valor obtenido
+        this.weightData.currentWeight = pesoData.peso;
+        this.weightData.isStable = true; // Asumimos que el peso solicitado es estable
+
+        // Agregar al historial
+        if (this.weightData.weightHistory.length >= 10) {
+          this.weightData.weightHistory.shift();
+        }
+        this.weightData.weightHistory.push(pesoData.peso);
+
+        this.loadingWeight = false;
+        this.cdr.markForCheck();
+
+        // CAPTURAR AUTOMÁTICAMENTE el peso (igual que el botón Capturar Peso)
+        this.weightData.capturedWeight = pesoData.peso;
+        this.weightData.capturedAt = new Date();
+        this.currentWeightCaptureType = 'Salida';
+
+        // Registrar el peso en el formulario
+        this.exitForm.get('exitWeight')?.setValue(pesoData.peso);
+        this.calculateNetWeight();
+
+        console.log('Peso capturado automáticamente:', this.weightData.capturedWeight);
+
+        this.showToast(
+          'success',
+          'Peso capturado',
+          `Peso de salida capturado: ${pesoData.peso.toFixed(2)} kg`
+        );
+      },
+      error: (error) => {
+        console.error('Error al solicitar peso desde SerialGateway:', error);
+        this.loadingWeight = false;
+
+        let errorMessage = 'Error al obtener peso de la báscula';
+        if (error.status === 0) {
+          errorMessage = 'No se pudo conectar con el SerialGateway. Verifique que esté en ejecución.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
+        this.showToast('error', 'Error al solicitar peso', errorMessage);
+      }
+    });
+  }
+
+  /**
+   * Limpia el formulario
+   */
+  onClear(): void {
+    this.exitForm.reset();
+    this.photoData = {
+      trailerPlate: '',
+      trailerPlate2: '',
+      cargoState: '',
+      containerPlate: '',
+      remolque1Plate: '',
+      remolque2Plate: '',
+      cargoRemolque1: '',
+      cargoRemolque2: '',
+    };
+    this.showToast('info', 'Formulario limpiado', 'Los datos del formulario han sido limpiados');
+  }
+
+  /**
+   * Guarda el registro de salida
+   */
+  onSave(): void {
+    if (!this.isFormValid) {
+      this.showToast('error', 'Formulario inválido', 'Por favor complete todos los campos requeridos');
+      return;
+    }
+
+    if (!this.entryData || !this.entryFolio) {
+      this.showToast('error', 'Datos incompletos', 'No hay datos de entrada válidos para procesar la salida. Debe buscar una entrada primero.');
+      return;
+    }
+
+    this.isLoading = true;
+
+    if (this.entryData.tipoUnidad === 'doble-remolque') {
+      this.saveDoubleTrailerExit();
+    } else {
+      this.saveNormalExit();
+    }
+  }
+
+  /**
+   * Guarda una salida normal (remolque único o contenedor)
+   */
+  private saveNormalExit(): void {
+    if (!this.entryData) return;
+
+    const exitWeight = this.exitForm.get('exitWeight')?.value || 0;
+    const netWeight = this.exitForm.get('netWeight')?.value || 0;
+
+    const exitRequest = {
+      folio: this.entryFolio, // Usar el folio de la entrada encontrada
+      pesoBruto: exitWeight,
+      pesoTara: exitWeight,
+      pesoNeto: Math.abs(netWeight),
+      placaTrailer: this.entryData.placaTrailer || '',
+      placaRemolque: this.entryData.placaRemolque,
+      placaContenedor: this.entryData.tipoUnidad === 'contenedor' ? this.entryData.placaTrailerContenedor : undefined,
+      placaTrailerContenedor: this.entryData.placaTrailerContenedor,
+      placaRemolqueContenedor: this.entryData.placaRemolqueContenedor,
+      fotos: {
+        trailerPlate: this.photoData.trailerPlate,
+        trailerPlate2: this.photoData.trailerPlate2,
+        cargoState: this.photoData.cargoState || '',
+        containerPlate: this.photoData.containerPlate,
+      },
+      estado: 'SALIDA_REGISTRADA',
+      fechaSalida: new Date().toISOString(),
+      tipoUnidad: this.entryData.tipoUnidad,
+    };
+
+    this.weighingService.createExitOperation(exitRequest).subscribe({
+      next: async (response) => {
+        this.isLoading = false;
+        this.isExitRegistered = true;
+        console.log('✅ Exit saved successfully:', response);
+
+        this.showToast('success', 'Salida registrada', `Salida registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`);
+
+        // Generar PDF con los datos de la operación
+        await this.generatePDF(response);
+
+        // Navegar después de 3 segundos
+        setTimeout(() => {
+          this.onClear();
+          this.router.navigate(['/dashboard']);
+        }, 3000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('🔥 Error saving exit:', {
+          error,
+          errorMessage: error.message,
+          errorStatus: error.status,
+          isApiError: (error as any).isApiError,
+          originalResponse: (error as any).originalResponse
+        });
+
+        const finalMessage = extractErrorMessage(error);
+        console.log('📢 Showing error toast:', finalMessage);
+
+        this.showToast('error', 'Error al registrar salida', finalMessage);
+      },
+    });
+  }
+
+  /**
+   * Guarda una salida con doble remolque
+   */
+  private saveDoubleTrailerExit(): void {
+    if (!this.entryData) return;
+
+    const exitRequest = {
+      folio: this.entryFolio, // Usar el folio de la entrada encontrada
+      placaTrailer: this.entryData.placaTrailer || '',
+      remolque1: {
+        placa: this.entryData.placaRemolque1 || '',
+        pesoTara: this.exitForm.get('pesoTaraRemolque1')?.value || 0,
+        fotoCargaCapturada: !!this.photoData.cargoRemolque1,
+      },
+      remolque2: {
+        placa: this.entryData.placaRemolque2 || '',
+        pesoTara: this.exitForm.get('pesoTaraRemolque2')?.value || 0,
+        fotoCargaCapturada: !!this.photoData.cargoRemolque2,
+      },
+      pesoBrutoTotal: this.entryData.entryWeight,
+      pesoNetoCalculado: Math.abs(this.exitForm.get('netWeight')?.value || 0),
+      fechaSalida: new Date().toISOString(),
+      fotos: {
+        trailerPlate: this.photoData.trailerPlate || '',
+        remolque1Plate: this.photoData.remolque1Plate || '',
+        remolque2Plate: this.photoData.remolque2Plate || '',
+        cargoRemolque1: this.photoData.cargoRemolque1 || '',
+        cargoRemolque2: this.photoData.cargoRemolque2 || '',
+      },
+    };
+
+    this.weighingService.createDoubleTrailerExit(exitRequest).subscribe({
+      next: async (response) => {
+        this.isLoading = false;
+        this.isExitRegistered = true;
+
+        this.showToast('success', 'Salida registrada', `Salida con doble remolque registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`);
+
+        // Generar PDF con los datos de la operación
+        await this.generatePDF(response);
+
+        // Navegar después de 3 segundos
+        setTimeout(() => {
+          this.onClear();
+          this.router.navigate(['/dashboard']);
+        }, 3000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('🔥 Error saving double trailer exit:', error);
+
+        const finalMessage = extractErrorMessage(error);
+        this.showToast('error', 'Error al registrar salida', finalMessage);
+      },
+    });
+  }
+
+  /**
+   * Genera el PDF del ticket de salida
+   */
+  private async generatePDF(response: any): Promise<void> {
+    if (!this.entryData) return;
+
+    try {
+      const receiptData: WeighingReceiptData = {
+        folio: response.folio || this.entryFolio,
+        fecha: new Date(response.fechaSalida || new Date()),
+        tipoUnidad: this.entryData.tipoUnidad,
+        clienteProveedor: this.entryData.clientProviderName || '',
+        tipo: 'client', // Por defecto, ya que EntrySearchData no tiene este campo
+        producto: this.entryData.product || '',
+
+        // Datos de entrada
+        fechaEntrada: this.entryData.createdAt ? new Date(this.entryData.createdAt) : new Date(),
+        pesoBrutoEntrada: this.entryData.entryWeight || 0,
+        placaTrailer: this.entryData.placaTrailer || '',
+        placaRemolque: this.entryData.placaRemolque || this.entryData.placaRemolque1 || '',
+
+        // Datos de salida
+        fechaSalida: new Date(response.fechaSalida || new Date()),
+        pesoBrutoSalida: this.exitForm.get('exitWeight')?.value || 0,
+        pesoTara: this.exitForm.get('exitWeight')?.value || 0,
+        pesoNeto: response.pesoNeto || 0,
+      };
+
+      // Si es doble remolque, agregar datos de los remolques
+      if (this.entryData.tipoUnidad === 'doble-remolque') {
+        const pesoBrutoR1 = this.entryData.entryWeight || 0; // Usar entryWeight como aproximación
+        const pesoTaraR1 = this.exitForm.get('pesoTaraRemolque1')?.value || 0;
+        const pesoBrutoR2 = this.entryData.entryWeight || 0; // Usar entryWeight como aproximación
+        const pesoTaraR2 = this.exitForm.get('pesoTaraRemolque2')?.value || 0;
+
+        receiptData.remolque1 = {
+          placa: this.entryData.placaRemolque1 || '',
+          pesoBruto: pesoBrutoR1,
+          pesoTara: pesoTaraR1,
+          pesoNeto: Math.abs(pesoBrutoR1 - pesoTaraR1),
+        };
+
+        receiptData.remolque2 = {
+          placa: this.entryData.placaRemolque2 || '',
+          pesoBruto: pesoBrutoR2,
+          pesoTara: pesoTaraR2,
+          pesoNeto: Math.abs(pesoBrutoR2 - pesoTaraR2),
+        };
+      }
+
+      await this.pdfGeneratorService.generateWeighingReceipt(receiptData);
+      console.log('✅ PDF generado exitosamente');
+    } catch (error) {
+      console.error('❌ Error generando PDF:', error);
+      this.showToast('warn', 'Advertencia', 'Salida registrada pero hubo un error al generar el PDF');
+    }
+  }
+
+  /**
+   * Obtiene el tipo de unidad de la ruta
+   */
+  private getUnitTypeFromRoute(): void {
+    this.route.paramMap.subscribe(params => {
+      this.unitType = params.get('unitType') || 'provider';
+      const unitTypeTitles: Record<string, string> = {
+        'provider': 'Proveedor',
+        'client': 'Cliente',
+        'internal': 'Interno'
+      };
+      this.unitTypeTitle = unitTypeTitles[this.unitType] || 'Unidad';
+    });
+  }
+
+  /**
+   * Verifica si el formulario es válido
+   */
+  get isFormValid(): boolean {
+    return this.exitForm.valid;
   }
 }

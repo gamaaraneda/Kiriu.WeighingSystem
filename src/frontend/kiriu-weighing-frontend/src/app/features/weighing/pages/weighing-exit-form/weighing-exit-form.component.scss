@@ -1121,6 +1121,25 @@
     min-width: 200px;
   }
 
+  .weight-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .request-weight-btn,
+    .capture-weight-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      i {
+        font-size: 14px;
+      }
+    }
+  }
+
   .capture-weight-btn {
     white-space: nowrap;
     min-width: 120px;

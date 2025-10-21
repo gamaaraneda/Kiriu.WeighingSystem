@@ -775,6 +775,33 @@
     }
   }
 
+  .weight-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .request-weight-btn,
+    .capture-weight-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      i {
+        font-size: 14px;
+      }
+    }
+
+    .request-weight-btn {
+      background: #3b82f6;
+
+      &:hover:not(:disabled) {
+        background: #2563eb;
+      }
+    }
+  }
+
   .capture-weight-btn {
     width: 100%;
     margin-bottom: 16px;

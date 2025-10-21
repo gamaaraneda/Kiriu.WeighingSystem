@@ -1,6 +1,7 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { distinctUntilChanged, throttleTime } from 'rxjs/operators';
+import { distinctUntilChanged, throttleTime, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface PesoData {
@@ -15,10 +16,18 @@ export interface ConnectionStatus {
   lastError?: string;
 }
 
+export interface SerialGatewayWeightResponse {
+  value: number;
+  unit: string;
+  timestampUtc: string;
+  raw: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class PesoRealtimeService implements OnDestroy {
+  private http = inject(HttpClient);
   private connection: any = null;
   private pesoSubject = new BehaviorSubject<PesoData | null>(null);
   private connectionStatusSubject = new BehaviorSubject<ConnectionStatus>({
@@ -26,7 +35,7 @@ export class PesoRealtimeService implements OnDestroy {
     reconnectAttempts: 0
   });
   private destroy$ = new Subject<void>();
-  
+
   constructor() {
     this.initializeConnection();
   }
@@ -214,14 +223,31 @@ export class PesoRealtimeService implements OnDestroy {
     }
   }
 
+  /**
+   * Obtener peso actual desde SerialGateway (bajo demanda)
+   * Este método consulta el endpoint /weight del SerialGateway
+   * para obtener el peso actual directamente de la báscula
+   */
+  public getCurrentWeightFromGateway(): Observable<PesoData> {
+    const serialGatewayUrl = environment.serialGatewayUrl || 'http://localhost:5001';
+
+    return this.http.get<SerialGatewayWeightResponse>(`${serialGatewayUrl}/weight`).pipe(
+      map(response => ({
+        id: 0, // ID temporal ya que no viene del backend principal
+        peso: response.value,
+        timestamp: new Date(response.timestampUtc)
+      }))
+    );
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    
+
     if (this.connection) {
       this.connection.stop();
     }
-    
+
     this.pesoSubject.complete();
     this.connectionStatusSubject.complete();
   }

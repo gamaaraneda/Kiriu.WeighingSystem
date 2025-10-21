@@ -892,7 +892,7 @@
               <button
                 type="button"
                 class="btn btn-primary"
-                [disabled]="!isFormValid || isLoading"
+                [disabled]="isLoading"
                 (click)="onSave()"
               >
                 <span *ngIf="!isLoading">Guardar {{ operationTitle }}</span>
@@ -981,16 +981,30 @@
               </div>
             </div>
 
-            <button
-              class="btn btn-success capture-weight-btn"
-              [disabled]="
-                !weightData.isConnected ||
-                !canCaptureWeight()
-              "
-              (click)="onCaptureWeight()"
-            >
-              Capturar Peso
-            </button>
+            <div class="weight-actions">
+              <button
+                type="button"
+                class="btn btn-primary request-weight-btn"
+                [disabled]="loadingWeight"
+                (click)="requestCurrentWeight()"
+                title="Solicitar peso actual desde la báscula"
+              >
+                <i *ngIf="!loadingWeight" class="pi pi-refresh"></i>
+                <i *ngIf="loadingWeight" class="pi pi-spin pi-spinner"></i>
+                {{ loadingWeight ? 'Solicitando...' : 'Solicitar Peso' }}
+              </button>
+
+              <button
+                class="btn btn-success capture-weight-btn"
+                [disabled]="
+                  !weightData.isConnected ||
+                  !canCaptureWeight()
+                "
+                (click)="onCaptureWeight()"
+              >
+                Capturar Peso
+              </button>
+            </div>
 
             <div *ngIf="weightData.capturedWeight" class="captured-weight">
               <div class="captured-weight-header">
