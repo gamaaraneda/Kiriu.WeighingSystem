@@ -386,7 +386,7 @@
                     >
                       {{
                         doubleTrailerState.remolque1.pesoBruto
-                          | number : "1.0-0"
+                          | number : "1.0-2"
                       }}
                       kg
                     </span>
@@ -603,7 +603,7 @@
                     >
                       {{
                         doubleTrailerState.remolque2.pesoBruto
-                          | number : "1.0-0"
+                          | number : "1.0-2"
                       }}
                       kg
                     </span>
@@ -969,62 +969,6 @@
               </div>
             </div>
 
-            <div class="weight-status">
-              <div class="status-item">
-                <span class="status-label">Conexión:</span>
-                <span
-                  class="status-value"
-                  [class]="
-                    weightData.isConnected ? 'connected' : 'disconnected'
-                  "
-                >
-                  {{ weightData.isConnected ? "Conectado" : "Desconectado" }}
-                </span>
-              </div>
-
-              <!-- Estado de conexión SignalR -->
-              <div class="status-item">
-                <span class="status-label">Estado SignalR:</span>
-                <span
-                  class="status-value signalr-status"
-                  [class]="isWeightServiceConnected ? 'connected' : 'disconnected'"
-                  [title]="
-                    isWeightServiceConnected
-                    ? 'Báscula conectada via SignalR'
-                    : connectionStatus.reconnectAttempts > 0
-                      ? 'Reconectando... (' + connectionStatus.reconnectAttempts + ' intentos)'
-                      : 'Desconectado - Sistema de peso no disponible'
-                  "
-                >
-                  <i
-                    class="pi"
-                    [class.pi-check-circle]="isWeightServiceConnected"
-                    [class.pi-times-circle]="!isWeightServiceConnected && connectionStatus.reconnectAttempts === 0"
-                    [class.pi-refresh]="!isWeightServiceConnected && connectionStatus.reconnectAttempts > 0"
-                    [class.pi-spin]="!isWeightServiceConnected && connectionStatus.reconnectAttempts > 0"
-                  ></i>
-                  {{
-                    isWeightServiceConnected
-                      ? 'Conectado'
-                      : connectionStatus.reconnectAttempts > 0
-                        ? 'Reconectando...'
-                        : 'Desconectado'
-                  }}
-
-                  <!-- Botón de reconexión -->
-                  <button
-                    *ngIf="!isWeightServiceConnected"
-                    type="button"
-                    class="reconnect-btn"
-                    (click)="reconnectToWeightService()"
-                    title="Reintentar conexión"
-                  >
-                    <i class="pi pi-refresh"></i>
-                  </button>
-                </span>
-              </div>
-            </div>
-
             <div class="weight-actions">
               <button
                 type="button"
@@ -1032,21 +976,11 @@
                 [disabled]="loadingWeight"
                 (click)="requestCurrentWeight()"
                 title="Solicitar peso actual desde la báscula"
+                style="width: 100%;"
               >
                 <i *ngIf="!loadingWeight" class="pi pi-refresh"></i>
                 <i *ngIf="loadingWeight" class="pi pi-spin pi-spinner"></i>
                 {{ loadingWeight ? 'Solicitando...' : 'Solicitar Peso' }}
-              </button>
-
-              <button
-                class="btn btn-success capture-weight-btn"
-                [disabled]="
-                  !weightData.isConnected ||
-                  !canCaptureWeight()
-                "
-                (click)="onCaptureWeight()"
-              >
-                Capturar Peso
               </button>
             </div>
 
@@ -1055,7 +989,7 @@
                 <span class="captured-label">Peso Capturado</span>
               </div>
               <div class="captured-weight-value">
-                {{ weightData.capturedWeight | number : "1.0-0" }} kg
+                {{ weightData.capturedWeight | number : "1.0-2" }} kg
               </div>
               <div class="captured-weight-timestamp">
                 Capturado el {{ getCurrentTime() | date : "dd/MM/yyyy HH:mm" }}
