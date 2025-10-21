@@ -280,7 +280,8 @@ export class PdfGeneratorService {
     // DECISIÓN DE LAYOUT: Para remolque simple, usar tabla horizontal
     if (
       data.tipoUnidad === 'remolque' ||
-      data.tipoUnidad === 'doble-remolque'
+      data.tipoUnidad === 'doble-remolque' ||
+      data.tipoUnidad === 'contenedor'
     ) {
       // LAYOUT HORIZONTAL PARA REMOLQUE
       // Tabla única con entrada y salida en la misma fila
