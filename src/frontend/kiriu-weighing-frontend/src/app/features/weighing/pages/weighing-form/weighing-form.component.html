@@ -756,13 +756,8 @@
               <div class="form-group">
                 <label for="trailerPlate2" class="form-label"
                   >Placa Remolque
-                  <span *ngIf="!weighingForm.get('containerOnly')?.value"
-                    >*</span
-                  ><span
-                    *ngIf="weighingForm.get('containerOnly')?.value"
-                    class="optional-label"
-                    >(Opcional)</span
-                  ></label
+                  <span *ngIf="!weighingForm.get('containerOnly')?.value">*</span>
+                  <span *ngIf="weighingForm.get('containerOnly')?.value" class="optional-label">(Opcional)</span></label
                 >
                 <div class="plate-input-group">
                   <button

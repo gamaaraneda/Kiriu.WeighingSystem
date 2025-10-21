@@ -235,7 +235,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           Validators.required,
         ],
       ],
-      trailerPlate2: [''],
+      trailerPlate2: ['', Validators.required], // Obligatorio para remolque único
       remolque1Plate: [''],
       remolque2Plate: [''],
       containerOnly: [false],
@@ -671,7 +671,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         ]);
       this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
 
-      // Limpiar solo la placa del remolque (opcional en este flujo)
+      // Placa del remolque es OPCIONAL en modo contenedor
+      this.weighingForm.get('trailerPlate2')?.clearValidators();
+      this.weighingForm.get('trailerPlate2')?.updateValueAndValidity();
+
+      // Limpiar la placa del remolque (opcional en este flujo)
       this.weighingForm.patchValue({
         trailerPlate2: '',
       });
@@ -686,6 +690,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           Validators.required,
         ]);
       this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
+
+      // Restaurar validación obligatoria para trailerPlate2 (remolque único)
+      this.weighingForm
+        .get('trailerPlate2')
+        ?.setValidators([Validators.required]);
+      this.weighingForm.get('trailerPlate2')?.updateValueAndValidity();
     }
 
     // Actualizar el estado de los pasos del proceso
