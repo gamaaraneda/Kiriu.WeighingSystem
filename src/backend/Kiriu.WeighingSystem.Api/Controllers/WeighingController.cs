@@ -239,9 +239,9 @@ public class WeighingController : ControllerBase
             }
 
             _logger.LogInformation("Obteniendo operación por placa: {Placa}", placa);
-            
+
             var result = await _weighingService.GetOperationByPlateAsync(placa);
-            
+
             if (!result.Success)
             {
                 return result.Message == "Operación no encontrada" ? NotFound(result) : BadRequest(result);
@@ -252,6 +252,39 @@ public class WeighingController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener operación por placa: {Placa}", placa);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtener operación por ID
+    /// </summary>
+    /// <param name="id">ID de la operación</param>
+    /// <returns>Operación completa</returns>
+    [HttpGet("operations/{id}")]
+    public async Task<IActionResult> GetOperationById(string id)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return BadRequest(new { success = false, message = "El ID es requerido" });
+            }
+
+            _logger.LogInformation("Obteniendo operación por ID: {Id}", id);
+
+            var result = await _weighingService.GetOperationByIdAsync(id);
+
+            if (!result.Success)
+            {
+                return result.Message == "Operación no encontrada" ? NotFound(result) : BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener operación por ID: {Id}", id);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }

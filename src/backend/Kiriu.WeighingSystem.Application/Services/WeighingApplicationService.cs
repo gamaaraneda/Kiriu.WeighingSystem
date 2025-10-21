@@ -415,6 +415,31 @@ public class WeighingApplicationService : IWeighingApplicationService
         }
     }
 
+    public async Task<ApiResponse<WeighingOperationDto>> GetOperationByIdAsync(string id)
+    {
+        try
+        {
+            if (!Guid.TryParse(id, out var operationId))
+            {
+                return ApiResponse<WeighingOperationDto>.CreateError("ID de operación inválido");
+            }
+
+            var operation = await _weighingRepository.GetByIdAsync(operationId);
+
+            if (operation == null)
+            {
+                return ApiResponse<WeighingOperationDto>.CreateError("Operación no encontrada");
+            }
+
+            var result = operation.Adapt<WeighingOperationDto>();
+            return ApiResponse<WeighingOperationDto>.CreateSuccess(result, "Operación encontrada");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<WeighingOperationDto>.CreateError($"Error interno del servidor: {ex.Message}");
+        }
+    }
+
     public async Task<ApiResponse<ExitValidationDto>> ValidateExitAsync(string placa)
     {
         try
