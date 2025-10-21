@@ -394,4 +394,14 @@ export class WeighingService {
            (request.placaRemolque1 !== undefined && request.placaRemolque1 !== original.placaRemolque1) ||
            (request.placaRemolque2 !== undefined && request.placaRemolque2 !== original.placaRemolque2);
   }
+
+  // Método para buscar productos (autocompletado)
+  searchProducts(searchTerm: string): Observable<string[]> {
+    // Filtrar productos de las operaciones existentes
+    const uniqueProducts = [...new Set(this.operations.map(op => op.product))];
+    const filtered = uniqueProducts.filter(product =>
+      product.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return of(filtered.slice(0, 10));
+  }
 }

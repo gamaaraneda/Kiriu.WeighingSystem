@@ -393,6 +393,35 @@ public class WeighingController : ControllerBase
     }
 
     /// <summary>
+    /// Buscar productos por texto (autocompletado)
+    /// </summary>
+    /// <param name="searchTerm">Término de búsqueda</param>
+    /// <param name="limit">Límite de resultados (default: 10)</param>
+    /// <returns>Lista de productos que coinciden</returns>
+    [HttpGet("products/search")]
+    public async Task<IActionResult> SearchProducts([FromQuery] string searchTerm, [FromQuery] int limit = 10)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            {
+                return Ok(new { success = true, data = new List<string>() });
+            }
+
+            _logger.LogInformation("Buscando productos con término: {SearchTerm}", searchTerm);
+
+            var result = await _weighingService.SearchProductsAsync(searchTerm, limit);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar productos con término: {SearchTerm}", searchTerm);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
     /// Obtener imagen de una foto de pesaje desde la base de datos
     /// </summary>
     /// <param name="photoId">ID de la foto</param>

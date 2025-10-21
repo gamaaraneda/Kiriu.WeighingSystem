@@ -7,7 +7,8 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import {
   RealWeighingService,
@@ -146,6 +147,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   // Báscula actual (para filtros por dispositivo)
   currentBasculaId: number | null = null;
 
+  // Autocompletado de productos
+  productSuggestions: string[] = [];
+  showProductSuggestions = false;
+  productSearchSubscription: Subscription | undefined;
+
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       this.unitType = params['unitType'];
@@ -161,9 +167,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     // Actualizar el estado de los pasos del proceso después de la inicialización
     setTimeout(() => this.updateProcessStepsStatus(), 100);
-    
+
     // Configurar detección de edición manual
     this.setupManualEditDetection();
+
+    // Configurar búsqueda de productos con debounce
+    this.setupProductSearch();
   }
 
   ngOnDestroy(): void {
@@ -182,7 +191,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (this.connectionStatusSubscription) {
       this.connectionStatusSubscription.unsubscribe();
     }
-    
+
+    if (this.productSearchSubscription) {
+      this.productSearchSubscription.unsubscribe();
+    }
+
     // Limpiar estado del detector de edición manual
     this.manualEditDetector.resetFormState('weighing-form');
   }
@@ -1983,5 +1996,101 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         }, 180);
       }
     }, 5000);
+  }
+
+  /**
+   * Configurar búsqueda de productos con debounce
+   */
+  private setupProductSearch(): void {
+    // Suscribirse a los cambios del control de formulario 'product'
+    const productControl = this.weighingForm.get('product');
+
+    if (productControl) {
+      this.productSearchSubscription = productControl.valueChanges
+        .pipe(
+          debounceTime(400), // Esperar 400ms después del último keystroke
+          distinctUntilChanged(), // Solo buscar si el valor cambió
+          switchMap((searchTerm: string) => {
+            console.log('🔍 Buscando productos con término:', searchTerm);
+
+            // Solo buscar si hay al menos 2 caracteres
+            if (!searchTerm || searchTerm.trim().length < 2) {
+              console.log('❌ Valor muy corto, limpiando sugerencias');
+              this.productSuggestions = [];
+              this.showProductSuggestions = false;
+              this.cdr.detectChanges();
+              return [];
+            }
+
+            return this.weighingService.searchProducts(searchTerm.trim());
+          })
+        )
+        .subscribe({
+          next: (products) => {
+            console.log('✅ Productos recibidos:', products);
+            console.log('✅ Tipo de products:', typeof products, Array.isArray(products));
+            this.productSuggestions = products;
+            this.showProductSuggestions = products.length > 0;
+            console.log('📋 showProductSuggestions:', this.showProductSuggestions);
+            console.log('📋 productSuggestions:', this.productSuggestions);
+            console.log('📋 productSuggestions.length:', this.productSuggestions.length);
+
+            // Verificar si el elemento existe en el DOM
+            setTimeout(() => {
+              const dropdown = document.querySelector('.autocomplete-dropdown');
+              console.log('🔍 Dropdown element:', dropdown);
+              if (dropdown) {
+                const styles = window.getComputedStyle(dropdown);
+                console.log('🔍 Dropdown display:', styles.display);
+                console.log('🔍 Dropdown visibility:', styles.visibility);
+                console.log('🔍 Dropdown z-index:', styles.zIndex);
+                console.log('🔍 Dropdown position:', styles.position);
+                console.log('🔍 Dropdown top:', styles.top);
+              }
+            }, 50);
+
+            this.cdr.detectChanges(); // Forzar detección de cambios
+          },
+          error: (error) => {
+            console.error('❌ Error buscando productos:', error);
+            this.productSuggestions = [];
+            this.showProductSuggestions = false;
+            this.cdr.detectChanges();
+          },
+        });
+    }
+  }
+
+  /**
+   * Seleccionar un producto de las sugerencias
+   */
+  selectProductSuggestion(product: string): void {
+    console.log('🎯 Producto seleccionado:', product);
+    this.weighingForm.patchValue({ product }, { emitEvent: false });
+    this.productSuggestions = [];
+    this.showProductSuggestions = false;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Mostrar sugerencias al hacer focus (si hay productos previos)
+   */
+  onProductFocus(): void {
+    const productValue = this.weighingForm.get('product')?.value;
+    if (productValue && productValue.trim().length >= 2 && this.productSuggestions.length > 0) {
+      this.showProductSuggestions = true;
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Cerrar sugerencias al hacer blur
+   */
+  onProductBlur(): void {
+    // Delay para permitir click en sugerencias
+    setTimeout(() => {
+      this.showProductSuggestions = false;
+      this.cdr.detectChanges();
+    }, 200);
   }
 }

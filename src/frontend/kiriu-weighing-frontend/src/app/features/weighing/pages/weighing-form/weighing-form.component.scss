@@ -1513,6 +1513,49 @@
   }
 }
 
+/* Autocomplete de productos */
+.autocomplete-container {
+  position: relative;
+  flex: 1; // Para que ocupe el espacio disponible en el flex container
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: -1px;
+}
+
+.autocomplete-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: #f3f4f6;
+  }
+
+  &:active {
+    background-color: #e5e7eb;
+  }
+}
+
 /* Responsive */
 @media (max-width: 480px) {
   .toast-stack {

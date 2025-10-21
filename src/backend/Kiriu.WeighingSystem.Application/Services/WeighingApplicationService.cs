@@ -922,4 +922,18 @@ public class WeighingApplicationService : IWeighingApplicationService
             return null;
         }
     }
+
+    public async Task<ApiResponse<List<string>>> SearchProductsAsync(string searchTerm, int limit = 10)
+    {
+        try
+        {
+            var products = await _weighingRepository.SearchProductsAsync(searchTerm, limit);
+            return ApiResponse<List<string>>.CreateSuccess(products);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar productos con término: {SearchTerm}", searchTerm);
+            return ApiResponse<List<string>>.CreateError("Error al buscar productos");
+        }
+    }
 }

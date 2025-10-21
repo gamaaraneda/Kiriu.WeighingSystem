@@ -70,13 +70,28 @@
                   >Producto/Material *</label
                 >
                 <div class="product-input-group">
-                  <input
-                    type="text"
-                    id="product"
-                    formControlName="product"
-                    class="form-input product-input"
-                    placeholder="Ingresa el nombre del producto o material"
-                  />
+                  <div class="autocomplete-container">
+                    <input
+                      type="text"
+                      id="product"
+                      formControlName="product"
+                      class="form-input product-input"
+                      placeholder="Ingresa el nombre del producto o material"
+                      (focus)="onProductFocus()"
+                      (blur)="onProductBlur()"
+                      autocomplete="off"
+                    />
+                    <!-- Dropdown de sugerencias -->
+                    <div *ngIf="showProductSuggestions" class="autocomplete-dropdown">
+                      <div
+                        *ngFor="let product of productSuggestions"
+                        class="autocomplete-item"
+                        (mousedown)="selectProductSuggestion(product)"
+                      >
+                        {{ product }}
+                      </div>
+                    </div>
+                  </div>
                   <button
                     *ngIf="!weighingForm.get('doubleTrailer')?.value"
                     type="button"
@@ -812,13 +827,28 @@
                   >Producto/Material *</label
                 >
                 <div class="product-input-group">
-                  <input
-                    type="text"
-                    id="product"
-                    formControlName="product"
-                    class="form-input product-input"
-                    placeholder="Ingresa el nombre del producto o material"
-                  />
+                  <div class="autocomplete-container">
+                    <input
+                      type="text"
+                      id="product"
+                      formControlName="product"
+                      class="form-input product-input"
+                      placeholder="Ingresa el nombre del producto o material"
+                      (focus)="onProductFocus()"
+                      (blur)="onProductBlur()"
+                      autocomplete="off"
+                    />
+                    <!-- Dropdown de sugerencias -->
+                    <div *ngIf="showProductSuggestions" class="autocomplete-dropdown">
+                      <div
+                        *ngFor="let product of productSuggestions"
+                        class="autocomplete-item"
+                        (mousedown)="selectProductSuggestion(product)"
+                      >
+                        {{ product }}
+                      </div>
+                    </div>
+                  </div>
                   <button
                     *ngIf="!weighingForm.get('doubleTrailer')?.value"
                     type="button"

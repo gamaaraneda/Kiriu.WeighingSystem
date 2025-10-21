@@ -22,4 +22,5 @@ public interface IWeighingApplicationService
     Task<ApiResponse<ExitValidationDto>> ValidateExitAsync(string placa);
     Task<ApiResponse<WeighingOperationDto>> UpdateWeighingOperationAsync(Guid operationId, UpdateWeighingOperationRequest request);
     Task<PhotoBinaryDataDto?> GetPhotoDataAsync(Guid photoId);
+    Task<ApiResponse<List<string>>> SearchProductsAsync(string searchTerm, int limit = 10);
 }

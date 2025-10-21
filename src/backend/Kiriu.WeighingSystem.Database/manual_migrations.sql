@@ -16,7 +16,7 @@ GO
 -- =====================================================
 -- VARIABLES DE CONTROL
 -- =====================================================
-DECLARE @CurrentVersion INT = 3; -- Versión actual del script
+DECLARE @CurrentVersion INT = 4; -- Versión actual del script
 DECLARE @SchemaVersion INT;
 
 -- Crear tabla de versiones si no existe
@@ -389,10 +389,45 @@ FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_SCHEMA = 'weighing'
 ORDER BY TABLE_NAME;
 
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 4: ÍNDICE PARA BÚSQUEDA DE PRODUCTOS
+-- =====================================================
+IF @SchemaVersion < 4
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 4: ÍNDICE PARA BÚSQUEDA DE PRODUCTOS';
+    PRINT '==========================================';
+
+    -- Crear índice en la columna Product para optimizar búsquedas de autocompletado
+    IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_WeighingOperations_Product' AND object_id = OBJECT_ID('WeighingOperations'))
+    BEGIN
+        CREATE NONCLUSTERED INDEX [IX_WeighingOperations_Product]
+        ON [dbo].[WeighingOperations] ([Product])
+        WHERE [Product] IS NOT NULL;
+
+        PRINT '✓ Índice IX_WeighingOperations_Product creado exitosamente.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Índice IX_WeighingOperations_Product ya existe.';
+    END
+
+    -- Registrar migración
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (4, 'Índice para búsqueda de productos', 'manual_migrations.sql');
+
+    PRINT '✓ Versión 4 aplicada exitosamente.';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'Versión 4 ya aplicada, saltando...';
+END
+
 -- Mostrar historial de migraciones
 PRINT '';
 PRINT 'Historial de migraciones aplicadas:';
-SELECT 
+SELECT
     [Version] as Ver,
     [Description] as Descripción,
     FORMAT([AppliedDate], 'yyyy-MM-dd HH:mm') as Aplicada

@@ -357,4 +357,18 @@ public class WeighingOperationRepository : IWeighingOperationRepository
 
         return await query.CountAsync();
     }
+
+    public async Task<List<string>> SearchProductsAsync(string searchTerm, int limit = 10)
+    {
+        // Búsqueda de productos únicos que coincidan con el término (LIKE)
+        var products = await _context.WeighingOperations
+            .Where(w => !string.IsNullOrEmpty(w.Product) && w.Product.Contains(searchTerm))
+            .Select(w => w.Product)
+            .Distinct()
+            .OrderBy(p => p)
+            .Take(limit)
+            .ToListAsync();
+
+        return products;
+    }
 }
