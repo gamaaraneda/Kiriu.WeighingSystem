@@ -672,6 +672,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         break;
       case 'remolque2':
         // Capturar peso del remolque 2
+        console.log('✅ Capturando peso del remolque 2:', this.weightData.capturedWeight);
         this.doubleTrailerState.remolque2.pesoBruto =
           this.weightData.capturedWeight;
         this.doubleTrailerState.remolque2.pesoCapturado = true;
@@ -681,6 +682,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           (this.doubleTrailerState.remolque1.pesoBruto || 0) +
           (this.doubleTrailerState.remolque2.pesoBruto || 0);
 
+        console.log('✅ Peso total calculado:', this.doubleTrailerState.pesoBrutoTotal);
+        console.log('✅ Marcando como completo...');
+
         this.doubleTrailerState.currentStep = 'complete';
         this.doubleTrailerState.isComplete = true;
 
@@ -688,6 +692,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
+        break;
+      default:
+        console.warn('⚠️ processDoubleTrailerWeight - paso no reconocido:', this.doubleTrailerState.currentStep);
         break;
     }
   }
@@ -745,9 +752,33 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (isChecked) {
       // Si se selecciona "Doble remolque", desmarcar "Solo contenedor"
       this.weighingForm.patchValue({ containerOnly: false });
+
+      // En flujo doble remolque, trailerPlate2 NO se usa (se usan remolque1Plate y remolque2Plate)
+      // Por lo tanto, limpiar validadores de trailerPlate2
+      this.weighingForm.get('trailerPlate2')?.clearValidators();
+      this.weighingForm.get('trailerPlate2')?.updateValueAndValidity();
+
+      // Hacer obligatorios los campos de placas de remolques en doble remolque
+      this.weighingForm.get('remolque1Plate')?.setValidators([Validators.required]);
+      this.weighingForm.get('remolque1Plate')?.updateValueAndValidity();
+
+      this.weighingForm.get('remolque2Plate')?.setValidators([Validators.required]);
+      this.weighingForm.get('remolque2Plate')?.updateValueAndValidity();
+
       this.initializeDoubleTrailerFlow();
     } else {
       this.resetDoubleTrailerState();
+
+      // Restaurar validación de trailerPlate2 al salir del modo doble remolque
+      this.weighingForm.get('trailerPlate2')?.setValidators([Validators.required]);
+      this.weighingForm.get('trailerPlate2')?.updateValueAndValidity();
+
+      // Limpiar validadores de remolque1 y remolque2 al salir del modo doble remolque
+      this.weighingForm.get('remolque1Plate')?.clearValidators();
+      this.weighingForm.get('remolque1Plate')?.updateValueAndValidity();
+
+      this.weighingForm.get('remolque2Plate')?.clearValidators();
+      this.weighingForm.get('remolque2Plate')?.updateValueAndValidity();
     }
 
     // Actualizar el estado de los pasos del proceso
@@ -1649,15 +1680,43 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Obligatorios: producto, cliente, placa tráiler, placas remolques y pesos
     // Opcionales: fotos
     if (isDoubleTrailer) {
-      return (
-        this.weighingForm.valid &&
-        this.doubleTrailerState.isComplete &&
-        !!this.doubleTrailerState.trailerPlaca &&
-        !!this.doubleTrailerState.remolque1.placa &&
-        !!this.doubleTrailerState.remolque2.placa &&
-        !!this.doubleTrailerState.remolque1.pesoCapturado &&
-        !!this.doubleTrailerState.remolque2.pesoCapturado
+      const validations = {
+        formValid: this.weighingForm.valid,
+        isComplete: this.doubleTrailerState.isComplete,
+        trailerPlaca: !!this.doubleTrailerState.trailerPlaca,
+        remolque1Placa: !!this.doubleTrailerState.remolque1.placa,
+        remolque2Placa: !!this.doubleTrailerState.remolque2.placa,
+        remolque1Peso: !!this.doubleTrailerState.remolque1.pesoCapturado,
+        remolque2Peso: !!this.doubleTrailerState.remolque2.pesoCapturado
+      };
+
+      console.log('🔍 isFormValid - Doble Remolque:', validations);
+
+      // Si el formulario no es válido, mostrar qué campos están fallando
+      if (!this.weighingForm.valid) {
+        const invalidFields: string[] = [];
+        Object.keys(this.weighingForm.controls).forEach(key => {
+          const control = this.weighingForm.get(key);
+          if (control && control.invalid) {
+            invalidFields.push(`${key}: ${JSON.stringify(control.errors)}`);
+          }
+        });
+        console.log('❌ Campos inválidos del formulario:', invalidFields);
+      }
+
+      const result = (
+        validations.formValid &&
+        validations.isComplete &&
+        validations.trailerPlaca &&
+        validations.remolque1Placa &&
+        validations.remolque2Placa &&
+        validations.remolque1Peso &&
+        validations.remolque2Peso
       );
+
+      console.log('🔍 isFormValid result:', result);
+
+      return result;
     }
 
     // FLUJO REMOLQUE ÚNICO: Solo campos del formulario + peso capturado
