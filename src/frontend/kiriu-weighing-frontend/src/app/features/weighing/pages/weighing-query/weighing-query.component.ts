@@ -375,20 +375,20 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       // Construir los datos para el PDF usando la misma lógica que en weighing-exit-form
       const receiptData: WeighingReceiptData = {
         folio: fullOperation.folio,
-        fecha: new Date(fullOperation.updatedAt || fullOperation.createdAt),
+        fecha: fullOperation.updatedAt || fullOperation.createdAt,
         tipoUnidad: fullOperation.tipoUnidad || 'remolque',
         clienteProveedor: fullOperation.clientProviderName,
         tipo: fullOperation.unitType || 'cliente',
         producto: fullOperation.product,
 
-        // Datos de entrada
-        fechaEntrada: new Date(fullOperation.createdAt),
+        // Datos de entrada - pasar strings directamente del backend
+        fechaEntrada: fullOperation.createdAt,
         pesoBrutoEntrada: fullOperation.entryWeight || 0,
         placaTrailer: fullOperation.trailerPlate || '',
         placaRemolque: fullOperation.trailerPlate2 || '',
 
-        // Datos de salida
-        fechaSalida: new Date(fullOperation.updatedAt || fullOperation.createdAt),
+        // Datos de salida - pasar strings directamente del backend
+        fechaSalida: fullOperation.updatedAt || fullOperation.createdAt,
         pesoBrutoSalida: fullOperation.exitWeight || 0,
         pesoTara: fullOperation.exitWeight || 0,
         pesoNeto: fullOperation.netWeight || 0,

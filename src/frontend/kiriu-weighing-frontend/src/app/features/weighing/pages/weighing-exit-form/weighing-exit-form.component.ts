@@ -1161,20 +1161,20 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     try {
       const receiptData: WeighingReceiptData = {
         folio: response.folio || this.entryFolio,
-        fecha: new Date(response.fechaSalida || new Date()),
+        fecha: response.fechaSalida || new Date().toISOString(),
         tipoUnidad: this.entryData.tipoUnidad,
         clienteProveedor: this.entryData.clientProviderName || '',
         tipo: 'client', // Por defecto, ya que EntrySearchData no tiene este campo
         producto: this.entryData.product || '',
 
-        // Datos de entrada
-        fechaEntrada: this.entryData.createdAt ? new Date(this.entryData.createdAt) : new Date(),
+        // Datos de entrada - pasar strings directamente del backend
+        fechaEntrada: this.entryData.createdAt || new Date().toISOString(),
         pesoBrutoEntrada: this.entryData.entryWeight || 0,
         placaTrailer: this.entryData.placaTrailer || '',
         placaRemolque: this.entryData.placaRemolque || this.entryData.placaRemolque1 || '',
 
-        // Datos de salida
-        fechaSalida: new Date(response.fechaSalida || new Date()),
+        // Datos de salida - pasar strings directamente del backend
+        fechaSalida: response.fechaSalida || new Date().toISOString(),
         pesoBrutoSalida: this.exitForm.get('exitWeight')?.value || 0,
         pesoTara: this.exitForm.get('exitWeight')?.value || 0,
         pesoNeto: response.pesoNeto || 0,

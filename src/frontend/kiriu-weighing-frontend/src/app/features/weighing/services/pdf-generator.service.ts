@@ -4,20 +4,20 @@ import QRCode from 'qrcode';
 
 export interface WeighingReceiptData {
   folio: string;
-  fecha: Date;
+  fecha: Date | string;
   tipoUnidad: string;
   clienteProveedor: string;
   tipo: string;
   producto: string;
 
   // Datos de entrada
-  fechaEntrada: Date;
+  fechaEntrada: Date | string;
   pesoBrutoEntrada: number;
   placaTrailer: string;
   placaRemolque?: string;
 
   // Datos de salida
-  fechaSalida: Date;
+  fechaSalida: Date | string;
   pesoBrutoSalida: number;
   pesoTara: number;
   pesoNeto: number;
@@ -440,11 +440,21 @@ export class PdfGeneratorService {
    * Formatea una fecha para mostrarla en el PDF
    * Convierte de UTC a hora local de México (America/Mexico_City)
    */
-  private formatDate(date: Date): string {
+  private formatDate(date: Date | string): string {
     if (!date) return '-';
 
+    // Si es string, asegurar que tiene 'Z' al final para que se interprete como UTC
+    let dateObj: Date;
+    if (typeof date === 'string') {
+      // Si el string no termina en 'Z', agregarlo (viene del backend sin 'Z')
+      const dateStr = date.endsWith('Z') ? date : date + 'Z';
+      dateObj = new Date(dateStr);
+    } else {
+      dateObj = new Date(date);
+    }
+
     // Crear fecha y convertir a timezone de México
-    const mexicoDate = new Date(date).toLocaleString('es-MX', {
+    const mexicoDate = dateObj.toLocaleString('es-MX', {
       timeZone: 'America/Mexico_City',
       year: 'numeric',
       month: '2-digit',
@@ -462,9 +472,18 @@ export class PdfGeneratorService {
    * Formatea una fecha para nombre de archivo
    * Usa hora local de México
    */
-  private formatDateForFilename(date: Date): string {
+  private formatDateForFilename(date: Date | string): string {
+    // Si es string, asegurar que tiene 'Z' al final para que se interprete como UTC
+    let dateObj: Date;
+    if (typeof date === 'string') {
+      const dateStr = date.endsWith('Z') ? date : date + 'Z';
+      dateObj = new Date(dateStr);
+    } else {
+      dateObj = new Date(date);
+    }
+
     // Convertir a hora de México
-    const mexicoDateParts = new Date(date).toLocaleString('es-MX', {
+    const mexicoDateParts = dateObj.toLocaleString('es-MX', {
       timeZone: 'America/Mexico_City',
       year: 'numeric',
       month: '2-digit',

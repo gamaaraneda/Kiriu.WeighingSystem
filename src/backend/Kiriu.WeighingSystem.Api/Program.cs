@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Threading;
 using Microsoft.EntityFrameworkCore;
+using Kiriu.WeighingSystem.Api.Converters;
 using Kiriu.WeighingSystem.Api.Extensions;
 using Kiriu.WeighingSystem.Infrastructure.Data;
 
@@ -26,7 +27,13 @@ builder.Services
     .AddPersistence(builder.Configuration)
     .AddDomainServices()
     .AddApplicationServices(builder.Configuration)
-    .AddControllers();
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Configurar serialización de fechas en formato ISO 8601 con 'Z' (UTC)
+        options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 // Add HttpClient for cargo camera
 builder.Services.AddHttpClient();
