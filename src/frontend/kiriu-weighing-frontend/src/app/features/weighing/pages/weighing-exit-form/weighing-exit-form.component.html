@@ -462,14 +462,15 @@
                       ⏳ Pendiente
                     </span>
                   </div>
-                  <button
+                  <!-- Botón Capturar Remolque 1 oculto -->
+                  <!-- <button
                     type="button"
                     class="btn btn-success capture-weight-btn"
                     [disabled]="!canCaptureWeight() || !weightData.isConnected"
                     (click)="onCaptureWeightRemolque1()"
                   >
                     ⚖️ Capturar
-                  </button>
+                  </button> -->
                 </div>
                 <div
                   *ngIf="getFieldError('pesoTaraRemolque1')"
@@ -698,7 +699,8 @@
                       ⏳ Pendiente
                     </span>
                   </div>
-                  <button
+                  <!-- Botón Capturar Remolque 2 oculto -->
+                  <!-- <button
                     type="button"
                     class="btn btn-success capture-weight-btn"
                     [disabled]="
@@ -707,7 +709,7 @@
                     (click)="onCaptureWeightRemolque2()"
                   >
                     ⚖️ Capturar
-                  </button>
+                  </button> -->
                 </div>
                 <div
                   *ngIf="getFieldError('pesoTaraRemolque2')"
@@ -1122,14 +1124,16 @@
                       ⏳ Pendiente
                     </span>
                   </div>
-                  <button
+                  <!-- Botón Capturar oculto -->
+                  <!-- <button
                     type="button"
                     class="btn btn-success capture-weight-btn"
                     [disabled]="!canCaptureWeight() || !weightData.isConnected"
                     (click)="onCaptureWeight()"
+                    style="display: none;"
                   >
                     ⚖️ Capturar
-                  </button>
+                  </button> -->
                 </div>
                 <div *ngIf="getFieldError('exitWeight')" class="error-message">
                   {{ getFieldError("exitWeight") }}
@@ -1201,79 +1205,15 @@
               </div>
             </div>
 
-            <div class="weight-status">
-              <div class="status-item">
-                <span class="status-label">Conexión:</span>
-                <span
-                  class="status-value"
-                  [class]="
-                    weightData.isConnected ? 'connected' : 'disconnected'
-                  "
-                >
-                  {{ weightData.isConnected ? "Conectado" : "Desconectado" }}
-                </span>
-              </div>
-
-              <!-- Estado de conexión SignalR -->
-              <div class="status-item">
-                <span class="status-label">Estado SignalR:</span>
-                <span
-                  class="status-value signalr-status"
-                  [class]="
-                    isWeightServiceConnected ? 'connected' : 'disconnected'
-                  "
-                  [title]="
-                    isWeightServiceConnected
-                      ? 'Báscula conectada via SignalR'
-                      : connectionStatus.reconnectAttempts > 0
-                      ? 'Reconectando... (' +
-                        connectionStatus.reconnectAttempts +
-                        ' intentos)'
-                      : 'Desconectado - Sistema de peso no disponible'
-                  "
-                >
-                  <i
-                    class="pi"
-                    [class.pi-check-circle]="isWeightServiceConnected"
-                    [class.pi-times-circle]="
-                      !isWeightServiceConnected &&
-                      connectionStatus.reconnectAttempts === 0
-                    "
-                    [class.pi-refresh]="
-                      !isWeightServiceConnected &&
-                      connectionStatus.reconnectAttempts > 0
-                    "
-                    [class.pi-spin]="
-                      !isWeightServiceConnected &&
-                      connectionStatus.reconnectAttempts > 0
-                    "
-                  ></i>
-                  {{
-                    isWeightServiceConnected
-                      ? "Conectado"
-                      : connectionStatus.reconnectAttempts > 0
-                      ? "Reconectando..."
-                      : "Desconectado"
-                  }}
-
-                  <!-- Botón de reconexión -->
-                  <button
-                    *ngIf="!isWeightServiceConnected"
-                    type="button"
-                    class="reconnect-btn"
-                    (click)="onReconnectWeightService()"
-                    title="Reintentar conexión"
-                  >
-                    <i class="pi pi-refresh"></i>
-                  </button>
-                </span>
-              </div>
-            </div>
+            <!-- Ocultar estado de conexión -->
+            <!-- <div class="weight-status" style="display: none;">
+              ... contenido oculto ...
+            </div> -->
 
             <div class="weight-actions">
               <button
                 type="button"
-                class="btn btn-primary request-weight-btn"
+                class="btn btn-primary request-weight-btn full-width"
                 [disabled]="loadingWeight"
                 (click)="requestCurrentWeight()"
                 title="Solicitar peso actual desde la báscula"
@@ -1283,13 +1223,15 @@
                 {{ loadingWeight ? "Solicitando..." : "Solicitar Peso" }}
               </button>
 
-              <button
+              <!-- Ocultar botón Capturar Peso -->
+              <!-- <button
                 class="btn btn-success capture-weight-btn"
                 [disabled]="!weightData.isConnected || !canCaptureWeight()"
                 (click)="onCaptureWeight()"
+                style="display: none;"
               >
                 Capturar Peso
-              </button>
+              </button> -->
             </div>
 
             <div *ngIf="weightData.capturedWeight" class="captured-weight">
