@@ -21,9 +21,6 @@
           <p>Configurar módulos del sistema y sus permisos</p>
         </div>
         <div class="hero-actions">
-          <button type="button" class="btn btn-success" (click)="openCreateModal()">
-            + Nuevo Módulo
-          </button>
           <button type="button" class="btn btn-ghost" (click)="onGoBack()">
             ← Regresar
           </button>
@@ -159,23 +156,6 @@
                       title="Ver permisos"
                     >
                       👁️
-                    </button>
-                    <button
-                      type="button"
-                      class="btn-icon btn-warning"
-                      (click)="openEditModal(modulo)"
-                      title="Editar módulo"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      type="button"
-                      class="btn-icon btn-danger"
-                      [disabled]="!modulo.activo"
-                      (click)="confirmDelete(modulo)"
-                      title="Eliminar módulo"
-                    >
-                      🗑️
                     </button>
                   </div>
                 </td>

@@ -23,13 +23,6 @@
         <div class="hero-actions">
           <button
             type="button"
-            class="btn btn-success"
-            (click)="openCreateModal()"
-          >
-            + Nuevo Permiso
-          </button>
-          <button
-            type="button"
             class="btn btn-ghost"
             (click)="onGoBack()"
           >
@@ -166,23 +159,6 @@
                         title="Ver uso del permiso"
                       >
                         👁️
-                      </button>
-                      <button
-                        type="button"
-                        class="btn-mini"
-                        (click)="openEditModal(permiso)"
-                        title="Editar permiso"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        type="button"
-                        class="btn-mini btn-danger"
-                        [disabled]="!permiso.activo"
-                        (click)="confirmDelete(permiso)"
-                        [title]="!permiso.activo ? 'Permiso ya inactivo' : 'Eliminar permiso'"
-                      >
-                        🗑️
                       </button>
                     </div>
                   </td>
