@@ -5,7 +5,7 @@ export const environment = {
   serialGatewayUrl: 'http://192.168.110.91:5080',
   apiTimeout: 30000,
   cargoCamera: {
-    url: 'http://192.168.1.49/ISAPI/Streaming/channels/1/picture',
+    url: 'http://nose usa',
     username: 'admin',
     password: 'Admin123',
   },
