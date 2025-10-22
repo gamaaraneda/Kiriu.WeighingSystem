@@ -205,10 +205,10 @@
                   <td class="col-cliente">{{ operation.clienteProveedor }}</td>
                   <td class="col-producto">{{ operation.producto }}</td>
                   <td class="col-tipo">
-                    <span class="badge blue">{{
-                      operation.tipo === "client" ? "CLIENTE" : "PROVEEDOR"
-                    }}</span>
-                    <div class="hint">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                      <span class="badge blue">{{
+                        operation.tipo === "client" ? "CLIENTE" : "PROVEEDOR"
+                      }}</span>
                       <span
                         class="badge"
                         [class.orange]="operation.tipoUnidad === 'remolque'"
