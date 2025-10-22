@@ -33,17 +33,18 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "web.config",
+                "input": "src",
+                "output": "/"
               }
             ],
-            "styles": ["src/styles.scss"],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            "styles": ["src/styles.scss"]
           },
           "configurations": {
             "production": {
+              "outputMode": "static",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
