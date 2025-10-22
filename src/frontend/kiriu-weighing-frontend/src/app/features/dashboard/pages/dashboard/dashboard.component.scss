@@ -1,72 +1,117 @@
-.dashboard-container {
-  min-height: 100vh;
-  background-color: #f8f9fa;
+// Variables de la paleta Electric Blue
+:host {
+  /* Brand */
+  --brand-primary: #0041f2;
+  --brand-secondary: #bfeb30;
+  --brand-dark: #0a1e33;
+  --brand-light: #ffffff;
+  --brand-neutral: #e6eaf1;
+
+  /* Semantic */
+  --success: #b8e92e;
+  --success-bg: #f4fbe4;
+  --info: #1f6bff;
+  --info-bg: #e8f1ff;
 }
 
-.dashboard-content {
-  padding-top: 80px; // Espacio para el header fijo
-  min-height: calc(100vh - 80px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+// Breadcrumb (mantener estilo exacto de PrimeNG/global)
+.crumb {
+  color: var(--info);
+  background-color: var(--info-bg);
+  border: 1px solid rgba(31, 107, 255, 0.2);
+}
 
-  @media (max-width: 767px) {
-    padding-top: 120px; // Más espacio en móvil para header de dos líneas
-    min-height: calc(100vh - 120px);
+// Título principal
+.page-title {
+  color: var(--brand-primary);
+}
+
+// Burbuja de icono - solo cambiar colores de fondo
+.icon-bubble {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--info) 100%);
+  box-shadow: 0 4px 20px rgba(0, 65, 242, 0.2);
+
+  &.success {
+    background: linear-gradient(135deg, var(--success) 0%, #9dd424 100%);
+    box-shadow: 0 4px 20px rgba(184, 233, 46, 0.3);
   }
 }
 
-.dashboard-header {
-  text-align: center;
-  margin-bottom: 48px;
+// Título de tarjeta
+.choice-title {
+  color: var(--brand-dark);
+}
 
-  .dashboard-title {
-    color: #398df1;
-    font-size: 32px;
-    font-weight: 600;
-    margin-bottom: 16px;
+// Subtítulo de tarjeta
+.choice-subtitle {
+  color: var(--info);
+}
 
-    @media (max-width: 767px) {
-      font-size: 24px;
+// Tarjeta - solo ajustar colores de borde y hover
+.choice-card {
+  border-color: var(--brand-neutral);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover,
+  &:focus {
+    border-color: var(--brand-primary);
+    box-shadow: 0 12px 40px rgba(0, 65, 242, 0.15);
+
+    &::before {
+      transform: scaleX(1);
+    }
+
+    .icon-bubble {
+      box-shadow: 0 8px 24px rgba(0, 65, 242, 0.2);
+    }
+
+    .p-button {
+      background-color: var(--brand-secondary);
+      color: var(--brand-dark);
     }
   }
 
-  .dashboard-subtitle {
-    color: #545454;
-    font-size: 18px;
-    margin: 0;
-
-    @media (max-width: 767px) {
-      font-size: 16px;
-    }
+  &:focus {
+    outline-color: var(--brand-primary);
   }
 }
 
-.cards-container {
-  width: 100%;
-  max-width: 800px;
+// Botón - solo cambiar colores
+.p-button {
+  background-color: var(--brand-primary);
+  color: var(--brand-light);
+  position: relative;
+  overflow: hidden;
 
-  .grid {
-    gap: 32px;
-
-    @media (max-width: 767px) {
-      gap: 24px;
-    }
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease, height 0.3s ease;
   }
-}
 
-// Animaciones
-.dashboard-content {
-  animation: fadeIn 0.6s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  &:hover::before {
+    width: 300px;
+    height: 300px;
   }
 }
