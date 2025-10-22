@@ -4,25 +4,42 @@
  * WEIGHING QUERY COMPONENT - KIRIU DESIGN SYSTEM
  * ============================================================================ */
 
-:root {
+:host {
+  /* Brand Electric Blue */
+  --brand-primary: #0041f2;
+  --brand-secondary: #bfeb30;
+  --brand-dark: #0a1e33;
+  --brand-light: #ffffff;
+  --brand-neutral: #e6eaf1;
+
+  /* Semantic */
+  --success: #b8e92e;
+  --success-bg: #f4fbe4;
+  --success-hover: #9dd424;
+  --warning: #ffd93b;
+  --warning-bg: #fff9e0;
+  --error: #e54848;
+  --error-bg: #ffecec;
+  --info: #1f6bff;
+  --info-bg: #e8f1ff;
+  --neutral: #d4d9e2;
+  --neutral-bg: #f5f6f9;
+
+  /* Derived colors for compatibility */
   --brand-50: #eef5ff;
   --brand-100: #d9e8ff;
   --brand-200: #b9d3ff;
   --brand-300: #8fb6ff;
   --brand-400: #5e8dff;
-  --brand-500: #1f5eff;
-  --brand-600: #1847cc;
-  --brand-700: #1a42ad;
+  --brand-500: #0041f2;
+  --brand-600: #0034c7;
+  --brand-700: #002a9d;
   --bg: #f6f8fb;
   --surface: #fff;
   --surface-2: #fbfcff;
   --text: #1b2430;
   --muted: #5b687a;
-  --success: #0ea44e;
-  --success-hover: #0b7f3c;
-  --info: #0ea5e9;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --danger: #e54848;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
@@ -42,7 +59,7 @@
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --duration-1: 120ms;
   --duration-2: 200ms;
-  --focus-ring: 0 0 0 3px rgba(31, 94, 255, 0.25);
+  --focus-ring: 0 0 0 3px rgba(0, 65, 242, 0.25);
 }
 
 .weighing-query-container {
@@ -124,8 +141,8 @@
   padding: 0 18px !important;
   border-radius: 12px !important;
   border: 0 !important;
-  background: #0ea44e !important;
-  color: #fff !important;
+  background: var(--success) !important;
+  color: #000000 !important;
   font-weight: var(--fw-semibold) !important;
   font-size: var(--fs-md) !important;
   box-shadow: var(--shadow-sm) !important;
@@ -135,7 +152,8 @@
     background-color var(--duration-2) var(--ease) !important;
 
   &:hover:not(:disabled) {
-    background: #0b7f3c !important;
+    background: var(--brand-primary) !important;
+    color: #ffffff !important;
     transform: translateY(-1px) !important;
     box-shadow: var(--shadow-md) !important;
   }
@@ -182,15 +200,13 @@
   }
 
   &.btn-primary {
-    background: linear-gradient(
-      135deg,
-      var(--brand-500),
-      var(--brand-600)
-    ) !important;
+    background: var(--brand-primary) !important;
     color: #fff !important;
     box-shadow: var(--shadow-sm) !important;
 
     &:hover:not(:disabled) {
+      background: var(--success) !important;
+      color: #000000 !important;
       transform: translateY(-1px) !important;
       box-shadow: var(--shadow-md) !important;
     }
@@ -267,8 +283,8 @@
 
 .weighing-query-container .input:focus {
   outline: none;
-  border-color: #5e8dff;
-  box-shadow: 0 0 0 3px rgba(47, 106, 246, 0.25);
+  border-color: var(--brand-primary);
+  box-shadow: var(--focus-ring);
 }
 
 .weighing-query-container .input:disabled {
@@ -278,8 +294,8 @@
 }
 
 .weighing-query-container .input.ng-invalid.ng-touched {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+  border-color: var(--error);
+  box-shadow: 0 0 0 2px rgba(229, 72, 72, 0.15);
 }
 
 /* Inputs de fecha */
@@ -381,15 +397,15 @@
   thead th {
     position: sticky;
     top: 0;
-    background: #ecf3ff;
-    color: #334155;
-    border-bottom: 2px solid #d6e4ff;
+    background: linear-gradient(180deg, var(--brand-primary) 0%, #0034c7 100%);
+    color: var(--brand-light);
+    border-bottom: 2px solid var(--brand-secondary);
     text-align: left;
     padding: 12px 10px;
     font-weight: var(--fw-semibold);
     font-size: var(--fs-sm);
     z-index: 50;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(0, 65, 242, 0.2);
 
     &.col-acciones {
       text-align: center;
@@ -412,11 +428,12 @@
   }
 
   tbody tr:nth-child(even) {
-    background: #fafcff;
+    background: linear-gradient(90deg, #f8fbff 0%, #fafcff 100%);
   }
 
   tbody tr:hover {
-    background: #f0f7ff;
+    background: linear-gradient(90deg, #e3f2ff 0%, #f0f9ff 100%);
+    border-left: 3px solid var(--info);
   }
 
   .col-acciones {
@@ -493,9 +510,9 @@
   }
 
   &.btn-page--current {
-    background: var(--brand-500);
+    background: var(--brand-primary);
     color: #fff;
-    border-color: var(--brand-500);
+    border-color: var(--brand-primary);
     font-weight: var(--fw-semibold);
     cursor: default;
 
@@ -528,8 +545,8 @@
   gap: 6px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #e0ecff;
-  color: var(--brand-600);
+  background: var(--info-bg);
+  color: var(--brand-primary);
   border: 1px solid #c7dbff;
   text-decoration: none;
   font-weight: var(--fw-medium);
@@ -539,7 +556,8 @@
     background-color var(--duration-2) var(--ease);
 
   &:hover {
-    background: #d1e3ff;
+    background: var(--success);
+    color: #000000;
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
   }
@@ -553,26 +571,64 @@
   padding: 4px 10px;
   border-radius: 999px;
   font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-semibold);
   border: 1px solid transparent;
   line-height: 1.4;
 
+  // Badge para CLIENTE/PROVEEDOR - Azul primario vibrante
   &.blue {
-    background: #dbeafe;
-    border-color: #bfdbfe;
-    color: #1e40af;
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--info) 100%);
+    border-color: var(--brand-primary);
+    color: var(--brand-light);
+    box-shadow: 0 2px 4px rgba(0, 65, 242, 0.15);
   }
 
+  // Badge para pesos - Verde lima brillante
   &.green {
-    background: #d1fae5;
-    border-color: #a7f3d0;
-    color: #065f46;
+    background: linear-gradient(135deg, var(--success) 0%, #9dd424 100%);
+    border-color: var(--success);
+    color: #000000;
+    box-shadow: 0 2px 4px rgba(184, 233, 46, 0.2);
   }
 
+  // Badge para placas - Gris azulado oscuro
   &.gray {
-    background: #f1f5f9;
-    border-color: #e2e8f0;
-    color: #475569;
+    background: linear-gradient(135deg, #546e7a 0%, #37474f 100%);
+    border-color: #546e7a;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(84, 110, 122, 0.2);
+  }
+
+  // Badge para tipo unidad Remolque - Naranja vibrante
+  &.orange {
+    background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%);
+    border-color: #ff6f00;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(255, 111, 0, 0.2);
+  }
+
+  // Badge para Contenedor - Púrpura/Morado
+  &.purple {
+    background: linear-gradient(135deg, #7c4dff 0%, #9575cd 100%);
+    border-color: #7c4dff;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(124, 77, 255, 0.2);
+  }
+
+  // Badge para 2 Remolques - Turquesa/Cyan
+  &.cyan {
+    background: linear-gradient(135deg, #00acc1 0%, #26c6da 100%);
+    border-color: #00acc1;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 172, 193, 0.2);
+  }
+
+  // Badge para pesos alternativo - Amarillo dorado
+  &.yellow {
+    background: linear-gradient(135deg, #ffa726 0%, #ffb74d 100%);
+    border-color: #ffa726;
+    color: #000000;
+    box-shadow: 0 2px 4px rgba(255, 167, 38, 0.2);
   }
 
   &.badge-peso {
@@ -871,24 +927,26 @@
   }
 
   &.btn-export-modal {
-    background: #10b981;
-    color: #fff;
-    border-color: #10b981;
+    background: var(--success);
+    color: #000000;
+    border-color: var(--success);
 
     &:hover:not(:disabled) {
-      background: #059669;
-      border-color: #059669;
+      background: var(--brand-primary);
+      color: #ffffff;
+      border-color: var(--brand-primary);
     }
   }
 
   &.btn-reprint-modal {
-    background: var(--brand-500);
+    background: var(--brand-primary);
     color: #fff;
-    border-color: var(--brand-500);
+    border-color: var(--brand-primary);
 
     &:hover:not(:disabled) {
-      background: var(--brand-600);
-      border-color: var(--brand-600);
+      background: var(--success);
+      color: #000000;
+      border-color: var(--success);
     }
   }
 }
@@ -959,15 +1017,17 @@
   letter-spacing: 0.3px;
 
   &.status-entrada {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--info) 100%);
+    color: var(--brand-light);
+    border: 1px solid var(--brand-primary);
+    box-shadow: 0 2px 4px rgba(0, 65, 242, 0.2);
   }
 
   &.status-salida {
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
+    background: linear-gradient(135deg, var(--success) 0%, #9dd424 100%);
+    color: #000000;
+    border: 1px solid var(--success);
+    box-shadow: 0 2px 4px rgba(184, 233, 46, 0.2);
   }
 }
 
@@ -978,9 +1038,10 @@
   border-radius: 6px;
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
-  background: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
+  background: linear-gradient(135deg, var(--info) 0%, #4d8bff 100%);
+  color: var(--brand-light);
+  border: 1px solid var(--info);
+  box-shadow: 0 2px 4px rgba(31, 107, 255, 0.15);
 }
 
 .badge-unidad {
@@ -989,10 +1050,10 @@
   padding: 4px 10px;
   border-radius: 6px;
   font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  font-weight: var(--fw-semibold);
+  background: linear-gradient(135deg, var(--neutral) 0%, #c8ced9 100%);
+  color: var(--brand-dark);
+  border: 1px solid var(--neutral);
 }
 
 /* Placas */
@@ -1010,9 +1071,9 @@
   font-size: var(--fs-sm);
   font-weight: 700;
   font-family: 'Courier New', monospace;
-  background: #1a42ad;
-  color: #fff;
-  border: 2px solid #2962ff;
+  background: var(--brand-dark);
+  color: var(--brand-secondary);
+  border: 2px solid var(--brand-primary);
   box-shadow: var(--shadow-sm);
 }
 
@@ -1037,11 +1098,11 @@
   box-shadow: var(--shadow-sm);
 
   &.entrada-card {
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid var(--brand-primary);
   }
 
   &.salida-card {
-    border-left: 4px solid #10b981;
+    border-left: 4px solid var(--success);
   }
 }
 
@@ -1130,11 +1191,11 @@
   transition: background-color var(--duration-2) var(--ease);
 
   &.checklist-item--completed {
-    background: #ecfdf5;
+    background: var(--success-bg);
     border-color: #a7f3d0;
 
     .checklist-icon {
-      color: #10b981;
+      color: var(--success);
       background: #d1fae5;
     }
 
@@ -1144,12 +1205,12 @@
   }
 
   &.checklist-item--pending {
-    background: #fef2f2;
+    background: var(--error-bg);
     border-color: #fecaca;
 
     .checklist-icon {
       color: #94a3b8;
-      background: #f1f5f9;
+      background: var(--neutral-bg);
     }
 
     .checklist-text {
@@ -1267,7 +1328,7 @@
   height: 24px;
   padding: 0 8px;
   border-radius: 999px;
-  background: var(--brand-500);
+  background: var(--brand-primary);
   color: #fff;
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
@@ -1543,40 +1604,40 @@
 
 /* Variantes (aplica una sola) */
 .toast--info {
-  border-left-color: #0ea5e9;
-  background: linear-gradient(180deg, #e0f2fe, #fff);
+  border-left-color: var(--info);
+  background: linear-gradient(180deg, var(--info-bg), #fff);
 }
 
 .toast--success {
-  border-left-color: #10b981;
-  background: linear-gradient(180deg, #e9fbf4, #fff);
+  border-left-color: var(--success);
+  background: linear-gradient(180deg, var(--success-bg), #fff);
 }
 
 .toast--warn {
-  border-left-color: #f59e0b;
-  background: linear-gradient(180deg, #fef3c7, #fff);
+  border-left-color: var(--warning);
+  background: linear-gradient(180deg, var(--warning-bg), #fff);
 }
 
 .toast--error {
-  border-left-color: #ef4444;
-  background: linear-gradient(180deg, #fee2e2, #fff);
+  border-left-color: var(--error);
+  background: linear-gradient(180deg, var(--error-bg), #fff);
 }
 
 /* Colores del icono por variante */
 .toast--info .toast__icon {
-  background: #0ea5e9;
+  background: var(--info);
 }
 
 .toast--success .toast__icon {
-  background: #10b981;
+  background: var(--success);
 }
 
 .toast--warn .toast__icon {
-  background: #f59e0b;
+  background: var(--warning);
 }
 
 .toast--error .toast__icon {
-  background: #ef4444;
+  background: var(--error);
 }
 
 /* Animaciones */

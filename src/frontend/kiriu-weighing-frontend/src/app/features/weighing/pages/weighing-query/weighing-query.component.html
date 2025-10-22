@@ -209,11 +209,18 @@
                       operation.tipo === "client" ? "CLIENTE" : "PROVEEDOR"
                     }}</span>
                     <div class="hint">
-                      {{ getUnidadLabel(operation.tipoUnidad) }}
+                      <span
+                        class="badge"
+                        [class.orange]="operation.tipoUnidad === 'remolque'"
+                        [class.purple]="operation.tipoUnidad === 'contenedor'"
+                        [class.cyan]="operation.tipoUnidad === 'doble-remolque'"
+                      >
+                        {{ getUnidadLabel(operation.tipoUnidad) }}
+                      </span>
                     </div>
                   </td>
                   <td class="col-peso">
-                    <span *ngIf="operation.pesoBruto" class="badge badge-peso green">
+                    <span *ngIf="operation.pesoBruto" class="badge badge-peso yellow">
                       {{ operation.pesoBruto | number : "1.0-0" }} kg
                     </span>
                     <span *ngIf="!operation.pesoBruto" class="peso-empty"
