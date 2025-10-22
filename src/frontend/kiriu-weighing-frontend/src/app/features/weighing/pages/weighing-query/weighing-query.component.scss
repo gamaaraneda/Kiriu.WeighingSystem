@@ -651,16 +651,20 @@
 
 .edited-row {
   background: rgba(#fef2f2, 0.8) !important;
-  position: relative;
+  height: 68px !important; // Asegurar altura consistente
 
-  &::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: #fef2f2;
+  td {
+    position: relative;
+
+    &:first-child::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #fef2f2;
+    }
   }
 }
 
