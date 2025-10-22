@@ -415,7 +415,7 @@
   tbody td {
     padding: 12px 10px;
     border-bottom: 1px solid #f1f5f9;
-    vertical-align: middle;
+    vertical-align: top;
     color: #334155;
     background: inherit;
     position: relative;
@@ -425,6 +425,7 @@
   tbody tr {
     position: relative;
     z-index: 1;
+    height: 68px; // Altura fija para todas las filas
   }
 
   tbody tr:nth-child(even) {
