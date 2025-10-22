@@ -196,50 +196,53 @@
                   [class.edited-row]="operation.fueEditado"
                 >
                   <td class="col-folio">
-                    <a href="#" class="pill-link" (click)="$event.preventDefault(); onViewDetail(operation)">{{ operation.folio }}</a>
+                    <a href="#" class="folio-link" (click)="$event.preventDefault(); onViewDetail(operation)">
+                      {{ operation.folio }}
+                    </a>
                   </td>
-                  <td class="col-fecha">{{ operation.fecha | date : "dd/MM/yyyy" }}</td>
+                  <td class="col-fecha">
+                    <span class="text-secondary">{{ operation.fecha | date : "dd/MM/yyyy" }}</span>
+                  </td>
                   <td class="col-placas">
-                    <span class="badge gray">{{ operation.placas }}</span>
+                    <span class="text-mono">{{ operation.placas }}</span>
                   </td>
-                  <td class="col-cliente">{{ operation.clienteProveedor }}</td>
-                  <td class="col-producto">{{ operation.producto }}</td>
+                  <td class="col-cliente">
+                    <span class="text-primary">{{ operation.clienteProveedor }}</span>
+                  </td>
+                  <td class="col-producto">
+                    <span class="text-muted">{{ operation.producto }}</span>
+                  </td>
                   <td class="col-tipo">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                      <span class="badge blue">{{
-                        operation.tipo === "client" ? "CLIENTE" : "PROVEEDOR"
-                      }}</span>
+                    <div class="tipo-stack">
                       <span
-                        class="badge"
-                        [class.orange]="operation.tipoUnidad === 'remolque'"
-                        [class.purple]="operation.tipoUnidad === 'contenedor'"
-                        [class.cyan]="operation.tipoUnidad === 'doble-remolque'"
+                        class="tipo-badge"
+                        [class.tipo-cliente]="operation.tipo === 'client'"
+                        [class.tipo-proveedor]="operation.tipo === 'provider'"
                       >
-                        {{ getUnidadLabel(operation.tipoUnidad) }}
+                        {{ operation.tipo === "client" ? "Cliente" : "Proveedor" }}
                       </span>
+                      <span class="unidad-text">{{ getUnidadLabel(operation.tipoUnidad) }}</span>
                     </div>
                   </td>
                   <td class="col-peso">
-                    <span *ngIf="operation.pesoBruto" class="badge badge-peso yellow">
-                      {{ operation.pesoBruto | number : "1.0-0" }} kg
+                    <span *ngIf="operation.pesoBruto" class="peso-value peso-bruto">
+                      {{ operation.pesoBruto | number : "1.0-0" }}
+                      <span class="peso-unit">kg</span>
                     </span>
-                    <span *ngIf="!operation.pesoBruto" class="peso-empty"
-                      >-</span
-                    >
+                    <span *ngIf="!operation.pesoBruto" class="peso-empty">—</span>
                   </td>
                   <td class="col-peso">
-                    <span *ngIf="operation.pesoNeto" class="badge badge-peso green">
-                      {{ operation.pesoNeto | number : "1.0-0" }} kg
+                    <span *ngIf="operation.pesoNeto" class="peso-value peso-neto">
+                      {{ operation.pesoNeto | number : "1.0-0" }}
+                      <span class="peso-unit">kg</span>
                     </span>
-                    <span *ngIf="!operation.pesoNeto" class="peso-empty"
-                      >-</span
-                    >
+                    <span *ngIf="!operation.pesoNeto" class="peso-empty">—</span>
                   </td>
                   <td class="col-estado">
                     <span
-                      class="badge badge-estado"
-                      [class.green]="operation.estado !== 'ENTRADA_REGISTRADA'"
-                      [class.blue]="operation.estado === 'ENTRADA_REGISTRADA'"
+                      class="estado-badge"
+                      [class.estado-entrada]="operation.estado === 'ENTRADA_REGISTRADA'"
+                      [class.estado-salida]="operation.estado === 'SALIDA_REGISTRADA'"
                     >
                       {{ getEstadoLabel(operation.estado) }}
                     </span>
@@ -247,28 +250,38 @@
                   <td class="col-acciones">
                     <div class="actions-group">
                       <button
-                        class="btn-mini"
-                        title="Ver"
+                        class="btn-action"
+                        title="Ver detalles"
                         (click)="onViewDetail(operation)"
                       >
-                        👁
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
                       </button>
                       <button
                         *appHasPermission="'REPORTES.UPDATE'"
-                        class="btn-mini"
+                        class="btn-action"
                         title="Editar pesos"
                         (click)="onEditWeights(operation)"
                         [disabled]="isLoading"
                       >
-                        ✏️
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
                       </button>
                       <button
-                        class="btn-mini"
+                        class="btn-action"
                         title="Reimprimir"
                         (click)="onReprint(operation)"
                         [disabled]="!operation.puedeReimprimir || isLoading"
                       >
-                        🖨
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="6 9 6 2 18 2 18 9"/>
+                          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                          <rect x="6" y="14" width="12" height="8"/>
+                        </svg>
                       </button>
                     </div>
                   </td>

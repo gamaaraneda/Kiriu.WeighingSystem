@@ -397,18 +397,30 @@
   thead th {
     position: sticky;
     top: 0;
-    background: linear-gradient(180deg, var(--brand-primary) 0%, #0034c7 100%);
-    color: var(--brand-light);
-    border-bottom: 2px solid var(--brand-secondary);
+    background: #f8fafc;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
     text-align: left;
-    padding: 12px 10px;
-    font-weight: var(--fw-semibold);
-    font-size: var(--fs-sm);
+    padding: 14px 12px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     z-index: 50;
-    box-shadow: 0 2px 8px rgba(0, 65, 242, 0.2);
+    white-space: nowrap;
+
+    // Línea divisoria entre columnas
+    &:not(:last-child) {
+      border-right: 1px solid #f1f5f9;
+    }
 
     &.col-acciones {
       text-align: center;
+    }
+
+    // Efecto hover sutil
+    &:hover {
+      background: #f1f5f9;
     }
   }
 
@@ -672,6 +684,170 @@
   color: #9ca3af;
   font-style: italic;
   font-weight: normal;
+}
+
+/* ============================================================================
+ * NUEVO DISEÑO DE TABLA - UX/UI MEJORADO
+ * ============================================================================ */
+
+// Estilos de texto con jerarquía
+.text-primary {
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.text-secondary {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+.text-muted {
+  color: #94a3b8;
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+.text-mono {
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+// Link de folio mejorado
+.folio-link {
+  color: var(--brand-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--brand-600);
+    text-decoration: underline;
+  }
+}
+
+// Stack para tipo y unidad
+.tipo-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+// Badge de tipo (Cliente/Proveedor) - más sutil
+.tipo-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+
+  &.tipo-cliente {
+    background: #eff6ff;
+    color: #1e40af;
+    border-left: 2px solid #3b82f6;
+  }
+
+  &.tipo-proveedor {
+    background: #fef3c7;
+    color: #92400e;
+    border-left: 2px solid #f59e0b;
+  }
+}
+
+// Texto de unidad - sin badge, solo texto
+.unidad-text {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+// Valores de peso - tipografía clara
+.peso-value {
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+
+  &.peso-bruto {
+    color: #f59e0b;
+  }
+
+  &.peso-neto {
+    color: #10b981;
+  }
+}
+
+.peso-unit {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+// Badge de estado - minimalista
+.estado-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+
+  &.estado-entrada {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  &.estado-salida {
+    background: #d1fae5;
+    color: #065f46;
+  }
+}
+
+// Botones de acción - iconos SVG limpios
+.btn-action {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 .btn-mini {
