@@ -115,3 +115,20 @@
     height: 300px;
   }
 }
+
+// Estilos específicos para el card de Proveedor (verde lima)
+.choice-card--provider {
+  .p-button {
+    background-color: var(--success);
+    color: #000000;
+    font-weight: 600;
+  }
+
+  &:hover,
+  &:focus {
+    .p-button {
+      background-color: var(--brand-primary);
+      color: var(--brand-light);
+    }
+  }
+}
