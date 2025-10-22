@@ -1573,11 +1573,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     this.showToast('success', 'Operación registrada', message);
     console.log('✅ Toast de éxito enviado desde showSuccessMessage');
 
-    // Esperar 3 segundos para que el usuario vea el mensaje antes de redirigir
+    // Esperar 1.5 segundos para que el usuario vea el mensaje antes de redirigir
     setTimeout(() => {
       console.log('🔄 Redirigiendo desde showSuccessMessage...');
       this.onGoBack();
-    }, 3000);
+    }, 1500);
   }
 
   private markFormGroupTouched(): void {
