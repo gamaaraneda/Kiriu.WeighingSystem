@@ -756,6 +756,12 @@
       text-align: center;
     }
 
+    // Forzar que los botones dentro de weight-section ocupen todo el ancho
+    .btn {
+      display: block !important;
+      width: 100% !important;
+    }
+
     .weight-display {
       text-align: center;
       margin-bottom: 20px;
@@ -1122,21 +1128,31 @@
   }
 
   .weight-actions {
-    display: flex;
-    gap: 12px;
+    display: block;
     margin-bottom: 16px;
+    margin-top: 20px;
 
     .request-weight-btn,
     .capture-weight-btn {
-      flex: 1;
+      width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      padding: 14px 20px;
+      font-size: 16px;
 
       i {
-        font-size: 14px;
+        font-size: 16px;
       }
+    }
+
+    // Botón de ancho completo - forzar con !important
+    .request-weight-btn.full-width,
+    .btn.full-width {
+      width: 100% !important;
+      display: flex !important;
+      max-width: none !important;
     }
   }
 
