@@ -10,22 +10,14 @@
 export const environment = {
   production: true,
 
-  // OPCIÓN 1: URLs relativas (recomendado - se ajustan al dominio actual)
-  apiUrl: '/api',
-  hubUrl: '/hubs',
+  apiUrl: 'http://localhost:5000/KiriuWeighingAPI/api',
+  hubUrl: 'http://localhost:5000/KiriuWeighingAPI/hubs',
 
-  // OPCIÓN 2: URLs absolutas (descomentar y configurar si es necesario)
-  // apiUrl: 'https://tu-servidor-produccion.com/api',
-  // hubUrl: 'https://tu-servidor-produccion.com/hubs',
-
-  // Serial Gateway URL (red local)
   serialGatewayUrl: 'http://192.168.110.91:5080',
 
   apiTimeout: 30000,
 
   cargoCamera: {
-    // IMPORTANTE: Esta URL será visible en el código JavaScript del navegador
-    // Considera mover las credenciales al backend mediante un proxy
     url: 'http://192.168.1.49/ISAPI/Streaming/channels/1/picture',
     username: 'admin',
     password: 'Admin123',

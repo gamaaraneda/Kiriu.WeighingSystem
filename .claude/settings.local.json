@@ -50,7 +50,9 @@
       "Bash(timeout 30 npm start)",
       "Bash(ng serve:*)",
       "Read(//c/Users/Gama/Desktop/**)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(ren:*)",
+      "Bash(move index.csr.html index.html)"
     ],
     "deny": [],
     "ask": []
