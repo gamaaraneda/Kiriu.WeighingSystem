@@ -48,8 +48,8 @@ Console.WriteLine("API starting - Database should be configured manually using t
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// CORS debe ir primero - usar política que permite credenciales
-app.UseCors("AllowAngular");
+// CORS debe ir primero - usar política que permite todos los orígenes (red local)
+app.UseCors("AllowAll");
 
 // Servir archivos estáticos (imágenes de placas)
 app.UseStaticFiles();
@@ -63,8 +63,8 @@ app.UseMiddleware<Kiriu.WeighingSystem.Api.Middleware.GlobalExceptionHandlerMidd
 app.UseMiddleware<Kiriu.WeighingSystem.Api.Middleware.AuditMiddleware>();
 
 // Mapear endpoints - SignalR debe ir con otros endpoints
-app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapControllers().RequireCors("AllowAll");
+app.MapHealthChecks("/health").RequireCors("AllowAll");
 app.MapSignalRHubs();
 
 app.Run();

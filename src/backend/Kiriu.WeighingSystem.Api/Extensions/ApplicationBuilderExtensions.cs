@@ -34,6 +34,6 @@ public static class ApplicationBuilderExtensions
 
     public static void MapSignalRHubs(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapHub<PesoHub>("/hubs/peso");
+        endpoints.MapHub<PesoHub>("/hubs/peso").RequireCors("AllowAll");
     }
 } 
