@@ -175,6 +175,24 @@ public class AnprController : ControllerBase
             var processedEvent = await _applicationService.ProcessAnprEventAsync(anprEvent, imageData, cameraType);
 
             Console.WriteLine($"✅ Evento procesado");
+
+            // Validar que la imagen tenga datos antes de guardar en BD
+            if (imageData == null || imageData.Length == 0)
+            {
+                Console.WriteLine($"⚠️ Petición sin datos de imagen - NO se guardará en BD");
+                _logger.LogWarning(
+                    "Evento ANPR recibido sin imagen de cámara: {CameraType}, Placa: {Plate}",
+                    cameraType,
+                    processedEvent.LicensePlate);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Evento ANPR procesado sin imagen (no guardado en BD)",
+                    hasImage = false
+                });
+            }
+
             Console.WriteLine($"🔄 Guardando imagen en base de datos como huérfana...");
 
             // Guardar imagen en BD como "huérfana" (sin WeighingOperationId)
