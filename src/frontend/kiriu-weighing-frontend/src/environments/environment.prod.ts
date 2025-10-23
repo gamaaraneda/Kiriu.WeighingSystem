@@ -11,8 +11,8 @@ export const environment = {
   production: true,
 
   // Usar la IP del servidor en lugar de localhost para permitir acceso desde red local
-  apiUrl: 'http://192.168.110.91:5000/KiriuWeighingAPI/api',
-  hubUrl: 'http://192.168.110.91:5000/KiriuWeighingAPI/hubs',
+  apiUrl: 'http://172.16.192.25/KiriuWeighingAPI/api',
+  hubUrl: 'http://172.16.192.25/KiriuWeighingAPI/hubs',
 
   serialGatewayUrl: 'http://172.16.193.176:5080',
 
