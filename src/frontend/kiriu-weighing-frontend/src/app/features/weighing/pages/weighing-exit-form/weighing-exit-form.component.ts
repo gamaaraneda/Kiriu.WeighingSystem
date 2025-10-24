@@ -845,15 +845,17 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
                            fieldName === 'remolque2Plate' ? 'remolque 2' : 'vehículo';
 
     try {
-      // Paso 1: Intentar obtener foto huérfana de BD primero (SOLO para doble remolque)
+      // Paso 1: Intentar obtener foto huérfana de BD primero
       const isDoubleTrailer = this.entryData?.tipoUnidad === 'doble-remolque';
-      const shouldSearchDB = isDoubleTrailer && (fieldName === 'remolque1Plate' || fieldName === 'remolque2Plate');
+      // Buscar en BD para: trailerPlate en doble remolque, remolque1Plate y remolque2Plate
+      const shouldSearchDB = isDoubleTrailer && (fieldName === 'trailerPlate' || fieldName === 'remolque1Plate' || fieldName === 'remolque2Plate');
 
       if (shouldSearchDB) {
         console.log(`🔍 [WEIGHING-EXIT-FORM] Buscando foto en BD para photoType: ${fieldName}`);
 
         // Mapear fieldName a photoType para BD
         const photoTypeMap: Record<string, string> = {
+          'trailerPlate': 'trailerPlate',
           'remolque1Plate': 'remolque1Plate',
           'remolque2Plate': 'remolque1Plate' // Buscar en remolque1Plate porque backend guarda todo como remolque1Plate
         };
@@ -880,13 +882,44 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
             console.log(`💾 [WEIGHING-EXIT-FORM] PhotoId de remolque1 guardado: ${this.remolque1PhotoId}`);
           }
 
-          // Actualizar placa en formulario
+          // Actualizar placa en formulario y validar
           if (orphanPhoto.licensePlate) {
             this.exitForm.patchValue({ [fieldName]: orphanPhoto.licensePlate });
             console.log(`🔤 [WEIGHING-EXIT-FORM] Placa de ${plateTypeLabel} actualizada: ${orphanPhoto.licensePlate}`);
-          }
+            console.log(`🔍 [DEBUG] entryData existe:`, !!this.entryData, `fieldName:`, fieldName);
 
-          this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+            // Validar placa contra la entrada (si existe)
+            if (this.entryData) {
+              const expectedPlate = this.getExpectedPlate(fieldName);
+              console.log(`🔍 [DEBUG] expectedPlate para ${fieldName}:`, expectedPlate);
+              const isMatch = orphanPhoto.licensePlate === expectedPlate;
+              console.log(`🔍 [DEBUG] isMatch:`, isMatch, `(${orphanPhoto.licensePlate} === ${expectedPlate})`);
+
+              if (!isMatch && expectedPlate) {
+                // Placa no coincide - marcar error
+                this.plateValidations[fieldName] = {
+                  isValid: false,
+                  errorMessage: `Placa detectada (${orphanPhoto.licensePlate}) no coincide con la entrada (${expectedPlate})`
+                };
+                console.log(`⚠️ [WEIGHING-EXIT-FORM] Placa de BD no coincide: ${orphanPhoto.licensePlate} vs ${expectedPlate}`);
+                this.showToast('warn', 'Placa no coincide', `La placa de BD "${orphanPhoto.licensePlate}" no coincide con la entrada "${expectedPlate}". Puede editar manualmente si es correcto.`);
+              } else {
+                // Placa coincide - marcar válida
+                this.plateValidations[fieldName] = {
+                  isValid: true,
+                  errorMessage: ''
+                };
+                console.log(`✅ [WEIGHING-EXIT-FORM] Placa de BD validada correctamente: ${orphanPhoto.licensePlate}`);
+                this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+              }
+            } else {
+              // No hay entrada, solo mostrar éxito
+              this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+            }
+          } else {
+            // No hay placa en la foto
+            this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+          }
         } else {
           console.log(`ℹ️ [WEIGHING-EXIT-FORM] No se encontró foto huérfana en BD para ${searchPhotoType}`);
         }
@@ -895,8 +928,98 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       // Paso 2: Capturar desde cámara en tiempo real (SignalR)
       this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
 
+      // Iniciar polling a BD cada 3 segundos mientras espera SignalR
+      // Esto captura fotos que lleguen tarde a BD
+      let pollingInterval: any = null;
+      let photoFoundByPolling = false;
+
+      if (shouldSearchDB) {
+        console.log(`🔄 [WEIGHING-EXIT-FORM] Iniciando polling cada 3s mientras espera SignalR...`);
+
+        pollingInterval = setInterval(async () => {
+          try {
+            console.log(`📡 [POLLING-EXIT] Revisando BD para ${fieldName}...`);
+
+            // Determinar photoType y exclusión según el fieldName
+            const photoTypeMap: Record<string, string> = {
+              'trailerPlate': 'trailerPlate',
+              'remolque1Plate': 'remolque1Plate',
+              'remolque2Plate': 'remolque1Plate' // Buscar en remolque1Plate porque backend guarda todo como remolque1Plate
+            };
+
+            let currentSearchPhotoType = photoTypeMap[fieldName];
+            let currentExcludePhotoId = (fieldName === 'remolque2Plate' && this.remolque1PhotoId) ? this.remolque1PhotoId : undefined;
+
+            let polledPhoto = await this.anprService.getLatestOrphanPhoto(currentSearchPhotoType, currentExcludePhotoId).toPromise();
+
+            if (polledPhoto && !photoFoundByPolling) {
+              photoFoundByPolling = true;
+              console.log(`✅ [POLLING-EXIT] Foto encontrada en BD durante polling: ${polledPhoto.photoUrl}`);
+
+              // Guardar la foto
+              this.photoData[fieldName as keyof ExitPhotoData] = polledPhoto.photoUrl;
+
+              // Guardar photoId si es remolque1
+              if (fieldName === 'remolque1Plate') {
+                this.remolque1PhotoId = polledPhoto.photoId;
+                console.log(`💾 [POLLING-EXIT] PhotoId de remolque1 guardado: ${this.remolque1PhotoId}`);
+              }
+
+              // Si viene la placa en la foto, también actualizarla en el formulario y validar
+              if (polledPhoto.licensePlate) {
+                this.exitForm.patchValue({ [fieldName]: polledPhoto.licensePlate });
+                console.log(`🔤 [POLLING-EXIT] Placa de ${plateTypeLabel} actualizada: ${polledPhoto.licensePlate}`);
+
+                // Validar placa contra la entrada (si existe)
+                if (this.entryData) {
+                  const expectedPlate = this.getExpectedPlate(fieldName);
+                  const isMatch = polledPhoto.licensePlate === expectedPlate;
+
+                  if (!isMatch && expectedPlate) {
+                    // Placa no coincide - marcar error
+                    this.plateValidations[fieldName] = {
+                      isValid: false,
+                      errorMessage: `Placa detectada (${polledPhoto.licensePlate}) no coincide con la entrada (${expectedPlate})`
+                    };
+                    console.log(`⚠️ [POLLING-EXIT] Placa no coincide: ${polledPhoto.licensePlate} vs ${expectedPlate}`);
+                    this.showToast('warn', 'Placa no coincide', `La placa encontrada "${polledPhoto.licensePlate}" no coincide con la entrada "${expectedPlate}". Puede editar manualmente si es correcto.`);
+                  } else {
+                    // Placa coincide - marcar válida
+                    this.plateValidations[fieldName] = {
+                      isValid: true,
+                      errorMessage: ''
+                    };
+                    console.log(`✅ [POLLING-EXIT] Placa validada correctamente: ${polledPhoto.licensePlate}`);
+                    this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);
+                  }
+                } else {
+                  // No hay entrada, solo mostrar éxito
+                  this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);
+                }
+              } else {
+                // No hay placa en la foto
+                this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);
+              }
+
+              // No cancelamos SignalR, seguimos esperando por si llega una más reciente
+            }
+          } catch (error) {
+            console.error(`❌ [POLLING-EXIT] Error en polling:`, error);
+          }
+        }, 3000); // Cada 3 segundos
+      }
+
       // Capturar placa con ANPR (30 segundos de timeout)
-      const anprEvent: AnprEvent = await this.anprService.capturePlate(cameraType, 30000);
+      let anprEvent: AnprEvent;
+      try {
+        anprEvent = await this.anprService.capturePlate(cameraType, 30000);
+      } finally {
+        // Limpiar polling cuando termine (éxito o error)
+        if (pollingInterval) {
+          console.log(`🛑 [POLLING-EXIT] Deteniendo polling`);
+          clearInterval(pollingInterval);
+        }
+      }
 
       // Guardar la imagen URL
       this.photoData[fieldName as keyof ExitPhotoData] = anprEvent.imageUrl;
