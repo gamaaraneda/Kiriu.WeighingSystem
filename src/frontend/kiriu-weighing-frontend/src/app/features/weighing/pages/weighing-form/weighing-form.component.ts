@@ -996,6 +996,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         // Buscar en BD para: flujo simple, trailerPlate, remolque1Plate y remolque2Plate
         const shouldSearchDB = !isDoubleTrailer || photoType === 'trailerPlate' || photoType === 'remolque1Plate' || photoType === 'remolque2Plate';
 
+        let orphanPhoto: any = null; // Declarar fuera del bloque para acceso en polling
+
         if (shouldSearchDB) {
           console.log(`🔍 [WEIGHING-FORM] Buscando foto en BD para photoType: ${photoType}`);
 
@@ -1010,7 +1012,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             console.log(`🔄 [WEIGHING-FORM] Buscando remolque2 en remolque1Plate, excluyendo foto de remolque1: ${excludePhotoId}`);
           }
 
-          let orphanPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType, excludePhotoId).toPromise();
+          orphanPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType, excludePhotoId).toPromise();
 
           // Fallback para trailerPlate2: también buscar en remolque1Plate
           // Esto es porque el backend guarda fotos de cámara "remolque" como "remolque1Plate"
@@ -1077,15 +1079,26 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
         // Iniciar polling a BD cada 3 segundos mientras espera SignalR
         // Esto captura fotos que lleguen tarde a BD
+        // SOLO si NO se encontró foto en búsqueda inicial
         let pollingInterval: any = null;
         let photoFoundByPolling = false;
+        let pollingAttempts = 0;
+        const MAX_POLLING_ATTEMPTS = 3;
 
-        if (shouldSearchDB) {
-          console.log(`🔄 [WEIGHING-FORM] Iniciando polling cada 3s mientras espera SignalR...`);
+        if (shouldSearchDB && !orphanPhoto) {
+          console.log(`🔄 [WEIGHING-FORM] Iniciando polling limitado (${MAX_POLLING_ATTEMPTS} intentos) cada 3s mientras espera SignalR...`);
 
           pollingInterval = setInterval(async () => {
             try {
-              console.log(`📡 [POLLING] Revisando BD para ${photoType}...`);
+              pollingAttempts++;
+              console.log(`📡 [POLLING] Intento ${pollingAttempts}/${MAX_POLLING_ATTEMPTS} - Revisando BD para ${photoType}...`);
+
+              // Detener polling después de 3 intentos
+              if (pollingAttempts >= MAX_POLLING_ATTEMPTS) {
+                console.log(`🛑 [POLLING] Límite de intentos alcanzado (${MAX_POLLING_ATTEMPTS}), deteniendo polling`);
+                clearInterval(pollingInterval);
+                return;
+              }
               let polledPhoto = await this.anprService.getLatestOrphanPhoto(photoType).toPromise();
 
               // Fallback para trailerPlate2

@@ -856,6 +856,8 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       const shouldSearchDB = !isDoubleTrailer ||
                             (isDoubleTrailer && (fieldName === 'trailerPlate' || fieldName === 'remolque1Plate' || fieldName === 'remolque2Plate'));
 
+      let orphanPhoto: any = null; // Declarar fuera del bloque para acceso en polling
+
       if (shouldSearchDB) {
         console.log(`🔍 [WEIGHING-EXIT-FORM] Buscando foto en BD para photoType: ${fieldName}`);
 
@@ -876,7 +878,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           console.log(`🔄 [WEIGHING-EXIT-FORM] Buscando remolque2 en remolque1Plate, excluyendo foto de remolque1: ${excludePhotoId}`);
         }
 
-        let orphanPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType, excludePhotoId).toPromise();
+        orphanPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType, excludePhotoId).toPromise();
 
         if (orphanPhoto) {
           console.log(`✅ [WEIGHING-EXIT-FORM] Foto huérfana encontrada en BD:`, orphanPhoto);
@@ -938,15 +940,26 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
 
       // Iniciar polling a BD cada 3 segundos mientras espera SignalR
       // Esto captura fotos que lleguen tarde a BD
+      // SOLO si NO se encontró foto en búsqueda inicial
       let pollingInterval: any = null;
       let photoFoundByPolling = false;
+      let pollingAttempts = 0;
+      const MAX_POLLING_ATTEMPTS = 3;
 
-      if (shouldSearchDB) {
-        console.log(`🔄 [WEIGHING-EXIT-FORM] Iniciando polling cada 3s mientras espera SignalR...`);
+      if (shouldSearchDB && !orphanPhoto) {
+        console.log(`🔄 [WEIGHING-EXIT-FORM] Iniciando polling limitado (${MAX_POLLING_ATTEMPTS} intentos) cada 3s mientras espera SignalR...`);
 
         pollingInterval = setInterval(async () => {
           try {
-            console.log(`📡 [POLLING-EXIT] Revisando BD para ${fieldName}...`);
+            pollingAttempts++;
+            console.log(`📡 [POLLING-EXIT] Intento ${pollingAttempts}/${MAX_POLLING_ATTEMPTS} - Revisando BD para ${fieldName}...`);
+
+            // Detener polling después de 3 intentos
+            if (pollingAttempts >= MAX_POLLING_ATTEMPTS) {
+              console.log(`🛑 [POLLING-EXIT] Límite de intentos alcanzado (${MAX_POLLING_ATTEMPTS}), deteniendo polling`);
+              clearInterval(pollingInterval);
+              return;
+            }
 
             // Determinar photoType y exclusión según el fieldName
             const photoTypeMap: Record<string, string> = {
