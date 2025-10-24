@@ -52,7 +52,9 @@
       "Read(//c/Users/Gama/Desktop/**)",
       "Bash(git reset:*)",
       "Bash(ren:*)",
-      "Bash(move index.csr.html index.html)"
+      "Bash(move index.csr.html index.html)",
+      "Bash(Select-String -Pattern \"error TS\")",
+      "Bash(Select-Object -First 10)"
     ],
     "deny": [],
     "ask": []
