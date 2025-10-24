@@ -210,12 +210,20 @@ export class UsuariosComponent implements OnInit {
             hasData: !!response?.data,
             dataLength: response?.data?.length,
           });
-          this.showToast('error', 'Error', 'Error al cargar la lista de usuarios');
+          this.showToast(
+            'error',
+            'Error',
+            'Error al cargar la lista de usuarios'
+          );
         }
       },
       error: (error) => {
         console.error('Error loading usuarios:', error);
-        this.showToast('error', 'Error', 'Error al cargar la lista de usuarios');
+        this.showToast(
+          'error',
+          'Error',
+          'Error al cargar la lista de usuarios'
+        );
       },
       complete: () => {
         this.isLoading = false;
@@ -504,7 +512,11 @@ export class UsuariosComponent implements OnInit {
           .toPromise();
 
         if (response?.success) {
-          this.showToast('success', 'Éxito', 'Usuario actualizado exitosamente');
+          this.showToast(
+            'success',
+            'Éxito',
+            'Usuario actualizado exitosamente'
+          );
           this.onSearch();
           this.closeModal();
         }
@@ -514,7 +526,7 @@ export class UsuariosComponent implements OnInit {
           nombre: formValue.nombre,
           apellidos: formValue.apellidos,
           email: formValue.email,
-          contrasena: formValue.contrasena,
+          password: formValue.contrasena,
           activo: formValue.activo,
           rolId: formValue.rolId || '',
         };
@@ -541,7 +553,11 @@ export class UsuariosComponent implements OnInit {
       let errorMessage = 'Error al guardar el usuario';
 
       // Priorizar el array de errores sobre el mensaje general
-      if (error?.error?.errors && Array.isArray(error.error.errors) && error.error.errors.length > 0) {
+      if (
+        error?.error?.errors &&
+        Array.isArray(error.error.errors) &&
+        error.error.errors.length > 0
+      ) {
         errorMessage = error.error.errors[0];
       } else if (error?.error?.message) {
         errorMessage = error.error.message;
@@ -633,7 +649,11 @@ export class UsuariosComponent implements OnInit {
             .toPromise();
 
           if (response?.success) {
-            this.showToast('success', 'Éxito', `Usuario ${newStatus ? 'activado' : 'desactivado'} exitosamente`);
+            this.showToast(
+              'success',
+              'Éxito',
+              `Usuario ${newStatus ? 'activado' : 'desactivado'} exitosamente`
+            );
             this.onSearch();
           }
         } catch (error: any) {
@@ -711,7 +731,7 @@ export class UsuariosComponent implements OnInit {
       error: (error) => {
         console.error('Error en logout:', error);
         this.router.navigate(['/login']);
-      }
+      },
     });
   }
 
@@ -801,7 +821,8 @@ export class UsuariosComponent implements OnInit {
     // Auto-remove después de 5 segundos
     setTimeout(() => {
       if (toast.parentElement) {
-        toast.style.animation = 'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
+        toast.style.animation =
+          'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
         setTimeout(() => {
           toast.remove();
         }, 180);

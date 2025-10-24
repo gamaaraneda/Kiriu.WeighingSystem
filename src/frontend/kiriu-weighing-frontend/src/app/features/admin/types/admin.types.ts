@@ -84,7 +84,7 @@ export interface CreateUsuarioRequest {
   email: string;
   rolId: string;
   activo: boolean;
-  contrasena: string;
+  password: string;
 }
 
 export interface UpdateUsuarioRequest {

@@ -343,7 +343,7 @@ public class AdminApplicationService : IAdminApplicationService
             Nombre = request.Nombre,
             Apellidos = request.Apellidos,
             Email = request.Email,
-            PasswordHash = await _passwordService.HashPasswordAsync(request.Password),
+            PasswordHash = await _passwordService.HashPasswordAsync(request.GetPassword()),
             RolId = request.RolId,
             FechaCreacion = DateTime.UtcNow,
             Activo = true

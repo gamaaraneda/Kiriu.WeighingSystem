@@ -38,6 +38,10 @@ public class UsuarioApplicationService : IUsuarioApplicationService
             throw new ValidationException("El ID del rol proporcionado no es válido");
         }
 
+        // Crear el hash de la contraseña
+        var passwordHash = await _passwordService.HashPasswordAsync(request.GetPassword());
+        _logger.LogInformation("🔐 HASH GENERADO para {Email}: {Hash}", request.Email, passwordHash);
+
         // Crear el usuario
         var usuario = new Usuario
         {
@@ -45,7 +49,7 @@ public class UsuarioApplicationService : IUsuarioApplicationService
             Nombre = request.Nombre,
             Apellidos = request.Apellidos,
             Email = request.Email,
-            PasswordHash = await _passwordService.HashPasswordAsync(request.Password),
+            PasswordHash = passwordHash,
             RolId = request.RolId,
             FechaCreacion = DateTime.UtcNow,
             Activo = true

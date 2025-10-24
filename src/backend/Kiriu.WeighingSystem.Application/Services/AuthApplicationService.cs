@@ -30,17 +30,27 @@ public class AuthApplicationService : IAuthApplicationService
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
+        _logger.LogInformation("🔑 Intentando login para: {Email}", request.Email);
+
         var usuario = await _usuarioRepository.GetByEmailAsync(request.Email);
         if (usuario == null)
         {
+            _logger.LogWarning("❌ Usuario no encontrado: {Email}", request.Email);
             throw new UnauthorizedException("Email o contraseña incorrectos");
         }
+
+        _logger.LogInformation("✅ Usuario encontrado: {Email}, ID: {Id}", usuario.Email, usuario.Id);
+        _logger.LogInformation("   Activo: {Activo}", usuario.Activo);
+        _logger.LogInformation("   Hash almacenado: {Hash}...", usuario.PasswordHash?.Substring(0, Math.Min(20, usuario.PasswordHash?.Length ?? 0)));
 
         var isValidPassword = await _authService.ValidatePasswordAsync(request.Password, usuario.PasswordHash);
         if (!isValidPassword)
         {
+            _logger.LogWarning("❌ Contraseña inválida para: {Email}", request.Email);
             throw new UnauthorizedException("Email o contraseña incorrectos");
         }
+
+        _logger.LogInformation("✅ Login exitoso para: {Email}", request.Email);
 
         // Actualizar último acceso
         usuario.UltimoAcceso = DateTime.UtcNow;
