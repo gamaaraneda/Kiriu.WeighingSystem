@@ -1016,8 +1016,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             // Guardar la foto de BD según el tipo
             if (photoType === 'trailerPlate') {
               this.photoData.trailerPlate = orphanPhoto.photoUrl;
+              // Si viene la placa en la foto, también actualizarla en el formulario
+              if (orphanPhoto.licensePlate) {
+                this.weighingForm.patchValue({ trailerPlate: orphanPhoto.licensePlate });
+                console.log(`🔤 [WEIGHING-FORM] Placa actualizada en formulario: ${orphanPhoto.licensePlate}`);
+              }
             } else if (photoType === 'trailerPlate2') {
               this.photoData.trailerPlate2 = orphanPhoto.photoUrl;
+              // Si viene la placa en la foto, también actualizarla en el formulario
+              if (orphanPhoto.licensePlate) {
+                this.weighingForm.patchValue({ trailerPlate2: orphanPhoto.licensePlate });
+                console.log(`🔤 [WEIGHING-FORM] Placa actualizada en formulario: ${orphanPhoto.licensePlate}`);
+              }
             }
 
             this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
@@ -1056,8 +1066,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 // Guardar la foto
                 if (photoType === 'trailerPlate') {
                   this.photoData.trailerPlate = polledPhoto.photoUrl;
+                  // Si viene la placa en la foto, también actualizarla en el formulario
+                  if (polledPhoto.licensePlate) {
+                    this.weighingForm.patchValue({ trailerPlate: polledPhoto.licensePlate });
+                    console.log(`🔤 [POLLING] Placa actualizada en formulario: ${polledPhoto.licensePlate}`);
+                  }
                 } else if (photoType === 'trailerPlate2') {
                   this.photoData.trailerPlate2 = polledPhoto.photoUrl;
+                  // Si viene la placa en la foto, también actualizarla en el formulario
+                  if (polledPhoto.licensePlate) {
+                    this.weighingForm.patchValue({ trailerPlate2: polledPhoto.licensePlate });
+                    console.log(`🔤 [POLLING] Placa actualizada en formulario: ${polledPhoto.licensePlate}`);
+                  }
                 }
 
                 this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);

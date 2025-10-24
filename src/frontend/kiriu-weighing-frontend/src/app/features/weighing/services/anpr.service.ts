@@ -275,7 +275,7 @@ export class AnprService implements OnDestroy {
    * Obtiene la última foto huérfana disponible en BD por tipo de cámara
    * Retorna null si no hay fotos disponibles
    */
-  public getLatestOrphanPhoto(photoType: string): Observable<{ photoUrl: string; photoId: string; createdAt: Date } | null> {
+  public getLatestOrphanPhoto(photoType: string): Observable<{ photoUrl: string; photoId: string; createdAt: Date; licensePlate?: string } | null> {
     console.log(`📦 Buscando última foto huérfana en BD para tipo: ${photoType}`);
 
     return this.http.get<any>(`${environment.apiUrl}/weighing/photos/orphan/latest/${photoType}`)
@@ -283,10 +283,22 @@ export class AnprService implements OnDestroy {
         map(response => {
           if (response.success && response.data) {
             console.log(`✅ Foto huérfana encontrada en BD: ${response.data.photoUrl}`);
+
+            // Extraer placa del campo Description (formato: "Placa ANPR: YKD482KY - Cámara: trailer")
+            let licensePlate: string | undefined;
+            if (response.data.description) {
+              const plateMatch = response.data.description.match(/Placa ANPR:\s*([A-Z0-9]+)/i);
+              if (plateMatch && plateMatch[1]) {
+                licensePlate = plateMatch[1];
+                console.log(`🔍 Placa extraída del Description: ${licensePlate}`);
+              }
+            }
+
             return {
               photoUrl: response.data.photoUrl,
               photoId: response.data.photoId,
-              createdAt: new Date(response.data.createdAt)
+              createdAt: new Date(response.data.createdAt),
+              licensePlate
             };
           }
           return null;

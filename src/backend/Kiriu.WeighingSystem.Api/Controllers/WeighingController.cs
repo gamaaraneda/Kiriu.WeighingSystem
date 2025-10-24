@@ -561,6 +561,7 @@ public class WeighingController : ControllerBase
                     photoUrl = photo.PhotoUrl,
                     createdAt = photo.CreatedAt,
                     photoType = photo.PhotoType,
+                    description = photo.Description,
                     source = "database"
                 }
             });
