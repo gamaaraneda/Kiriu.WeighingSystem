@@ -275,10 +275,18 @@ export class AnprService implements OnDestroy {
    * Obtiene la última foto huérfana disponible en BD por tipo de cámara
    * Retorna null si no hay fotos disponibles
    */
-  public getLatestOrphanPhoto(photoType: string): Observable<{ photoUrl: string; photoId: string; createdAt: Date; licensePlate?: string } | null> {
-    console.log(`📦 Buscando última foto huérfana en BD para tipo: ${photoType}`);
+  public getLatestOrphanPhoto(photoType: string, excludePhotoId?: string): Observable<{ photoUrl: string; photoId: string; createdAt: Date; licensePlate?: string } | null> {
+    if (excludePhotoId) {
+      console.log(`📦 Buscando última foto huérfana en BD para tipo: ${photoType}, excluyendo ID: ${excludePhotoId}`);
+    } else {
+      console.log(`📦 Buscando última foto huérfana en BD para tipo: ${photoType}`);
+    }
 
-    return this.http.get<any>(`${environment.apiUrl}/weighing/photos/orphan/latest/${photoType}`)
+    const url = excludePhotoId
+      ? `${environment.apiUrl}/weighing/photos/orphan/latest/${photoType}?excludePhotoId=${excludePhotoId}`
+      : `${environment.apiUrl}/weighing/photos/orphan/latest/${photoType}`;
+
+    return this.http.get<any>(url)
       .pipe(
         map(response => {
           if (response.success && response.data) {

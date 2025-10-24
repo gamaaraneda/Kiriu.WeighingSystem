@@ -532,13 +532,20 @@ public class WeighingController : ControllerBase
     /// <param name="photoType">Tipo de foto (trailerPlate, remolque1Plate, cargo, etc.)</param>
     /// <returns>Información de la última foto huérfana disponible</returns>
     [HttpGet("photos/orphan/latest/{photoType}")]
-    public async Task<IActionResult> GetLatestOrphanPhoto(string photoType)
+    public async Task<IActionResult> GetLatestOrphanPhoto(string photoType, [FromQuery] Guid? excludePhotoId = null)
     {
         try
         {
-            _logger.LogInformation("Buscando última foto huérfana para tipo: {PhotoType}", photoType);
+            if (excludePhotoId.HasValue)
+            {
+                _logger.LogInformation("Buscando última foto huérfana para tipo: {PhotoType}, excluyendo ID: {ExcludePhotoId}", photoType, excludePhotoId);
+            }
+            else
+            {
+                _logger.LogInformation("Buscando última foto huérfana para tipo: {PhotoType}", photoType);
+            }
 
-            var photo = await _photoRepository.GetLatestOrphanPhotoByTypeAsync(photoType);
+            var photo = await _photoRepository.GetLatestOrphanPhotoByTypeAsync(photoType, excludePhotoId);
 
             if (photo == null)
             {

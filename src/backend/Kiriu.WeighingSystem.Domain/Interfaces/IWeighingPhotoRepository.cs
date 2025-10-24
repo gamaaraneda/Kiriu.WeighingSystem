@@ -18,7 +18,9 @@ public interface IWeighingPhotoRepository
     /// <summary>
     /// Obtiene la última foto huérfana (sin WeighingOperationId) según el tipo
     /// </summary>
-    Task<WeighingPhoto?> GetLatestOrphanPhotoByTypeAsync(string photoType);
+    /// <param name="photoType">Tipo de foto a buscar</param>
+    /// <param name="excludePhotoId">ID de foto a excluir (para doble remolque)</param>
+    Task<WeighingPhoto?> GetLatestOrphanPhotoByTypeAsync(string photoType, Guid? excludePhotoId = null);
 
     /// <summary>
     /// Vincula una foto huérfana con una operación de pesaje

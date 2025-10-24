@@ -62,16 +62,24 @@ public class WeighingPhotoRepository : IWeighingPhotoRepository
             .FirstOrDefaultAsync(p => p.PhotoUrl == photoUrl && p.WeighingOperationId == null);
     }
 
-    public async Task<WeighingPhoto?> GetLatestOrphanPhotoByTypeAsync(string photoType)
+    public async Task<WeighingPhoto?> GetLatestOrphanPhotoByTypeAsync(string photoType, Guid? excludePhotoId = null)
     {
         // Solo buscar fotos recientes para evitar usar fotos viejas
         // El tiempo máximo se configura en appsettings.json (PhotoSettings:OrphanPhotoMaxAgeMinutes)
         var cutoffTime = DateTime.UtcNow.AddMinutes(-_photoSettings.OrphanPhotoMaxAgeMinutes);
 
-        return await _context.WeighingPhotos
+        var query = _context.WeighingPhotos
             .Where(p => p.PhotoType == photoType
                      && p.WeighingOperationId == null
-                     && p.CreatedAt >= cutoffTime)
+                     && p.CreatedAt >= cutoffTime);
+
+        // Excluir foto específica (usado en doble remolque para obtener remolque2 sin duplicar remolque1)
+        if (excludePhotoId.HasValue)
+        {
+            query = query.Where(p => p.Id != excludePhotoId.Value);
+        }
+
+        return await query
             .OrderByDescending(p => p.CreatedAt)
             .FirstOrDefaultAsync();
     }

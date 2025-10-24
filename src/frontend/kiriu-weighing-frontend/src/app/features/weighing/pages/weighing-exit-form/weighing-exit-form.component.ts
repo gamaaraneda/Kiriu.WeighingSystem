@@ -98,6 +98,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       remolque2Plate: { isValid: true, errorMessage: '' },
     };
 
+  // PhotoId de remolque1 (doble remolque) - usado para excluir al buscar remolque2
+  private remolque1PhotoId: string | null = null;
+
   // Datos de la entrada encontrada
   entryData: EntrySearchData | null = null;
   isEntryFound = false;

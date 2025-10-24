@@ -96,6 +96,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     remolque2Plate: false,
   };
 
+  // PhotoId de remolque1 (doble remolque) - usado para excluir al buscar remolque2
+  private remolque1PhotoId: string | null = null;
+
   // Estado para doble remolque
   doubleTrailerState: DoubleTrailerWeighingState = {
     currentStep: 'trailer',
@@ -989,13 +992,25 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                                photoType === 'remolque1Plate' ? 'remolque 1' : 'remolque 2';
 
         // Paso 1: Intentar obtener foto huérfana de BD primero
-        // SOLO para flujo simple o placa de tráiler (evitar confusión en doble remolque)
         const isDoubleTrailer = this.weighingForm.get('doubleTrailer')?.value;
-        const shouldSearchDB = !isDoubleTrailer || photoType === 'trailerPlate';
+        // Buscar en BD para: flujo simple, trailerPlate, remolque1Plate y remolque2Plate
+        const shouldSearchDB = !isDoubleTrailer || photoType === 'trailerPlate' || photoType === 'remolque1Plate' || photoType === 'remolque2Plate';
 
         if (shouldSearchDB) {
           console.log(`🔍 [WEIGHING-FORM] Buscando foto en BD para photoType: ${photoType}`);
-          let orphanPhoto = await this.anprService.getLatestOrphanPhoto(photoType).toPromise();
+
+          // Si es remolque2Plate en doble remolque, buscar en remolque1Plate excluyendo la foto de remolque1
+          // Esto es porque el backend siempre guarda fotos de cámara "remolque" como "remolque1Plate"
+          let searchPhotoType = photoType;
+          let excludePhotoId: string | undefined = undefined;
+
+          if (isDoubleTrailer && photoType === 'remolque2Plate' && this.remolque1PhotoId) {
+            searchPhotoType = 'remolque1Plate'; // Buscar en remolque1Plate
+            excludePhotoId = this.remolque1PhotoId; // Excluir la foto ya usada para remolque1
+            console.log(`🔄 [WEIGHING-FORM] Buscando remolque2 en remolque1Plate, excluyendo foto de remolque1: ${excludePhotoId}`);
+          }
+
+          let orphanPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType, excludePhotoId).toPromise();
 
           // Fallback para trailerPlate2: también buscar en remolque1Plate
           // Esto es porque el backend guarda fotos de cámara "remolque" como "remolque1Plate"
@@ -1027,6 +1042,25 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
               if (orphanPhoto.licensePlate) {
                 this.weighingForm.patchValue({ trailerPlate2: orphanPhoto.licensePlate });
                 console.log(`🔤 [WEIGHING-FORM] Placa actualizada en formulario: ${orphanPhoto.licensePlate}`);
+              }
+            } else if (photoType === 'remolque1Plate') {
+              // DOBLE REMOLQUE: Guardar foto de remolque 1
+              this.photoData.remolque1Plate = orphanPhoto.photoUrl;
+              // Guardar photoId para excluirlo al buscar remolque2
+              this.remolque1PhotoId = orphanPhoto.photoId;
+              console.log(`💾 [WEIGHING-FORM] PhotoId de remolque1 guardado: ${this.remolque1PhotoId}`);
+              // Actualizar placa en formulario
+              if (orphanPhoto.licensePlate) {
+                this.weighingForm.patchValue({ remolque1Plate: orphanPhoto.licensePlate });
+                console.log(`🔤 [WEIGHING-FORM] Placa de remolque1 actualizada: ${orphanPhoto.licensePlate}`);
+              }
+            } else if (photoType === 'remolque2Plate') {
+              // DOBLE REMOLQUE: Guardar foto de remolque 2
+              this.photoData.remolque2Plate = orphanPhoto.photoUrl;
+              // Actualizar placa en formulario
+              if (orphanPhoto.licensePlate) {
+                this.weighingForm.patchValue({ remolque2Plate: orphanPhoto.licensePlate });
+                console.log(`🔤 [WEIGHING-FORM] Placa de remolque2 actualizada: ${orphanPhoto.licensePlate}`);
               }
             }
 
