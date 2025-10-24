@@ -1,17 +1,21 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Kiriu.WeighingSystem.Domain.Entities;
 using Kiriu.WeighingSystem.Domain.Interfaces;
 using Kiriu.WeighingSystem.Infrastructure.Data;
+using Kiriu.WeighingSystem.Infrastructure.Configuration;
 
 namespace Kiriu.WeighingSystem.Infrastructure.Repositories;
 
 public class WeighingPhotoRepository : IWeighingPhotoRepository
 {
     private readonly WeighingDbContext _context;
+    private readonly PhotoSettings _photoSettings;
 
-    public WeighingPhotoRepository(WeighingDbContext context)
+    public WeighingPhotoRepository(WeighingDbContext context, IOptions<PhotoSettings> photoSettings)
     {
         _context = context;
+        _photoSettings = photoSettings.Value;
     }
 
     public async Task<WeighingPhoto?> GetByIdAsync(Guid id)
@@ -60,8 +64,9 @@ public class WeighingPhotoRepository : IWeighingPhotoRepository
 
     public async Task<WeighingPhoto?> GetLatestOrphanPhotoByTypeAsync(string photoType)
     {
-        // Solo buscar fotos de los últimos 10 minutos para evitar usar fotos viejas
-        var cutoffTime = DateTime.UtcNow.AddMinutes(-10);
+        // Solo buscar fotos recientes para evitar usar fotos viejas
+        // El tiempo máximo se configura en appsettings.json (PhotoSettings:OrphanPhotoMaxAgeMinutes)
+        var cutoffTime = DateTime.UtcNow.AddMinutes(-_photoSettings.OrphanPhotoMaxAgeMinutes);
 
         return await _context.WeighingPhotos
             .Where(p => p.PhotoType == photoType

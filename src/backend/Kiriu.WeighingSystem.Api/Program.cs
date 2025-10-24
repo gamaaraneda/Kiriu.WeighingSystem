@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Kiriu.WeighingSystem.Api.Converters;
 using Kiriu.WeighingSystem.Api.Extensions;
 using Kiriu.WeighingSystem.Infrastructure.Data;
+using Kiriu.WeighingSystem.Infrastructure.Configuration;
 
 // Configuración de cultura para soporte de globalización
 // AppContext.SetData("System.Globalization.Invariant", true); // Comentado para permitir culturas
@@ -13,6 +14,9 @@ Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Settings from appsettings.json
+builder.Services.Configure<PhotoSettings>(builder.Configuration.GetSection("PhotoSettings"));
 
 // Configure Services
 builder.Services
