@@ -85,16 +85,21 @@ export interface DoubleTrailerExitState {
     placa: string;
     pesoTara: number;
     fotoCargaCapturada: boolean;
+    pesoSalida?: number;
+    pesoSalidaCapturado?: boolean;
   };
   remolque2: {
     numero: number;
     placa: string;
     pesoTara: number;
     fotoCargaCapturada: boolean;
+    pesoSalida?: number;
+    pesoSalidaCapturado?: boolean;
   };
   isComplete: boolean;
   pesoBrutoTotal: number;
   pesoNetoCalculado: number;
+  pesoSalidaTotal?: number;
 }
 
 // Tipo para la respuesta de búsqueda de entrada

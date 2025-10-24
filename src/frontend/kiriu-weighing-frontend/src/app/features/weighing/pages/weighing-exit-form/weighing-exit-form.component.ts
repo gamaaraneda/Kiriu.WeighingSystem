@@ -719,12 +719,15 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       });
 
       // Actualizar estado de doble remolque
+      this.doubleTrailerState.currentStep = 'remolque1'; // Iniciar en remolque1 para captura de peso
       this.doubleTrailerState.trailerPlaca = this.entryData.placaTrailer || '';
       this.doubleTrailerState.remolque1.placa =
         this.entryData.placaRemolque1 || '';
       this.doubleTrailerState.remolque2.placa =
         this.entryData.placaRemolque2 || '';
       this.doubleTrailerState.pesoBrutoTotal = this.getDoubleTrailerExitWeight();
+
+      console.log('🔄 [EXIT] Estado de doble remolque inicializado - currentStep:', this.doubleTrailerState.currentStep);
 
       // Actualizar validaciones de placas
       this.updatePlateValidationsAfterLoad();
@@ -1177,17 +1180,23 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         this.weightData.capturedAt = new Date();
         this.currentWeightCaptureType = 'Salida';
 
-        // Registrar el peso en el formulario
-        this.exitForm.get('exitWeight')?.setValue(pesoData.peso);
-        this.calculateNetWeight();
-
         console.log('Peso capturado automáticamente:', this.weightData.capturedWeight);
 
-        this.showToast(
-          'success',
-          'Peso capturado',
-          `Peso de salida capturado: ${pesoData.peso.toFixed(2)} kg`
-        );
+        // Si es doble remolque, procesar el peso según el paso actual
+        const isDoubleTrailer = this.entryData?.tipoUnidad === 'doble-remolque';
+        if (isDoubleTrailer) {
+          this.processDoubleTrailerWeight();
+        } else {
+          // Flujo normal (remolque único o contenedor)
+          this.exitForm.get('exitWeight')?.setValue(pesoData.peso);
+          this.calculateNetWeight();
+
+          this.showToast(
+            'success',
+            'Peso capturado',
+            `Peso de salida capturado: ${pesoData.peso.toFixed(2)} kg`
+          );
+        }
       },
       error: (error) => {
         console.error('Error al solicitar peso desde SerialGateway:', error);
@@ -1203,6 +1212,63 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         this.showToast('error', 'Error al solicitar peso', errorMessage);
       }
     });
+  }
+
+  /**
+   * Procesa el peso capturado para el flujo de doble remolque
+   */
+  private processDoubleTrailerWeight(): void {
+    if (!this.weightData.capturedWeight) return;
+
+    console.log('🔍 [EXIT] processDoubleTrailerWeight - currentStep:', this.doubleTrailerState.currentStep);
+    console.log('🔍 [EXIT] doubleTrailerState completo:', this.doubleTrailerState);
+
+    switch (this.doubleTrailerState.currentStep) {
+      case 'remolque1':
+        // Capturar peso del remolque 1 en salida
+        this.doubleTrailerState.remolque1.pesoSalida = this.weightData.capturedWeight;
+        this.doubleTrailerState.remolque1.pesoSalidaCapturado = true;
+
+        // Actualizar el campo del formulario para que se muestre en el HTML
+        this.exitForm.get('pesoTaraRemolque1')?.setValue(this.weightData.capturedWeight);
+
+        console.log('✅ [EXIT] Peso de salida del remolque 1 capturado:', this.weightData.capturedWeight);
+
+        this.showToast('success', 'Peso capturado', `Peso de salida del remolque 1: ${this.weightData.capturedWeight} kg. Ahora suba el segundo remolque.`);
+
+        // Avanzar al siguiente paso
+        this.doubleTrailerState.currentStep = 'remolque2';
+        break;
+
+      case 'remolque2':
+        // Capturar peso del remolque 2 en salida
+        console.log('✅ [EXIT] Capturando peso de salida del remolque 2:', this.weightData.capturedWeight);
+        this.doubleTrailerState.remolque2.pesoSalida = this.weightData.capturedWeight;
+        this.doubleTrailerState.remolque2.pesoSalidaCapturado = true;
+
+        // Actualizar el campo del formulario para que se muestre en el HTML
+        this.exitForm.get('pesoTaraRemolque2')?.setValue(this.weightData.capturedWeight);
+
+        // Calcular peso total de salida
+        this.doubleTrailerState.pesoSalidaTotal =
+          (this.doubleTrailerState.remolque1.pesoSalida || 0) +
+          (this.doubleTrailerState.remolque2.pesoSalida || 0);
+
+        console.log('✅ [EXIT] Peso total de salida calculado:', this.doubleTrailerState.pesoSalidaTotal);
+
+        // Asignar el peso total al formulario
+        this.exitForm.get('exitWeight')?.setValue(this.doubleTrailerState.pesoSalidaTotal);
+        this.calculateNetWeight();
+
+        this.showToast('success', 'Peso capturado', `Peso total de salida: ${this.doubleTrailerState.pesoSalidaTotal} kg`);
+
+        this.doubleTrailerState.currentStep = 'complete';
+        this.doubleTrailerState.isComplete = true;
+        break;
+
+      default:
+        console.warn('⚠️ [EXIT] Paso no reconocido:', this.doubleTrailerState.currentStep);
+    }
   }
 
   /**
