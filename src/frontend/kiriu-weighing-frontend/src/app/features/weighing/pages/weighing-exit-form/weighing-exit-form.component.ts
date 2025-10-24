@@ -1285,10 +1285,13 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Limpia el formulario
+   * Limpia el formulario completamente y resetea toda la vista al estado inicial
    */
   onClear(): void {
+    // Resetear formulario
     this.exitForm.reset();
+
+    // Resetear datos de fotos
     this.photoData = {
       trailerPlate: '',
       trailerPlate2: '',
@@ -1299,7 +1302,76 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       cargoRemolque1: '',
       cargoRemolque2: '',
     };
-    this.showToast('info', 'Formulario limpiado', 'Los datos del formulario han sido limpiados');
+
+    // Resetear placas detectadas
+    this.detectedPlates = {
+      trailerPlate: '',
+      trailerPlate2: '',
+      containerPlate: '',
+      remolque1Plate: '',
+      remolque2Plate: '',
+    };
+
+    // Resetear validaciones de placas
+    this.plateValidations = {
+      trailerPlate: { isValid: true, errorMessage: '' },
+      trailerPlate2: { isValid: true, errorMessage: '' },
+      containerPlate: { isValid: true, errorMessage: '' },
+      remolque1Plate: { isValid: true, errorMessage: '' },
+      remolque2Plate: { isValid: true, errorMessage: '' },
+    };
+
+    // Resetear edición manual
+    this.manualEditEnabled = {
+      trailerPlate: false,
+      trailerPlate2: false,
+      containerPlate: false,
+      remolque1Plate: false,
+      remolque2Plate: false,
+    };
+
+    // Resetear estado de doble remolque
+    this.doubleTrailerState = {
+      currentStep: 'trailer',
+      trailerPlaca: '',
+      remolque1: {
+        numero: 1,
+        placa: '',
+        pesoTara: 0,
+        fotoCargaCapturada: false,
+      },
+      remolque2: {
+        numero: 2,
+        placa: '',
+        pesoTara: 0,
+        fotoCargaCapturada: false,
+      },
+      isComplete: false,
+      pesoBrutoTotal: 0,
+      pesoNetoCalculado: 0,
+    };
+
+    // Resetear datos de entrada
+    this.entryData = null;
+    this.isEntryFound = false;
+    this.entryFolio = '';
+    this.isExitRegistered = false;
+    this.remolque1PhotoId = null;
+
+    // Resetear búsqueda y carga
+    this.isSearching = false;
+    this.isLoading = false;
+    this.loadingWeight = false;
+    this.currentWeightCaptureType = null;
+
+    // Resetear sugerencias de búsqueda
+    this.entrySuggestions = [];
+    this.showEntrySuggestions = false;
+
+    // Forzar detección de cambios
+    this.cdr.detectChanges();
+
+    this.showToast('info', 'Formulario limpiado', 'La vista ha sido restablecida completamente');
   }
 
   /**
