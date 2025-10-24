@@ -847,8 +847,11 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     try {
       // Paso 1: Intentar obtener foto huérfana de BD primero
       const isDoubleTrailer = this.entryData?.tipoUnidad === 'doble-remolque';
-      // Buscar en BD para: trailerPlate en doble remolque, remolque1Plate y remolque2Plate
-      const shouldSearchDB = isDoubleTrailer && (fieldName === 'trailerPlate' || fieldName === 'remolque1Plate' || fieldName === 'remolque2Plate');
+      // Buscar en BD para:
+      // - Flujo de remolque único o contenedor: SIEMPRE buscar (trailerPlate, trailerPlate2, containerPlate)
+      // - Flujo doble remolque: SOLO para trailerPlate, remolque1Plate y remolque2Plate
+      const shouldSearchDB = !isDoubleTrailer ||
+                            (isDoubleTrailer && (fieldName === 'trailerPlate' || fieldName === 'remolque1Plate' || fieldName === 'remolque2Plate'));
 
       if (shouldSearchDB) {
         console.log(`🔍 [WEIGHING-EXIT-FORM] Buscando foto en BD para photoType: ${fieldName}`);
@@ -856,8 +859,10 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         // Mapear fieldName a photoType para BD
         const photoTypeMap: Record<string, string> = {
           'trailerPlate': 'trailerPlate',
-          'remolque1Plate': 'remolque1Plate',
-          'remolque2Plate': 'remolque1Plate' // Buscar en remolque1Plate porque backend guarda todo como remolque1Plate
+          'trailerPlate2': 'remolque1Plate', // Flujo remolque único - buscar en remolque1Plate
+          'containerPlate': 'trailerPlate',   // Flujo solo contenedor - buscar en trailerPlate
+          'remolque1Plate': 'remolque1Plate', // Flujo doble remolque
+          'remolque2Plate': 'remolque1Plate'  // Flujo doble remolque - buscar en remolque1Plate porque backend guarda todo como remolque1Plate
         };
 
         let searchPhotoType = photoTypeMap[fieldName];
@@ -943,8 +948,10 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
             // Determinar photoType y exclusión según el fieldName
             const photoTypeMap: Record<string, string> = {
               'trailerPlate': 'trailerPlate',
-              'remolque1Plate': 'remolque1Plate',
-              'remolque2Plate': 'remolque1Plate' // Buscar en remolque1Plate porque backend guarda todo como remolque1Plate
+              'trailerPlate2': 'remolque1Plate', // Flujo remolque único - buscar en remolque1Plate
+              'containerPlate': 'trailerPlate',   // Flujo solo contenedor - buscar en trailerPlate
+              'remolque1Plate': 'remolque1Plate', // Flujo doble remolque
+              'remolque2Plate': 'remolque1Plate'  // Flujo doble remolque - buscar en remolque1Plate porque backend guarda todo como remolque1Plate
             };
 
             let currentSearchPhotoType = photoTypeMap[fieldName];
