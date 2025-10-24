@@ -261,12 +261,8 @@ public class WeighingApplicationService : IWeighingApplicationService
             entry.ExitDate = request.FechaSalida;
             entry.UpdatedAt = DateTime.UtcNow;
 
-            // Add exit photos
-            var exitPhotos = CreateExitPhotosFromRequest(entry.Id, request.Fotos);
-            foreach (var photo in exitPhotos)
-            {
-                entry.Photos.Add(photo);
-            }
+            // Add exit photos - usar el mismo motor que entrada
+            await ProcessExitPhotosFromRequestAsync(entry.Id, request.Fotos);
 
             Console.WriteLine($"[CreateExitAsync] About to update - Folio: {entry.Folio}, New Status: {entry.Status}");
             
@@ -330,14 +326,10 @@ public class WeighingApplicationService : IWeighingApplicationService
             entry.ExitDate = request.FechaSalida;
             entry.UpdatedAt = DateTime.UtcNow;
 
-            // Vincular fotos ANPR huérfanas del request.Fotos
+            // Vincular fotos ANPR huérfanas del request.Fotos - usar el mismo motor que entrada
             if (request.Fotos != null)
             {
-                var exitPhotos = CreateDoubleTrailerExitPhotosFromRequest(entry.Id, request.Fotos);
-                foreach (var photo in exitPhotos)
-                {
-                    entry.Photos.Add(photo);
-                }
+                await ProcessDoubleTrailerExitPhotosFromRequestAsync(entry.Id, request.Fotos);
             }
 
             await _weighingRepository.UpdateAsync(entry);
@@ -532,6 +524,25 @@ public class WeighingApplicationService : IWeighingApplicationService
         _logger.LogInformation("Finalizado procesamiento de fotos para doble remolque - OperationId: {OperationId}", operationId);
     }
 
+    private async Task ProcessExitPhotosFromRequestAsync(Guid operationId, ExitPhotoDataDto photos)
+    {
+        // Usar el mismo motor que entrada para vincular fotos
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate");
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate2, "trailerPlate2");
+        await ProcessPhotoFieldAsync(operationId, photos.CargoState, "cargoExit");
+        await ProcessPhotoFieldAsync(operationId, photos.ContainerPlate, "containerPlate");
+    }
+
+    private async Task ProcessDoubleTrailerExitPhotosFromRequestAsync(Guid operationId, DoubleTrailerExitPhotoDataDto photos)
+    {
+        // Usar el mismo motor que entrada para vincular fotos
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate");
+        await ProcessPhotoFieldAsync(operationId, photos.Remolque1Plate, "remolque1Plate");
+        await ProcessPhotoFieldAsync(operationId, photos.Remolque2Plate, "remolque2Plate");
+        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque1, "cargoRemolque1");
+        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque2, "cargoRemolque2");
+    }
+
     private async Task ProcessPhotoFieldAsync(Guid operationId, string? photoUrl, string photoType)
     {
         // Solo procesar si es una URL de API (foto ANPR guardada en BD)
@@ -543,9 +554,28 @@ public class WeighingApplicationService : IWeighingApplicationService
 
         try
         {
-            _logger.LogInformation("Buscando foto huérfana con URL: {PhotoUrl} para tipo: {PhotoType}", photoUrl, photoType);
+            WeighingPhoto? orphanPhoto = null;
 
-            var orphanPhoto = await _photoRepository.GetOrphanPhotoByUrlAsync(photoUrl);
+            // Paso 1: Intentar buscar por URL exacta
+            _logger.LogInformation("Buscando foto huérfana con URL: {PhotoUrl} para tipo: {PhotoType}", photoUrl, photoType);
+            orphanPhoto = await _photoRepository.GetOrphanPhotoByUrlAsync(photoUrl);
+
+            // Paso 2: Si no se encontró por URL, buscar la última huérfana por tipo (fallback)
+            if (orphanPhoto == null)
+            {
+                _logger.LogWarning("⚠️ No se encontró foto huérfana con URL: {PhotoUrl}", photoUrl);
+                _logger.LogInformation("🔄 Buscando última foto huérfana por tipo: {PhotoType}", photoType);
+
+                orphanPhoto = await _photoRepository.GetLatestOrphanPhotoByTypeAsync(photoType);
+
+                if (orphanPhoto != null)
+                {
+                    _logger.LogInformation("✅ Foto huérfana encontrada por tipo (fallback): {PhotoId}, CreatedAt: {CreatedAt}",
+                        orphanPhoto.Id, orphanPhoto.CreatedAt);
+                }
+            }
+
+            // Vincular la foto si se encontró (ya sea por URL o por tipo)
             if (orphanPhoto != null)
             {
                 await _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId);
@@ -554,195 +584,13 @@ public class WeighingApplicationService : IWeighingApplicationService
             }
             else
             {
-                _logger.LogWarning("❌ No se encontró foto huérfana con URL: {PhotoUrl} para tipo: {PhotoType}", photoUrl, photoType);
+                _logger.LogWarning("❌ No se encontró foto huérfana para tipo: {PhotoType} (ni por URL ni por tipo)", photoType);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al vincular foto huérfana {PhotoType} con URL {PhotoUrl}, se omitirá", photoType, photoUrl);
         }
-    }
-
-    private List<WeighingPhoto> CreateExitPhotosFromRequest(Guid operationId, ExitPhotoDataDto photos)
-    {
-        var photoList = new List<WeighingPhoto>();
-
-        // Solo procesar fotos si son URLs de API (fotos ANPR guardadas)
-        // Ignorar marcadores como "Foto capturada" o "MOCK_CAPTURED" que no son URLs
-
-        // Vincular foto de placa del tráiler
-        if (!string.IsNullOrEmpty(photos.TrailerPlate) && photos.TrailerPlate.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.TrailerPlate).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana trailerPlate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana trailerPlate, se omitirá");
-            }
-        }
-
-        // Vincular foto de placa del remolque
-        if (!string.IsNullOrEmpty(photos.TrailerPlate2) && photos.TrailerPlate2.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.TrailerPlate2).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana trailerPlate2 vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana trailerPlate2, se omitirá");
-            }
-        }
-
-        // Vincular foto de estado de carga
-        if (!string.IsNullOrEmpty(photos.CargoState) && photos.CargoState.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.CargoState).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana cargoState vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana cargoState, se omitirá");
-            }
-        }
-
-        // Vincular foto de placa del contenedor (si aplica)
-        if (!string.IsNullOrEmpty(photos.ContainerPlate) && photos.ContainerPlate.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.ContainerPlate).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana containerPlate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana containerPlate, se omitirá");
-            }
-        }
-
-        return photoList;
-    }
-
-    private List<WeighingPhoto> CreateDoubleTrailerExitPhotosFromRequest(Guid operationId, DoubleTrailerExitPhotoDataDto photos)
-    {
-        var photoList = new List<WeighingPhoto>();
-
-        // Solo procesar fotos si son URLs de API (fotos ANPR guardadas)
-        // Ignorar marcadores como "Foto capturada" o "MOCK_CAPTURED" que no son URLs
-
-        // Vincular foto de placa del tráiler
-        if (!string.IsNullOrEmpty(photos.TrailerPlate) && photos.TrailerPlate.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.TrailerPlate).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana trailerPlate (doble remolque) vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana trailerPlate (doble remolque), se omitirá");
-            }
-        }
-
-        // Vincular foto de placa del remolque 1
-        if (!string.IsNullOrEmpty(photos.Remolque1Plate) && photos.Remolque1Plate.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.Remolque1Plate).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana remolque1Plate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana remolque1Plate, se omitirá");
-            }
-        }
-
-        // Vincular foto de placa del remolque 2
-        if (!string.IsNullOrEmpty(photos.Remolque2Plate) && photos.Remolque2Plate.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.Remolque2Plate).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana remolque2Plate vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana remolque2Plate, se omitirá");
-            }
-        }
-
-        // Vincular foto de carga del remolque 1
-        if (!string.IsNullOrEmpty(photos.CargoRemolque1) && photos.CargoRemolque1.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.CargoRemolque1).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana cargoRemolque1 vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana cargoRemolque1, se omitirá");
-            }
-        }
-
-        // Vincular foto de carga del remolque 2
-        if (!string.IsNullOrEmpty(photos.CargoRemolque2) && photos.CargoRemolque2.StartsWith("/api/"))
-        {
-            try
-            {
-                var orphanPhoto = _photoRepository.GetOrphanPhotoByUrlAsync(photos.CargoRemolque2).Result;
-                if (orphanPhoto != null)
-                {
-                    _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId).Wait();
-                    _logger.LogInformation("Foto huérfana cargoRemolque2 vinculada: {PhotoId} -> {OperationId}", orphanPhoto.Id, operationId);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Error al vincular foto huérfana cargoRemolque2, se omitirá");
-            }
-        }
-
-        return photoList;
     }
 
     private EntryPhotosDto CreateEntryPhotosDto(ICollection<WeighingPhoto> photos)

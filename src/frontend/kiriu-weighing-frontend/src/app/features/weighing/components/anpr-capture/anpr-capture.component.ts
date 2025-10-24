@@ -6,7 +6,7 @@ import { ImageModule } from 'primeng/image';
 import { TooltipModule } from 'primeng/tooltip';
 import { AnprService, AnprEvent } from '../../services/anpr.service';
 import { MessageService } from 'primeng/api';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-anpr-capture',
@@ -55,7 +55,7 @@ export class AnprCaptureComponent implements OnInit, OnDestroy {
   }
 
   async onCapture(): Promise<void> {
-    if (this.disabled || this.isCapturing || !this.isConnected) {
+    if (this.disabled || this.isCapturing) {
       return;
     }
 
@@ -65,7 +65,68 @@ export class AnprCaptureComponent implements OnInit, OnDestroy {
     this.confidenceLevel = 0;
 
     try {
-      // Mostrar mensaje de inicio
+      // Paso 1: SIEMPRE intentar obtener foto huérfana de BD primero (no requiere SignalR)
+      const photoTypeMap: Record<string, string> = {
+        'trailer': 'trailerPlate',
+        'remolque': 'remolque1Plate',
+        'cargo': 'cargo'
+      };
+      const photoType = photoTypeMap[this.cameraType] || 'trailerPlate';
+
+      console.log(`🔍 [ANPR-CAPTURE] Iniciando búsqueda en BD...`);
+      console.log(`🔍 [ANPR-CAPTURE] CameraType: ${this.cameraType}`);
+      console.log(`🔍 [ANPR-CAPTURE] PhotoType mapeado: ${photoType}`);
+
+      const orphanPhoto = await firstValueFrom(
+        this.anprService.getLatestOrphanPhoto(photoType)
+      );
+
+      console.log(`🔍 [ANPR-CAPTURE] Resultado de BD:`, orphanPhoto);
+
+      if (orphanPhoto) {
+        // Foto encontrada en BD - mostrarla inmediatamente
+        console.log(`✅ Foto encontrada en BD: ${orphanPhoto.photoUrl}`);
+        this.capturedImageUrl = orphanPhoto.photoUrl;
+        this.confidenceLevel = 0; // No tenemos nivel de confianza de BD
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Foto obtenida',
+          detail: 'Foto obtenida de base de datos. Esperando nueva captura...',
+          life: 3000
+        });
+
+        // Emitir evento con la foto de BD (sin placa, solo imagen)
+        const dbEvent: AnprEvent = {
+          licensePlate: '', // Sin placa de BD
+          cameraType: this.cameraType,
+          imageUrl: orphanPhoto.photoUrl,
+          confidenceLevel: 0,
+          direction: '',
+          cameraName: '',
+          capturedAt: orphanPhoto.createdAt
+        };
+
+        this.plateCaptured.emit(dbEvent);
+      } else {
+        console.log(`ℹ️ No hay fotos disponibles en BD para tipo: ${photoType}`);
+      }
+
+      // Paso 2: Solo continuar con SignalR si está conectado
+      if (!this.isConnected) {
+        console.log(`⚠️ SignalR no conectado - no se esperará nueva captura`);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'SignalR desconectado',
+          detail: orphanPhoto
+            ? 'Foto obtenida de BD. SignalR no disponible para nueva captura.'
+            : 'No hay fotos disponibles y SignalR no está conectado.',
+          life: 5000
+        });
+        return;
+      }
+
+      // SignalR conectado - esperar nueva captura que reemplazará la de BD si existía
       this.messageService.add({
         severity: 'info',
         summary: 'Esperando lectura',
@@ -73,13 +134,14 @@ export class AnprCaptureComponent implements OnInit, OnDestroy {
         life: this.timeoutSeconds * 1000
       });
 
-      // Iniciar captura con timeout
+      console.log(`⏳ Esperando evento SignalR...`);
       const anprEvent = await this.anprService.capturePlate(
         this.cameraType,
         this.timeoutSeconds * 1000
       );
 
-      // Captura exitosa
+      // Captura exitosa de SignalR (reemplaza la de BD si existía)
+      console.log(`✅ Evento SignalR recibido: ${anprEvent.licensePlate}`);
       this.capturedPlate = anprEvent.licensePlate;
       this.capturedImageUrl = anprEvent.imageUrl;
       this.confidenceLevel = anprEvent.confidenceLevel;

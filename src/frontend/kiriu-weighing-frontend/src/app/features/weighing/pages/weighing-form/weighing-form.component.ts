@@ -988,10 +988,99 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                                photoType === 'trailerPlate2' ? 'remolque' :
                                photoType === 'remolque1Plate' ? 'remolque 1' : 'remolque 2';
 
+        // Paso 1: Intentar obtener foto huérfana de BD primero
+        // SOLO para flujo simple o placa de tráiler (evitar confusión en doble remolque)
+        const isDoubleTrailer = this.weighingForm.get('doubleTrailer')?.value;
+        const shouldSearchDB = !isDoubleTrailer || photoType === 'trailerPlate';
+
+        if (shouldSearchDB) {
+          console.log(`🔍 [WEIGHING-FORM] Buscando foto en BD para photoType: ${photoType}`);
+          let orphanPhoto = await this.anprService.getLatestOrphanPhoto(photoType).toPromise();
+
+          // Fallback para trailerPlate2: también buscar en remolque1Plate
+          // Esto es porque el backend guarda fotos de cámara "remolque" como "remolque1Plate"
+          if (!orphanPhoto && photoType === 'trailerPlate2') {
+            console.log(`🔄 [WEIGHING-FORM] No encontrado en trailerPlate2, buscando en remolque1Plate (fallback)...`);
+            orphanPhoto = await this.anprService.getLatestOrphanPhoto('remolque1Plate').toPromise();
+
+            if (orphanPhoto) {
+              console.log(`✅ [WEIGHING-FORM] Foto encontrada en remolque1Plate (fallback): ${orphanPhoto.photoUrl}`);
+            }
+          }
+
+          if (orphanPhoto) {
+            if (!orphanPhoto.photoUrl.includes('remolque1Plate')) {
+              console.log(`✅ [WEIGHING-FORM] Foto encontrada en BD: ${orphanPhoto.photoUrl}`);
+            }
+
+            // Guardar la foto de BD según el tipo
+            if (photoType === 'trailerPlate') {
+              this.photoData.trailerPlate = orphanPhoto.photoUrl;
+            } else if (photoType === 'trailerPlate2') {
+              this.photoData.trailerPlate2 = orphanPhoto.photoUrl;
+            }
+
+            this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+          } else {
+            console.log(`ℹ️ [WEIGHING-FORM] No hay fotos en BD para photoType: ${photoType}`);
+          }
+        } else {
+          console.log(`⚠️ [WEIGHING-FORM] Doble remolque detectado - NO buscar en BD para ${photoType}, solo SignalR`);
+        }
+
+        // Paso 2: Continuar esperando evento de SignalR (puede reemplazar la de BD)
         this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
 
+        // Iniciar polling a BD cada 3 segundos mientras espera SignalR
+        // Esto captura fotos que lleguen tarde a BD
+        let pollingInterval: any = null;
+        let photoFoundByPolling = false;
+
+        if (shouldSearchDB) {
+          console.log(`🔄 [WEIGHING-FORM] Iniciando polling cada 3s mientras espera SignalR...`);
+
+          pollingInterval = setInterval(async () => {
+            try {
+              console.log(`📡 [POLLING] Revisando BD para ${photoType}...`);
+              let polledPhoto = await this.anprService.getLatestOrphanPhoto(photoType).toPromise();
+
+              // Fallback para trailerPlate2
+              if (!polledPhoto && photoType === 'trailerPlate2') {
+                polledPhoto = await this.anprService.getLatestOrphanPhoto('remolque1Plate').toPromise();
+              }
+
+              if (polledPhoto && !photoFoundByPolling) {
+                photoFoundByPolling = true;
+                console.log(`✅ [POLLING] Foto encontrada en BD durante polling: ${polledPhoto.photoUrl}`);
+
+                // Guardar la foto
+                if (photoType === 'trailerPlate') {
+                  this.photoData.trailerPlate = polledPhoto.photoUrl;
+                } else if (photoType === 'trailerPlate2') {
+                  this.photoData.trailerPlate2 = polledPhoto.photoUrl;
+                }
+
+                this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);
+
+                // No cancelamos SignalR, seguimos esperando por si llega una más reciente
+              }
+            } catch (error) {
+              console.error(`❌ [POLLING] Error en polling:`, error);
+            }
+          }, 3000); // Cada 3 segundos
+        }
+
         // Capturar placa con ANPR (30 segundos de timeout)
-        const anprEvent: AnprEvent = await this.anprService.capturePlate(cameraType, 30000);
+        let anprEvent: AnprEvent;
+        try {
+          anprEvent = await this.anprService.capturePlate(cameraType, 30000);
+        } finally {
+          // Limpiar polling cuando termine (éxito o error)
+          if (pollingInterval) {
+            console.log(`🛑 [POLLING] Deteniendo polling`);
+            clearInterval(pollingInterval);
+          }
+        }
 
         // Guardar la imagen URL según el tipo de foto
         if (photoType === 'trailerPlate') {

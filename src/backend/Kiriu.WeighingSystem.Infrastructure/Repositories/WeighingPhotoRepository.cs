@@ -58,6 +58,19 @@ public class WeighingPhotoRepository : IWeighingPhotoRepository
             .FirstOrDefaultAsync(p => p.PhotoUrl == photoUrl && p.WeighingOperationId == null);
     }
 
+    public async Task<WeighingPhoto?> GetLatestOrphanPhotoByTypeAsync(string photoType)
+    {
+        // Solo buscar fotos de los últimos 10 minutos para evitar usar fotos viejas
+        var cutoffTime = DateTime.UtcNow.AddMinutes(-10);
+
+        return await _context.WeighingPhotos
+            .Where(p => p.PhotoType == photoType
+                     && p.WeighingOperationId == null
+                     && p.CreatedAt >= cutoffTime)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task LinkOrphanPhotoToOperationAsync(Guid photoId, Guid operationId)
     {
         var photo = await _context.WeighingPhotos.FindAsync(photoId);

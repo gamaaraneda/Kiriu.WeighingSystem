@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Kiriu.WeighingSystem.Application.DTOs.Weighing;
 using Kiriu.WeighingSystem.Application.Interfaces;
+using Kiriu.WeighingSystem.Domain.Interfaces;
 using System.Security.Claims;
 
 namespace Kiriu.WeighingSystem.Api.Controllers;
@@ -12,13 +13,16 @@ namespace Kiriu.WeighingSystem.Api.Controllers;
 public class WeighingController : ControllerBase
 {
     private readonly IWeighingApplicationService _weighingService;
+    private readonly IWeighingPhotoRepository _photoRepository;
     private readonly ILogger<WeighingController> _logger;
 
     public WeighingController(
         IWeighingApplicationService weighingService,
+        IWeighingPhotoRepository photoRepository,
         ILogger<WeighingController> logger)
     {
         _weighingService = weighingService;
+        _photoRepository = photoRepository;
         _logger = logger;
     }
 
@@ -518,6 +522,52 @@ public class WeighingController : ControllerBase
             Console.WriteLine($"❌ ERROR obteniendo imagen: {ex.Message}");
             Console.WriteLine($"   StackTrace: {ex.StackTrace}");
             _logger.LogError(ex, "Error al obtener imagen de foto: {PhotoId}", photoId);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene la última foto huérfana disponible por tipo
+    /// </summary>
+    /// <param name="photoType">Tipo de foto (trailerPlate, remolque1Plate, cargo, etc.)</param>
+    /// <returns>Información de la última foto huérfana disponible</returns>
+    [HttpGet("photos/orphan/latest/{photoType}")]
+    public async Task<IActionResult> GetLatestOrphanPhoto(string photoType)
+    {
+        try
+        {
+            _logger.LogInformation("Buscando última foto huérfana para tipo: {PhotoType}", photoType);
+
+            var photo = await _photoRepository.GetLatestOrphanPhotoByTypeAsync(photoType);
+
+            if (photo == null)
+            {
+                _logger.LogInformation("No se encontró foto huérfana para tipo: {PhotoType}", photoType);
+                return NotFound(new
+                {
+                    success = false,
+                    message = "No hay fotos disponibles para este tipo"
+                });
+            }
+
+            _logger.LogInformation("Foto huérfana encontrada: {PhotoId}, CreatedAt: {CreatedAt}", photo.Id, photo.CreatedAt);
+
+            return Ok(new
+            {
+                success = true,
+                data = new
+                {
+                    photoId = photo.Id,
+                    photoUrl = photo.PhotoUrl,
+                    createdAt = photo.CreatedAt,
+                    photoType = photo.PhotoType,
+                    source = "database"
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener última foto huérfana para tipo: {PhotoType}", photoType);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }

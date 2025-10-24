@@ -1,6 +1,7 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, firstValueFrom } from 'rxjs';
-import { filter, timeout, take } from 'rxjs/operators';
+import { Injectable, OnDestroy, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, Subject, firstValueFrom, catchError, of } from 'rxjs';
+import { filter, timeout, take, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface AnprEvent {
@@ -31,6 +32,7 @@ export interface AnprCaptureState {
   providedIn: 'root'
 })
 export class AnprService implements OnDestroy {
+  private http = inject(HttpClient);
   private connection: any = null;
   private anprEventSubject = new BehaviorSubject<AnprEvent | null>(null);
   private connectionStatusSubject = new BehaviorSubject<AnprConnectionStatus>({
@@ -267,6 +269,37 @@ export class AnprService implements OnDestroy {
     }
 
     await this.initializeConnection();
+  }
+
+  /**
+   * Obtiene la última foto huérfana disponible en BD por tipo de cámara
+   * Retorna null si no hay fotos disponibles
+   */
+  public getLatestOrphanPhoto(photoType: string): Observable<{ photoUrl: string; photoId: string; createdAt: Date } | null> {
+    console.log(`📦 Buscando última foto huérfana en BD para tipo: ${photoType}`);
+
+    return this.http.get<any>(`${environment.apiUrl}/weighing/photos/orphan/latest/${photoType}`)
+      .pipe(
+        map(response => {
+          if (response.success && response.data) {
+            console.log(`✅ Foto huérfana encontrada en BD: ${response.data.photoUrl}`);
+            return {
+              photoUrl: response.data.photoUrl,
+              photoId: response.data.photoId,
+              createdAt: new Date(response.data.createdAt)
+            };
+          }
+          return null;
+        }),
+        catchError(error => {
+          if (error.status === 404) {
+            console.log(`ℹ️ No hay fotos huérfanas disponibles para tipo: ${photoType}`);
+          } else {
+            console.error(`❌ Error al buscar foto huérfana:`, error);
+          }
+          return of(null);
+        })
+      );
   }
 
   ngOnDestroy(): void {

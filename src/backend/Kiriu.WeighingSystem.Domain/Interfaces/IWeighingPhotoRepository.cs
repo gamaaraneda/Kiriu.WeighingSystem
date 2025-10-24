@@ -16,6 +16,11 @@ public interface IWeighingPhotoRepository
     Task<WeighingPhoto?> GetOrphanPhotoByUrlAsync(string photoUrl);
 
     /// <summary>
+    /// Obtiene la última foto huérfana (sin WeighingOperationId) según el tipo
+    /// </summary>
+    Task<WeighingPhoto?> GetLatestOrphanPhotoByTypeAsync(string photoType);
+
+    /// <summary>
     /// Vincula una foto huérfana con una operación de pesaje
     /// </summary>
     Task LinkOrphanPhotoToOperationAsync(Guid photoId, Guid operationId);
