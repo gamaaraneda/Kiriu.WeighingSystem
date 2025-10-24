@@ -845,6 +845,54 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
                            fieldName === 'remolque2Plate' ? 'remolque 2' : 'vehículo';
 
     try {
+      // Paso 1: Intentar obtener foto huérfana de BD primero (SOLO para doble remolque)
+      const isDoubleTrailer = this.entryData?.tipoUnidad === 'doble-remolque';
+      const shouldSearchDB = isDoubleTrailer && (fieldName === 'remolque1Plate' || fieldName === 'remolque2Plate');
+
+      if (shouldSearchDB) {
+        console.log(`🔍 [WEIGHING-EXIT-FORM] Buscando foto en BD para photoType: ${fieldName}`);
+
+        // Mapear fieldName a photoType para BD
+        const photoTypeMap: Record<string, string> = {
+          'remolque1Plate': 'remolque1Plate',
+          'remolque2Plate': 'remolque1Plate' // Buscar en remolque1Plate porque backend guarda todo como remolque1Plate
+        };
+
+        let searchPhotoType = photoTypeMap[fieldName];
+        let excludePhotoId: string | undefined = undefined;
+
+        if (fieldName === 'remolque2Plate' && this.remolque1PhotoId) {
+          excludePhotoId = this.remolque1PhotoId; // Excluir la foto ya usada para remolque1
+          console.log(`🔄 [WEIGHING-EXIT-FORM] Buscando remolque2 en remolque1Plate, excluyendo foto de remolque1: ${excludePhotoId}`);
+        }
+
+        let orphanPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType, excludePhotoId).toPromise();
+
+        if (orphanPhoto) {
+          console.log(`✅ [WEIGHING-EXIT-FORM] Foto huérfana encontrada en BD:`, orphanPhoto);
+
+          // Guardar la imagen URL
+          this.photoData[fieldName as keyof ExitPhotoData] = orphanPhoto.photoUrl;
+
+          // Guardar photoId si es remolque1
+          if (fieldName === 'remolque1Plate') {
+            this.remolque1PhotoId = orphanPhoto.photoId;
+            console.log(`💾 [WEIGHING-EXIT-FORM] PhotoId de remolque1 guardado: ${this.remolque1PhotoId}`);
+          }
+
+          // Actualizar placa en formulario
+          if (orphanPhoto.licensePlate) {
+            this.exitForm.patchValue({ [fieldName]: orphanPhoto.licensePlate });
+            console.log(`🔤 [WEIGHING-EXIT-FORM] Placa de ${plateTypeLabel} actualizada: ${orphanPhoto.licensePlate}`);
+          }
+
+          this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+        } else {
+          console.log(`ℹ️ [WEIGHING-EXIT-FORM] No se encontró foto huérfana en BD para ${searchPhotoType}`);
+        }
+      }
+
+      // Paso 2: Capturar desde cámara en tiempo real (SignalR)
       this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
 
       // Capturar placa con ANPR (30 segundos de timeout)
@@ -862,6 +910,19 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       console.log('✅ Placa detectada por ANPR:', anprEvent.licensePlate);
       console.log('Imagen guardada en:', anprEvent.imageUrl);
       console.log('Confianza:', anprEvent.confidenceLevel + '%');
+
+      // Si es doble remolque y remolque1, obtener el photoId de la foto recién guardada
+      if (isDoubleTrailer && fieldName === 'remolque1Plate') {
+        // Esperar un momento para que la foto se guarde en BD
+        setTimeout(async () => {
+          const searchPhotoType = 'remolque1Plate';
+          const recentPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType).toPromise();
+          if (recentPhoto) {
+            this.remolque1PhotoId = recentPhoto.photoId;
+            console.log(`💾 [WEIGHING-EXIT-FORM] PhotoId de remolque1 guardado desde SignalR: ${this.remolque1PhotoId}`);
+          }
+        }, 500); // Esperar 500ms para que se guarde en BD
+      }
 
       // Validar placa contra la entrada (si existe)
       if (this.entryData) {
