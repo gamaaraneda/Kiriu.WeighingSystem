@@ -1170,6 +1170,36 @@
               </button>
               <button
                 type="button"
+                class="btn btn-secondary"
+                [disabled]="isCapturingAllPhotos || isLoading || !isEntryFound"
+                (click)="onCaptureAllPhotos()"
+                [title]="entryData?.tipoUnidad === 'doble-remolque'
+                  ? 'Captura fotos del remolque 1 (tráiler + remolque1 + carga1)'
+                  : 'Captura todas las fotos necesarias (tráiler, remolque, carga)'"
+              >
+                <span *ngIf="!isCapturingAllPhotos && entryData?.tipoUnidad !== 'doble-remolque'">📸 Capturar Todas las Fotos</span>
+                <span *ngIf="!isCapturingAllPhotos && entryData?.tipoUnidad === 'doble-remolque'">📸 Capturar Remolque 1</span>
+                <span *ngIf="isCapturingAllPhotos">
+                  ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
+                  ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                </span>
+              </button>
+              <button
+                *ngIf="entryData?.tipoUnidad === 'doble-remolque'"
+                type="button"
+                class="btn btn-secondary"
+                [disabled]="isCapturingAllPhotos || isLoading || !isEntryFound"
+                (click)="onCaptureRemolque2Photos()"
+                title="Captura fotos del remolque 2 (remolque2 + carga2)"
+              >
+                <span *ngIf="!isCapturingAllPhotos">📸 Capturar Remolque 2</span>
+                <span *ngIf="isCapturingAllPhotos">
+                  ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
+                  ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                </span>
+              </button>
+              <button
+                type="button"
                 class="btn btn-primary"
                 [disabled]="!isFormValid || isLoading || isExitRegistered"
                 (click)="onSave()"

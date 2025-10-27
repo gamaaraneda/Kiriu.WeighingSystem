@@ -110,6 +110,10 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   isExitRegistered = false;
   loadingWeight = false;
 
+  // Control para captura consolidada de fotos
+  isCapturingAllPhotos = false;
+  photosCaptureProgress = { current: 0, total: 0, fieldName: '' };
+
   // Control de edición manual de placas
   manualEditEnabled: Record<string, boolean> = {
     trailerPlate: false,
@@ -1687,5 +1691,190 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       this.showEntrySuggestions = false;
       this.cdr.detectChanges();
     }, 200);
+  }
+
+  /**
+   * Captura todas las fotos del flujo de salida de manera consolidada
+   * Para doble remolque: SOLO captura tráiler + remolque1 + carga remolque1 (Fase 1)
+   * Para otros flujos: captura todas las fotos en paralelo
+   * Este método NO modifica la funcionalidad existente
+   */
+  async onCaptureAllPhotos(): Promise<void> {
+    // Validar que tenemos datos de entrada
+    if (!this.entryData) {
+      this.showToast('error', 'Datos faltantes', 'Debe buscar una entrada primero antes de capturar fotos');
+      return;
+    }
+
+    const isDoubleTrailer = this.entryData.tipoUnidad === 'doble-remolque';
+    const isContainerOnly = this.entryData.tipoUnidad === 'contenedor';
+
+    this.isCapturingAllPhotos = true;
+
+    console.log('🎯 [WEIGHING-EXIT-FORM] Iniciando captura consolidada - tipoUnidad:', this.entryData.tipoUnidad);
+
+    try {
+      this.showToast('info', 'Captura consolidada iniciada', 'Capturando fotos en paralelo. Por favor espere...');
+
+      let fotosExitosas = 0;
+      let fotosFallidas = 0;
+      let totalFotos = 0;
+
+      if (isDoubleTrailer) {
+        // ============= FLUJO DOBLE REMOLQUE - SOLO FASE 1 =============
+        // Capturar: trailer, remolque1 y carga remolque1 EN PARALELO
+        totalFotos = 3;
+        this.photosCaptureProgress = { current: 0, total: totalFotos, fieldName: 'Remolque 1...' };
+        this.cdr.detectChanges();
+
+        const phase1Promises = [
+          { promise: this.onPhotoCaptureWithOCR('trailerPlate'), name: 'Tráiler' },
+          { promise: this.onPhotoCaptureWithOCR('remolque1Plate'), name: 'Remolque 1' },
+          { promise: this.onPhotoCapture('cargoRemolque1'), name: 'Carga Remolque 1' }
+        ];
+
+        const phase1Results = await Promise.allSettled(phase1Promises.map(cp => cp.promise));
+
+        phase1Results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            fotosExitosas++;
+            console.log(`✅ [WEIGHING-EXIT-FORM] Foto ${phase1Promises[index].name} capturada exitosamente`);
+          } else {
+            fotosFallidas++;
+            console.error(`❌ [WEIGHING-EXIT-FORM] Error capturando ${phase1Promises[index].name}:`, result.reason);
+          }
+        });
+
+      } else {
+        // ============= FLUJO REMOLQUE ÚNICO O CONTENEDOR - TODO PARALELO =============
+        const capturePromises = [
+          { promise: this.onPhotoCaptureWithOCR('trailerPlate'), name: 'Tráiler' },
+          { promise: this.onPhotoCaptureWithOCR('trailerPlate2'), name: isContainerOnly ? 'Contenedor' : 'Remolque' },
+          { promise: this.onPhotoCapture('cargoState'), name: 'Estado de Carga' }
+        ];
+
+        totalFotos = capturePromises.length;
+        this.photosCaptureProgress = { current: 0, total: totalFotos, fieldName: 'En paralelo...' };
+        this.cdr.detectChanges();
+
+        const results = await Promise.allSettled(capturePromises.map(cp => cp.promise));
+
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            fotosExitosas++;
+            console.log(`✅ [WEIGHING-EXIT-FORM] Foto ${capturePromises[index].name} capturada exitosamente`);
+          } else {
+            fotosFallidas++;
+            console.error(`❌ [WEIGHING-EXIT-FORM] Error capturando ${capturePromises[index].name}:`, result.reason);
+          }
+        });
+      }
+
+      // Mostrar resultado final
+      if (fotosFallidas === 0) {
+        this.showToast(
+          'success',
+          'Captura consolidada exitosa',
+          `Se capturaron exitosamente ${fotosExitosas} de ${totalFotos} fotos en paralelo`
+        );
+      } else {
+        this.showToast(
+          'warn',
+          'Captura consolidada parcial',
+          `Se capturaron ${fotosExitosas} de ${totalFotos} fotos. ${fotosFallidas} fotos fallaron.`
+        );
+      }
+
+    } catch (error: any) {
+      console.error('❌ [WEIGHING-EXIT-FORM] Error en captura consolidada:', error);
+      this.showToast(
+        'error',
+        'Error en captura consolidada',
+        error.message || 'Error desconocido al capturar fotos'
+      );
+    } finally {
+      this.isCapturingAllPhotos = false;
+      this.photosCaptureProgress = { current: 0, total: 0, fieldName: '' };
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Captura fotos del remolque 2 en flujo de doble remolque (Fase 2)
+   * Captura: remolque2 + carga remolque2 EN PARALELO
+   * Este método NO modifica la funcionalidad existente
+   */
+  async onCaptureRemolque2Photos(): Promise<void> {
+    if (!this.entryData) {
+      this.showToast('error', 'Datos faltantes', 'Debe buscar una entrada primero');
+      return;
+    }
+
+    const isDoubleTrailer = this.entryData.tipoUnidad === 'doble-remolque';
+
+    if (!isDoubleTrailer) {
+      console.warn('⚠️ [WEIGHING-EXIT-FORM] onCaptureRemolque2Photos solo aplica para doble remolque');
+      return;
+    }
+
+    this.isCapturingAllPhotos = true;
+
+    console.log('🎯 [WEIGHING-EXIT-FORM] Iniciando captura de fotos Remolque 2');
+
+    try {
+      this.showToast('info', 'Capturando Remolque 2', 'Capturando fotos del remolque 2. Por favor espere...');
+
+      const totalFotos = 2;
+      let fotosExitosas = 0;
+      let fotosFallidas = 0;
+
+      this.photosCaptureProgress = { current: 0, total: totalFotos, fieldName: 'Remolque 2...' };
+      this.cdr.detectChanges();
+
+      // Capturar remolque2 y carga remolque2 EN PARALELO
+      const phase2Promises = [
+        { promise: this.onPhotoCaptureWithOCR('remolque2Plate'), name: 'Remolque 2' },
+        { promise: this.onPhotoCapture('cargoRemolque2'), name: 'Carga Remolque 2' }
+      ];
+
+      const phase2Results = await Promise.allSettled(phase2Promises.map(cp => cp.promise));
+
+      phase2Results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          fotosExitosas++;
+          console.log(`✅ [WEIGHING-EXIT-FORM] Foto ${phase2Promises[index].name} capturada exitosamente`);
+        } else {
+          fotosFallidas++;
+          console.error(`❌ [WEIGHING-EXIT-FORM] Error capturando ${phase2Promises[index].name}:`, result.reason);
+        }
+      });
+
+      // Mostrar resultado final
+      if (fotosFallidas === 0) {
+        this.showToast(
+          'success',
+          'Remolque 2 capturado',
+          `Se capturaron exitosamente ${fotosExitosas} de ${totalFotos} fotos del remolque 2`
+        );
+      } else {
+        this.showToast(
+          'warn',
+          'Captura parcial Remolque 2',
+          `Se capturaron ${fotosExitosas} de ${totalFotos} fotos. ${fotosFallidas} fotos fallaron.`
+        );
+      }
+
+    } catch (error: any) {
+      console.error('❌ [WEIGHING-EXIT-FORM] Error en captura de Remolque 2:', error);
+      this.showToast(
+        'error',
+        'Error en captura Remolque 2',
+        error.message || 'Error desconocido al capturar fotos del remolque 2'
+      );
+    } finally {
+      this.isCapturingAllPhotos = false;
+      this.photosCaptureProgress = { current: 0, total: 0, fieldName: '' };
+      this.cdr.detectChanges();
+    }
   }
 }

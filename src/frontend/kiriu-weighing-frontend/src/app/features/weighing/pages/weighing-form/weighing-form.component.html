@@ -937,6 +937,36 @@
               </button>
               <button
                 type="button"
+                class="btn btn-secondary"
+                [disabled]="isCapturingAllPhotos || isLoading"
+                (click)="onCaptureAllPhotos()"
+                [title]="weighingForm.get('doubleTrailer')?.value
+                  ? 'Captura fotos del remolque 1 (tráiler + remolque1 + carga1)'
+                  : 'Captura todas las fotos necesarias (tráiler, remolque, carga)'"
+              >
+                <span *ngIf="!isCapturingAllPhotos && !weighingForm.get('doubleTrailer')?.value">📸 Capturar Todas las Fotos</span>
+                <span *ngIf="!isCapturingAllPhotos && weighingForm.get('doubleTrailer')?.value">📸 Capturar Remolque 1</span>
+                <span *ngIf="isCapturingAllPhotos">
+                  ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
+                  ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                </span>
+              </button>
+              <button
+                *ngIf="weighingForm.get('doubleTrailer')?.value"
+                type="button"
+                class="btn btn-secondary"
+                [disabled]="isCapturingAllPhotos || isLoading"
+                (click)="onCaptureRemolque2Photos()"
+                title="Captura fotos del remolque 2 (remolque2 + carga2)"
+              >
+                <span *ngIf="!isCapturingAllPhotos">📸 Capturar Remolque 2</span>
+                <span *ngIf="isCapturingAllPhotos">
+                  ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
+                  ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                </span>
+              </button>
+              <button
+                type="button"
                 class="btn btn-primary"
                 [disabled]="!isFormValid || isLoading"
                 (click)="onSave()"
