@@ -12,30 +12,30 @@
    KIRIU – Refresh visual (style-only)
    ================================ */
 :root {
-  /* Brand */
-  --brand-50: #eef5ff;
-  --brand-100: #d9e8ff;
-  --brand-200: #b9d3ff;
-  --brand-300: #8fb6ff;
-  --brand-400: #5e8dff;
-  --brand-500: #2f6af6;
-  --brand-600: #2153d6;
-  --brand-700: #1a42ad;
-  --brand-800: #183a8a;
-  --brand-900: #162f6b;
+  /* Brand - Paleta Kiriu */
+  --brand-50: #e8f4ff;
+  --brand-100: #d1e9ff;
+  --brand-200: #b3dcff;
+  --brand-300: #84c9ff;
+  --brand-400: #5eb4ff;
+  --brand-500: #398DF1;
+  --brand-600: #005BB5;
+  --brand-700: #004a94;
+  --brand-800: #003973;
+  --brand-900: #002952;
 
   /* Neutral / surfaces */
   --bg: #f6f8fb;
   --surface: #ffffff;
   --surface-2: #fbfcff;
-  --text: #1b2430;
+  --text: #000000;
   --muted: #5b687a;
 
-  /* Semantic */
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #0ea5e9;
+  /* Semantic - Paleta Kiriu */
+  --success: #1EE733;
+  --warning: #FF914D;
+  --danger: #F70000;
+  --info: #398DF1;
 
   /* Elevation / effects */
   --radius-xs: 6px;
@@ -63,7 +63,7 @@
   --duration-1: 120ms;
   --duration-2: 200ms;
   --duration-3: 320ms;
-  --focus-ring: 0 0 0 3px rgba(47, 106, 246, 0.25);
+  --focus-ring: 0 0 0 3px rgba(57, 141, 241, 0.25);
 
   /* PrimeNG overrides */
   --p-primary-color: var(--brand-600);
@@ -80,12 +80,12 @@ body {
   margin: 0;
   background: radial-gradient(
       1200px 800px at 70% -10%,
-      rgba(47, 106, 246, 0.08),
+      rgba(57, 141, 241, 0.08),
       transparent 60%
     ),
     radial-gradient(
       900px 600px at -10% 100%,
-      rgba(14, 165, 233, 0.08),
+      rgba(57, 141, 241, 0.08),
       transparent 60%
     ),
     var(--bg);
@@ -382,7 +382,7 @@ h2,
   background: #ffffff;
   border-color: var(--brand-200);
   color: var(--brand-700);
-  box-shadow: 0 2px 8px rgba(47, 106, 246, 0.15);
+  box-shadow: 0 2px 8px rgba(57, 141, 241, 0.15);
   transform: translateY(-2px);
 }
 
@@ -392,13 +392,13 @@ h2,
 
 .nav-item:active {
   transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(47, 106, 246, 0.1);
+  box-shadow: 0 1px 4px rgba(57, 141, 241, 0.1);
 }
 
 .nav-item:focus-visible {
   outline: none;
   border-color: var(--brand-400);
-  box-shadow: 0 0 0 3px rgba(47, 106, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.1);
 }
 
 .nav-icon {
@@ -475,7 +475,7 @@ h2,
   background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
   color: #fff;
   font-size: 18px;
-  box-shadow: 0 2px 8px rgba(47, 106, 246, 0.25);
+  box-shadow: 0 2px 8px rgba(57, 141, 241, 0.25);
   flex-shrink: 0;
 }
 
@@ -735,7 +735,7 @@ h2,
   background: linear-gradient(135deg, var(--brand-400), var(--brand-600));
 }
 .icon-bubble.success {
-  background: linear-gradient(135deg, #34d399, #10b981);
+  background: linear-gradient(135deg, var(--success), var(--brand-600));
 }
 
 .choice-title {
@@ -767,11 +767,11 @@ h2,
 
 /* Accents para operaciones */
 :root {
-  --accent-in: #2f6af6;
-  --accent-in-600: #2153d6;
-  --accent-in-50: #eef5ff;
-  --accent-out: #10b981;
-  --accent-out-600: #0aa273;
+  --accent-in: #398DF1;
+  --accent-in-600: #005BB5;
+  --accent-in-50: #e8f4ff;
+  --accent-out: #1EE733;
+  --accent-out-600: #14AE24;
   --accent-out-50: #e9fbf4;
 }
 
@@ -864,7 +864,7 @@ h2,
 .operation-card.in {
   background: radial-gradient(
       700px 240px at 50% -80px,
-      rgba(47, 106, 246, 0.1),
+      rgba(57, 141, 241, 0.1),
       transparent 70%
     ),
     var(--surface);
@@ -873,7 +873,7 @@ h2,
 .operation-card.out {
   background: radial-gradient(
       700px 240px at 50% -80px,
-      rgba(16, 185, 129, 0.1),
+      rgba(30, 231, 51, 0.1),
       transparent 70%
     ),
     var(--surface);
@@ -897,14 +897,14 @@ h2,
 .operation-card.in .icon-wrap::before {
   background: radial-gradient(
     closest-side,
-    rgba(47, 106, 246, 0.18),
+    rgba(57, 141, 241, 0.18),
     transparent 70%
   );
 }
 .operation-card.out .icon-wrap::before {
   background: radial-gradient(
     closest-side,
-    rgba(16, 185, 129, 0.18),
+    rgba(30, 231, 51, 0.18),
     transparent 70%
   );
 }

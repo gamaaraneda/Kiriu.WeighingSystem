@@ -1,16 +1,22 @@
-// Variables de la paleta Electric Blue
+// Variables de la paleta Kiriu
 :host {
   /* Brand */
-  --brand-primary: #0041f2;
-  --brand-secondary: #bfeb30;
-  --brand-dark: #0a1e33;
-  --brand-light: #ffffff;
-  --brand-neutral: #e6eaf1;
+  --brand-primary: #398DF1;
+  --brand-primary-hover: #005BB5;
+  --brand-pressed: #000000;
+  --brand-dark: #000000;
+  --brand-light: #FFFFFF;
+  --brand-neutral: #ECECEC;
+  --brand-disabled: #545454;
 
   /* Semantic */
-  --success: #b8e92e;
+  --success: #1EE733;
+  --success-hover: #14AE24;
   --success-bg: #f4fbe4;
-  --info: #1f6bff;
+  --error: #F70000;
+  --error-hover: #CA0000;
+  --warning: #FF914D;
+  --info: #398DF1;
   --info-bg: #e8f1ff;
 }
 
@@ -18,7 +24,7 @@
 .crumb {
   color: var(--info);
   background-color: var(--info-bg);
-  border: 1px solid rgba(31, 107, 255, 0.2);
+  border: 1px solid rgba(57, 141, 241, 0.2);
 }
 
 // Título principal
@@ -28,12 +34,12 @@
 
 // Burbuja de icono - solo cambiar colores de fondo
 .icon-bubble {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--info) 100%);
-  box-shadow: 0 4px 20px rgba(0, 65, 242, 0.2);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+  box-shadow: 0 4px 20px rgba(57, 141, 241, 0.2);
 
   &.success {
-    background: linear-gradient(135deg, var(--success) 0%, #9dd424 100%);
-    box-shadow: 0 4px 20px rgba(184, 233, 46, 0.3);
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-hover) 100%);
+    box-shadow: 0 4px 20px rgba(30, 231, 51, 0.3);
   }
 }
 
@@ -60,7 +66,7 @@
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+    background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s ease;
@@ -69,19 +75,19 @@
   &:hover,
   &:focus {
     border-color: var(--brand-primary);
-    box-shadow: 0 12px 40px rgba(0, 65, 242, 0.15);
+    box-shadow: 0 12px 40px rgba(57, 141, 241, 0.15);
 
     &::before {
       transform: scaleX(1);
     }
 
     .icon-bubble {
-      box-shadow: 0 8px 24px rgba(0, 65, 242, 0.2);
+      box-shadow: 0 8px 24px rgba(57, 141, 241, 0.2);
     }
 
     .p-button {
-      background-color: var(--brand-secondary);
-      color: var(--brand-dark);
+      background-color: var(--brand-primary-hover);
+      color: var(--brand-light);
     }
   }
 
@@ -116,18 +122,18 @@
   }
 }
 
-// Estilos específicos para el card de Proveedor (verde lima)
+// Estilos específicos para el card de Proveedor (verde)
 .choice-card--provider {
   .p-button {
     background-color: var(--success);
-    color: #000000;
+    color: var(--brand-light);
     font-weight: 600;
   }
 
   &:hover,
   &:focus {
     .p-button {
-      background-color: var(--brand-primary);
+      background-color: var(--success-hover);
       color: var(--brand-light);
     }
   }
