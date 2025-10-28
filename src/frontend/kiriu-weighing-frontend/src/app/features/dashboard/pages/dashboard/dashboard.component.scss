@@ -124,6 +124,10 @@
 
 // Estilos específicos para el card de Proveedor (verde)
 .choice-card--provider {
+  &::before {
+    background: linear-gradient(90deg, var(--success) 0%, var(--success-hover) 100%);
+  }
+
   .p-button {
     background-color: var(--success);
     color: var(--brand-light);
@@ -132,6 +136,13 @@
 
   &:hover,
   &:focus {
+    border-color: var(--success);
+    box-shadow: 0 12px 40px rgba(30, 231, 51, 0.15);
+
+    .icon-bubble {
+      box-shadow: 0 8px 24px rgba(30, 231, 51, 0.3);
+    }
+
     .p-button {
       background-color: var(--success-hover);
       color: var(--brand-light);

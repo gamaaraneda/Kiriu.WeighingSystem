@@ -1,34 +1,36 @@
 :host {
-  /* Electric Blue Palette - Brand Colors */
-  --brand-primary: #0041f2;
-  --brand-secondary: #bfeb30;
-  --brand-dark: #0a1e33;
-  --brand-light: #ffffff;
-  --brand-neutral: #e6eaf1;
+  /* Paleta Kiriu - Brand Colors */
+  --brand-primary: #398DF1;
+  --brand-secondary: #005BB5;
+  --brand-dark: #000000;
+  --brand-light: #FFFFFF;
+  --brand-neutral: #ECECEC;
 
-  /* Electric Blue Palette - Semantic Colors */
-  --success: #b8e92e;
+  /* Paleta Kiriu - Semantic Colors */
+  --success: #1EE733;
+  --success-hover: #14AE24;
   --success-bg: #f4fbe4;
-  --warning: #ffd93b;
+  --warning: #FF914D;
   --warning-bg: #fff9e0;
-  --error: #e54848;
+  --error: #F70000;
+  --error-hover: #CA0000;
   --error-bg: #ffecec;
-  --info: #1f6bff;
+  --info: #398DF1;
   --info-bg: #e8f1ff;
   --neutral: #d4d9e2;
   --neutral-bg: #f5f6f9;
 
   /* Derived colors for UI */
-  --brand-50: #e8f1ff;
-  --brand-100: #d9e8ff;
-  --brand-400: #5e8dff;
-  --brand-600: #0037cc;
-  --brand-700: #0041f2;
+  --brand-50: #e8f4ff;
+  --brand-100: #d1e9ff;
+  --brand-400: #5eb4ff;
+  --brand-600: #005BB5;
+  --brand-700: #004a94;
 
   /* Neutrals */
   --bg: #f6f8fb;
   --surface: #ffffff;
-  --text: #0a1e33;
+  --text: #000000;
   --muted: #6b7280;
 
   /* Effects (mantener valores originales) */
@@ -54,14 +56,14 @@
   --duration-1: 120ms;
   --duration-2: 200ms;
   --duration-3: 320ms;
-  --focus-ring: 0 0 0 3px rgba(0, 65, 242, 0.25);
+  --focus-ring: 0 0 0 3px rgba(57, 141, 241, 0.25);
 
-  /* Accents - usando paleta Electric Blue */
-  --accent-in: #0041f2;
-  --accent-in-600: #0037cc;
-  --accent-in-50: #e8f1ff;
-  --accent-out: #b8e92e;
-  --accent-out-600: #9dd424;
+  /* Accents - usando paleta Kiriu */
+  --accent-in: #398DF1;
+  --accent-in-600: #005BB5;
+  --accent-in-50: #e8f4ff;
+  --accent-out: #1EE733;
+  --accent-out-600: #14AE24;
   --accent-out-50: #f4fbe4;
 }
 
@@ -69,12 +71,12 @@
   min-height: 100vh;
   background: radial-gradient(
       1200px 800px at 70% -10%,
-      rgba(0, 65, 242, 0.08),
+      rgba(57, 141, 241, 0.08),
       transparent 60%
     ),
     radial-gradient(
       900px 600px at -10% 100%,
-      rgba(191, 235, 48, 0.06),
+      rgba(57, 141, 241, 0.06),
       transparent 60%
     ),
     var(--bg);
@@ -131,9 +133,10 @@
 }
 
 .title {
-  margin: 22px 0 8px;
-  font-size: var(--fs-xl);
-  color: var(--brand-700);
+  margin: 18px 0 8px;
+  font-size: 1.75rem;
+  color: var(--brand-primary);
+  font-weight: var(--fw-semibold);
   text-align: center;
   letter-spacing: 0.2px;
 }
@@ -141,9 +144,11 @@
 .subtitle {
   color: var(--muted);
   font-size: var(--fs-sm);
-  margin: 0 auto 28px;
+  margin-bottom: 24px;
   text-align: center;
   max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Grid */
@@ -197,16 +202,16 @@
   .operation-button,
   .btn {
     background-color: var(--brand-secondary);
-    color: var(--brand-dark);
+    color: var(--brand-light);
   }
 }
 
-// Caso especial: tarjeta OUT en hover cambia botón a azul
+// Caso especial: tarjeta OUT en hover cambia botón a verde más oscuro
 .operation-card.out:hover:not(.disabled),
 .card.out:hover:not(.disabled) {
   .operation-button,
   .btn {
-    background-color: var(--brand-primary);
+    background-color: var(--success-hover);
     color: var(--brand-light);
   }
 }
@@ -227,11 +232,11 @@
 .card.in {
   background: radial-gradient(
       700px 240px at 50% -80px,
-      rgba(0, 65, 242, 0.1),
+      rgba(57, 141, 241, 0.1),
       transparent 70%
     ),
     var(--surface);
-  border-color: rgba(0, 65, 242, 0.12);
+  border-color: rgba(57, 141, 241, 0.12);
 
   &::before {
     content: '';
@@ -252,11 +257,11 @@
 .card.out {
   background: radial-gradient(
       700px 240px at 50% -80px,
-      rgba(184, 233, 46, 0.1),
+      rgba(30, 231, 51, 0.1),
       transparent 70%
     ),
     var(--surface);
-  border-color: rgba(184, 233, 46, 0.15);
+  border-color: rgba(30, 231, 51, 0.15);
 
   &::before {
     content: '';
@@ -265,7 +270,7 @@
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, var(--success) 0%, var(--brand-primary) 100%);
+    background: linear-gradient(90deg, var(--success) 0%, var(--success-hover) 100%);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s ease;
@@ -293,7 +298,7 @@
 .card.in .icon-wrap::before {
   background: radial-gradient(
     closest-side,
-    rgba(0, 65, 242, 0.18),
+    rgba(57, 141, 241, 0.18),
     transparent 70%
   );
 }
@@ -302,7 +307,7 @@
 .card.out .icon-wrap::before {
   background: radial-gradient(
     closest-side,
-    rgba(184, 233, 46, 0.18),
+    rgba(30, 231, 51, 0.18),
     transparent 70%
   );
 }
@@ -422,7 +427,7 @@
 .operation-card.out .operation-button,
 .card.out .btn {
   background: var(--accent-out);
-  color: #000000;
+  color: var(--brand-light);
   font-weight: var(--fw-semibold);
 
   &::before {
