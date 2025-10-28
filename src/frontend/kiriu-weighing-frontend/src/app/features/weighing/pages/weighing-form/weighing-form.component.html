@@ -55,19 +55,6 @@
                   <span class="checkmark"></span>
                   Unidad con doble remolque
                 </label>
-
-                <label
-                  class="checkbox-label"
-                  title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés">
-                  <input
-                    type="checkbox"
-                    [checked]="invertedPlateOrder"
-                    (change)="onInvertedPlateOrderChange($event)"
-                  />
-                  <span class="checkmark"></span>
-                  Orden invertido (intercambiar fotos trailer/remolque)
-                  <span class="info-icon" style="margin-left: 4px;">ℹ️</span>
-                </label>
               </div>
             </div>
 
@@ -95,7 +82,10 @@
                       autocomplete="off"
                     />
                     <!-- Dropdown de sugerencias -->
-                    <div *ngIf="showProductSuggestions" class="autocomplete-dropdown">
+                    <div
+                      *ngIf="showProductSuggestions"
+                      class="autocomplete-dropdown"
+                    >
                       <div
                         *ngFor="let product of productSuggestions"
                         class="autocomplete-item"
@@ -136,9 +126,20 @@
                       [src]="getFullImageUrl(photoData.cargo)"
                       alt="Foto de carga"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
-                    <span *ngIf="photoData.cargo && !photoData.cargo.startsWith('/')" class="photo-captured">
+                    <span
+                      *ngIf="
+                        photoData.cargo && !photoData.cargo.startsWith('/')
+                      "
+                      class="photo-captured"
+                    >
                       ✅ Foto capturada
                     </span>
                   </div>
@@ -162,7 +163,10 @@
                     autocomplete="off"
                   />
                   <!-- Dropdown de sugerencias de clientes -->
-                  <div *ngIf="showClientSuggestions" class="autocomplete-dropdown">
+                  <div
+                    *ngIf="showClientSuggestions"
+                    class="autocomplete-dropdown"
+                  >
                     <div
                       *ngFor="let client of clientSuggestions"
                       class="autocomplete-item"
@@ -187,6 +191,43 @@
               class="form-section"
             >
               <h2 class="section-title">Datos del Tráiler</h2>
+
+              <!-- Subsección: Captura de placas -->
+              <div class="plate-capture-subsection">
+                <h3 class="subsection-title">Captura de placas</h3>
+
+                <button
+                  type="button"
+                  class="btn btn-primary capture-all-photos-btn"
+                  [disabled]="isCapturingAllPhotos || isLoading"
+                  (click)="onCaptureAllPhotos()"
+                  title="Captura fotos del remolque 1 (tráiler + remolque1 + carga1)"
+                  style="width: 100%; margin-bottom: 16px"
+                >
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
+                  <span *ngIf="isCapturingAllPhotos"> Capturar Fotos </span>
+                </button>
+
+                <div class="inverted-order-section">
+                  <label
+                    class="checkbox-label"
+                    title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="invertedPlateOrder"
+                      (change)="onInvertedPlateOrderChange($event)"
+                    />
+                    <span class="checkmark"></span>
+                    Orden invertido (intercambiar fotos tráiler/remolque)
+                  </label>
+                  <p class="help-text">
+                    Este ajuste sólo afecta a las placas; no modifica el proceso
+                    general.
+                  </p>
+                </div>
+              </div>
+
               <div class="form-group">
                 <label for="trailerPlate" class="form-label"
                   >Placa del Tráiler *</label
@@ -238,13 +279,28 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.trailerPlate && photoData.trailerPlate.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate &&
+                        photoData.trailerPlate.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.trailerPlate)"
                       alt="Placa del tráiler"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
-                    <span *ngIf="photoData.trailerPlate && !photoData.trailerPlate.startsWith('/')" class="photo-captured">
+                    <span
+                      *ngIf="
+                        photoData.trailerPlate &&
+                        !photoData.trailerPlate.startsWith('/')
+                      "
+                      class="photo-captured"
+                    >
                       ✅ Foto capturada
                     </span>
                   </div>
@@ -313,14 +369,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.remolque1Plate && photoData.remolque1Plate.startsWith('/')"
+                      *ngIf="
+                        photoData.remolque1Plate &&
+                        photoData.remolque1Plate.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.remolque1Plate)"
                       alt="Placa del remolque 1"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.remolque1Plate && !photoData.remolque1Plate.startsWith('/')"
+                      *ngIf="
+                        photoData.remolque1Plate &&
+                        !photoData.remolque1Plate.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -370,14 +438,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.cargoRemolque1 && photoData.cargoRemolque1.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoRemolque1 &&
+                        photoData.cargoRemolque1.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.cargoRemolque1)"
                       alt="Foto de carga del remolque 1"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.cargoRemolque1 && !photoData.cargoRemolque1.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoRemolque1 &&
+                        !photoData.cargoRemolque1.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -475,6 +555,27 @@
                 </div>
               </div>
 
+              <!-- Subsección: Captura de placas Remolque 2 -->
+              <div class="plate-capture-subsection">
+                <h3 class="subsection-title">Captura de placas</h3>
+
+                <button
+                  type="button"
+                  class="btn btn-primary capture-all-photos-btn"
+                  [disabled]="
+                    isCapturingAllPhotos ||
+                    isLoading ||
+                    !canProceedToRemolque2()
+                  "
+                  (click)="onCaptureRemolque2Photos()"
+                  title="Captura fotos del remolque 2 (remolque2 + carga2)"
+                  style="width: 100%; margin-bottom: 16px"
+                >
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
+                  <span *ngIf="isCapturingAllPhotos"> Capturar Fotos </span>
+                </button>
+              </div>
+
               <div class="form-group">
                 <label for="remolque2Plate" class="form-label"
                   >Placa del Remolque 2 *</label
@@ -529,14 +630,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.remolque2Plate && photoData.remolque2Plate.startsWith('/')"
+                      *ngIf="
+                        photoData.remolque2Plate &&
+                        photoData.remolque2Plate.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.remolque2Plate)"
                       alt="Placa del remolque 2"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.remolque2Plate && !photoData.remolque2Plate.startsWith('/')"
+                      *ngIf="
+                        photoData.remolque2Plate &&
+                        !photoData.remolque2Plate.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -587,14 +700,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.cargoRemolque2 && photoData.cargoRemolque2.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoRemolque2 &&
+                        photoData.cargoRemolque2.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.cargoRemolque2)"
                       alt="Foto de carga del remolque 2"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.cargoRemolque2 && !photoData.cargoRemolque2.startsWith('/')"
+                      *ngIf="
+                        photoData.cargoRemolque2 &&
+                        !photoData.cargoRemolque2.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -689,7 +814,9 @@
               <div class="info-box">
                 <div class="info-content">
                   <span class="info-text"
-                    ><strong>Modo Solo Contenedor:</strong> se requiere placa del tráiler, producto, cliente y peso. La placa del remolque y fotos son opcionales.</span
+                    ><strong>Modo Solo Contenedor:</strong> se requiere placa
+                    del tráiler, producto, cliente y peso. La placa del remolque
+                    y fotos son opcionales.</span
                   >
                 </div>
               </div>
@@ -701,6 +828,42 @@
               class="form-section"
             >
               <h2 class="section-title">Datos del Vehículo</h2>
+
+              <!-- Subsección: Captura de placas -->
+              <div class="plate-capture-subsection">
+                <h3 class="subsection-title">Captura de placas</h3>
+
+                <button
+                  type="button"
+                  class="btn btn-primary capture-all-photos-btn"
+                  [disabled]="isCapturingAllPhotos || isLoading"
+                  (click)="onCaptureAllPhotos()"
+                  title="Captura fotos para detectar automáticamente las placas del tráiler y remolque."
+                  style="width: 100%; margin-bottom: 16px"
+                >
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
+                  <span *ngIf="isCapturingAllPhotos"> Capturar Fotos </span>
+                </button>
+
+                <div class="inverted-order-section">
+                  <label
+                    class="checkbox-label"
+                    title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="invertedPlateOrder"
+                      (change)="onInvertedPlateOrderChange($event)"
+                    />
+                    <span class="checkmark"></span>
+                    Orden invertido (intercambiar fotos tráiler/remolque)
+                  </label>
+                  <p class="help-text">
+                    Este ajuste sólo afecta a las placas; no modifica el proceso
+                    general.
+                  </p>
+                </div>
+              </div>
 
               <div class="form-group">
                 <label for="trailerPlate" class="form-label"
@@ -753,13 +916,28 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.trailerPlate && photoData.trailerPlate.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate &&
+                        photoData.trailerPlate.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.trailerPlate)"
                       alt="Placa del tráiler"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
-                    <span *ngIf="photoData.trailerPlate && !photoData.trailerPlate.startsWith('/')" class="photo-captured">
+                    <span
+                      *ngIf="
+                        photoData.trailerPlate &&
+                        !photoData.trailerPlate.startsWith('/')
+                      "
+                      class="photo-captured"
+                    >
                       ✅ Foto capturada
                     </span>
                   </div>
@@ -769,8 +947,14 @@
               <div class="form-group">
                 <label for="trailerPlate2" class="form-label"
                   >Placa Remolque
-                  <span *ngIf="!weighingForm.get('containerOnly')?.value">*</span>
-                  <span *ngIf="weighingForm.get('containerOnly')?.value" class="optional-label">(Opcional)</span></label
+                  <span *ngIf="!weighingForm.get('containerOnly')?.value"
+                    >*</span
+                  >
+                  <span
+                    *ngIf="weighingForm.get('containerOnly')?.value"
+                    class="optional-label"
+                    >(Opcional)</span
+                  ></label
                 >
                 <div class="plate-input-group">
                   <button
@@ -820,14 +1004,26 @@
                       📷 Sin captura
                     </span>
                     <img
-                      *ngIf="photoData.trailerPlate2 && photoData.trailerPlate2.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate2 &&
+                        photoData.trailerPlate2.startsWith('/')
+                      "
                       [src]="getFullImageUrl(photoData.trailerPlate2)"
                       alt="Placa del remolque"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
                     <span
-                      *ngIf="photoData.trailerPlate2 && !photoData.trailerPlate2.startsWith('/')"
+                      *ngIf="
+                        photoData.trailerPlate2 &&
+                        !photoData.trailerPlate2.startsWith('/')
+                      "
                       class="photo-captured"
                     >
                       ✅ Foto capturada
@@ -853,7 +1049,10 @@
                       autocomplete="off"
                     />
                     <!-- Dropdown de sugerencias -->
-                    <div *ngIf="showProductSuggestions" class="autocomplete-dropdown">
+                    <div
+                      *ngIf="showProductSuggestions"
+                      class="autocomplete-dropdown"
+                    >
                       <div
                         *ngFor="let product of productSuggestions"
                         class="autocomplete-item"
@@ -891,9 +1090,20 @@
                       [src]="getFullImageUrl(photoData.cargo)"
                       alt="Foto de carga"
                       class="captured-plate-image"
-                      style="max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;"
+                      style="
+                        max-width: 100%;
+                        max-height: 100%;
+                        width: auto;
+                        height: auto;
+                        object-fit: contain;
+                      "
                     />
-                    <span *ngIf="photoData.cargo && !photoData.cargo.startsWith('/')" class="photo-captured">
+                    <span
+                      *ngIf="
+                        photoData.cargo && !photoData.cargo.startsWith('/')
+                      "
+                      class="photo-captured"
+                    >
                       ✅ Foto capturada
                     </span>
                   </div>
@@ -917,7 +1127,10 @@
                     autocomplete="off"
                   />
                   <!-- Dropdown de sugerencias de clientes -->
-                  <div *ngIf="showClientSuggestions" class="autocomplete-dropdown">
+                  <div
+                    *ngIf="showClientSuggestions"
+                    class="autocomplete-dropdown"
+                  >
                     <div
                       *ngFor="let client of clientSuggestions"
                       class="autocomplete-item"
@@ -938,27 +1151,44 @@
 
             <!-- Botones de acción -->
             <div class="form-actions">
-              <button type="button" class="btn btn-outline" (click)="onClear()">
-                Limpiar
-              </button>
-              <button
-                type="button"
-                class="btn btn-outline"
-                (click)="onGoBack()"
-              >
-                Regresar
-              </button>
+              <div class="left-actions">
+                <button type="button" class="btn btn-light-gray" (click)="onClear()">
+                  Limpiar
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  (click)="onGoBack()"
+                >
+                  Regresar
+                </button>
+              </div>
+              <!-- BOTONES ORIGINALES DE CAPTURA - COMENTADOS (Ahora se usan los botones en las subsecciones de captura de placas)
               <button
                 type="button"
                 class="btn btn-secondary"
                 [disabled]="isCapturingAllPhotos || isLoading"
                 (click)="onCaptureAllPhotos()"
-                [title]="weighingForm.get('doubleTrailer')?.value
-                  ? 'Captura fotos del remolque 1 (tráiler + remolque1 + carga1)'
-                  : 'Captura todas las fotos necesarias (tráiler, remolque, carga)'"
+                [title]="
+                  weighingForm.get('doubleTrailer')?.value
+                    ? 'Captura fotos del remolque 1 (tráiler + remolque1 + carga1)'
+                    : 'Captura todas las fotos necesarias (tráiler, remolque, carga)'
+                "
               >
-                <span *ngIf="!isCapturingAllPhotos && !weighingForm.get('doubleTrailer')?.value">📸 Capturar Todas las Fotos</span>
-                <span *ngIf="!isCapturingAllPhotos && weighingForm.get('doubleTrailer')?.value">📸 Capturar Remolque 1</span>
+                <span
+                  *ngIf="
+                    !isCapturingAllPhotos &&
+                    !weighingForm.get('doubleTrailer')?.value
+                  "
+                  >📸 Capturar Todas las Fotos</span
+                >
+                <span
+                  *ngIf="
+                    !isCapturingAllPhotos &&
+                    weighingForm.get('doubleTrailer')?.value
+                  "
+                  >📸 Capturar Remolque 1</span
+                >
                 <span *ngIf="isCapturingAllPhotos">
                   ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
                   ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
@@ -978,15 +1208,19 @@
                   ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
                 </span>
               </button>
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="!isFormValid || isLoading"
-                (click)="onSave()"
-              >
-                <span *ngIf="!isLoading">Guardar {{ operationTitle }}</span>
-                <span *ngIf="isLoading">Guardando...</span>
-              </button>
+              -->
+              <div class="right-actions">
+                <button
+                  type="button"
+                  class="btn btn-save"
+                  [class.btn-save-disabled]="!isFormValid || isLoading"
+                  [disabled]="!isFormValid || isLoading"
+                  (click)="onSave()"
+                >
+                  <span *ngIf="!isLoading">Guardar {{ operationTitle }}</span>
+                  <span *ngIf="isLoading">Guardando...</span>
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -1019,11 +1253,11 @@
                 [disabled]="loadingWeight"
                 (click)="requestCurrentWeight()"
                 title="Solicitar peso actual desde la báscula"
-                style="width: 100%;"
+                style="width: 100%"
               >
                 <i *ngIf="!loadingWeight" class="pi pi-refresh"></i>
                 <i *ngIf="loadingWeight" class="pi pi-spin pi-spinner"></i>
-                {{ loadingWeight ? 'Solicitando...' : 'Solicitar Peso' }}
+                {{ loadingWeight ? "Solicitando..." : "Solicitar Peso" }}
               </button>
             </div>
 
