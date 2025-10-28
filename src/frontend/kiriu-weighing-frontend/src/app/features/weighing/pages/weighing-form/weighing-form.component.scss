@@ -1,20 +1,23 @@
-// Variables de la paleta Electric Blue
+// Variables de la paleta Kiriu
 :host {
   /* Brand */
-  --brand-primary: #0041f2;
-  --brand-secondary: #bfeb30;
-  --brand-dark: #0a1e33;
-  --brand-light: #ffffff;
-  --brand-neutral: #e6eaf1;
+  --brand-primary: #398DF1;
+  --brand-secondary: #005BB5;
+  --brand-dark: #000000;
+  --brand-light: #FFFFFF;
+  --brand-neutral: #ECECEC;
+  --brand-disabled: #545454;
 
   /* Semantic */
-  --success: #b8e92e;
+  --success: #1EE733;
+  --success-hover: #14AE24;
   --success-bg: #f4fbe4;
-  --warning: #ffd93b;
+  --warning: #FF914D;
   --warning-bg: #fff9e0;
-  --error: #e54848;
+  --error: #F70000;
+  --error-hover: #CA0000;
   --error-bg: #ffecec;
-  --info: #1f6bff;
+  --info: #398DF1;
   --info-bg: #e8f1ff;
   --neutral: #d4d9e2;
   --neutral-bg: #f5f6f9;
@@ -176,7 +179,7 @@
   // Estilos para la sección de resumen
   &.summary-section {
     background: var(--success-bg);
-    border: 2px solid rgba(184, 233, 46, 0.3);
+    border: 2px solid rgba(30, 231, 51, 0.3);
     border-radius: 12px;
     padding: 24px;
 
@@ -191,7 +194,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 12px 0;
-        border-bottom: 1px solid rgba(184, 233, 46, 0.3);
+        border-bottom: 1px solid rgba(30, 231, 51, 0.3);
 
         &:last-child {
           border-bottom: none;
@@ -201,7 +204,7 @@
           font-weight: 700;
           font-size: 18px;
           color: var(--brand-dark);
-          border-top: 2px solid rgba(184, 233, 46, 0.3);
+          border-top: 2px solid rgba(30, 231, 51, 0.3);
           border-bottom: none;
           padding-top: 16px;
           margin-top: 8px;
@@ -263,7 +266,7 @@
     &:focus {
       outline: none;
       border-color: var(--brand-primary);
-      box-shadow: 0 0 0 3px rgba(0, 65, 242, 0.1);
+      box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.1);
     }
 
     &::placeholder {
@@ -308,9 +311,9 @@
 
     .photo-capture-btn {
       padding: 16px 20px;
-      border: 2px solid #398df1;
-      background-color: #ffffff;
-      color: #398df1;
+      border: 2px solid var(--brand-primary);
+      background-color: var(--brand-light);
+      color: var(--brand-primary);
       border-radius: 8px;
       font-size: 18px;
       cursor: pointer;
@@ -319,8 +322,8 @@
       min-width: 60px;
 
       &:hover {
-        background-color: #398df1;
-        color: #ffffff;
+        background-color: var(--brand-primary);
+        color: var(--brand-light);
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(57, 141, 241, 0.3);
       }
@@ -408,7 +411,7 @@
 
     input[type="checkbox"]:hover + .checkmark {
       border-color: var(--info);
-      box-shadow: 0 0 0 2px rgba(0, 65, 242, 0.2);
+      box-shadow: 0 0 0 2px rgba(57, 141, 241, 0.2);
     }
 
     input[type="checkbox"]:disabled + .checkmark {
@@ -483,8 +486,8 @@
       transition: all 0.2s ease;
 
       &:hover {
-        background: #398df1;
-        color: #ffffff;
+        background: var(--brand-primary);
+        color: var(--brand-light);
         transform: translateY(-1px);
       }
     }
@@ -616,14 +619,14 @@
     padding: 12px 16px;
     font-size: 0.9rem;
     border-radius: 8px;
-    background: #ffffff;
-    border: 2px solid #398df1;
-    color: #398df1;
+    background: var(--brand-light);
+    border: 2px solid var(--brand-primary);
+    color: var(--brand-primary);
     transition: all 0.2s ease;
 
     &:hover {
-      background: #398df1;
-      color: #ffffff;
+      background: var(--brand-primary);
+      color: var(--brand-light);
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(57, 141, 241, 0.3);
     }
@@ -816,10 +819,10 @@
     }
 
     .request-weight-btn {
-      background: #3b82f6;
+      background: var(--brand-primary);
 
       &:hover:not(:disabled) {
-        background: #2563eb;
+        background: var(--brand-secondary);
       }
     }
   }
@@ -1091,27 +1094,28 @@
 
     &:hover:not(:disabled) {
       background: var(--brand-secondary);
-      color: var(--brand-dark);
+      color: var(--brand-light);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 65, 242, 0.3);
+      box-shadow: 0 4px 12px rgba(57, 141, 241, 0.3);
     }
 
     &:disabled {
-      opacity: 0.6;
+      background-color: var(--brand-disabled);
+      color: var(--brand-light);
       cursor: not-allowed;
     }
   }
 
   &.btn-success {
     background: var(--success);
-    color: #000000;
+    color: var(--brand-light);
     font-weight: 600;
 
     &:hover:not(:disabled) {
-      background: var(--brand-primary);
+      background: var(--success-hover);
       color: var(--brand-light);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(184, 233, 46, 0.3);
+      box-shadow: 0 4px 12px rgba(30, 231, 51, 0.3);
     }
 
     &:disabled {
@@ -1478,45 +1482,45 @@
 
 .toast__close:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(31, 94, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.25);
 }
 
-/* Variantes (aplica una sola) */
+/* Variantes (aplica una sola) - Paleta Kiriu */
 .toast--info {
-  border-left-color: #0ea5e9;
-  background: linear-gradient(180deg, #e0f2fe, #fff);
+  border-left-color: var(--info);
+  background: linear-gradient(180deg, #e8f4ff, #fff);
 }
 
 .toast--success {
-  border-left-color: #10b981;
+  border-left-color: var(--success);
   background: linear-gradient(180deg, #e9fbf4, #fff);
 }
 
 .toast--warn {
-  border-left-color: #f59e0b;
-  background: linear-gradient(180deg, #fef3c7, #fff);
+  border-left-color: var(--warning);
+  background: linear-gradient(180deg, #fff3e0, #fff);
 }
 
 .toast--error {
-  border-left-color: #ef4444;
+  border-left-color: var(--error);
   background: linear-gradient(180deg, #fee2e2, #fff);
 }
 
-/* Colores del icono por variante */
+/* Colores del icono por variante - Paleta Kiriu */
 .toast--info .toast__icon {
-  background: #0ea5e9;
+  background: var(--info);
 }
 
 .toast--success .toast__icon {
-  background: #10b981;
+  background: var(--success);
 }
 
 .toast--warn .toast__icon {
-  background: #f59e0b;
+  background: var(--warning);
 }
 
 .toast--error .toast__icon {
-  background: #ef4444;
+  background: var(--error);
 }
 
 /* Animaciones */
