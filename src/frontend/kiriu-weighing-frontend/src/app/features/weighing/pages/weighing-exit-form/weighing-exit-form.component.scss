@@ -1449,40 +1449,40 @@
 
 /* Variantes (aplica una sola) */
 .toast--info {
-  border-left-color: #0ea5e9;
-  background: linear-gradient(180deg, #e0f2fe, #fff);
+  border-left-color: var(--info);
+  background: linear-gradient(180deg, var(--info-bg), #fff);
 }
 
 .toast--success {
-  border-left-color: #10b981;
-  background: linear-gradient(180deg, #e9fbf4, #fff);
+  border-left-color: var(--success);
+  background: linear-gradient(180deg, var(--success-bg), #fff);
 }
 
 .toast--warn {
-  border-left-color: #f59e0b;
-  background: linear-gradient(180deg, #fef3c7, #fff);
+  border-left-color: var(--warning);
+  background: linear-gradient(180deg, var(--warning-bg), #fff);
 }
 
 .toast--error {
-  border-left-color: #ef4444;
-  background: linear-gradient(180deg, #fee2e2, #fff);
+  border-left-color: var(--error);
+  background: linear-gradient(180deg, var(--error-bg), #fff);
 }
 
 /* Colores del icono por variante */
 .toast--info .toast__icon {
-  background: #0ea5e9;
+  background: var(--info);
 }
 
 .toast--success .toast__icon {
-  background: #10b981;
+  background: var(--success);
 }
 
 .toast--warn .toast__icon {
-  background: #f59e0b;
+  background: var(--warning);
 }
 
 .toast--error .toast__icon {
-  background: #ef4444;
+  background: var(--error);
 }
 
 /* Animaciones */
