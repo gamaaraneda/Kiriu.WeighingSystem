@@ -513,8 +513,9 @@
   &:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
-    border-color: #c7d2fe;
-    background: #f8faff;
+    border-color: var(--brand-200);
+    background: var(--brand-50);
+    color: var(--brand-primary);
   }
 
   &:disabled {
@@ -595,15 +596,15 @@
     background: linear-gradient(135deg, var(--brand-primary) 0%, var(--info) 100%);
     border-color: var(--brand-primary);
     color: var(--brand-light);
-    box-shadow: 0 2px 4px rgba(0, 65, 242, 0.15);
+    box-shadow: 0 2px 4px rgba(57, 141, 241, 0.15);
   }
 
-  // Badge para pesos - Verde lima brillante
+  // Badge para pesos - Verde Kiriu brillante
   &.green {
-    background: linear-gradient(135deg, var(--success) 0%, #9dd424 100%);
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-hover) 100%);
     border-color: var(--success);
     color: #000000;
-    box-shadow: 0 2px 4px rgba(184, 233, 46, 0.2);
+    box-shadow: 0 2px 4px rgba(30, 231, 51, 0.2);
   }
 
   // Badge para placas - Gris azulado oscuro
@@ -614,12 +615,12 @@
     box-shadow: 0 2px 4px rgba(84, 110, 122, 0.2);
   }
 
-  // Badge para tipo unidad Remolque - Naranja vibrante
+  // Badge para tipo unidad Remolque - Naranja Kiriu
   &.orange {
-    background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%);
-    border-color: #ff6f00;
-    color: #ffffff;
-    box-shadow: 0 2px 4px rgba(255, 111, 0, 0.2);
+    background: linear-gradient(135deg, var(--warning) 0%, #ffb380 100%);
+    border-color: var(--warning);
+    color: #000000;
+    box-shadow: 0 2px 4px rgba(255, 145, 77, 0.2);
   }
 
   // Badge para Contenedor - Púrpura/Morado
@@ -752,15 +753,15 @@
   text-transform: uppercase;
 
   &.tipo-cliente {
-    background: #eff6ff;
-    color: #1e40af;
-    border-left: 2px solid #3b82f6;
+    background: var(--info-bg);
+    color: var(--brand-secondary);
+    border-left: 2px solid var(--brand-primary);
   }
 
   &.tipo-proveedor {
-    background: #fef3c7;
-    color: #92400e;
-    border-left: 2px solid #f59e0b;
+    background: var(--warning-bg);
+    color: var(--warning);
+    border-left: 2px solid var(--warning);
   }
 }
 
@@ -779,11 +780,11 @@
   letter-spacing: -0.02em;
 
   &.peso-bruto {
-    color: #f59e0b;
+    color: var(--warning);
   }
 
   &.peso-neto {
-    color: #10b981;
+    color: var(--success);
   }
 }
 
@@ -805,13 +806,13 @@
   letter-spacing: 0.01em;
 
   &.estado-entrada {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--info-bg);
+    color: var(--brand-secondary);
   }
 
   &.estado-salida {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--success-bg);
+    color: var(--success-hover);
   }
 }
 
@@ -835,11 +836,11 @@
   }
 
   &:hover:not(:disabled) {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-    color: #334155;
+    background: var(--brand-50);
+    border-color: var(--brand-200);
+    color: var(--brand-primary);
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px rgba(57, 141, 241, 0.15);
   }
 
   &:active:not(:disabled) {
@@ -870,7 +871,9 @@
   &:hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
-    border-color: #d6deeb;
+    border-color: var(--brand-200);
+    background: var(--brand-50);
+    color: var(--brand-primary);
   }
 
   &:disabled {
