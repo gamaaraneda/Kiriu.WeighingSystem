@@ -1,12 +1,18 @@
-// Variables de la paleta Electric Blue
+// Variables de la paleta Kiriu
 :host {
-  --brand-primary: #0041f2;
-  --brand-secondary: #bfeb30;
-  --brand-dark: #0a1e33;
-  --brand-light: #ffffff;
-  --brand-neutral: #e6eaf1;
-  --error: #e54848;
+  --brand-primary: #398DF1;
+  --brand-primary-hover: #005BB5;
+  --brand-pressed: #000000;
+  --brand-light: #FFFFFF;
+  --brand-dark: #000000;
+  --brand-neutral: #ECECEC;
+  --brand-disabled: #545454;
+  --error: #F70000;
+  --error-hover: #CA0000;
   --error-bg: #ffecec;
+  --success: #1EE733;
+  --success-hover: #14AE24;
+  --warning: #FF914D;
 }
 
 // Fondo general con degradado sutil
@@ -25,14 +31,14 @@
   border: 1px solid var(--brand-neutral);
   border-radius: 16px;
   padding: 40px 32px;
-  box-shadow: 0 4px 20px rgba(0, 65, 242, 0.08);
+  box-shadow: 0 4px 20px rgba(57, 141, 241, 0.08);
   width: 100%;
   max-width: 420px;
   text-align: center;
   transition: all 0.3s ease;
 
   &:hover {
-    box-shadow: 0 8px 30px rgba(0, 65, 242, 0.12);
+    box-shadow: 0 8px 30px rgba(57, 141, 241, 0.12);
     transform: translateY(-4px);
   }
 
@@ -45,7 +51,7 @@
 
 // Marca/Logo
 .brand {
-  background: var(--brand-dark);
+  background: var(--brand-primary);
   border-radius: 12px;
   padding: 16px 24px;
   margin-bottom: 24px;
@@ -56,7 +62,7 @@
     font-weight: 700;
     color: var(--brand-light);
     letter-spacing: 3px;
-    text-shadow: 0 2px 8px rgba(191, 235, 48, 0.2);
+    text-shadow: 0 2px 8px rgba(0, 91, 181, 0.3);
   }
 }
 
@@ -64,13 +70,13 @@
 .auth-title {
   color: var(--brand-primary);
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 12px;
   margin-top: 0;
 }
 
 .auth-subtitle {
-  color: #6b7280;
+  color: var(--brand-dark);
   font-size: 15px;
   margin: 0 0 32px 0;
   line-height: 1.5;
@@ -102,7 +108,7 @@
     &:focus {
       outline: none;
       border-color: var(--brand-primary);
-      box-shadow: 0 0 0 4px rgba(0, 65, 242, 0.1);
+      box-shadow: 0 0 0 4px rgba(57, 141, 241, 0.1);
       background-color: var(--brand-light);
     }
 
@@ -121,9 +127,10 @@
     }
 
     &:disabled {
-      opacity: 0.6;
+      background-color: var(--brand-disabled);
+      color: var(--brand-light);
       cursor: not-allowed;
-      background-color: #f9fafb;
+      border-color: var(--brand-disabled);
     }
   }
 
@@ -171,7 +178,7 @@
     left: 0;
     width: 0%;
     height: 100%;
-    background-color: var(--brand-secondary);
+    background-color: var(--brand-primary-hover);
     transition: width 0.3s ease;
     z-index: 0;
   }
@@ -182,25 +189,27 @@
   }
 
   &:hover:not(:disabled) {
-    background-color: #0037cc;
+    background-color: var(--brand-primary-hover);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 65, 242, 0.3);
+    box-shadow: 0 6px 20px rgba(57, 141, 241, 0.3);
 
     &::before {
       width: 100%;
     }
 
     span {
-      color: var(--brand-dark);
+      color: var(--brand-light);
     }
   }
 
   &:active:not(:disabled) {
+    background-color: var(--brand-pressed);
     transform: translateY(0);
   }
 
   &:disabled {
-    opacity: 0.5;
+    background-color: var(--brand-disabled);
+    color: var(--brand-light);
     cursor: not-allowed;
     transform: none;
   }
