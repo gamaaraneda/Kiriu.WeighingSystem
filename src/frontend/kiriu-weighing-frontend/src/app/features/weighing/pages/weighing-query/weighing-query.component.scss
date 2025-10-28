@@ -154,10 +154,10 @@
     background-color var(--duration-2) var(--ease) !important;
 
   &:hover:not(:disabled) {
-    background: var(--brand-primary) !important;
-    color: #ffffff !important;
+    background: var(--success-hover) !important;
+    color: #000000 !important;
     transform: translateY(-1px) !important;
-    box-shadow: var(--shadow-md) !important;
+    box-shadow: 0 4px 12px rgba(30, 231, 51, 0.3) !important;
   }
 
   &:focus-visible {
