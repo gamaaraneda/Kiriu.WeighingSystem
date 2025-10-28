@@ -1113,6 +1113,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 this.weighingForm.patchValue({ trailerPlate: orphanPhoto.licensePlate });
                 console.log(`🔤 [WEIGHING-FORM] Placa actualizada en formulario: ${orphanPhoto.licensePlate}`);
               }
+              // Actualizar estado de doble remolque si aplica
+              if (this.weighingForm.get('doubleTrailer')?.value && orphanPhoto.licensePlate) {
+                this.doubleTrailerState.trailerPlaca = orphanPhoto.licensePlate;
+                this.doubleTrailerState.currentStep = 'remolque1';
+              }
             } else if (photoType === 'trailerPlate2') {
               this.photoData.trailerPlate2 = orphanPhoto.photoUrl;
               // Si viene la placa en la foto, también actualizarla en el formulario
@@ -1131,6 +1136,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 this.weighingForm.patchValue({ remolque1Plate: orphanPhoto.licensePlate });
                 console.log(`🔤 [WEIGHING-FORM] Placa de remolque1 actualizada: ${orphanPhoto.licensePlate}`);
               }
+              // Actualizar estado de doble remolque
+              if (this.weighingForm.get('doubleTrailer')?.value && orphanPhoto.licensePlate) {
+                this.doubleTrailerState.remolque1.placa = orphanPhoto.licensePlate;
+              }
             } else if (photoType === 'remolque2Plate') {
               // DOBLE REMOLQUE: Guardar foto de remolque 2
               this.photoData.remolque2Plate = orphanPhoto.photoUrl;
@@ -1139,9 +1148,20 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 this.weighingForm.patchValue({ remolque2Plate: orphanPhoto.licensePlate });
                 console.log(`🔤 [WEIGHING-FORM] Placa de remolque2 actualizada: ${orphanPhoto.licensePlate}`);
               }
+              // Actualizar estado de doble remolque
+              if (this.weighingForm.get('doubleTrailer')?.value && orphanPhoto.licensePlate) {
+                this.doubleTrailerState.remolque2.placa = orphanPhoto.licensePlate;
+              }
             }
 
-            this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+            this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos`);
+
+            // Actualizar el estado de los pasos del proceso
+            setTimeout(() => this.updateProcessStepsStatus(), 0);
+
+            // EARLY RETURN: Si encontró foto en BD, no esperar SignalR
+            console.log(`🚀 [WEIGHING-FORM] Foto encontrada en BD, retornando inmediatamente sin esperar SignalR`);
+            return;
           } else {
             console.log(`ℹ️ [WEIGHING-FORM] No hay fotos en BD para photoType: ${photoType}`);
           }
@@ -1149,7 +1169,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           console.log(`⚠️ [WEIGHING-FORM] Doble remolque detectado - NO buscar en BD para ${photoType}, solo SignalR`);
         }
 
-        // Paso 2: Continuar esperando evento de SignalR (puede reemplazar la de BD)
+        // Paso 2: Si NO se encontró foto en BD, esperar evento de SignalR
         this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
 
         // Iniciar polling a BD cada 3 segundos mientras espera SignalR

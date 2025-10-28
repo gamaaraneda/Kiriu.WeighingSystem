@@ -1013,22 +1013,26 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
                   errorMessage: ''
                 };
                 console.log(`✅ [WEIGHING-EXIT-FORM] Placa de BD validada correctamente: ${orphanPhoto.licensePlate}`);
-                this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+                this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos`);
               }
             } else {
               // No hay entrada, solo mostrar éxito
-              this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+              this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos`);
             }
           } else {
             // No hay placa en la foto
-            this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos. Esperando nueva captura...`);
+            this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos`);
           }
+
+          // EARLY RETURN: Si encontró foto en BD, no esperar SignalR
+          console.log(`🚀 [WEIGHING-EXIT-FORM] Foto encontrada en BD, retornando inmediatamente sin esperar SignalR`);
+          return;
         } else {
           console.log(`ℹ️ [WEIGHING-EXIT-FORM] No se encontró foto huérfana en BD para ${searchPhotoType}`);
         }
       }
 
-      // Paso 2: Capturar desde cámara en tiempo real (SignalR)
+      // Paso 2: Si NO se encontró foto en BD, capturar desde cámara en tiempo real (SignalR)
       this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
 
       // Iniciar polling a BD cada 3 segundos mientras espera SignalR
