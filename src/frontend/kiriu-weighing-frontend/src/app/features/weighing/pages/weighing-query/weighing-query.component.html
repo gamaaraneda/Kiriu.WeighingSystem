@@ -44,11 +44,7 @@
           <h1>Consulta y Reimpresión</h1>
           <p>Buscar y gestionar registros existentes</p>
         </div>
-        <button
-          type="button"
-          class="btn btn-ghost"
-          (click)="onGoBack()"
-        >
+        <button type="button" class="btn btn-ghost" (click)="onGoBack()">
           ← Regresar
         </button>
       </section>
@@ -196,18 +192,26 @@
                   [class.edited-row]="operation.fueEditado"
                 >
                   <td class="col-folio">
-                    <a href="#" class="folio-link" (click)="$event.preventDefault(); onViewDetail(operation)">
+                    <a
+                      href="#"
+                      class="folio-link"
+                      (click)="$event.preventDefault(); onViewDetail(operation)"
+                    >
                       {{ operation.folio }}
                     </a>
                   </td>
                   <td class="col-fecha">
-                    <span class="text-secondary">{{ operation.fecha | date : "dd/MM/yyyy" }}</span>
+                    <span class="text-secondary">{{
+                      operation.fecha | date : "dd/MM/yyyy"
+                    }}</span>
                   </td>
                   <td class="col-placas">
                     <span class="text-mono">{{ operation.placas }}</span>
                   </td>
                   <td class="col-cliente">
-                    <span class="text-primary">{{ operation.clienteProveedor }}</span>
+                    <span class="text-primary">{{
+                      operation.clienteProveedor
+                    }}</span>
                   </td>
                   <td class="col-producto">
                     <span class="text-muted">{{ operation.producto }}</span>
@@ -219,33 +223,60 @@
                         [class.tipo-cliente]="operation.tipo === 'client'"
                         [class.tipo-proveedor]="operation.tipo === 'provider'"
                       >
-                        {{ operation.tipo === "client" ? "Cliente" : "Proveedor" }}
+                        {{
+                          operation.tipo === "client" ? "Cliente" : "Proveedor"
+                        }}
                       </span>
-                      <span class="unidad-text">{{ getUnidadLabel(operation.tipoUnidad) }}</span>
+                      <span class="unidad-text">{{
+                        getUnidadLabel(operation.tipoUnidad)
+                      }}</span>
                     </div>
                   </td>
                   <td class="col-peso">
-                    <span *ngIf="operation.pesoBruto" class="peso-value peso-bruto">
+                    <span
+                      *ngIf="operation.pesoBruto"
+                      class="peso-value peso-bruto"
+                    >
                       {{ operation.pesoBruto | number : "1.0-0" }}
                       <span class="peso-unit">kg</span>
                     </span>
-                    <span *ngIf="!operation.pesoBruto" class="peso-empty">—</span>
+                    <span *ngIf="!operation.pesoBruto" class="peso-empty"
+                      >—</span
+                    >
                   </td>
                   <td class="col-peso">
-                    <span *ngIf="operation.pesoNeto" class="peso-value peso-neto">
+                    <span
+                      *ngIf="operation.pesoNeto"
+                      class="peso-value peso-neto"
+                    >
                       {{ operation.pesoNeto | number : "1.0-0" }}
                       <span class="peso-unit">kg</span>
                     </span>
-                    <span *ngIf="!operation.pesoNeto" class="peso-empty">—</span>
+                    <span *ngIf="!operation.pesoNeto" class="peso-empty"
+                      >—</span
+                    >
                   </td>
                   <td class="col-estado">
-                    <span
-                      class="estado-badge"
-                      [class.estado-entrada]="operation.estado === 'ENTRADA_REGISTRADA'"
-                      [class.estado-salida]="operation.estado === 'SALIDA_REGISTRADA'"
-                    >
-                      {{ getEstadoLabel(operation.estado) }}
-                    </span>
+                    <div class="estado-stack">
+                      <span
+                        class="estado-badge"
+                        [class.estado-entrada]="
+                          operation.estado === 'ENTRADA_REGISTRADA'
+                        "
+                        [class.estado-salida]="
+                          operation.estado === 'SALIDA_REGISTRADA'
+                        "
+                      >
+                        {{ getEstadoLabel(operation.estado) }}
+                      </span>
+                      <span
+                        *ngIf="operation.fueEditado"
+                        class="edited-badge"
+                        title="Registro editado"
+                      >
+                        Editado
+                      </span>
+                    </div>
                   </td>
                   <td class="col-acciones">
                     <div class="actions-group">
@@ -254,9 +285,18 @@
                         title="Ver detalles"
                         (click)="onViewDetail(operation)"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                          <circle cx="12" cy="12" r="3"/>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path
+                            d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                          />
+                          <circle cx="12" cy="12" r="3" />
                         </svg>
                       </button>
                       <button
@@ -266,9 +306,20 @@
                         (click)="onEditWeights(operation)"
                         [disabled]="isLoading"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path
+                            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                          />
+                          <path
+                            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                          />
                         </svg>
                       </button>
                       <button
@@ -277,10 +328,19 @@
                         (click)="onReprint(operation)"
                         [disabled]="!operation.puedeReimprimir || isLoading"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <polyline points="6 9 6 2 18 2 18 9"/>
-                          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                          <rect x="6" y="14" width="12" height="8"/>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <polyline points="6 9 6 2 18 2 18 9" />
+                          <path
+                            d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
+                          />
+                          <rect x="6" y="14" width="12" height="8" />
                         </svg>
                       </button>
                     </div>
@@ -376,7 +436,11 @@
             class="btn-modal-action btn-reprint-modal"
             title="Reimprimir"
             (click)="onReprint(selectedOperation!)"
-            [disabled]="!selectedOperation || !selectedOperation.puedeReimprimir || isLoading"
+            [disabled]="
+              !selectedOperation ||
+              !selectedOperation.puedeReimprimir ||
+              isLoading
+            "
           >
             🖨 Reimprimir
           </button>
@@ -397,7 +461,9 @@
             <!-- Información básica -->
             <div class="info-row">
               <span class="info-label">Folio</span>
-              <span class="info-value folio-value">{{ selectedOperation.folio }}</span>
+              <span class="info-value folio-value">{{
+                selectedOperation.folio
+              }}</span>
             </div>
 
             <div class="info-row">
@@ -405,8 +471,12 @@
               <span class="info-value">
                 <span
                   class="badge-status"
-                  [class.status-entrada]="selectedOperation.estado === 'ENTRADA_REGISTRADA'"
-                  [class.status-salida]="selectedOperation.estado === 'SALIDA_REGISTRADA'"
+                  [class.status-entrada]="
+                    selectedOperation.estado === 'ENTRADA_REGISTRADA'
+                  "
+                  [class.status-salida]="
+                    selectedOperation.estado === 'SALIDA_REGISTRADA'
+                  "
                 >
                   {{ getEstadoLabel(selectedOperation.estado) }}
                 </span>
@@ -415,19 +485,27 @@
 
             <div class="info-row">
               <span class="info-label">Fecha</span>
-              <span class="info-value">{{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}</span>
+              <span class="info-value">{{
+                selectedOperation.fecha | date : "dd/MM/yyyy HH:mm"
+              }}</span>
             </div>
 
             <div class="info-row">
               <span class="info-label">Cliente/Proveedor</span>
-              <span class="info-value">{{ selectedOperation.clienteProveedor }}</span>
+              <span class="info-value">{{
+                selectedOperation.clienteProveedor
+              }}</span>
             </div>
 
             <div class="info-row">
               <span class="info-label">Tipo</span>
               <span class="info-value">
                 <span class="badge-tipo">
-                  {{ selectedOperation.tipo === "client" ? "CLIENTE" : "PROVEEDOR" }}
+                  {{
+                    selectedOperation.tipo === "client"
+                      ? "CLIENTE"
+                      : "PROVEEDOR"
+                  }}
                 </span>
               </span>
             </div>
@@ -437,13 +515,22 @@
             <div class="pesaje-card entrada-card">
               <div class="pesaje-row">
                 <span class="pesaje-label">Fecha</span>
-                <span class="pesaje-value">{{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}</span>
+                <span class="pesaje-value">{{
+                  selectedOperation.fecha | date : "dd/MM/yyyy HH:mm"
+                }}</span>
               </div>
               <div class="pesaje-row">
                 <span class="pesaje-label">Peso Bruto</span>
                 <span class="pesaje-value peso-highlight">
-                  <span *ngIf="selectedOperation.pesoBruto">{{ selectedOperation.pesoBruto | number : "1.0-0" }} kg</span>
-                  <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty">—</span>
+                  <span *ngIf="selectedOperation.pesoBruto"
+                    >{{
+                      selectedOperation.pesoBruto | number : "1.0-0"
+                    }}
+                    kg</span
+                  >
+                  <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty"
+                    >—</span
+                  >
                 </span>
               </div>
             </div>
@@ -454,7 +541,9 @@
             <div class="info-row">
               <span class="info-label">Tipo de Unidad</span>
               <span class="info-value">
-                <span class="badge-unidad">{{ getUnidadLabel(selectedOperation.tipoUnidad) }}</span>
+                <span class="badge-unidad">{{
+                  getUnidadLabel(selectedOperation.tipoUnidad)
+                }}</span>
               </span>
             </div>
 
@@ -467,13 +556,15 @@
               <span class="info-label">Placas</span>
               <span class="info-value">
                 <div class="placas-container">
-                  <span class="placa-badge">{{ selectedOperation.placas }}</span>
+                  <span class="placa-badge">{{
+                    selectedOperation.placas
+                  }}</span>
                 </div>
               </span>
             </div>
 
             <!-- Espaciador para alinear con columna izquierda -->
-            <div style="height: 68px;"></div>
+            <div style="height: 68px"></div>
 
             <!-- Sección de Pesaje de Salida -->
             <div class="section-header">Pesaje de Salida</div>
@@ -481,15 +572,31 @@
               <div class="pesaje-row">
                 <span class="pesaje-label">Fecha</span>
                 <span class="pesaje-value">
-                  <span *ngIf="selectedOperation.estado === 'SALIDA_REGISTRADA'">{{ selectedOperation.fecha | date : "dd/MM/yyyy HH:mm" }}</span>
-                  <span *ngIf="selectedOperation.estado !== 'SALIDA_REGISTRADA'" class="peso-empty">—</span>
+                  <span
+                    *ngIf="selectedOperation.estado === 'SALIDA_REGISTRADA'"
+                    >{{
+                      selectedOperation.fecha | date : "dd/MM/yyyy HH:mm"
+                    }}</span
+                  >
+                  <span
+                    *ngIf="selectedOperation.estado !== 'SALIDA_REGISTRADA'"
+                    class="peso-empty"
+                    >—</span
+                  >
                 </span>
               </div>
               <div class="pesaje-row">
                 <span class="pesaje-label">Peso Bruto</span>
                 <span class="pesaje-value peso-highlight">
-                  <span *ngIf="selectedOperation.pesoBruto">{{ selectedOperation.pesoBruto | number : "1.0-0" }} kg</span>
-                  <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty">—</span>
+                  <span *ngIf="selectedOperation.pesoBruto"
+                    >{{
+                      selectedOperation.pesoBruto | number : "1.0-0"
+                    }}
+                    kg</span
+                  >
+                  <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty"
+                    >—</span
+                  >
                 </span>
               </div>
             </div>
@@ -498,8 +605,12 @@
             <div class="total-neto-card">
               <span class="total-label">Total Neto</span>
               <span class="total-value">
-                <span *ngIf="selectedOperation.pesoNeto">{{ selectedOperation.pesoNeto | number : "1.0-0" }} kg</span>
-                <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty">—</span>
+                <span *ngIf="selectedOperation.pesoNeto"
+                  >{{ selectedOperation.pesoNeto | number : "1.0-0" }} kg</span
+                >
+                <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty"
+                  >—</span
+                >
               </span>
             </div>
           </div>
@@ -512,16 +623,33 @@
             type="button"
             (click)="togglePhotosExpanded()"
           >
-            <span class="photos-toggle-icon">{{ photosExpanded ? '▼' : '▶' }}</span>
+            <span class="photos-toggle-icon">{{
+              photosExpanded ? "▼" : "▶"
+            }}</span>
             <span class="photos-toggle-text">Fotos de Placas y Carga</span>
             <span class="photos-toggle-badge">{{ getPhotosCount() }}</span>
           </button>
 
-          <div class="photos-content" [class.photos-content--expanded]="photosExpanded">
-            <div class="photos-grid" *ngIf="selectedOperation && selectedOperation.photos && selectedOperation.photos.length > 0">
+          <div
+            class="photos-content"
+            [class.photos-content--expanded]="photosExpanded"
+          >
+            <div
+              class="photos-grid"
+              *ngIf="
+                selectedOperation &&
+                selectedOperation.photos &&
+                selectedOperation.photos.length > 0
+              "
+            >
               <!-- Iterar sobre todas las fotos disponibles -->
-              <div class="photo-item" *ngFor="let photo of selectedOperation.photos">
-                <div class="photo-label">{{ getPhotoLabel(photo.photoType) }}</div>
+              <div
+                class="photo-item"
+                *ngFor="let photo of selectedOperation.photos"
+              >
+                <div class="photo-label">
+                  {{ getPhotoLabel(photo.photoType) }}
+                </div>
                 <div class="photo-frame">
                   <img
                     [src]="getPhotoUrl(photo.id)"
@@ -532,14 +660,26 @@
                 </div>
               </div>
             </div>
-            <div class="no-photos" *ngIf="!selectedOperation || !selectedOperation.photos || selectedOperation.photos.length === 0">
-              <p class="no-photos-text">No hay fotos disponibles para esta operación</p>
+            <div
+              class="no-photos"
+              *ngIf="
+                !selectedOperation ||
+                !selectedOperation.photos ||
+                selectedOperation.photos.length === 0
+              "
+            >
+              <p class="no-photos-text">
+                No hay fotos disponibles para esta operación
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Información de edición -->
-        <div class="edit-info" *ngIf="selectedOperation.fueEditado && selectedOperation.fechaEdicion">
+        <div
+          class="edit-info"
+          *ngIf="selectedOperation.fueEditado && selectedOperation.fechaEdicion"
+        >
           <div class="edit-info-row">
             <span class="edit-info-label">Creado por:</span>
             <span class="edit-info-value">operador@kiriu.com</span>
@@ -550,7 +690,9 @@
           </div>
           <div class="edit-info-row">
             <span class="edit-info-label">Última edición:</span>
-            <span class="edit-info-value">{{ selectedOperation.fechaEdicion | date : "dd/MM/yyyy HH:mm" }}</span>
+            <span class="edit-info-value">{{
+              selectedOperation.fechaEdicion | date : "dd/MM/yyyy HH:mm"
+            }}</span>
           </div>
         </div>
       </div>
@@ -558,11 +700,7 @@
   </div>
 
   <!-- Modal de edición de pesos -->
-  <div
-    class="km-backdrop"
-    [class.is-open]="showEditModal"
-    role="presentation"
-  >
+  <div class="km-backdrop" [class.is-open]="showEditModal" role="presentation">
     <section
       class="km-modal km-modal--md"
       role="dialog"
@@ -570,7 +708,9 @@
       aria-labelledby="edit-title"
     >
       <header class="km-modal__header">
-        <h3 id="edit-title" class="km-modal__title">Editar Pesos - {{ operationToEdit?.folio }}</h3>
+        <h3 id="edit-title" class="km-modal__title">
+          Editar Pesos - {{ operationToEdit?.folio }}
+        </h3>
         <button
           class="km-modal__close"
           aria-label="Cerrar"
@@ -585,7 +725,10 @@
             <span class="edit-info-icon">ℹ️</span>
             <div class="edit-info-content">
               <strong>Información:</strong>
-              <p>Solo puedes editar los pesos. Los datos de cliente, producto y fotos no pueden modificarse.</p>
+              <p>
+                Solo puedes editar los pesos. Los datos de cliente, producto y
+                fotos no pueden modificarse.
+              </p>
             </div>
           </div>
 
@@ -595,11 +738,15 @@
             <div class="readonly-grid">
               <div class="readonly-field">
                 <span class="readonly-label">Cliente/Proveedor:</span>
-                <span class="readonly-value">{{ operationToEdit.clienteProveedor }}</span>
+                <span class="readonly-value">{{
+                  operationToEdit.clienteProveedor
+                }}</span>
               </div>
               <div class="readonly-field">
                 <span class="readonly-label">Producto:</span>
-                <span class="readonly-value">{{ operationToEdit.producto }}</span>
+                <span class="readonly-value">{{
+                  operationToEdit.producto
+                }}</span>
               </div>
               <div class="readonly-field">
                 <span class="readonly-label">Placas:</span>
@@ -607,7 +754,9 @@
               </div>
               <div class="readonly-field">
                 <span class="readonly-label">Estado:</span>
-                <span class="readonly-value">{{ getEstadoLabel(operationToEdit.estado) }}</span>
+                <span class="readonly-value">{{
+                  getEstadoLabel(operationToEdit.estado)
+                }}</span>
               </div>
             </div>
           </div>
@@ -617,7 +766,9 @@
             <h4 class="section-title">Pesos (Editables)</h4>
             <div class="form-grid">
               <div class="form-field">
-                <label class="label" for="entryWeight">Peso de Entrada (kg)</label>
+                <label class="label" for="entryWeight"
+                  >Peso de Entrada (kg)</label
+                >
                 <input
                   type="number"
                   id="entryWeight"
@@ -631,7 +782,9 @@
               </div>
 
               <div class="form-field">
-                <label class="label" for="exitWeight">Peso de Salida (kg)</label>
+                <label class="label" for="exitWeight"
+                  >Peso de Salida (kg)</label
+                >
                 <input
                   type="number"
                   id="exitWeight"
@@ -663,7 +816,7 @@
           [disabled]="isLoading || !editForm.valid"
         >
           <span *ngIf="isLoading" class="spinner"></span>
-          {{ isLoading ? 'Guardando...' : 'Guardar Cambios' }}
+          {{ isLoading ? "Guardando..." : "Guardar Cambios" }}
         </button>
       </footer>
     </section>
