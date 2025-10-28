@@ -5,41 +5,43 @@
  * ============================================================================ */
 
 :host {
-  /* Brand Electric Blue */
-  --brand-primary: #0041f2;
-  --brand-secondary: #bfeb30;
-  --brand-dark: #0a1e33;
+  /* Brand Kiriu */
+  --brand-primary: #398DF1;
+  --brand-secondary: #005BB5;
+  --brand-dark: #000000;
   --brand-light: #ffffff;
-  --brand-neutral: #e6eaf1;
+  --brand-neutral: #ECECEC;
+  --brand-disabled: #545454;
 
   /* Semantic */
-  --success: #b8e92e;
+  --success: #1EE733;
   --success-bg: #f4fbe4;
-  --success-hover: #9dd424;
-  --warning: #ffd93b;
+  --success-hover: #14AE24;
+  --warning: #FF914D;
   --warning-bg: #fff9e0;
-  --error: #e54848;
+  --error: #F70000;
   --error-bg: #ffecec;
-  --info: #1f6bff;
+  --error-hover: #CA0000;
+  --info: #398DF1;
   --info-bg: #e8f1ff;
   --neutral: #d4d9e2;
   --neutral-bg: #f5f6f9;
 
   /* Derived colors for compatibility */
-  --brand-50: #eef5ff;
-  --brand-100: #d9e8ff;
-  --brand-200: #b9d3ff;
-  --brand-300: #8fb6ff;
-  --brand-400: #5e8dff;
-  --brand-500: #0041f2;
-  --brand-600: #0034c7;
-  --brand-700: #002a9d;
+  --brand-50: #e8f1ff;
+  --brand-100: #d4e7ff;
+  --brand-200: #b0d4ff;
+  --brand-300: #8ac0ff;
+  --brand-400: #61a7f7;
+  --brand-500: #398DF1;
+  --brand-600: #005BB5;
+  --brand-700: #004a94;
   --bg: #f6f8fb;
   --surface: #fff;
   --surface-2: #fbfcff;
   --text: #1b2430;
   --muted: #5b687a;
-  --danger: #e54848;
+  --danger: #F70000;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
@@ -59,19 +61,19 @@
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --duration-1: 120ms;
   --duration-2: 200ms;
-  --focus-ring: 0 0 0 3px rgba(0, 65, 242, 0.25);
+  --focus-ring: 0 0 0 3px rgba(57, 141, 241, 0.25);
 }
 
 .weighing-query-container {
   min-height: 100vh;
   background: radial-gradient(
       1200px 800px at 70% -10%,
-      rgba(47, 106, 246, 0.08),
+      rgba(57, 141, 241, 0.08),
       transparent 60%
     ),
     radial-gradient(
       900px 600px at -10% 100%,
-      rgba(14, 165, 233, 0.08),
+      rgba(57, 141, 241, 0.06),
       transparent 60%
     ),
     var(--bg);
@@ -102,7 +104,7 @@
 
 .hero {
   background: linear-gradient(180deg, #fff, #f6fbff);
-  border: 2px solid #d7e7ff;
+  border: 2px solid var(--brand-100);
   border-radius: 16px;
   padding: 16px 18px;
   box-shadow: var(--shadow-sm);
@@ -164,8 +166,8 @@
   }
 
   &:disabled {
-    background: #e5e7eb !important;
-    color: #9ca3af !important;
+    background: var(--brand-neutral) !important;
+    color: var(--brand-disabled) !important;
     opacity: 0.6;
     cursor: not-allowed;
     transform: none !important;
@@ -1201,14 +1203,14 @@
     background: linear-gradient(135deg, var(--brand-primary) 0%, var(--info) 100%);
     color: var(--brand-light);
     border: 1px solid var(--brand-primary);
-    box-shadow: 0 2px 4px rgba(0, 65, 242, 0.2);
+    box-shadow: 0 2px 4px rgba(57, 141, 241, 0.2);
   }
 
   &.status-salida {
-    background: linear-gradient(135deg, var(--success) 0%, #9dd424 100%);
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-hover) 100%);
     color: #000000;
     border: 1px solid var(--success);
-    box-shadow: 0 2px 4px rgba(184, 233, 46, 0.2);
+    box-shadow: 0 2px 4px rgba(30, 231, 51, 0.2);
   }
 }
 
@@ -1219,10 +1221,10 @@
   border-radius: 6px;
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
-  background: linear-gradient(135deg, var(--info) 0%, #4d8bff 100%);
+  background: linear-gradient(135deg, var(--info) 0%, var(--brand-400) 100%);
   color: var(--brand-light);
   border: 1px solid var(--info);
-  box-shadow: 0 2px 4px rgba(31, 107, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(57, 141, 241, 0.15);
 }
 
 .badge-unidad {
@@ -1780,7 +1782,7 @@
 
 .toast__close:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(31, 94, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.25);
 }
 
 /* Variantes (aplica una sola) */
