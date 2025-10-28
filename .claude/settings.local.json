@@ -54,7 +54,8 @@
       "Bash(ren:*)",
       "Bash(move index.csr.html index.html)",
       "Bash(Select-String -Pattern \"error TS\")",
-      "Bash(Select-Object -First 10)"
+      "Bash(Select-Object -First 10)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

@@ -144,7 +144,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   // Control para captura consolidada de fotos
   isCapturingAllPhotos = false;
   photosCaptureProgress = { current: 0, total: 0, fieldName: '' };
-  
+
+  // Control para orden invertido de placas
+  invertedPlateOrder = false;
+
   // Estado de conexión con la báscula
   connectionStatus: ConnectionStatus = {
     isConnected: false,
@@ -804,6 +807,74 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Maneja el cambio del checkbox de orden invertido
+   * Intercambia las fotos y textos de placas entre trailer y remolque
+   */
+  onInvertedPlateOrderChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.invertedPlateOrder = checked;
+
+    if (checked) {
+      this.swapPlatePhotos();
+    } else {
+      // Revertir intercambio (aplicar swap de nuevo)
+      this.swapPlatePhotos();
+    }
+  }
+
+  /**
+   * Intercambia las fotos y textos de placas entre trailer y remolque
+   * Respeta el flujo: simple (trailer ↔ remolque) o doble (trailer ↔ remolque1)
+   * También funciona en flujo Solo Contenedor (intercambia fotos y textos)
+   */
+  private swapPlatePhotos(): void {
+    const isDoubleTrailer = this.weighingForm.get('doubleTrailer')?.value;
+
+    if (isDoubleTrailer) {
+      // Intercambiar trailer ↔ remolque1 (NO tocar remolque2)
+      this.swapPhotoData('trailerPlate', 'remolque1Plate');
+      this.swapFormValues('trailerPlate', 'remolque1Plate');
+
+      // Intercambiar en doubleTrailerState
+      const tempPlaca = this.doubleTrailerState.trailerPlaca;
+      this.doubleTrailerState.trailerPlaca = this.doubleTrailerState.remolque1.placa || '';
+      this.doubleTrailerState.remolque1.placa = tempPlaca;
+
+      this.showToast('success', 'Orden invertido',
+        'Las fotos del tráiler y remolque 1 han sido intercambiadas');
+    } else {
+      // Intercambiar trailer ↔ trailerPlate2 (remolque simple o contenedor)
+      this.swapPhotoData('trailerPlate', 'trailerPlate2');
+      this.swapFormValues('trailerPlate', 'trailerPlate2');
+
+      this.showToast('success', 'Orden invertido',
+        'Las fotos del tráiler y remolque han sido intercambiadas');
+    }
+  }
+
+  /**
+   * Intercambia las URLs de las fotos entre dos campos
+   */
+  private swapPhotoData(field1: string, field2: string): void {
+    const temp = (this.photoData as any)[field1];
+    (this.photoData as any)[field1] = (this.photoData as any)[field2];
+    (this.photoData as any)[field2] = temp;
+  }
+
+  /**
+   * Intercambia los valores de texto de las placas en el formulario
+   */
+  private swapFormValues(field1: string, field2: string): void {
+    const value1 = this.weighingForm.get(field1)?.value;
+    const value2 = this.weighingForm.get(field2)?.value;
+
+    this.weighingForm.patchValue({
+      [field1]: value2,
+      [field2]: value1
+    });
+  }
+
+  /**
    * Valida que se haya capturado toda la información del primer remolque
    * ANTES de permitir avanzar al segundo remolque
    * Solo campos obligatorios: placas, producto, cliente y peso
@@ -1411,7 +1482,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (this.weighingForm.valid && this.weightData.capturedWeight) {
       this.isLoading = true;
 
-      const formData = this.weighingForm.value;
+      // Usar getRawValue() para incluir campos deshabilitados (ej: trailerPlate2 en modo containerOnly)
+      const formData = this.weighingForm.getRawValue();
 
       // Si hay ediciones manuales, incluir información del usuario
       if (this.hasManualEdits) {
@@ -2195,7 +2267,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private updateOperationWithManualEdit(editEvent: ManualEditEvent): void {
     if (!this.currentOperationId) return;
 
-    const formValues = this.weighingForm.value;
+    // Usar getRawValue() para incluir campos deshabilitados
+    const formValues = this.weighingForm.getRawValue();
     const updateRequest: UpdateWeighingOperationRequest = {
       esEdicionManual: true,
       // Solo incluir los campos que cambiaron

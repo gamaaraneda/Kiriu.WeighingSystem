@@ -114,6 +114,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   isCapturingAllPhotos = false;
   photosCaptureProgress = { current: 0, total: 0, fieldName: '' };
 
+  // Control para orden invertido de placas
+  invertedPlateOrder = false;
+
   // Control de edición manual de placas
   manualEditEnabled: Record<string, boolean> = {
     trailerPlate: false,
@@ -350,6 +353,92 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     };
 
     this.showToast('info', 'Edición manual habilitada', `Puede editar manualmente la placa. La validación automática ha sido deshabilitada.`);
+  }
+
+  /**
+   * Maneja el cambio del checkbox de orden invertido
+   * Intercambia las fotos y textos de placas entre trailer y remolque
+   */
+  onInvertedPlateOrderChange(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.invertedPlateOrder = checked;
+
+    if (checked) {
+      this.swapPlatePhotos();
+    } else {
+      // Revertir intercambio (aplicar swap de nuevo)
+      this.swapPlatePhotos();
+    }
+  }
+
+  /**
+   * Intercambia las fotos y textos de placas entre trailer y remolque
+   * Respeta el flujo: simple (trailer ↔ remolque) o doble (trailer ↔ remolque1)
+   */
+  private swapPlatePhotos(): void {
+    const isDoubleTrailer = this.entryData?.tipoUnidad === 'doble-remolque';
+
+    if (isDoubleTrailer) {
+      // Intercambiar trailer ↔ remolque1 (NO tocar remolque2)
+      this.swapPhotoData('trailerPlate', 'remolque1Plate');
+      this.swapFormValues('trailerPlate', 'remolque1Plate');
+      this.swapDetectedPlates('trailerPlate', 'remolque1Plate');
+
+      // Intercambiar en doubleTrailerState
+      const tempPlaca = this.doubleTrailerState.trailerPlaca;
+      this.doubleTrailerState.trailerPlaca = this.doubleTrailerState.remolque1.placa || '';
+      this.doubleTrailerState.remolque1.placa = tempPlaca;
+
+      // Re-validar después del intercambio con los nuevos valores
+      this.validatePlate('trailerPlate', this.getExpectedPlate('trailerPlate'));
+      this.validatePlate('remolque1Plate', this.getExpectedPlate('remolque1Plate'));
+
+      this.showToast('success', 'Orden invertido',
+        'Las fotos del tráiler y remolque 1 han sido intercambiadas');
+    } else {
+      // Intercambiar trailer ↔ trailerPlate2 (remolque simple)
+      this.swapPhotoData('trailerPlate', 'trailerPlate2');
+      this.swapFormValues('trailerPlate', 'trailerPlate2');
+      this.swapDetectedPlates('trailerPlate', 'trailerPlate2');
+
+      // Re-validar después del intercambio con los nuevos valores
+      this.validatePlate('trailerPlate', this.getExpectedPlate('trailerPlate'));
+      this.validatePlate('trailerPlate2', this.getExpectedPlate('trailerPlate2'));
+
+      this.showToast('success', 'Orden invertido',
+        'Las fotos del tráiler y remolque han sido intercambiadas');
+    }
+  }
+
+  /**
+   * Intercambia las URLs de las fotos entre dos campos
+   */
+  private swapPhotoData(field1: string, field2: string): void {
+    const temp = (this.photoData as any)[field1];
+    (this.photoData as any)[field1] = (this.photoData as any)[field2];
+    (this.photoData as any)[field2] = temp;
+  }
+
+  /**
+   * Intercambia los valores de texto de las placas en el formulario
+   */
+  private swapFormValues(field1: string, field2: string): void {
+    const value1 = this.exitForm.get(field1)?.value;
+    const value2 = this.exitForm.get(field2)?.value;
+
+    this.exitForm.patchValue({
+      [field1]: value2,
+      [field2]: value1
+    });
+  }
+
+  /**
+   * Intercambia las placas detectadas por OCR
+   */
+  private swapDetectedPlates(field1: string, field2: string): void {
+    const temp = this.detectedPlates[field1];
+    this.detectedPlates[field1] = this.detectedPlates[field2];
+    this.detectedPlates[field2] = temp;
   }
 
   /**

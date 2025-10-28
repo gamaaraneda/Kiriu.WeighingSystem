@@ -55,6 +55,19 @@
                   <span class="checkmark"></span>
                   Unidad con doble remolque
                 </label>
+
+                <label
+                  class="checkbox-label"
+                  title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés">
+                  <input
+                    type="checkbox"
+                    [checked]="invertedPlateOrder"
+                    (change)="onInvertedPlateOrderChange($event)"
+                  />
+                  <span class="checkmark"></span>
+                  Orden invertido (intercambiar fotos trailer/remolque)
+                  <span class="info-icon" style="margin-left: 4px;">ℹ️</span>
+                </label>
               </div>
             </div>
 
