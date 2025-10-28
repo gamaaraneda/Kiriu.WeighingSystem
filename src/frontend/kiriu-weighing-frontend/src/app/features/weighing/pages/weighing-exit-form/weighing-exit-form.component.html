@@ -163,6 +163,43 @@
             >
               <h2 class="section-title">Datos del Vehículo (Tráiler)</h2>
 
+              <!-- Subsección: Captura de placas -->
+              <div class="plate-capture-subsection">
+                <h3 class="subsection-title">Captura de placas</h3>
+
+                <button
+                  type="button"
+                  class="btn btn-primary capture-all-photos-btn"
+                  [disabled]="isCapturingAllPhotos || isLoading || !isEntryFound"
+                  (click)="onCaptureAllPhotos()"
+                  [title]="entryData?.tipoUnidad === 'doble-remolque'
+                    ? 'Captura fotos del remolque 1 (tráiler + remolque1 + carga1)'
+                    : 'Captura todas las fotos necesarias (tráiler, remolque, carga)'"
+                  style="width: 100%; margin-bottom: 16px;"
+                >
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
+                  <span *ngIf="isCapturingAllPhotos">
+                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
+                    ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                  </span>
+                </button>
+
+                <div class="inverted-order-section">
+                  <label
+                    class="checkbox-label"
+                    title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés">
+                    <input
+                      type="checkbox"
+                      [checked]="invertedPlateOrder"
+                      (change)="onInvertedPlateOrderChange($event)"
+                    />
+                    <span class="checkmark"></span>
+                    Orden invertido (intercambiar fotos tráiler/remolque)
+                  </label>
+                  <p class="help-text">Este ajuste sólo afecta a las placas; no modifica el proceso general.</p>
+                </div>
+              </div>
+
               <div class="form-group">
                 <label for="trailerPlate" class="form-label"
                   >Placa del Tráiler *</label
@@ -511,6 +548,26 @@
                 Remolque 2
               </h2>
 
+              <!-- Subsección: Captura de placas Remolque 2 -->
+              <div class="plate-capture-subsection">
+                <h3 class="subsection-title">Captura de placas</h3>
+
+                <button
+                  type="button"
+                  class="btn btn-primary capture-all-photos-btn"
+                  [disabled]="isCapturingAllPhotos || isLoading || !isEntryFound"
+                  (click)="onCaptureRemolque2Photos()"
+                  title="Captura fotos del remolque 2 (remolque2 + carga2)"
+                  style="width: 100%; margin-bottom: 16px;"
+                >
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
+                  <span *ngIf="isCapturingAllPhotos">
+                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
+                    ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                  </span>
+                </button>
+              </div>
+
               <div class="form-group">
                 <label for="remolque2Plate" class="form-label"
                   >Placa del Remolque 2 *</label
@@ -816,6 +873,41 @@
               class="form-section"
             >
               <h2 class="section-title">Datos del Vehículo</h2>
+
+              <!-- Subsección: Captura de placas -->
+              <div class="plate-capture-subsection">
+                <h3 class="subsection-title">Captura de placas</h3>
+
+                <button
+                  type="button"
+                  class="btn btn-primary capture-all-photos-btn"
+                  [disabled]="isCapturingAllPhotos || isLoading || !isEntryFound"
+                  (click)="onCaptureAllPhotos()"
+                  title="Captura todas las fotos necesarias (tráiler, remolque, carga)"
+                  style="width: 100%; margin-bottom: 16px;"
+                >
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
+                  <span *ngIf="isCapturingAllPhotos">
+                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
+                    ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                  </span>
+                </button>
+
+                <div class="inverted-order-section">
+                  <label
+                    class="checkbox-label"
+                    title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés">
+                    <input
+                      type="checkbox"
+                      [checked]="invertedPlateOrder"
+                      (change)="onInvertedPlateOrderChange($event)"
+                    />
+                    <span class="checkmark"></span>
+                    Orden invertido (intercambiar fotos tráiler/remolque)
+                  </label>
+                  <p class="help-text">Este ajuste sólo afecta a las placas; no modifica el proceso general.</p>
+                </div>
+              </div>
 
               <!-- Placa del tráiler (para todos los tipos) -->
               <div class="form-group">
@@ -1174,16 +1266,19 @@
 
             <!-- Botones de acción -->
             <div class="form-actions">
-              <button type="button" class="btn btn-outline" (click)="onClear()">
-                Limpiar
-              </button>
-              <button
-                type="button"
-                class="btn btn-outline"
-                (click)="onGoBack()"
-              >
-                Regresar
-              </button>
+              <div class="left-actions">
+                <button type="button" class="btn btn-light-gray" (click)="onClear()">
+                  Limpiar
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline"
+                  (click)="onGoBack()"
+                >
+                  Regresar
+                </button>
+              </div>
+              <!-- BOTONES ORIGINALES DE CAPTURA - COMENTADOS (Ahora se usan los botones en las subsecciones de captura de placas)
               <button
                 type="button"
                 class="btn btn-secondary"
@@ -1214,18 +1309,22 @@
                   ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
                 </span>
               </button>
-              <button
-                type="button"
-                class="btn btn-primary"
-                [disabled]="!isFormValid || isLoading || isExitRegistered"
-                (click)="onSave()"
-              >
-                <span *ngIf="!isLoading && !isExitRegistered"
-                  >Registrar Salida</span
+              -->
+              <div class="right-actions">
+                <button
+                  type="button"
+                  class="btn btn-save"
+                  [class.btn-save-disabled]="!isFormValid || isLoading || isExitRegistered"
+                  [disabled]="!isFormValid || isLoading || isExitRegistered"
+                  (click)="onSave()"
                 >
-                <span *ngIf="isLoading">Registrando...</span>
-                <span *ngIf="isExitRegistered">✅ Salida Registrada</span>
-              </button>
+                  <span *ngIf="!isLoading && !isExitRegistered"
+                    >Registrar Salida</span
+                  >
+                  <span *ngIf="isLoading">Registrando...</span>
+                  <span *ngIf="isExitRegistered">✅ Salida Registrada</span>
+                </button>
+              </div>
             </div>
           </form>
         </div>
