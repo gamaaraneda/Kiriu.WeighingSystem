@@ -1,3 +1,28 @@
+// Variables de la paleta Kiriu
+:host {
+  /* Brand */
+  --brand-primary: #398DF1;
+  --brand-secondary: #005BB5;
+  --brand-dark: #000000;
+  --brand-light: #FFFFFF;
+  --brand-neutral: #ECECEC;
+  --brand-disabled: #545454;
+
+  /* Semantic */
+  --success: #1EE733;
+  --success-hover: #14AE24;
+  --success-bg: #f4fbe4;
+  --warning: #FF914D;
+  --warning-bg: #fff9e0;
+  --error: #F70000;
+  --error-hover: #CA0000;
+  --error-bg: #ffecec;
+  --info: #398DF1;
+  --info-bg: #e8f1ff;
+  --neutral: #d4d9e2;
+  --neutral-bg: #f5f6f9;
+}
+
 .weighing-exit-form-container {
   min-height: 100vh;
   background-color: #f8f9fa;
@@ -19,7 +44,7 @@
   margin-bottom: 40px;
 
   .form-title {
-    color: #398df1;
+    color: var(--brand-primary);
     font-size: 28px;
     font-weight: 600;
     margin-bottom: 12px;
@@ -66,7 +91,7 @@
   }
 
   .section-title {
-    color: #398df1;
+    color: var(--brand-primary);
     font-size: 20px;
     font-weight: 600;
     margin-bottom: 20px;
@@ -106,7 +131,7 @@
 
     &:focus {
       outline: none;
-      border-color: #398df1;
+      border-color: var(--brand-primary);
       box-shadow: 0 0 0 3px rgba(57, 141, 241, 0.1);
     }
 
@@ -116,7 +141,7 @@
     }
 
     &.error {
-      border-color: #f70000;
+      border-color: var(--error);
       box-shadow: 0 0 0 3px rgba(247, 0, 0, 0.1);
     }
 
@@ -134,7 +159,7 @@
   }
 
   .error-message {
-    color: #f70000;
+    color: var(--error);
     font-size: 14px;
     margin-top: 4px;
     text-align: left;
@@ -148,17 +173,17 @@
     margin-top: 8px;
     padding: 8px 12px;
     background-color: rgba(247, 0, 0, 0.1);
-    border: 1px solid #f70000;
+    border: 1px solid var(--error);
     border-radius: 6px;
 
     .error-icon {
       font-size: 16px;
-      color: #f70000;
+      color: var(--error);
     }
 
     .error-message {
       flex: 1;
-      color: #f70000;
+      color: var(--error);
       font-size: 14px;
       font-weight: 500;
       margin: 0;
@@ -265,7 +290,7 @@
   .search-btn {
     padding: 16px 24px;
     border: none;
-    background-color: #398df1;
+    background-color: var(--brand-primary);
     color: #ffffff;
     border-radius: 8px;
     font-size: 16px;
@@ -300,7 +325,7 @@
   padding: 20px;
   background-color: #f8f9fa;
   border-radius: 12px;
-  border: 2px solid #1ee733;
+  border: 2px solid var(--success);
 
   .info-box.success {
     margin-bottom: 16px;
@@ -309,7 +334,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #1ee733;
+      color: var(--success);
       font-weight: 500;
 
       .info-icon {
@@ -356,9 +381,9 @@
   .photo-capture-btn,
   .edit-plate-btn {
     padding: 16px 20px;
-    border: 2px solid #398df1;
+    border: 2px solid var(--brand-primary);
     background-color: #ffffff;
-    color: #398df1;
+    color: var(--brand-primary);
     border-radius: 8px;
     font-size: 18px;
     cursor: pointer;
@@ -367,7 +392,7 @@
     min-width: 60px;
 
     &:hover {
-      background-color: #398df1;
+      background-color: var(--brand-primary);
       color: #ffffff;
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(57, 141, 241, 0.3);
@@ -388,16 +413,16 @@
 
   .photo-capture-btn {
     padding: 12px 20px;
-    border: 2px solid #398df1;
+    border: 2px solid var(--brand-primary);
     background-color: #ffffff;
-    color: #398df1;
+    color: var(--brand-primary);
     border-radius: 8px;
     font-size: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-      background-color: #398df1;
+      background-color: var(--brand-primary);
       color: #ffffff;
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(57, 141, 241, 0.3);
@@ -406,7 +431,7 @@
 
   .photo-status {
     .photo-captured {
-      color: #1ee733;
+      color: var(--success);
       font-weight: 500;
       font-size: 18px;
     }
@@ -438,7 +463,7 @@
     transition: all 0.2s ease;
 
     &.has-photo {
-      border-color: #1ee733;
+      border-color: var(--success);
       background: rgba(30, 231, 51, 0.05);
     }
 
@@ -453,7 +478,7 @@
       font-size: 14px;
       text-align: center;
       padding: 0 8px;
-      color: #1ee733;
+      color: var(--success);
     }
 
     .captured-plate-image {
@@ -480,7 +505,7 @@
   .capture-weight-btn {
     padding: 16px 24px;
     border: none;
-    background-color: #1ee733;
+    background-color: var(--success);
     color: #ffffff;
     border-radius: 8px;
     font-size: 16px;
@@ -545,7 +570,7 @@
     margin-right: 12px;
 
     .weight-captured {
-      color: #1ee733;
+      color: var(--success);
       font-size: 14px;
       font-weight: 600;
       display: flex;
@@ -574,7 +599,7 @@
   .capture-weight-btn {
     padding: 12px 20px;
     border: none;
-    background-color: #1ee733;
+    background-color: var(--success);
     color: #ffffff;
     border-radius: 6px;
     font-size: 14px;
@@ -606,7 +631,7 @@
 
   // Variante para cuando hay peso capturado
   &.has-weight {
-    border-color: #1ee733;
+    border-color: var(--success);
     background-color: rgba(30, 231, 51, 0.05);
 
     .weight-value-display span {
@@ -635,7 +660,7 @@
   }
 
   &.calculated {
-    border-color: #398df1;
+    border-color: var(--brand-primary);
     background-color: rgba(57, 141, 241, 0.05);
   }
 
@@ -687,11 +712,11 @@
   text-align: center;
 
   &.btn-primary {
-    background: #398df1;
+    background: var(--brand-primary);
     color: #ffffff;
 
     &:hover:not(:disabled) {
-      background: #005bb5;
+      background: var(--brand-secondary);
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(57, 141, 241, 0.3);
     }
@@ -703,11 +728,11 @@
   }
 
   &.btn-success {
-    background: #1ee733;
+    background: var(--success);
     color: #ffffff;
 
     &:hover:not(:disabled) {
-      background: #00b32a;
+      background: var(--success-hover);
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(30, 231, 51, 0.3);
     }
@@ -720,11 +745,11 @@
 
   &.btn-outline {
     background: transparent;
-    color: #398df1;
-    border: 2px solid #398df1;
+    color: var(--brand-primary);
+    border: 2px solid var(--brand-primary);
 
     &:hover {
-      background: #398df1;
+      background: var(--brand-primary);
       color: #ffffff;
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(57, 141, 241, 0.3);
@@ -749,7 +774,7 @@
     border: 1px solid #e9ecef;
 
     .section-title {
-      color: #398df1;
+      color: var(--brand-primary);
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 20px;
@@ -769,7 +794,7 @@
       .weight-value {
         font-size: 32px;
         font-weight: 700;
-        color: #398df1;
+        color: var(--brand-primary);
         margin-bottom: 8px;
       }
 
@@ -781,11 +806,11 @@
         margin-left: 8px;
 
         &.connected {
-          background-color: #1ee733;
+          background-color: var(--success);
         }
 
         &.disconnected {
-          background-color: #f70000;
+          background-color: var(--error);
         }
       }
     }
@@ -813,19 +838,19 @@
           font-weight: 600;
 
           &.connected {
-            color: #1ee733;
+            color: var(--success);
           }
 
           &.disconnected {
-            color: #f70000;
+            color: var(--error);
           }
 
           &.stable {
-            color: #1ee733;
+            color: var(--success);
           }
 
           &.unstable {
-            color: #f70000;
+            color: var(--error);
           }
         }
       }
@@ -837,11 +862,11 @@
         gap: 6px;
 
         &.connected {
-          color: #1ee733;
+          color: var(--success);
         }
 
         &.disconnected {
-          color: #f70000;
+          color: var(--error);
         }
 
         i {
@@ -882,8 +907,8 @@
       background: rgba(30, 231, 51, 0.05);
       border-radius: 16px;
       margin-bottom: 20px;
-      color: #1ee733;
-      border: 2px solid #1ee733;
+      color: var(--success);
+      border: 2px solid var(--success);
       position: relative;
       transition: all 0.3s ease;
 
@@ -896,7 +921,7 @@
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          color: #1ee733;
+          color: var(--success);
         }
       }
 
@@ -904,7 +929,7 @@
         font-size: 28px;
         font-weight: 700;
         margin-bottom: 8px;
-        color: #1ee733;
+        color: var(--success);
       }
 
       .captured-weight-timestamp {
@@ -1513,7 +1538,7 @@
         color: #212529;
 
         strong {
-          color: #398df1;
+          color: var(--brand-primary);
           font-weight: 600;
         }
       }
