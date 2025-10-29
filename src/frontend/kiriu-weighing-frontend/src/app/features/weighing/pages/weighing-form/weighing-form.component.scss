@@ -382,6 +382,55 @@
     }
   }
 
+  // Grupo de visualización de fotos integrado en el formulario
+  .photo-display-group {
+    margin-top: 12px;
+    max-width: 400px !important; // Limitar ancho del contenedor padre
+
+    .photo-preview {
+      width: 100% !important;
+      max-width: 400px !important;
+      height: 200px !important; // Altura pequeña como en el registro de salida
+      margin-bottom: 0 !important;
+      overflow: hidden !important;
+      border: 2px dashed #e9ecef;
+      border-radius: 8px;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background-color: #f8f9fa !important;
+      transition: all 0.2s ease;
+
+      &.has-photo {
+        border-color: var(--success);
+        background: rgba(30, 231, 51, 0.05);
+      }
+
+      .photo-placeholder {
+        font-size: 14px;
+        text-align: center;
+        padding: 0 8px;
+        color: #6c757d;
+      }
+
+      .photo-captured {
+        font-size: 14px;
+        text-align: center;
+        padding: 0 8px;
+        color: var(--success);
+      }
+
+      .captured-plate-image {
+        max-width: 100% !important;
+        max-height: 100% !important;
+        width: auto !important;
+        height: auto !important;
+        object-fit: contain !important;
+        border-radius: 6px;
+      }
+    }
+  }
+
   // Texto de ayuda
   .form-help-text {
     margin-top: 8px;
@@ -1059,7 +1108,7 @@
 
       .photo-preview {
         width: 100%;
-        height: 80px;
+        height: 200px;
         border: 2px dashed #e9ecef;
         border-radius: 8px;
         display: flex;
@@ -1084,44 +1133,6 @@
         }
       }
 
-      // Grupo de visualización de fotos integrado en el formulario
-      .photo-display-group {
-        margin-top: 12px;
-        max-width: 400px !important; // Limitar ancho del contenedor padre
-
-        .photo-preview {
-          width: 100% !important;
-          max-width: 400px !important;
-          height: 200px !important;
-          margin-bottom: 0 !important;
-          overflow: hidden !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          background-color: #f8f9fa !important;
-
-          .photo-placeholder {
-            font-size: 14px;
-            text-align: center;
-            padding: 0 8px;
-          }
-
-          .photo-captured {
-            font-size: 14px;
-            text-align: center;
-            padding: 0 8px;
-          }
-
-          .captured-plate-image {
-            max-width: 100% !important;
-            max-height: 100% !important;
-            width: auto !important;
-            height: auto !important;
-            object-fit: contain !important;
-            border-radius: 6px;
-          }
-        }
-      }
 
       // Texto de ayuda para fotos
       .photo-help-text {
