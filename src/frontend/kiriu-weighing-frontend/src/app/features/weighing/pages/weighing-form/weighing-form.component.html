@@ -243,14 +243,6 @@
                     📷
                   </button>
                   -->
-                  <button
-                    type="button"
-                    class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('trailerPlate')"
-                    title="Habilitar edición manual de la placa del tráiler"
-                  >
-                    ✏️
-                  </button>
                   <input
                     type="text"
                     id="trailerPlate"
@@ -260,6 +252,14 @@
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate"
                   />
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    (click)="onEnableManualEdit('trailerPlate')"
+                    title="Habilitar edición manual de la placa del tráiler"
+                  >
+                    ✏️
+                  </button>
                 </div>
                 <div
                   *ngIf="getFieldError('trailerPlate')"
@@ -335,14 +335,6 @@
                     📷
                   </button>
                   -->
-                  <button
-                    type="button"
-                    class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('remolque1Plate')"
-                    title="Habilitar edición manual de la placa del remolque 1"
-                  >
-                    ✏️
-                  </button>
                   <input
                     type="text"
                     id="remolque1Plate"
@@ -352,6 +344,14 @@
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.remolque1Plate"
                   />
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    (click)="onEnableManualEdit('remolque1Plate')"
+                    title="Habilitar edición manual de la placa del remolque 1"
+                  >
+                    ✏️
+                  </button>
                 </div>
                 <div
                   *ngIf="getFieldError('remolque1Plate')"
@@ -598,15 +598,6 @@
                     📷
                   </button>
                   -->
-                  <button
-                    type="button"
-                    class="btn btn-outline edit-plate-btn"
-                    [disabled]="!canProceedToRemolque2()"
-                    (click)="onEnableManualEdit('remolque2Plate')"
-                    title="Habilitar edición manual de la placa del remolque 2"
-                  >
-                    ✏️
-                  </button>
                   <input
                     type="text"
                     id="remolque2Plate"
@@ -617,6 +608,15 @@
                     [readonly]="!manualEditEnabled.remolque2Plate"
                     [disabled]="!canProceedToRemolque2()"
                   />
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    [disabled]="!canProceedToRemolque2()"
+                    (click)="onEnableManualEdit('remolque2Plate')"
+                    title="Habilitar edición manual de la placa del remolque 2"
+                  >
+                    ✏️
+                  </button>
                 </div>
                 <div
                   *ngIf="getFieldError('remolque2Plate')"
@@ -890,14 +890,6 @@
                     📷
                   </button>
                   -->
-                  <button
-                    type="button"
-                    class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('trailerPlate')"
-                    title="Habilitar edición manual de la placa del tráiler"
-                  >
-                    ✏️
-                  </button>
                   <input
                     type="text"
                     id="trailerPlate"
@@ -907,6 +899,14 @@
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate"
                   />
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    (click)="onEnableManualEdit('trailerPlate')"
+                    title="Habilitar edición manual de la placa del tráiler"
+                  >
+                    ✏️
+                  </button>
                 </div>
                 <div
                   *ngIf="getFieldError('trailerPlate')"
@@ -979,14 +979,6 @@
                     📷
                   </button>
                   -->
-                  <button
-                    type="button"
-                    class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('trailerPlate2')"
-                    title="Habilitar edición manual de la placa del remolque"
-                  >
-                    ✏️
-                  </button>
                   <input
                     type="text"
                     id="trailerPlate2"
@@ -997,6 +989,14 @@
                     [readonly]="!manualEditEnabled.trailerPlate2"
                     [disabled]="weighingForm.get('containerOnly')?.value"
                   />
+                  <button
+                    type="button"
+                    class="btn btn-outline edit-plate-btn"
+                    (click)="onEnableManualEdit('trailerPlate2')"
+                    title="Habilitar edición manual de la placa del remolque"
+                  >
+                    ✏️
+                  </button>
                 </div>
                 <div
                   *ngIf="getFieldError('trailerPlate2')"
