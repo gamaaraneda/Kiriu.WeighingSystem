@@ -494,7 +494,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     // Prellenar el formulario con los valores actuales
     this.editForm.patchValue({
       entryWeight: operation.pesoBruto || null,
-      exitWeight: operation.pesoNeto || null,
+      exitWeight: operation.pesoSalida || null,
     });
 
     this.showEditModal = true;

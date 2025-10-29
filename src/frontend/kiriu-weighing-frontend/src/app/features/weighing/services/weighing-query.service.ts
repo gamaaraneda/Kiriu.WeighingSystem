@@ -30,6 +30,7 @@ export interface WeighingQueryResult {
   tipo: string;
   tipoUnidad: string;
   pesoBruto?: number;
+  pesoSalida?: number;
   pesoNeto?: number;
   estado: string;
   fueEditado: boolean;

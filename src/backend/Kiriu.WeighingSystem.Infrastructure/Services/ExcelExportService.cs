@@ -26,6 +26,7 @@ public class ExcelExportService : IExcelExportService
             "Tipo",
             "Tipo de Unidad",
             "Peso Bruto (kg)",
+            "Peso Salida (kg)",
             "Peso Neto (kg)",
             "Estado",
             "Fecha Entrada",
@@ -58,12 +59,13 @@ public class ExcelExportService : IExcelExportService
             worksheet.Cells[excelRow, 6].Value = item.Tipo;
             worksheet.Cells[excelRow, 7].Value = item.TipoUnidad;
             worksheet.Cells[excelRow, 8].Value = item.PesoBruto;
-            worksheet.Cells[excelRow, 9].Value = item.PesoNeto;
-            worksheet.Cells[excelRow, 10].Value = item.Estado;
-            worksheet.Cells[excelRow, 11].Value = item.FechaEntrada?.ToString("dd/MM/yyyy HH:mm") ?? "";
-            worksheet.Cells[excelRow, 12].Value = item.FechaSalida?.ToString("dd/MM/yyyy HH:mm") ?? "";
-            worksheet.Cells[excelRow, 13].Value = item.EditadoPor;
-            worksheet.Cells[excelRow, 14].Value = item.FechaEdicion?.ToString("dd/MM/yyyy HH:mm") ?? "";
+            worksheet.Cells[excelRow, 9].Value = item.PesoSalida;
+            worksheet.Cells[excelRow, 10].Value = item.PesoNeto;
+            worksheet.Cells[excelRow, 11].Value = item.Estado;
+            worksheet.Cells[excelRow, 12].Value = item.FechaEntrada?.ToString("dd/MM/yyyy HH:mm") ?? "";
+            worksheet.Cells[excelRow, 13].Value = item.FechaSalida?.ToString("dd/MM/yyyy HH:mm") ?? "";
+            worksheet.Cells[excelRow, 14].Value = item.EditadoPor;
+            worksheet.Cells[excelRow, 15].Value = item.FechaEdicion?.ToString("dd/MM/yyyy HH:mm") ?? "";
 
             // Aplicar bordes a todas las celdas de datos
             for (int col = 1; col <= headers.Length; col++)
@@ -86,7 +88,7 @@ public class ExcelExportService : IExcelExportService
         worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
         // Configurar formato de números para peso
-        var weightColumns = new[] { 8, 9 }; // Columnas de peso bruto y neto
+        var weightColumns = new[] { 8, 9, 10 }; // Columnas de peso bruto, salida y neto
         foreach (var col in weightColumns)
         {
             worksheet.Column(col).Style.Numberformat.Format = "#,##0.00";

@@ -181,6 +181,7 @@
                   <th class="col-producto">Producto</th>
                   <th class="col-tipo">Tipo</th>
                   <th class="col-peso">Peso Bruto</th>
+                  <th class="col-peso">Peso Salida</th>
                   <th class="col-peso">Peso Neto</th>
                   <th class="col-estado">Estado</th>
                   <th class="col-acciones">Acciones</th>
@@ -241,6 +242,18 @@
                       <span class="peso-unit">kg</span>
                     </span>
                     <span *ngIf="!operation.pesoBruto" class="peso-empty"
+                      >—</span
+                    >
+                  </td>
+                  <td class="col-peso">
+                    <span
+                      *ngIf="operation.pesoSalida"
+                      class="peso-value peso-salida"
+                    >
+                      {{ operation.pesoSalida | number : "1.0-0" }}
+                      <span class="peso-unit">kg</span>
+                    </span>
+                    <span *ngIf="!operation.pesoSalida" class="peso-empty"
                       >—</span
                     >
                   </td>
@@ -588,13 +601,13 @@
               <div class="pesaje-row">
                 <span class="pesaje-label">Peso Bruto</span>
                 <span class="pesaje-value peso-highlight">
-                  <span *ngIf="selectedOperation.pesoBruto"
+                  <span *ngIf="selectedOperation.pesoSalida"
                     >{{
-                      selectedOperation.pesoBruto | number : "1.0-0"
+                      selectedOperation.pesoSalida | number : "1.0-0"
                     }}
                     kg</span
                   >
-                  <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty"
+                  <span *ngIf="!selectedOperation.pesoSalida" class="peso-empty"
                     >—</span
                   >
                 </span>

@@ -23,6 +23,7 @@ public class WeighingQueryResultDto
     public string Tipo { get; set; } = string.Empty; // client/provider
     public string TipoUnidad { get; set; } = string.Empty; // remolque/contenedor/doble-remolque
     public decimal? PesoBruto { get; set; }
+    public decimal? PesoSalida { get; set; }
     public decimal? PesoNeto { get; set; }
     public string Estado { get; set; } = string.Empty;
     public bool FueEditado { get; set; }
@@ -54,6 +55,7 @@ public class WeighingExportDto
     public string Tipo { get; set; } = string.Empty;
     public string TipoUnidad { get; set; } = string.Empty;
     public decimal? PesoBruto { get; set; }
+    public decimal? PesoSalida { get; set; }
     public decimal? PesoNeto { get; set; }
     public string Estado { get; set; } = string.Empty;
     public DateTime? FechaEntrada { get; set; }
