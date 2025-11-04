@@ -356,11 +356,22 @@
       white-space: nowrap;
       min-width: 60px;
 
+      .btn-icon {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+        filter: invert(1) brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(198deg) brightness(97%) contrast(97%);
+      }
+
       &:hover {
         background-color: var(--brand-primary);
         color: var(--brand-light);
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(57, 141, 241, 0.3);
+
+        .btn-icon {
+          filter: brightness(0) invert(1);
+        }
       }
 
       &:active {
@@ -939,6 +950,13 @@
 
       i {
         font-size: 14px;
+      }
+
+      .btn-icon-refresh {
+        width: 18px;
+        height: 18px;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
       }
     }
 
@@ -1746,7 +1764,7 @@
   }
 
   .capture-all-photos-btn {
-    background: var(--warning);
+    background: var(--brand-primary);
     color: var(--brand-light);
     border: none;
     padding: 14px 24px;
@@ -1761,9 +1779,9 @@
     gap: 8px;
 
     &:hover:not(:disabled) {
-      background: #e67d3a;
+      background: var(--brand-secondary);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 145, 77, 0.4);
+      box-shadow: 0 4px 12px rgba(57, 141, 241, 0.4);
     }
 
     &:disabled {

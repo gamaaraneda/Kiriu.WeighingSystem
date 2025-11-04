@@ -249,7 +249,7 @@
                     (click)="onEnableManualEdit('trailerPlate')"
                     title="Habilitar edición manual de la placa del tráiler"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -341,7 +341,7 @@
                     (click)="onEnableManualEdit('remolque1Plate')"
                     title="Habilitar edición manual de la placa del remolque 1"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -605,7 +605,7 @@
                     (click)="onEnableManualEdit('remolque2Plate')"
                     title="Habilitar edición manual de la placa del remolque 2"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -896,7 +896,7 @@
                     (click)="onEnableManualEdit('trailerPlate')"
                     title="Habilitar edición manual de la placa del tráiler"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -985,7 +985,7 @@
                     (click)="onEnableManualEdit('trailerPlate2')"
                     title="Habilitar edición manual de la placa del remolque"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -1168,7 +1168,11 @@
             <!-- Botones de acción -->
             <div class="form-actions">
               <div class="left-actions">
-                <button type="button" class="btn btn-light-gray" (click)="onClear()">
+                <button
+                  type="button"
+                  class="btn btn-light-gray"
+                  (click)="onClear()"
+                >
                   Limpiar
                 </button>
                 <button
@@ -1271,7 +1275,12 @@
                 title="Solicitar peso actual desde la báscula"
                 style="width: 100%"
               >
-                <i *ngIf="!loadingWeight" class="pi pi-refresh"></i>
+                <img
+                  *ngIf="!loadingWeight"
+                  src="ico/actualizar.png"
+                  alt=""
+                  class="btn-icon-refresh"
+                />
                 <i *ngIf="loadingWeight" class="pi pi-spin pi-spinner"></i>
                 {{ loadingWeight ? "Solicitando..." : "Solicitar Peso" }}
               </button>

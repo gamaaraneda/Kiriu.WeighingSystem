@@ -55,12 +55,22 @@
                       [disabled]="isSearching || isEntryFound"
                       (click)="onSearchEntry()"
                     >
-                      <span *ngIf="!isSearching">🔍 Buscar</span>
+                      <span *ngIf="!isSearching"
+                        ><img
+                          src="ico/buscar.png"
+                          alt=""
+                          class="btn-icon-search"
+                        />
+                        Buscar</span
+                      >
                       <span *ngIf="isSearching">⏳ Buscando...</span>
                     </button>
                   </div>
                   <!-- Dropdown de sugerencias de entradas -->
-                  <div *ngIf="showEntrySuggestions" class="autocomplete-dropdown entry-dropdown">
+                  <div
+                    *ngIf="showEntrySuggestions"
+                    class="autocomplete-dropdown entry-dropdown"
+                  >
                     <div
                       *ngFor="let entry of entrySuggestions"
                       class="autocomplete-item entry-item"
@@ -68,12 +78,17 @@
                     >
                       <div class="entry-suggestion">
                         <div class="entry-main">
-                          <strong>{{ entry.folio }}</strong> - {{ entry.trailerPlate }}
+                          <strong>{{ entry.folio }}</strong> -
+                          {{ entry.trailerPlate }}
                         </div>
                         <div class="entry-details">
-                          <span class="entry-client">{{ entry.clientProviderName }}</span>
+                          <span class="entry-client">{{
+                            entry.clientProviderName
+                          }}</span>
                           <span class="entry-product">{{ entry.product }}</span>
-                          <span class="entry-weight">{{ entry.entryWeight | number:'1.2-2' }} kg</span>
+                          <span class="entry-weight"
+                            >{{ entry.entryWeight | number : "1.2-2" }} kg</span
+                          >
                         </div>
                       </div>
                     </div>
@@ -171,24 +186,30 @@
                 <button
                   type="button"
                   class="btn btn-primary capture-all-photos-btn"
-                  [disabled]="isCapturingAllPhotos || isLoading || !isEntryFound"
+                  [disabled]="
+                    isCapturingAllPhotos || isLoading || !isEntryFound
+                  "
                   (click)="onCaptureAllPhotos()"
-                  [title]="entryData?.tipoUnidad === 'doble-remolque'
-                    ? 'Captura fotos del remolque 1 (tráiler + remolque1 + carga1)'
-                    : 'Captura todas las fotos necesarias (tráiler, remolque, carga)'"
-                  style="width: 100%; margin-bottom: 16px;"
+                  [title]="
+                    entryData?.tipoUnidad === 'doble-remolque'
+                      ? 'Captura fotos del remolque 1 (tráiler + remolque1 + carga1)'
+                      : 'Captura todas las fotos necesarias (tráiler, remolque, carga)'
+                  "
+                  style="width: 100%; margin-bottom: 16px"
                 >
                   <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
                   <span *ngIf="isCapturingAllPhotos">
-                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
-                    ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}... ({{
+                      photosCaptureProgress.current
+                    }}/{{ photosCaptureProgress.total }})
                   </span>
                 </button>
 
                 <div class="inverted-order-section">
                   <label
                     class="checkbox-label"
-                    title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés">
+                    title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés"
+                  >
                     <input
                       type="checkbox"
                       [checked]="invertedPlateOrder"
@@ -197,7 +218,10 @@
                     <span class="checkmark"></span>
                     Orden invertido (intercambiar fotos tráiler/remolque)
                   </label>
-                  <p class="help-text">Este ajuste sólo afecta a las placas; no modifica el proceso general.</p>
+                  <p class="help-text">
+                    Este ajuste sólo afecta a las placas; no modifica el proceso
+                    general.
+                  </p>
                 </div>
               </div>
 
@@ -222,7 +246,7 @@
                     (click)="onEnableManualEdit('trailerPlate')"
                     title="Habilitar edición manual de la placa del tráiler"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -335,7 +359,7 @@
                     (click)="onEnableManualEdit('remolque1Plate')"
                     title="Habilitar edición manual de la placa del remolque 1"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -562,15 +586,18 @@
                 <button
                   type="button"
                   class="btn btn-primary capture-all-photos-btn"
-                  [disabled]="isCapturingAllPhotos || isLoading || !isEntryFound"
+                  [disabled]="
+                    isCapturingAllPhotos || isLoading || !isEntryFound
+                  "
                   (click)="onCaptureRemolque2Photos()"
                   title="Captura fotos del remolque 2 (remolque2 + carga2)"
-                  style="width: 100%; margin-bottom: 16px;"
+                  style="width: 100%; margin-bottom: 16px"
                 >
                   <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
                   <span *ngIf="isCapturingAllPhotos">
-                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
-                    ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}... ({{
+                      photosCaptureProgress.current
+                    }}/{{ photosCaptureProgress.total }})
                   </span>
                 </button>
               </div>
@@ -596,7 +623,7 @@
                     (click)="onEnableManualEdit('remolque2Plate')"
                     title="Habilitar edición manual de la placa del remolque 2"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -892,22 +919,26 @@
                 <button
                   type="button"
                   class="btn btn-primary capture-all-photos-btn"
-                  [disabled]="isCapturingAllPhotos || isLoading || !isEntryFound"
+                  [disabled]="
+                    isCapturingAllPhotos || isLoading || !isEntryFound
+                  "
                   (click)="onCaptureAllPhotos()"
                   title="Captura todas las fotos necesarias (tráiler, remolque, carga)"
-                  style="width: 100%; margin-bottom: 16px;"
+                  style="width: 100%; margin-bottom: 16px"
                 >
                   <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
                   <span *ngIf="isCapturingAllPhotos">
-                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}...
-                    ({{ photosCaptureProgress.current }}/{{ photosCaptureProgress.total }})
+                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}... ({{
+                      photosCaptureProgress.current
+                    }}/{{ photosCaptureProgress.total }})
                   </span>
                 </button>
 
                 <div class="inverted-order-section">
                   <label
                     class="checkbox-label"
-                    title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés">
+                    title="Activar si el trailer subió en orden invertido y las cámaras capturaron las placas al revés"
+                  >
                     <input
                       type="checkbox"
                       [checked]="invertedPlateOrder"
@@ -916,7 +947,10 @@
                     <span class="checkmark"></span>
                     Orden invertido (intercambiar fotos tráiler/remolque)
                   </label>
-                  <p class="help-text">Este ajuste sólo afecta a las placas; no modifica el proceso general.</p>
+                  <p class="help-text">
+                    Este ajuste sólo afecta a las placas; no modifica el proceso
+                    general.
+                  </p>
                 </div>
               </div>
 
@@ -947,7 +981,7 @@
                     (click)="onEnableManualEdit('trailerPlate')"
                     title="Habilitar edición manual de la placa del tráiler"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -1051,7 +1085,7 @@
                     (click)="onEnableManualEdit('trailerPlate2')"
                     title="Habilitar edición manual de la placa del remolque"
                   >
-                    ✏️
+                    <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
@@ -1284,7 +1318,11 @@
             <!-- Botones de acción -->
             <div class="form-actions">
               <div class="left-actions">
-                <button type="button" class="btn btn-light-gray" (click)="onClear()">
+                <button
+                  type="button"
+                  class="btn btn-light-gray"
+                  (click)="onClear()"
+                >
                   Limpiar
                 </button>
                 <button
@@ -1331,7 +1369,9 @@
                 <button
                   type="button"
                   class="btn btn-save"
-                  [class.btn-save-disabled]="!isFormValid || isLoading || isExitRegistered"
+                  [class.btn-save-disabled]="
+                    !isFormValid || isLoading || isExitRegistered
+                  "
                   [disabled]="!isFormValid || isLoading || isExitRegistered"
                   (click)="onSave()"
                 >
@@ -1380,7 +1420,12 @@
                 (click)="requestCurrentWeight()"
                 title="Solicitar peso actual desde la báscula"
               >
-                <i *ngIf="!loadingWeight" class="pi pi-refresh"></i>
+                <img
+                  *ngIf="!loadingWeight"
+                  src="ico/actualizar.png"
+                  alt=""
+                  class="btn-icon-refresh"
+                />
                 <i *ngIf="loadingWeight" class="pi pi-spin pi-spinner"></i>
                 {{ loadingWeight ? "Solicitando..." : "Solicitar Peso" }}
               </button>
