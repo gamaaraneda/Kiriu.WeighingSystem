@@ -260,7 +260,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (!pattern.test(value)) {
       return { invalidPlate: true };
     }
-    // Máximo 10 caracteres
+    // Máximo 12 caracteres
     if (value.length > 12) {
       return { maxLength: true };
     }
@@ -273,7 +273,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const value = input.value;
     // Solo permitir letras, números y guion medio
     const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
-    // Limitar a 10 caracteres
+    // Limitar a 12 caracteres
     const truncatedValue = filteredValue.substring(0, 12);
 
     if (value !== truncatedValue) {
@@ -2238,7 +2238,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         return 'Solo se permiten letras, números y guion medio (-)';
       }
       if (field.errors?.['maxLength']) {
-        return 'La placa no puede exceder 10 caracteres';
+        return 'La placa no puede exceder 12 caracteres';
       }
     }
     return '';
