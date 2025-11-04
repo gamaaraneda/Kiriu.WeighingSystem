@@ -80,6 +80,8 @@
                       (focus)="onProductFocus()"
                       (blur)="onProductBlur()"
                       autocomplete="off"
+                      maxlength="50"
+                      (input)="onAlphanumericInput($event, 'product')"
                     />
                     <!-- Dropdown de sugerencias -->
                     <div
@@ -161,6 +163,8 @@
                     (focus)="onClientFocus()"
                     (blur)="onClientBlur()"
                     autocomplete="off"
+                    maxlength="50"
+                    (input)="onAlphanumericInput($event, 'clientProviderName')"
                   />
                   <!-- Dropdown de sugerencias de clientes -->
                   <div
@@ -259,6 +263,9 @@
                     [class.error]="getFieldError('trailerPlate')"
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateInput($event, 'trailerPlate')"
                   />
                 </div>
                 <div
@@ -351,6 +358,9 @@
                     [class.error]="getFieldError('remolque1Plate')"
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.remolque1Plate"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateInput($event, 'remolque1Plate')"
                   />
                 </div>
                 <div
@@ -616,6 +626,9 @@
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.remolque2Plate"
                     [disabled]="!canProceedToRemolque2()"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateInput($event, 'remolque2Plate')"
                   />
                 </div>
                 <div
@@ -906,6 +919,9 @@
                     [class.error]="getFieldError('trailerPlate')"
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateInput($event, 'trailerPlate')"
                   />
                 </div>
                 <div
@@ -996,6 +1012,9 @@
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate2"
                     [disabled]="weighingForm.get('containerOnly')?.value"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateInput($event, 'trailerPlate2')"
                   />
                 </div>
                 <div
@@ -1061,6 +1080,8 @@
                       (focus)="onProductFocus()"
                       (blur)="onProductBlur()"
                       autocomplete="off"
+                      maxlength="50"
+                      (input)="onAlphanumericInput($event, 'product')"
                     />
                     <!-- Dropdown de sugerencias -->
                     <div
@@ -1141,6 +1162,8 @@
                     (focus)="onClientFocus()"
                     (blur)="onClientBlur()"
                     autocomplete="off"
+                    maxlength="50"
+                    (input)="onAlphanumericInput($event, 'clientProviderName')"
                   />
                   <!-- Dropdown de sugerencias de clientes -->
                   <div

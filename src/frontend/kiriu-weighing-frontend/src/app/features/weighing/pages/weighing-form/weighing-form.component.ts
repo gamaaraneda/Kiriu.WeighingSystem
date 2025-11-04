@@ -1,4 +1,10 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -23,8 +29,15 @@ import {
   UpdateWeighingOperationRequest,
 } from '../../services/real-weighing.service';
 import { WeighingFlowService } from '../../services/weighing-flow.service';
-import { ManualEditDetectorService, ManualEditEvent } from '../../services/manual-edit-detector.service';
-import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/peso-realtime.service';
+import {
+  ManualEditDetectorService,
+  ManualEditEvent,
+} from '../../services/manual-edit-detector.service';
+import {
+  PesoRealtimeService,
+  PesoData,
+  ConnectionStatus,
+} from '../../services/peso-realtime.service';
 import { AnprService, AnprEvent } from '../../services/anpr.service';
 import { CargoCameraService } from '../../services/cargo-camera.service';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
@@ -151,9 +164,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   // Estado de conexión con la báscula
   connectionStatus: ConnectionStatus = {
     isConnected: false,
-    reconnectAttempts: 0
+    reconnectAttempts: 0,
   };
-  
+
   // Báscula actual (para filtros por dispositivo)
   currentBasculaId: number | null = null;
 
@@ -197,15 +210,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (this.weightUpdateInterval) {
       this.weightUpdateInterval.unsubscribe();
     }
-    
+
     if (this.manualEditSubscription) {
       this.manualEditSubscription.unsubscribe();
     }
-    
+
     if (this.pesoRealtimeSubscription) {
       this.pesoRealtimeSubscription.unsubscribe();
     }
-    
+
     if (this.connectionStatusSubscription) {
       this.connectionStatusSubscription.unsubscribe();
     }
@@ -236,18 +249,72 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Validador personalizado para placas
+  private plateValidator(control: any) {
+    if (!control.value) {
+      return null; // Si está vacío, Validators.required lo manejará
+    }
+    const value = control.value;
+    // Solo letras (mayúsculas y minúsculas), números y guion medio
+    const pattern = /^[a-zA-Z0-9-]*$/;
+    if (!pattern.test(value)) {
+      return { invalidPlate: true };
+    }
+    // Máximo 10 caracteres
+    if (value.length > 12) {
+      return { maxLength: true };
+    }
+    return null;
+  }
+
+  // Filtrar caracteres no permitidos en tiempo real para placas
+  onPlateInput(event: Event, fieldName: string): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras, números y guion medio
+    const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
+    // Limitar a 10 caracteres
+    const truncatedValue = filteredValue.substring(0, 12);
+
+    if (value !== truncatedValue) {
+      // Si hubo cambios, actualizar el valor del input y del formulario
+      input.value = truncatedValue;
+      this.weighingForm.patchValue(
+        { [fieldName]: truncatedValue },
+        { emitEvent: false }
+      );
+    }
+  }
+
+  // Filtrar caracteres no permitidos en tiempo real para campos alfanuméricos (producto, cliente)
+  onAlphanumericInput(event: Event, fieldName: string): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras, números y espacios
+    const filteredValue = value.replace(/[^a-zA-Z0-9\s]/g, '');
+    // Limitar a 50 caracteres
+    const truncatedValue = filteredValue.substring(0, 50);
+
+    if (value !== truncatedValue) {
+      // Si hubo cambios, actualizar el valor del input y del formulario
+      input.value = truncatedValue;
+      this.weighingForm.patchValue(
+        { [fieldName]: truncatedValue },
+        { emitEvent: false }
+      );
+    }
+  }
+
   private initializeForm(): void {
     this.weighingForm = this.fb.group({
       // Datos del vehículo
-      trailerPlate: [
+      trailerPlate: ['', [Validators.required, this.plateValidator.bind(this)]],
+      trailerPlate2: [
         '',
-        [
-          Validators.required,
-        ],
-      ],
-      trailerPlate2: ['', Validators.required], // Obligatorio para remolque único
-      remolque1Plate: [''],
-      remolque2Plate: [''],
+        [Validators.required, this.plateValidator.bind(this)],
+      ], // Obligatorio para remolque único
+      remolque1Plate: ['', this.plateValidator.bind(this)],
+      remolque2Plate: ['', this.plateValidator.bind(this)],
       containerOnly: [false],
       doubleTrailer: [false],
       product: ['', Validators.required],
@@ -319,21 +386,24 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
    */
   private setupManualEditDetection(): void {
     // Configurar el detector para este formulario
-    this.manualEditDetector.setupFormMonitoring(this.weighingForm, 'weighing-form');
-    
+    this.manualEditDetector.setupFormMonitoring(
+      this.weighingForm,
+      'weighing-form'
+    );
+
     // Suscribirse a eventos de edición manual
     this.manualEditSubscription = this.manualEditDetector.manualEdit$.subscribe(
       (editEvent: ManualEditEvent) => {
         console.log('🔍 Edición detectada:', editEvent);
-        
+
         if (editEvent.isManualEdit) {
           this.hasManualEdits = true;
-          
+
           // Si ya hay una operación registrada, actualizar en el backend
           if (this.currentOperationId) {
             this.updateOperationWithManualEdit(editEvent);
           }
-          
+
           // Mostrar indicador visual de edición manual
           this.showToast(
             'info',
@@ -426,13 +496,16 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Para salidas, necesitamos obtener los datos de la entrada previa
     // cuando el usuario capture o ingrese una placa
     console.log('Preparando flujo de salida...');
-    
+
     // Suscribirse a cambios en la placa para buscar entrada previa
-    this.weighingForm.get('trailerPlate')?.valueChanges.subscribe((plate: string) => {
-      if (plate && plate.length >= 8) { // Longitud mínima para una placa válida
-        this.searchAndLoadPreviousEntry(plate);
-      }
-    });
+    this.weighingForm
+      .get('trailerPlate')
+      ?.valueChanges.subscribe((plate: string) => {
+        if (plate && plate.length >= 8) {
+          // Longitud mínima para una placa válida
+          this.searchAndLoadPreviousEntry(plate);
+        }
+      });
   }
 
   private searchAndLoadPreviousEntry(plate: string): void {
@@ -446,7 +519,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           this.showToast(
             'warn',
             'Sin entrada previa',
-            validation.message || 'No se encontró entrada previa para esta placa'
+            validation.message ||
+              'No se encontró entrada previa para esta placa'
           );
         }
       },
@@ -454,7 +528,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.error('Error al validar salida:', error);
         // Intentar obtener datos de operación aunque la validación falle
         this.loadFullOperationData(plate);
-      }
+      },
     });
   }
 
@@ -463,7 +537,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       next: (operation) => {
         // Cargar datos completos de la entrada previa
         this.loadEntryDataForExit(operation);
-        
+
         this.showToast(
           'info',
           'Entrada encontrada',
@@ -483,18 +557,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           'Error de búsqueda',
           'Error al buscar información de entrada previa'
         );
-      }
+      },
     });
   }
 
   private preloadFormData(operation: any): void {
     // Pre-cargar información en el formulario basada en la entrada previa
     const updates: any = {};
-    
+
     if (operation.product) {
       updates.product = operation.product;
     }
-    
+
     if (operation.clientProviderName) {
       updates.clientProviderName = operation.clientProviderName;
     }
@@ -516,7 +590,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Aplicar actualizaciones al formulario si hay datos
     if (Object.keys(updates).length > 0) {
       this.weighingForm.patchValue(updates);
-      
+
       // Si es doble remolque, inicializar el estado
       if (updates.doubleTrailer) {
         this.initializeDoubleTrailerFlow();
@@ -526,22 +600,23 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   private loadEntryDataForExit(entryOperation: any): void {
     // Actualizar la información del formulario con datos de entrada
-    this.weightData.entryWeight = entryOperation.entryWeight || entryOperation.peso || 0;
-    
+    this.weightData.entryWeight =
+      entryOperation.entryWeight || entryOperation.peso || 0;
+
     // Marcar que hay datos de entrada válidos
     this.weightData.hasValidEntry = true;
-    
+
     // Guardar información adicional para referencia
     this.weightData.entryOperationId = entryOperation.id;
     this.weightData.entryFolio = entryOperation.folio;
     this.weightData.entryDate = entryOperation.createdAt;
-    
+
     console.log('Datos de entrada cargados para salida:', {
       id: entryOperation.id,
       folio: entryOperation.folio,
       entryWeight: this.weightData.entryWeight,
       product: entryOperation.product,
-      client: entryOperation.clientProviderName
+      client: entryOperation.clientProviderName,
     });
   }
 
@@ -606,7 +681,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         // CAPTURAR AUTOMÁTICAMENTE el peso (igual que el botón Capturar Peso)
         this.weightData.capturedWeight = pesoData.peso;
         this.weightData.capturedAt = new Date();
-        console.log('Peso capturado automáticamente:', this.weightData.capturedWeight);
+        console.log(
+          'Peso capturado automáticamente:',
+          this.weightData.capturedWeight
+        );
 
         // Si es doble remolque, procesar el peso según el paso actual
         if (this.weighingForm.get('doubleTrailer')?.value) {
@@ -628,20 +706,24 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
         let errorMessage = 'Error al obtener peso de la báscula';
         if (error.status === 0) {
-          errorMessage = 'No se pudo conectar con el SerialGateway. Verifique que esté en ejecución.';
+          errorMessage =
+            'No se pudo conectar con el SerialGateway. Verifique que esté en ejecución.';
         } else if (error.error?.message) {
           errorMessage = error.error.message;
         }
 
         this.showToast('error', 'Error al solicitar peso', errorMessage);
-      }
+      },
     });
   }
 
   private processDoubleTrailerWeight(): void {
     if (!this.weightData.capturedWeight) return;
 
-    console.log('🔍 processDoubleTrailerWeight - currentStep:', this.doubleTrailerState.currentStep);
+    console.log(
+      '🔍 processDoubleTrailerWeight - currentStep:',
+      this.doubleTrailerState.currentStep
+    );
     console.log('🔍 doubleTrailerState completo:', this.doubleTrailerState);
 
     switch (this.doubleTrailerState.currentStep) {
@@ -651,18 +733,25 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           this.weightData.capturedWeight;
         this.doubleTrailerState.remolque1.pesoCapturado = true;
 
-        console.log('✅ Peso del remolque 1 capturado:', this.weightData.capturedWeight);
+        console.log(
+          '✅ Peso del remolque 1 capturado:',
+          this.weightData.capturedWeight
+        );
         console.log('🔍 Estado después de captura:', {
           trailerPlaca: this.doubleTrailerState.trailerPlaca,
           remolque1Placa: this.doubleTrailerState.remolque1.placa,
           product: this.weighingForm.get('product')?.value,
           client: this.weighingForm.get('clientProviderName')?.value,
-          pesoCapturado: this.doubleTrailerState.remolque1.pesoCapturado
+          pesoCapturado: this.doubleTrailerState.remolque1.pesoCapturado,
         });
 
         // Validar que se haya capturado toda la información del primer remolque
         if (this.canProceedToRemolque2WithWeight()) {
-          this.showToast('success', 'Peso capturado', `Peso del remolque 1: ${this.weightData.capturedWeight} kg. Ahora suba el segundo remolque.`);
+          this.showToast(
+            'success',
+            'Peso capturado',
+            `Peso del remolque 1: ${this.weightData.capturedWeight} kg. Ahora suba el segundo remolque.`
+          );
 
           // Avanzar al siguiente paso
           this.doubleTrailerState.currentStep = 'remolque2';
@@ -670,7 +759,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           // Actualizar el estado de los pasos del proceso
           setTimeout(() => this.updateProcessStepsStatus(), 0);
         } else {
-          console.error('❌ No se puede proceder al remolque 2 - validación falló');
+          console.error(
+            '❌ No se puede proceder al remolque 2 - validación falló'
+          );
           // Mostrar error si faltan datos del primer remolque (solo campos obligatorios)
           this.notificationService.showError(
             'Información incompleta',
@@ -682,7 +773,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         break;
       case 'remolque2':
         // Capturar peso del remolque 2
-        console.log('✅ Capturando peso del remolque 2:', this.weightData.capturedWeight);
+        console.log(
+          '✅ Capturando peso del remolque 2:',
+          this.weightData.capturedWeight
+        );
         this.doubleTrailerState.remolque2.pesoBruto =
           this.weightData.capturedWeight;
         this.doubleTrailerState.remolque2.pesoCapturado = true;
@@ -692,19 +786,29 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           (this.doubleTrailerState.remolque1.pesoBruto || 0) +
           (this.doubleTrailerState.remolque2.pesoBruto || 0);
 
-        console.log('✅ Peso total calculado:', this.doubleTrailerState.pesoBrutoTotal);
+        console.log(
+          '✅ Peso total calculado:',
+          this.doubleTrailerState.pesoBrutoTotal
+        );
         console.log('✅ Marcando como completo...');
 
         this.doubleTrailerState.currentStep = 'complete';
         this.doubleTrailerState.isComplete = true;
 
-        this.showToast('success', 'Peso total calculado', `Peso total: ${this.doubleTrailerState.pesoBrutoTotal} kg. Puede proceder a guardar.`);
+        this.showToast(
+          'success',
+          'Peso total calculado',
+          `Peso total: ${this.doubleTrailerState.pesoBrutoTotal} kg. Puede proceder a guardar.`
+        );
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
         break;
       default:
-        console.warn('⚠️ processDoubleTrailerWeight - paso no reconocido:', this.doubleTrailerState.currentStep);
+        console.warn(
+          '⚠️ processDoubleTrailerWeight - paso no reconocido:',
+          this.doubleTrailerState.currentStep
+        );
         break;
     }
   }
@@ -722,9 +826,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Placa del tráiler sigue siendo OBLIGATORIA en modo contenedor
       this.weighingForm
         .get('trailerPlate')
-        ?.setValidators([
-          Validators.required,
-        ]);
+        ?.setValidators([Validators.required]);
       this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
 
       // Placa del remolque es OPCIONAL en modo contenedor
@@ -742,9 +844,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Si se desmarca "Solo contenedor", restaurar validaciones normales
       this.weighingForm
         .get('trailerPlate')
-        ?.setValidators([
-          Validators.required,
-        ]);
+        ?.setValidators([Validators.required]);
       this.weighingForm.get('trailerPlate')?.updateValueAndValidity();
 
       // Restaurar validación obligatoria para trailerPlate2 (remolque único)
@@ -769,10 +869,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.weighingForm.get('trailerPlate2')?.updateValueAndValidity();
 
       // Hacer obligatorios los campos de placas de remolques en doble remolque
-      this.weighingForm.get('remolque1Plate')?.setValidators([Validators.required]);
+      this.weighingForm
+        .get('remolque1Plate')
+        ?.setValidators([Validators.required]);
       this.weighingForm.get('remolque1Plate')?.updateValueAndValidity();
 
-      this.weighingForm.get('remolque2Plate')?.setValidators([Validators.required]);
+      this.weighingForm
+        .get('remolque2Plate')
+        ?.setValidators([Validators.required]);
       this.weighingForm.get('remolque2Plate')?.updateValueAndValidity();
 
       this.initializeDoubleTrailerFlow();
@@ -780,7 +884,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.resetDoubleTrailerState();
 
       // Restaurar validación de trailerPlate2 al salir del modo doble remolque
-      this.weighingForm.get('trailerPlate2')?.setValidators([Validators.required]);
+      this.weighingForm
+        .get('trailerPlate2')
+        ?.setValidators([Validators.required]);
       this.weighingForm.get('trailerPlate2')?.updateValueAndValidity();
 
       // Limpiar validadores de remolque1 y remolque2 al salir del modo doble remolque
@@ -837,18 +943,25 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
       // Intercambiar en doubleTrailerState
       const tempPlaca = this.doubleTrailerState.trailerPlaca;
-      this.doubleTrailerState.trailerPlaca = this.doubleTrailerState.remolque1.placa || '';
+      this.doubleTrailerState.trailerPlaca =
+        this.doubleTrailerState.remolque1.placa || '';
       this.doubleTrailerState.remolque1.placa = tempPlaca;
 
-      this.showToast('success', 'Orden invertido',
-        'Las fotos del tráiler y remolque 1 han sido intercambiadas');
+      this.showToast(
+        'success',
+        'Orden invertido',
+        'Las fotos del tráiler y remolque 1 han sido intercambiadas'
+      );
     } else {
       // Intercambiar trailer ↔ trailerPlate2 (remolque simple o contenedor)
       this.swapPhotoData('trailerPlate', 'trailerPlate2');
       this.swapFormValues('trailerPlate', 'trailerPlate2');
 
-      this.showToast('success', 'Orden invertido',
-        'Las fotos del tráiler y remolque han sido intercambiadas');
+      this.showToast(
+        'success',
+        'Orden invertido',
+        'Las fotos del tráiler y remolque han sido intercambiadas'
+      );
     }
   }
 
@@ -870,7 +983,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     this.weighingForm.patchValue({
       [field1]: value2,
-      [field2]: value1
+      [field2]: value1,
     });
   }
 
@@ -980,7 +1093,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       isComplete: false,
     };
 
-    this.showToast('info', 'Flujo de doble remolque', 'Seleccione la placa del tráiler y luego proceda con el primer remolque.');
+    this.showToast(
+      'info',
+      'Flujo de doble remolque',
+      'Seleccione la placa del tráiler y luego proceda con el primer remolque.'
+    );
   }
 
   private resetDoubleTrailerState(): void {
@@ -1048,61 +1165,94 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     // Mapear photoType a cameraType de ANPR
     const cameraTypeMap: Record<string, 'trailer' | 'remolque' | 'cargo'> = {
-      'trailerPlate': 'trailer',
-      'trailerPlate2': 'remolque',  // Placa del remolque en flujo de remolque único
-      'remolque1Plate': 'remolque',
-      'remolque2Plate': 'remolque',
-      'cargo': 'cargo',
-      'cargoRemolque1': 'cargo',
-      'cargoRemolque2': 'cargo'
+      trailerPlate: 'trailer',
+      trailerPlate2: 'remolque', // Placa del remolque en flujo de remolque único
+      remolque1Plate: 'remolque',
+      remolque2Plate: 'remolque',
+      cargo: 'cargo',
+      cargoRemolque1: 'cargo',
+      cargoRemolque2: 'cargo',
     };
 
     const cameraType = cameraTypeMap[photoType];
 
     // Si es un tipo de placa, usar ANPR
-    if ((photoType === 'trailerPlate' || photoType === 'trailerPlate2' || photoType === 'remolque1Plate' || photoType === 'remolque2Plate') && cameraType) {
+    if (
+      (photoType === 'trailerPlate' ||
+        photoType === 'trailerPlate2' ||
+        photoType === 'remolque1Plate' ||
+        photoType === 'remolque2Plate') &&
+      cameraType
+    ) {
       try {
-        const plateTypeLabel = photoType === 'trailerPlate' ? 'tráiler' :
-                               photoType === 'trailerPlate2' ? 'remolque' :
-                               photoType === 'remolque1Plate' ? 'remolque 1' : 'remolque 2';
+        const plateTypeLabel =
+          photoType === 'trailerPlate'
+            ? 'tráiler'
+            : photoType === 'trailerPlate2'
+            ? 'remolque'
+            : photoType === 'remolque1Plate'
+            ? 'remolque 1'
+            : 'remolque 2';
 
         // Paso 1: Intentar obtener foto huérfana de BD primero
         const isDoubleTrailer = this.weighingForm.get('doubleTrailer')?.value;
         // Buscar en BD para: flujo simple, trailerPlate, remolque1Plate y remolque2Plate
-        const shouldSearchDB = !isDoubleTrailer || photoType === 'trailerPlate' || photoType === 'remolque1Plate' || photoType === 'remolque2Plate';
+        const shouldSearchDB =
+          !isDoubleTrailer ||
+          photoType === 'trailerPlate' ||
+          photoType === 'remolque1Plate' ||
+          photoType === 'remolque2Plate';
 
         let orphanPhoto: any = null; // Declarar fuera del bloque para acceso en polling
 
         if (shouldSearchDB) {
-          console.log(`🔍 [WEIGHING-FORM] Buscando foto en BD para photoType: ${photoType}`);
+          console.log(
+            `🔍 [WEIGHING-FORM] Buscando foto en BD para photoType: ${photoType}`
+          );
 
           // Si es remolque2Plate en doble remolque, buscar en remolque1Plate excluyendo la foto de remolque1
           // Esto es porque el backend siempre guarda fotos de cámara "remolque" como "remolque1Plate"
           let searchPhotoType = photoType;
           let excludePhotoId: string | undefined = undefined;
 
-          if (isDoubleTrailer && photoType === 'remolque2Plate' && this.remolque1PhotoId) {
+          if (
+            isDoubleTrailer &&
+            photoType === 'remolque2Plate' &&
+            this.remolque1PhotoId
+          ) {
             searchPhotoType = 'remolque1Plate'; // Buscar en remolque1Plate
             excludePhotoId = this.remolque1PhotoId; // Excluir la foto ya usada para remolque1
-            console.log(`🔄 [WEIGHING-FORM] Buscando remolque2 en remolque1Plate, excluyendo foto de remolque1: ${excludePhotoId}`);
+            console.log(
+              `🔄 [WEIGHING-FORM] Buscando remolque2 en remolque1Plate, excluyendo foto de remolque1: ${excludePhotoId}`
+            );
           }
 
-          orphanPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType, excludePhotoId).toPromise();
+          orphanPhoto = await this.anprService
+            .getLatestOrphanPhoto(searchPhotoType, excludePhotoId)
+            .toPromise();
 
           // Fallback para trailerPlate2: también buscar en remolque1Plate
           // Esto es porque el backend guarda fotos de cámara "remolque" como "remolque1Plate"
           if (!orphanPhoto && photoType === 'trailerPlate2') {
-            console.log(`🔄 [WEIGHING-FORM] No encontrado en trailerPlate2, buscando en remolque1Plate (fallback)...`);
-            orphanPhoto = await this.anprService.getLatestOrphanPhoto('remolque1Plate').toPromise();
+            console.log(
+              `🔄 [WEIGHING-FORM] No encontrado en trailerPlate2, buscando en remolque1Plate (fallback)...`
+            );
+            orphanPhoto = await this.anprService
+              .getLatestOrphanPhoto('remolque1Plate')
+              .toPromise();
 
             if (orphanPhoto) {
-              console.log(`✅ [WEIGHING-FORM] Foto encontrada en remolque1Plate (fallback): ${orphanPhoto.photoUrl}`);
+              console.log(
+                `✅ [WEIGHING-FORM] Foto encontrada en remolque1Plate (fallback): ${orphanPhoto.photoUrl}`
+              );
             }
           }
 
           if (orphanPhoto) {
             if (!orphanPhoto.photoUrl.includes('remolque1Plate')) {
-              console.log(`✅ [WEIGHING-FORM] Foto encontrada en BD: ${orphanPhoto.photoUrl}`);
+              console.log(
+                `✅ [WEIGHING-FORM] Foto encontrada en BD: ${orphanPhoto.photoUrl}`
+              );
             }
 
             // Guardar la foto de BD según el tipo
@@ -1110,11 +1260,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
               this.photoData.trailerPlate = orphanPhoto.photoUrl;
               // Si viene la placa en la foto, también actualizarla en el formulario
               if (orphanPhoto.licensePlate) {
-                this.weighingForm.patchValue({ trailerPlate: orphanPhoto.licensePlate });
-                console.log(`🔤 [WEIGHING-FORM] Placa actualizada en formulario: ${orphanPhoto.licensePlate}`);
+                this.weighingForm.patchValue({
+                  trailerPlate: orphanPhoto.licensePlate,
+                });
+                console.log(
+                  `🔤 [WEIGHING-FORM] Placa actualizada en formulario: ${orphanPhoto.licensePlate}`
+                );
               }
               // Actualizar estado de doble remolque si aplica
-              if (this.weighingForm.get('doubleTrailer')?.value && orphanPhoto.licensePlate) {
+              if (
+                this.weighingForm.get('doubleTrailer')?.value &&
+                orphanPhoto.licensePlate
+              ) {
                 this.doubleTrailerState.trailerPlaca = orphanPhoto.licensePlate;
                 this.doubleTrailerState.currentStep = 'remolque1';
               }
@@ -1122,55 +1279,91 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
               this.photoData.trailerPlate2 = orphanPhoto.photoUrl;
               // Si viene la placa en la foto, también actualizarla en el formulario
               if (orphanPhoto.licensePlate) {
-                this.weighingForm.patchValue({ trailerPlate2: orphanPhoto.licensePlate });
-                console.log(`🔤 [WEIGHING-FORM] Placa actualizada en formulario: ${orphanPhoto.licensePlate}`);
+                this.weighingForm.patchValue({
+                  trailerPlate2: orphanPhoto.licensePlate,
+                });
+                console.log(
+                  `🔤 [WEIGHING-FORM] Placa actualizada en formulario: ${orphanPhoto.licensePlate}`
+                );
               }
             } else if (photoType === 'remolque1Plate') {
               // DOBLE REMOLQUE: Guardar foto de remolque 1
               this.photoData.remolque1Plate = orphanPhoto.photoUrl;
               // Guardar photoId para excluirlo al buscar remolque2
               this.remolque1PhotoId = orphanPhoto.photoId;
-              console.log(`💾 [WEIGHING-FORM] PhotoId de remolque1 guardado: ${this.remolque1PhotoId}`);
+              console.log(
+                `💾 [WEIGHING-FORM] PhotoId de remolque1 guardado: ${this.remolque1PhotoId}`
+              );
               // Actualizar placa en formulario
               if (orphanPhoto.licensePlate) {
-                this.weighingForm.patchValue({ remolque1Plate: orphanPhoto.licensePlate });
-                console.log(`🔤 [WEIGHING-FORM] Placa de remolque1 actualizada: ${orphanPhoto.licensePlate}`);
+                this.weighingForm.patchValue({
+                  remolque1Plate: orphanPhoto.licensePlate,
+                });
+                console.log(
+                  `🔤 [WEIGHING-FORM] Placa de remolque1 actualizada: ${orphanPhoto.licensePlate}`
+                );
               }
               // Actualizar estado de doble remolque
-              if (this.weighingForm.get('doubleTrailer')?.value && orphanPhoto.licensePlate) {
-                this.doubleTrailerState.remolque1.placa = orphanPhoto.licensePlate;
+              if (
+                this.weighingForm.get('doubleTrailer')?.value &&
+                orphanPhoto.licensePlate
+              ) {
+                this.doubleTrailerState.remolque1.placa =
+                  orphanPhoto.licensePlate;
               }
             } else if (photoType === 'remolque2Plate') {
               // DOBLE REMOLQUE: Guardar foto de remolque 2
               this.photoData.remolque2Plate = orphanPhoto.photoUrl;
               // Actualizar placa en formulario
               if (orphanPhoto.licensePlate) {
-                this.weighingForm.patchValue({ remolque2Plate: orphanPhoto.licensePlate });
-                console.log(`🔤 [WEIGHING-FORM] Placa de remolque2 actualizada: ${orphanPhoto.licensePlate}`);
+                this.weighingForm.patchValue({
+                  remolque2Plate: orphanPhoto.licensePlate,
+                });
+                console.log(
+                  `🔤 [WEIGHING-FORM] Placa de remolque2 actualizada: ${orphanPhoto.licensePlate}`
+                );
               }
               // Actualizar estado de doble remolque
-              if (this.weighingForm.get('doubleTrailer')?.value && orphanPhoto.licensePlate) {
-                this.doubleTrailerState.remolque2.placa = orphanPhoto.licensePlate;
+              if (
+                this.weighingForm.get('doubleTrailer')?.value &&
+                orphanPhoto.licensePlate
+              ) {
+                this.doubleTrailerState.remolque2.placa =
+                  orphanPhoto.licensePlate;
               }
             }
 
-            this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida de base de datos`);
+            this.showToast(
+              'success',
+              'Foto obtenida',
+              `Foto de ${plateTypeLabel} obtenida de base de datos`
+            );
 
             // Actualizar el estado de los pasos del proceso
             setTimeout(() => this.updateProcessStepsStatus(), 0);
 
             // EARLY RETURN: Si encontró foto en BD, no esperar SignalR
-            console.log(`🚀 [WEIGHING-FORM] Foto encontrada en BD, retornando inmediatamente sin esperar SignalR`);
+            console.log(
+              `🚀 [WEIGHING-FORM] Foto encontrada en BD, retornando inmediatamente sin esperar SignalR`
+            );
             return;
           } else {
-            console.log(`ℹ️ [WEIGHING-FORM] No hay fotos en BD para photoType: ${photoType}`);
+            console.log(
+              `ℹ️ [WEIGHING-FORM] No hay fotos en BD para photoType: ${photoType}`
+            );
           }
         } else {
-          console.log(`⚠️ [WEIGHING-FORM] Doble remolque detectado - NO buscar en BD para ${photoType}, solo SignalR`);
+          console.log(
+            `⚠️ [WEIGHING-FORM] Doble remolque detectado - NO buscar en BD para ${photoType}, solo SignalR`
+          );
         }
 
         // Paso 2: Si NO se encontró foto en BD, esperar evento de SignalR
-        this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
+        this.showToast(
+          'info',
+          'Esperando lectura',
+          `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`
+        );
 
         // Iniciar polling a BD cada 3 segundos mientras espera SignalR
         // Esto captura fotos que lleguen tarde a BD
@@ -1181,48 +1374,72 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         const MAX_POLLING_ATTEMPTS = 3;
 
         if (shouldSearchDB && !orphanPhoto) {
-          console.log(`🔄 [WEIGHING-FORM] Iniciando polling limitado (${MAX_POLLING_ATTEMPTS} intentos) cada 3s mientras espera SignalR...`);
+          console.log(
+            `🔄 [WEIGHING-FORM] Iniciando polling limitado (${MAX_POLLING_ATTEMPTS} intentos) cada 3s mientras espera SignalR...`
+          );
 
           pollingInterval = setInterval(async () => {
             try {
               pollingAttempts++;
-              console.log(`📡 [POLLING] Intento ${pollingAttempts}/${MAX_POLLING_ATTEMPTS} - Revisando BD para ${photoType}...`);
+              console.log(
+                `📡 [POLLING] Intento ${pollingAttempts}/${MAX_POLLING_ATTEMPTS} - Revisando BD para ${photoType}...`
+              );
 
               // Detener polling después de 3 intentos
               if (pollingAttempts >= MAX_POLLING_ATTEMPTS) {
-                console.log(`🛑 [POLLING] Límite de intentos alcanzado (${MAX_POLLING_ATTEMPTS}), deteniendo polling`);
+                console.log(
+                  `🛑 [POLLING] Límite de intentos alcanzado (${MAX_POLLING_ATTEMPTS}), deteniendo polling`
+                );
                 clearInterval(pollingInterval);
                 return;
               }
-              let polledPhoto = await this.anprService.getLatestOrphanPhoto(photoType).toPromise();
+              let polledPhoto = await this.anprService
+                .getLatestOrphanPhoto(photoType)
+                .toPromise();
 
               // Fallback para trailerPlate2
               if (!polledPhoto && photoType === 'trailerPlate2') {
-                polledPhoto = await this.anprService.getLatestOrphanPhoto('remolque1Plate').toPromise();
+                polledPhoto = await this.anprService
+                  .getLatestOrphanPhoto('remolque1Plate')
+                  .toPromise();
               }
 
               if (polledPhoto && !photoFoundByPolling) {
                 photoFoundByPolling = true;
-                console.log(`✅ [POLLING] Foto encontrada en BD durante polling: ${polledPhoto.photoUrl}`);
+                console.log(
+                  `✅ [POLLING] Foto encontrada en BD durante polling: ${polledPhoto.photoUrl}`
+                );
 
                 // Guardar la foto
                 if (photoType === 'trailerPlate') {
                   this.photoData.trailerPlate = polledPhoto.photoUrl;
                   // Si viene la placa en la foto, también actualizarla en el formulario
                   if (polledPhoto.licensePlate) {
-                    this.weighingForm.patchValue({ trailerPlate: polledPhoto.licensePlate });
-                    console.log(`🔤 [POLLING] Placa actualizada en formulario: ${polledPhoto.licensePlate}`);
+                    this.weighingForm.patchValue({
+                      trailerPlate: polledPhoto.licensePlate,
+                    });
+                    console.log(
+                      `🔤 [POLLING] Placa actualizada en formulario: ${polledPhoto.licensePlate}`
+                    );
                   }
                 } else if (photoType === 'trailerPlate2') {
                   this.photoData.trailerPlate2 = polledPhoto.photoUrl;
                   // Si viene la placa en la foto, también actualizarla en el formulario
                   if (polledPhoto.licensePlate) {
-                    this.weighingForm.patchValue({ trailerPlate2: polledPhoto.licensePlate });
-                    console.log(`🔤 [POLLING] Placa actualizada en formulario: ${polledPhoto.licensePlate}`);
+                    this.weighingForm.patchValue({
+                      trailerPlate2: polledPhoto.licensePlate,
+                    });
+                    console.log(
+                      `🔤 [POLLING] Placa actualizada en formulario: ${polledPhoto.licensePlate}`
+                    );
                   }
                 }
 
-                this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);
+                this.showToast(
+                  'success',
+                  'Foto obtenida',
+                  `Foto de ${plateTypeLabel} obtenida durante espera`
+                );
 
                 // No cancelamos SignalR, seguimos esperando por si llega una más reciente
               }
@@ -1248,7 +1465,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         if (photoType === 'trailerPlate') {
           this.photoData.trailerPlate = anprEvent.imageUrl;
           this.manualEditDetector.markNextChangeAsAutomatic();
-          this.weighingForm.patchValue({ trailerPlate: anprEvent.licensePlate });
+          this.weighingForm.patchValue({
+            trailerPlate: anprEvent.licensePlate,
+          });
 
           // Si es doble remolque, actualizar el estado
           if (this.weighingForm.get('doubleTrailer')?.value) {
@@ -1259,11 +1478,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           // Placa del remolque en flujo de remolque único
           this.photoData.trailerPlate2 = anprEvent.imageUrl;
           this.manualEditDetector.markNextChangeAsAutomatic();
-          this.weighingForm.patchValue({ trailerPlate2: anprEvent.licensePlate });
+          this.weighingForm.patchValue({
+            trailerPlate2: anprEvent.licensePlate,
+          });
         } else if (photoType === 'remolque1Plate') {
           this.photoData.remolque1Plate = anprEvent.imageUrl;
           this.manualEditDetector.markNextChangeAsAutomatic();
-          this.weighingForm.patchValue({ remolque1Plate: anprEvent.licensePlate });
+          this.weighingForm.patchValue({
+            remolque1Plate: anprEvent.licensePlate,
+          });
 
           // Si es doble remolque, actualizar el estado del remolque 1
           if (this.weighingForm.get('doubleTrailer')?.value) {
@@ -1278,7 +1501,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         } else if (photoType === 'remolque2Plate') {
           this.photoData.remolque2Plate = anprEvent.imageUrl;
           this.manualEditDetector.markNextChangeAsAutomatic();
-          this.weighingForm.patchValue({ remolque2Plate: anprEvent.licensePlate });
+          this.weighingForm.patchValue({
+            remolque2Plate: anprEvent.licensePlate,
+          });
 
           // Si es doble remolque, actualizar el estado del remolque 2
           if (this.weighingForm.get('doubleTrailer')?.value) {
@@ -1292,19 +1517,23 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.log('Imagen guardada en:', anprEvent.imageUrl);
         console.log('Confianza:', anprEvent.confidenceLevel + '%');
 
-        this.showToast('success', 'Placa capturada', `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`);
-
+        this.showToast(
+          'success',
+          'Placa capturada',
+          `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`
+        );
       } catch (error: any) {
         console.error('Error capturando placa con ANPR:', error);
 
-        const errorMessage = error.name === 'TimeoutError'
-          ? 'Tiempo de espera agotado (30s). No se detectó ninguna placa.'
-          : 'Error al capturar placa desde la cámara ANPR';
+        const errorMessage =
+          error.name === 'TimeoutError'
+            ? 'Tiempo de espera agotado (30s). No se detectó ninguna placa.'
+            : 'Error al capturar placa desde la cámara ANPR';
 
         this.messageService.showError({
           title: 'Error de captura',
           message: errorMessage,
-          duration: 5000
+          duration: 5000,
         });
       }
 
@@ -1329,7 +1558,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.photoData.remolque1Plate = 'Foto capturada';
       // Generar placa aleatoria en lugar de estática
       const randomPlate = this.generateRandomPlate();
-      
+
       // Marcar el siguiente cambio como automático (OCR)
       this.manualEditDetector.markNextChangeAsAutomatic();
       this.weighingForm.patchValue({ remolque1Plate: randomPlate });
@@ -1353,7 +1582,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.photoData.remolque2Plate = 'Foto capturada';
       // Generar placa aleatoria en lugar de estática
       const randomPlate = this.generateRandomPlate();
-      
+
       // Marcar el siguiente cambio como automático (OCR)
       this.manualEditDetector.markNextChangeAsAutomatic();
       this.weighingForm.patchValue({ remolque2Plate: randomPlate });
@@ -1371,9 +1600,16 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     } else if (photoType === 'cargo') {
       // Capturar foto real desde la cámara de carga
       try {
-        this.showToast('info', 'Capturando foto', 'Capturando foto de carga desde la cámara...');
+        this.showToast(
+          'info',
+          'Capturando foto',
+          'Capturando foto de carga desde la cámara...'
+        );
 
-        const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoEntry');
+        const photoUrl =
+          await this.cargoCameraService.captureAndSaveCargoPhotoAsync(
+            'cargoEntry'
+          );
         this.photoData.cargo = photoUrl;
 
         // Si es doble remolque y estamos en el paso del remolque 1,
@@ -1394,20 +1630,35 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
         }
 
-        this.showToast('success', 'Foto capturada', 'Foto de carga capturada exitosamente');
+        this.showToast(
+          'success',
+          'Foto capturada',
+          'Foto de carga capturada exitosamente'
+        );
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
       } catch (error) {
         console.error('Error capturando foto de carga:', error);
-        this.showToast('error', 'Error de captura', 'Error al capturar foto de carga desde la cámara');
+        this.showToast(
+          'error',
+          'Error de captura',
+          'Error al capturar foto de carga desde la cámara'
+        );
       }
     } else if (photoType === 'cargoRemolque1') {
       // Capturar foto real desde la cámara de carga para remolque 1
       try {
-        this.showToast('info', 'Capturando foto', 'Capturando foto de carga del remolque 1 desde la cámara...');
+        this.showToast(
+          'info',
+          'Capturando foto',
+          'Capturando foto de carga del remolque 1 desde la cámara...'
+        );
 
-        const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoRemolque1');
+        const photoUrl =
+          await this.cargoCameraService.captureAndSaveCargoPhotoAsync(
+            'cargoRemolque1'
+          );
         this.photoData.cargoRemolque1 = photoUrl;
 
         // Actualizar el estado del remolque 1
@@ -1422,20 +1673,35 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
         }
 
-        this.showToast('success', 'Foto capturada', 'Foto de carga del remolque 1 capturada exitosamente');
+        this.showToast(
+          'success',
+          'Foto capturada',
+          'Foto de carga del remolque 1 capturada exitosamente'
+        );
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
       } catch (error) {
         console.error('Error capturando foto de carga del remolque 1:', error);
-        this.showToast('error', 'Error de captura', 'Error al capturar foto de carga del remolque 1 desde la cámara');
+        this.showToast(
+          'error',
+          'Error de captura',
+          'Error al capturar foto de carga del remolque 1 desde la cámara'
+        );
       }
     } else if (photoType === 'cargoRemolque2') {
       // Capturar foto real desde la cámara de carga para remolque 2
       try {
-        this.showToast('info', 'Capturando foto', 'Capturando foto de carga del remolque 2 desde la cámara...');
+        this.showToast(
+          'info',
+          'Capturando foto',
+          'Capturando foto de carga del remolque 2 desde la cámara...'
+        );
 
-        const photoUrl = await this.cargoCameraService.captureAndSaveCargoPhotoAsync('cargoRemolque2');
+        const photoUrl =
+          await this.cargoCameraService.captureAndSaveCargoPhotoAsync(
+            'cargoRemolque2'
+          );
         this.photoData.cargoRemolque2 = photoUrl;
 
         // Si es doble remolque, actualizar el estado del remolque 2
@@ -1450,19 +1716,27 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           this.doubleTrailerState.remolque2.fotoCargaCapturada = true;
         }
 
-        this.showToast('success', 'Foto capturada', 'Foto de carga del remolque 2 capturada exitosamente');
+        this.showToast(
+          'success',
+          'Foto capturada',
+          'Foto de carga del remolque 2 capturada exitosamente'
+        );
 
         // Actualizar el estado de los pasos del proceso
         setTimeout(() => this.updateProcessStepsStatus(), 0);
       } catch (error) {
         console.error('Error capturando foto de carga del remolque 2:', error);
-        this.showToast('error', 'Error de captura', 'Error al capturar foto de carga desde la cámara');
+        this.showToast(
+          'error',
+          'Error de captura',
+          'Error al capturar foto de carga desde la cámara'
+        );
       }
     } else if (photoType === 'trailerPlate2') {
       this.photoData.trailerPlate2 = 'Foto capturada';
       // Generar placa aleatoria en lugar de estática
       const randomPlate = this.generateRandomPlate();
-      
+
       // Marcar el siguiente cambio como automático (OCR)
       this.manualEditDetector.markNextChangeAsAutomatic();
       this.weighingForm.patchValue({ trailerPlate2: randomPlate });
@@ -1482,15 +1756,17 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   ): void {
     // Habilitar edición manual del campo de placa
     this.manualEditEnabled[plateType] = true;
-    
+
     // Marcar los siguientes cambios en este campo como manuales
     this.manualEditDetector.markNextChangeAsManual();
-    
+
     console.log(`Edición manual habilitada para: ${plateType}`);
-    
+
     // Enfocar el campo para que el usuario pueda editarlo inmediatamente
     setTimeout(() => {
-      const fieldElement = document.querySelector(`input[formControlName="${plateType}"]`) as HTMLInputElement;
+      const fieldElement = document.querySelector(
+        `input[formControlName="${plateType}"]`
+      ) as HTMLInputElement;
       if (fieldElement) {
         fieldElement.focus();
         fieldElement.select(); // Seleccionar todo el texto para facilitar la edición
@@ -1507,7 +1783,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
       // Si hay ediciones manuales, incluir información del usuario
       if (this.hasManualEdits) {
-        console.log('⚠️ Formulario tiene ediciones manuales, se marcará como editado');
+        console.log(
+          '⚠️ Formulario tiene ediciones manuales, se marcará como editado'
+        );
       }
 
       if (this.operationType === 'entry') {
@@ -1535,7 +1813,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
   private saveDoubleTrailerEntry(formData: Record<string, unknown>): void {
     if (!this.doubleTrailerState.isComplete) {
-      this.showToast('error', 'Datos incompletos', 'Debe completar el pesaje de ambos remolques antes de guardar.');
+      this.showToast(
+        'error',
+        'Datos incompletos',
+        'Debe completar el pesaje de ambos remolques antes de guardar.'
+      );
       this.isLoading = false;
       return;
     }
@@ -1587,12 +1869,16 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.isLoading = false;
         console.log('Entrada con doble remolque registrada:', response);
-        
+
         // Guardar el ID de la operación para futuras ediciones manuales
         this.currentOperationId = response.id;
 
         // El interceptor ya procesó la respuesta y extrajo solo los datos
-        this.showToast('success', 'Entrada registrada', `Entrada con doble remolque registrada exitosamente. Folio: ${response.folio}`);
+        this.showToast(
+          'success',
+          'Entrada registrada',
+          `Entrada con doble remolque registrada exitosamente. Folio: ${response.folio}`
+        );
 
         // Generar ticket para entrada con doble remolque
         this.generateTicket('double', response);
@@ -1615,8 +1901,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   private saveNormalEntry(formData: Record<string, unknown>): void {
-    const tipoUnidad = formData['containerOnly'] ? 'contenedor' :
-                       formData['doubleTrailer'] ? 'doble-remolque' : 'remolque';
+    const tipoUnidad = formData['containerOnly']
+      ? 'contenedor'
+      : formData['doubleTrailer']
+      ? 'doble-remolque'
+      : 'remolque';
 
     const entryRequest: CreateEntryRequest = {
       unitType: this.unitType as 'client' | 'provider',
@@ -1641,7 +1930,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.log('Entrada registrada:', response);
 
         this.currentOperationId = response.id;
-        this.showToast('success', 'Entrada registrada', `Entrada registrada exitosamente. Folio: ${response.folio}`);
+        this.showToast(
+          'success',
+          'Entrada registrada',
+          `Entrada registrada exitosamente. Folio: ${response.folio}`
+        );
         this.generateTicket('normal', response);
       },
       error: (error) => {
@@ -1650,7 +1943,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
         let errorMessage = 'No se pudo completar la operación.';
         if (error.status === 409) {
-          errorMessage = 'La placa ya tiene una entrada registrada previamente.';
+          errorMessage =
+            'La placa ya tiene una entrada registrada previamente.';
         } else if (error.error?.message) {
           errorMessage = error.error.message;
         }
@@ -1663,7 +1957,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   private saveNormalExit(formData: Record<string, unknown>): void {
     if (!this.weightData.capturedWeight) {
       this.isLoading = false;
-      this.showToast('error', 'Error de validación', 'Debe capturar el peso de salida.');
+      this.showToast(
+        'error',
+        'Error de validación',
+        'Debe capturar el peso de salida.'
+      );
       return;
     }
 
@@ -1671,8 +1969,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const tipoUnidad = formData['containerOnly'] ? 'contenedor' : 'remolque';
 
     // Calcular peso neto (peso entrada - peso salida)
-    const pesoNeto = (this.weightData.entryWeight || 0) - (this.weightData.capturedWeight || 0);
-    
+    const pesoNeto =
+      (this.weightData.entryWeight || 0) -
+      (this.weightData.capturedWeight || 0);
+
     // Crear request para el backend
     const exitRequest: CreateExitRequest = {
       folio: '', // Se generará en el backend
@@ -1681,14 +1981,22 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       pesoNeto: Math.abs(pesoNeto), // Valor absoluto del peso neto
       placaTrailer: formData['trailerPlate'] as string,
       placaRemolque: (formData['trailerPlate2'] as string) || undefined,
-      placaContenedor: formData['containerOnly'] ? (formData['trailerPlate'] as string) : undefined,
-      placaTrailerContenedor: formData['containerOnly'] ? (formData['trailerPlate'] as string) : undefined,
-      placaRemolqueContenedor: formData['containerOnly'] ? (formData['trailerPlate2'] as string) : undefined,
+      placaContenedor: formData['containerOnly']
+        ? (formData['trailerPlate'] as string)
+        : undefined,
+      placaTrailerContenedor: formData['containerOnly']
+        ? (formData['trailerPlate'] as string)
+        : undefined,
+      placaRemolqueContenedor: formData['containerOnly']
+        ? (formData['trailerPlate2'] as string)
+        : undefined,
       fotos: {
         trailerPlate: this.photoData.trailerPlate || undefined,
         trailerPlate2: this.photoData.trailerPlate2 || undefined,
         cargoState: this.photoData.cargo || '',
-        containerPlate: formData['containerOnly'] ? (formData['trailerPlate'] as string) : undefined,
+        containerPlate: formData['containerOnly']
+          ? (formData['trailerPlate'] as string)
+          : undefined,
       },
       estado: 'SALIDA_REGISTRADA',
       fechaSalida: new Date().toISOString(),
@@ -1701,7 +2009,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.log('Salida registrada:', response);
 
         // El interceptor ya procesó la respuesta y extrajo solo los datos
-        this.showToast('success', 'Salida registrada', `Salida registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`);
+        this.showToast(
+          'success',
+          'Salida registrada',
+          `Salida registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`
+        );
 
         // Generar ticket para salida normal
         this.generateTicket('exit', response);
@@ -1709,14 +2021,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.isLoading = false;
         console.error('Error al registrar salida:', error);
-        
+
         let errorMessage = 'No se pudo completar la operación.';
         if (error.status === 404) {
           errorMessage = 'No se encontró la entrada previa para esta placa.';
         } else if (error.message) {
           errorMessage = error.message;
         }
-        
+
         this.showToast('error', 'Error al registrar', errorMessage);
       },
     });
@@ -1726,12 +2038,17 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Validar entrada previa
     if (!this.weightData.hasValidEntry || !this.weightData.entryWeight) {
       this.isLoading = false;
-      this.showToast('error', 'Error de validación', 'No se encontró entrada previa válida para esta placa.');
+      this.showToast(
+        'error',
+        'Error de validación',
+        'No se encontró entrada previa válida para esta placa.'
+      );
       return;
     }
 
     // Calcular peso neto total (peso entrada - peso salida total)
-    const pesoNetoCalculado = this.weightData.entryWeight - this.doubleTrailerState.pesoBrutoTotal;
+    const pesoNetoCalculado =
+      this.weightData.entryWeight - this.doubleTrailerState.pesoBrutoTotal;
 
     const exitRequest: CreateDoubleTrailerExitRequest = {
       folio: '', // Se generará en el backend
@@ -1739,12 +2056,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       remolque1: {
         placa: this.doubleTrailerState.remolque1.placa || '',
         pesoTara: this.doubleTrailerState.remolque1.pesoBruto || 0,
-        fotoCargaCapturada: this.doubleTrailerState.remolque1.fotoCargaCapturada || false,
+        fotoCargaCapturada:
+          this.doubleTrailerState.remolque1.fotoCargaCapturada || false,
       },
       remolque2: {
         placa: this.doubleTrailerState.remolque2.placa || '',
         pesoTara: this.doubleTrailerState.remolque2.pesoBruto || 0,
-        fotoCargaCapturada: this.doubleTrailerState.remolque2.fotoCargaCapturada || false,
+        fotoCargaCapturada:
+          this.doubleTrailerState.remolque2.fotoCargaCapturada || false,
       },
       pesoBrutoTotal: this.doubleTrailerState.pesoBrutoTotal,
       pesoNetoCalculado: Math.abs(pesoNetoCalculado),
@@ -1764,7 +2083,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.log('Salida con doble remolque registrada:', response);
 
         // El interceptor ya procesó la respuesta
-        this.showToast('success', 'Salida registrada', `Salida con doble remolque registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`);
+        this.showToast(
+          'success',
+          'Salida registrada',
+          `Salida con doble remolque registrada exitosamente. Folio: ${response.folio}. Peso neto: ${response.pesoNeto} kg`
+        );
 
         // Generar ticket para salida con doble remolque
         this.generateTicket('double-exit', response);
@@ -1772,14 +2095,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.isLoading = false;
         console.error('Error al registrar salida con doble remolque:', error);
-        
+
         let errorMessage = 'No se pudo completar la operación.';
         if (error.status === 404) {
           errorMessage = 'No se encontró la entrada previa para esta placa.';
         } else if (error.message) {
           errorMessage = error.message;
         }
-        
+
         this.messageService.showErrorToast({
           title: 'Error al registrar',
           message: errorMessage,
@@ -1887,7 +2210,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error en logout:', error);
         this.router.navigate(['/login']);
-      }
+      },
     });
   }
 
@@ -1911,6 +2234,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       if (field.errors?.['pattern']) {
         return 'Formato de placa inválido';
       }
+      if (field.errors?.['invalidPlate']) {
+        return 'Solo se permiten letras, números y guion medio (-)';
+      }
+      if (field.errors?.['maxLength']) {
+        return 'La placa no puede exceder 10 caracteres';
+      }
     }
     return '';
   }
@@ -1923,8 +2252,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Foto de carga es OPCIONAL
     if (isContainerOnly) {
       return (
-        this.weighingForm.valid &&
-        this.weightData.capturedWeight !== undefined
+        this.weighingForm.valid && this.weightData.capturedWeight !== undefined
       );
     }
 
@@ -1939,7 +2267,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         remolque1Placa: !!this.doubleTrailerState.remolque1.placa,
         remolque2Placa: !!this.doubleTrailerState.remolque2.placa,
         remolque1Peso: !!this.doubleTrailerState.remolque1.pesoCapturado,
-        remolque2Peso: !!this.doubleTrailerState.remolque2.pesoCapturado
+        remolque2Peso: !!this.doubleTrailerState.remolque2.pesoCapturado,
       };
 
       console.log('🔍 isFormValid - Doble Remolque:', validations);
@@ -1947,7 +2275,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Si el formulario no es válido, mostrar qué campos están fallando
       if (!this.weighingForm.valid) {
         const invalidFields: string[] = [];
-        Object.keys(this.weighingForm.controls).forEach(key => {
+        Object.keys(this.weighingForm.controls).forEach((key) => {
           const control = this.weighingForm.get(key);
           if (control && control.invalid) {
             invalidFields.push(`${key}: ${JSON.stringify(control.errors)}`);
@@ -1956,15 +2284,14 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         console.log('❌ Campos inválidos del formulario:', invalidFields);
       }
 
-      const result = (
+      const result =
         validations.formValid &&
         validations.isComplete &&
         validations.trailerPlaca &&
         validations.remolque1Placa &&
         validations.remolque2Placa &&
         validations.remolque1Peso &&
-        validations.remolque2Peso
-      );
+        validations.remolque2Peso;
 
       console.log('🔍 isFormValid result:', result);
 
@@ -1974,8 +2301,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // FLUJO REMOLQUE ÚNICO: Solo campos del formulario + peso capturado
     // Las fotos son OPCIONALES
     return (
-      this.weighingForm.valid &&
-      this.weightData.capturedWeight !== undefined
+      this.weighingForm.valid && this.weightData.capturedWeight !== undefined
     );
   }
 
@@ -2200,22 +2526,30 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   // ============= GETTERS PARA INFORMACIÓN DE ENTRADA =============
 
   get hasEntryInfo(): boolean {
-    return this.operationType === 'exit' && (this.weightData.hasValidEntry === true) && this.showEntryInfo;
+    return (
+      this.operationType === 'exit' &&
+      this.weightData.hasValidEntry === true &&
+      this.showEntryInfo
+    );
   }
 
   get entryInfoData() {
     return {
       folio: this.weightData.entryFolio || 'N/A',
       weight: this.weightData.entryWeight || 0,
-      date: this.weightData.entryDate ? new Date(this.weightData.entryDate).toLocaleString() : 'N/A',
+      date: this.weightData.entryDate
+        ? new Date(this.weightData.entryDate).toLocaleString()
+        : 'N/A',
       product: this.weighingForm.get('product')?.value || 'N/A',
-      client: this.weighingForm.get('clientProviderName')?.value || 'N/A'
+      client: this.weighingForm.get('clientProviderName')?.value || 'N/A',
     };
   }
 
   get calculatedNetWeight(): number {
     if (this.weightData.entryWeight && this.weightData.capturedWeight) {
-      return Math.abs(this.weightData.entryWeight - this.weightData.capturedWeight);
+      return Math.abs(
+        this.weightData.entryWeight - this.weightData.capturedWeight
+      );
     }
     return 0;
   }
@@ -2228,7 +2562,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
    * Verifica si el formulario tiene campos editados manualmente
    */
   get hasManualPlateEdits(): boolean {
-    return this.hasManualEdits || this.manualEditDetector.hasManualChanges('weighing-form');
+    return (
+      this.hasManualEdits ||
+      this.manualEditDetector.hasManualChanges('weighing-form')
+    );
   }
 
   /**
@@ -2260,10 +2597,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   async reconnectToWeightService(): Promise<void> {
     try {
       await this.pesoRealtimeService.reconnect();
-      this.showToast('info', 'Reconexión', 'Intentando reconectar con el servicio de peso...');
+      this.showToast(
+        'info',
+        'Reconexión',
+        'Intentando reconectar con el servicio de peso...'
+      );
     } catch (error) {
       console.error('Error al reconectar:', error);
-      this.showToast('error', 'Error de reconexión', 'No se pudo reconectar con el servicio de peso');
+      this.showToast(
+        'error',
+        'Error de reconexión',
+        'No se pudo reconectar con el servicio de peso'
+      );
     }
   }
 
@@ -2292,13 +2637,22 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const updateRequest: UpdateWeighingOperationRequest = {
       esEdicionManual: true,
       // Solo incluir los campos que cambiaron
-      ...(editEvent.fieldName === 'trailerPlate' && { trailerPlate: formValues.trailerPlate }),
-      ...(editEvent.fieldName === 'trailerPlate2' && { trailerPlate2: formValues.trailerPlate2 }),
-      ...(editEvent.fieldName === 'remolque1Plate' && { placaRemolque1: formValues.remolque1Plate }),
-      ...(editEvent.fieldName === 'remolque2Plate' && { placaRemolque2: formValues.remolque2Plate }),
+      ...(editEvent.fieldName === 'trailerPlate' && {
+        trailerPlate: formValues.trailerPlate,
+      }),
+      ...(editEvent.fieldName === 'trailerPlate2' && {
+        trailerPlate2: formValues.trailerPlate2,
+      }),
+      ...(editEvent.fieldName === 'remolque1Plate' && {
+        placaRemolque1: formValues.remolque1Plate,
+      }),
+      ...(editEvent.fieldName === 'remolque2Plate' && {
+        placaRemolque2: formValues.remolque2Plate,
+      }),
     };
 
-    this.weighingService.updateWeighingOperation(this.currentOperationId, updateRequest)
+    this.weighingService
+      .updateWeighingOperation(this.currentOperationId, updateRequest)
       .subscribe({
         next: (response) => {
           console.log('✅ Operación actualizada con edición manual:', response);
@@ -2306,8 +2660,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('❌ Error al actualizar operación:', error);
-          this.showToast('error', 'Error al guardar', 'No se pudieron guardar los cambios manuales');
-        }
+          this.showToast(
+            'error',
+            'Error al guardar',
+            'No se pudieron guardar los cambios manuales'
+          );
+        },
       });
   }
 
@@ -2318,7 +2676,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (!relativeUrl) return '';
 
     // Si ya es una URL completa, retornarla tal cual
-    if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+    if (
+      relativeUrl.startsWith('http://') ||
+      relativeUrl.startsWith('https://')
+    ) {
       return relativeUrl;
     }
 
@@ -2364,7 +2725,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Auto-remove después de 5 segundos
     setTimeout(() => {
       if (toast.parentElement) {
-        toast.style.animation = 'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
+        toast.style.animation =
+          'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
         setTimeout(() => {
           toast.remove();
         }, 180);
@@ -2402,12 +2764,22 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (products) => {
             console.log('✅ Productos recibidos:', products);
-            console.log('✅ Tipo de products:', typeof products, Array.isArray(products));
+            console.log(
+              '✅ Tipo de products:',
+              typeof products,
+              Array.isArray(products)
+            );
             this.productSuggestions = products;
             this.showProductSuggestions = products.length > 0;
-            console.log('📋 showProductSuggestions:', this.showProductSuggestions);
+            console.log(
+              '📋 showProductSuggestions:',
+              this.showProductSuggestions
+            );
             console.log('📋 productSuggestions:', this.productSuggestions);
-            console.log('📋 productSuggestions.length:', this.productSuggestions.length);
+            console.log(
+              '📋 productSuggestions.length:',
+              this.productSuggestions.length
+            );
 
             // Verificar si el elemento existe en el DOM
             setTimeout(() => {
@@ -2451,7 +2823,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
    */
   onProductFocus(): void {
     const productValue = this.weighingForm.get('product')?.value;
-    if (productValue && productValue.trim().length >= 2 && this.productSuggestions.length > 0) {
+    if (
+      productValue &&
+      productValue.trim().length >= 2 &&
+      this.productSuggestions.length > 0
+    ) {
       this.showProductSuggestions = true;
       this.cdr.detectChanges();
     }
@@ -2510,7 +2886,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
    * Seleccionar un cliente/proveedor de las sugerencias
    */
   selectClientSuggestion(client: string): void {
-    this.weighingForm.patchValue({ clientProviderName: client }, { emitEvent: false });
+    this.weighingForm.patchValue(
+      { clientProviderName: client },
+      { emitEvent: false }
+    );
     this.clientSuggestions = [];
     this.showClientSuggestions = false;
     this.cdr.detectChanges();
@@ -2521,7 +2900,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
    */
   onClientFocus(): void {
     const clientValue = this.weighingForm.get('clientProviderName')?.value;
-    if (clientValue && clientValue.trim().length >= 2 && this.clientSuggestions.length > 0) {
+    if (
+      clientValue &&
+      clientValue.trim().length >= 2 &&
+      this.clientSuggestions.length > 0
+    ) {
       this.showClientSuggestions = true;
       this.cdr.detectChanges();
     }
@@ -2549,10 +2932,19 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     this.isCapturingAllPhotos = true;
 
-    console.log('🎯 [WEIGHING-FORM] Iniciando captura consolidada - doubleTrailer:', isDoubleTrailer, 'containerOnly:', isContainerOnly);
+    console.log(
+      '🎯 [WEIGHING-FORM] Iniciando captura consolidada - doubleTrailer:',
+      isDoubleTrailer,
+      'containerOnly:',
+      isContainerOnly
+    );
 
     try {
-      this.showToast('info', 'Captura consolidada iniciada', 'Capturando fotos en paralelo. Por favor espere...');
+      this.showToast(
+        'info',
+        'Captura consolidada iniciada',
+        'Capturando fotos en paralelo. Por favor espere...'
+      );
 
       let fotosExitosas = 0;
       let fotosFallidas = 0;
@@ -2562,48 +2954,78 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         // ============= FLUJO DOBLE REMOLQUE - SOLO FASE 1 =============
         // Capturar: trailer, remolque1 y carga remolque1 EN PARALELO
         totalFotos = 3;
-        this.photosCaptureProgress = { current: 0, total: totalFotos, fieldName: 'Remolque 1...' };
+        this.photosCaptureProgress = {
+          current: 0,
+          total: totalFotos,
+          fieldName: 'Remolque 1...',
+        };
         this.cdr.detectChanges();
 
         const phase1Promises = [
           { promise: this.onPhotoCapture('trailerPlate'), name: 'Tráiler' },
-          { promise: this.onPhotoCapture('remolque1Plate'), name: 'Remolque 1' },
-          { promise: this.onPhotoCapture('cargoRemolque1'), name: 'Carga Remolque 1' }
+          {
+            promise: this.onPhotoCapture('remolque1Plate'),
+            name: 'Remolque 1',
+          },
+          {
+            promise: this.onPhotoCapture('cargoRemolque1'),
+            name: 'Carga Remolque 1',
+          },
         ];
 
-        const phase1Results = await Promise.allSettled(phase1Promises.map(cp => cp.promise));
+        const phase1Results = await Promise.allSettled(
+          phase1Promises.map((cp) => cp.promise)
+        );
 
         phase1Results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
             fotosExitosas++;
-            console.log(`✅ [WEIGHING-FORM] Foto ${phase1Promises[index].name} capturada exitosamente`);
+            console.log(
+              `✅ [WEIGHING-FORM] Foto ${phase1Promises[index].name} capturada exitosamente`
+            );
           } else {
             fotosFallidas++;
-            console.error(`❌ [WEIGHING-FORM] Error capturando ${phase1Promises[index].name}:`, result.reason);
+            console.error(
+              `❌ [WEIGHING-FORM] Error capturando ${phase1Promises[index].name}:`,
+              result.reason
+            );
           }
         });
-
       } else {
         // ============= FLUJO REMOLQUE ÚNICO O CONTENEDOR - TODO PARALELO =============
         const capturePromises = [
           { promise: this.onPhotoCapture('trailerPlate'), name: 'Tráiler' },
-          { promise: this.onPhotoCapture('trailerPlate2'), name: isContainerOnly ? 'Contenedor' : 'Remolque' },
-          { promise: this.onPhotoCapture('cargo'), name: 'Carga' }
+          {
+            promise: this.onPhotoCapture('trailerPlate2'),
+            name: isContainerOnly ? 'Contenedor' : 'Remolque',
+          },
+          { promise: this.onPhotoCapture('cargo'), name: 'Carga' },
         ];
 
         totalFotos = capturePromises.length;
-        this.photosCaptureProgress = { current: 0, total: totalFotos, fieldName: 'En paralelo...' };
+        this.photosCaptureProgress = {
+          current: 0,
+          total: totalFotos,
+          fieldName: 'En paralelo...',
+        };
         this.cdr.detectChanges();
 
-        const results = await Promise.allSettled(capturePromises.map(cp => cp.promise));
+        const results = await Promise.allSettled(
+          capturePromises.map((cp) => cp.promise)
+        );
 
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
             fotosExitosas++;
-            console.log(`✅ [WEIGHING-FORM] Foto ${capturePromises[index].name} capturada exitosamente`);
+            console.log(
+              `✅ [WEIGHING-FORM] Foto ${capturePromises[index].name} capturada exitosamente`
+            );
           } else {
             fotosFallidas++;
-            console.error(`❌ [WEIGHING-FORM] Error capturando ${capturePromises[index].name}:`, result.reason);
+            console.error(
+              `❌ [WEIGHING-FORM] Error capturando ${capturePromises[index].name}:`,
+              result.reason
+            );
           }
         });
       }
@@ -2622,7 +3044,6 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           `Se capturaron ${fotosExitosas} de ${totalFotos} fotos. ${fotosFallidas} fotos fallaron.`
         );
       }
-
     } catch (error: any) {
       console.error('❌ [WEIGHING-FORM] Error en captura consolidada:', error);
       this.showToast(
@@ -2646,7 +3067,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const isDoubleTrailer = this.weighingForm.get('doubleTrailer')?.value;
 
     if (!isDoubleTrailer) {
-      console.warn('⚠️ [WEIGHING-FORM] onCaptureRemolque2Photos solo aplica para doble remolque');
+      console.warn(
+        '⚠️ [WEIGHING-FORM] onCaptureRemolque2Photos solo aplica para doble remolque'
+      );
       return;
     }
 
@@ -2655,30 +3078,48 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     console.log('🎯 [WEIGHING-FORM] Iniciando captura de fotos Remolque 2');
 
     try {
-      this.showToast('info', 'Capturando Remolque 2', 'Capturando fotos del remolque 2. Por favor espere...');
+      this.showToast(
+        'info',
+        'Capturando Remolque 2',
+        'Capturando fotos del remolque 2. Por favor espere...'
+      );
 
       const totalFotos = 2;
       let fotosExitosas = 0;
       let fotosFallidas = 0;
 
-      this.photosCaptureProgress = { current: 0, total: totalFotos, fieldName: 'Remolque 2...' };
+      this.photosCaptureProgress = {
+        current: 0,
+        total: totalFotos,
+        fieldName: 'Remolque 2...',
+      };
       this.cdr.detectChanges();
 
       // Capturar remolque2 y carga remolque2 EN PARALELO
       const phase2Promises = [
         { promise: this.onPhotoCapture('remolque2Plate'), name: 'Remolque 2' },
-        { promise: this.onPhotoCapture('cargoRemolque2'), name: 'Carga Remolque 2' }
+        {
+          promise: this.onPhotoCapture('cargoRemolque2'),
+          name: 'Carga Remolque 2',
+        },
       ];
 
-      const phase2Results = await Promise.allSettled(phase2Promises.map(cp => cp.promise));
+      const phase2Results = await Promise.allSettled(
+        phase2Promises.map((cp) => cp.promise)
+      );
 
       phase2Results.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           fotosExitosas++;
-          console.log(`✅ [WEIGHING-FORM] Foto ${phase2Promises[index].name} capturada exitosamente`);
+          console.log(
+            `✅ [WEIGHING-FORM] Foto ${phase2Promises[index].name} capturada exitosamente`
+          );
         } else {
           fotosFallidas++;
-          console.error(`❌ [WEIGHING-FORM] Error capturando ${phase2Promises[index].name}:`, result.reason);
+          console.error(
+            `❌ [WEIGHING-FORM] Error capturando ${phase2Promises[index].name}:`,
+            result.reason
+          );
         }
       });
 
@@ -2696,9 +3137,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           `Se capturaron ${fotosExitosas} de ${totalFotos} fotos. ${fotosFallidas} fotos fallaron.`
         );
       }
-
     } catch (error: any) {
-      console.error('❌ [WEIGHING-FORM] Error en captura de Remolque 2:', error);
+      console.error(
+        '❌ [WEIGHING-FORM] Error en captura de Remolque 2:',
+        error
+      );
       this.showToast(
         'error',
         'Error en captura Remolque 2',
