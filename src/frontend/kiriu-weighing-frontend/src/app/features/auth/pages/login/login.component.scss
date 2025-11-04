@@ -51,7 +51,7 @@
 
 // Marca/Logo
 .brand {
-  background: var(--brand-primary);
+  background: transparent;
   border-radius: 12px;
   padding: 16px 24px;
   margin-bottom: 24px;
@@ -63,6 +63,12 @@
     color: var(--brand-light);
     letter-spacing: 3px;
     text-shadow: 0 2px 8px rgba(0, 91, 181, 0.3);
+  }
+
+  .logo-image {
+    max-width: 200px;
+    height: auto;
+    display: block;
   }
 }
 
