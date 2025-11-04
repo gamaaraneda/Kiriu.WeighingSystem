@@ -18,8 +18,8 @@
   --brand-200: #b3dcff;
   --brand-300: #84c9ff;
   --brand-400: #5eb4ff;
-  --brand-500: #398DF1;
-  --brand-600: #005BB5;
+  --brand-500: #398df1;
+  --brand-600: #005bb5;
   --brand-700: #004a94;
   --brand-800: #003973;
   --brand-900: #002952;
@@ -32,10 +32,10 @@
   --muted: #5b687a;
 
   /* Semantic - Paleta Kiriu */
-  --success: #1EE733;
-  --warning: #FF914D;
-  --danger: #F70000;
-  --info: #398DF1;
+  --success: #1ee733;
+  --warning: #ff914d;
+  --danger: #f70000;
+  --info: #398df1;
 
   /* Elevation / effects */
   --radius-xs: 6px;
@@ -299,10 +299,9 @@ h2,
 }
 
 .topbar .brand .logo {
-  color: var(--brand-700);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.5px;
-  font-size: var(--fs-xl);
+  height: 55px;
+  width: auto;
+  object-fit: contain;
 }
 
 .topbar .brand .app {
@@ -366,7 +365,7 @@ h2,
 }
 
 .nav-item::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -767,11 +766,11 @@ h2,
 
 /* Accents para operaciones */
 :root {
-  --accent-in: #398DF1;
-  --accent-in-600: #005BB5;
+  --accent-in: #398df1;
+  --accent-in-600: #005bb5;
   --accent-in-50: #e8f4ff;
-  --accent-out: #1EE733;
-  --accent-out-600: #14AE24;
+  --accent-out: #1ee733;
+  --accent-out-600: #14ae24;
   --accent-out-50: #e9fbf4;
 }
 

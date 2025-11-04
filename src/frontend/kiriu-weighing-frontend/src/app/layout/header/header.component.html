@@ -1,7 +1,7 @@
 <header class="topbar" role="banner">
   <div class="brand">
-    <strong class="logo">KIRIU</strong>
-    <span class="app">Sistema de Pesaje</span>
+    <img src="ico/logo.png" alt="KIRIU" class="logo" />
+    <span class="app">Sistema ade Pesaje</span>
   </div>
 
   <!-- Menú de navegación central -->
@@ -10,7 +10,8 @@
       class="nav-item"
       aria-label="Ir a Consultas"
       *ngIf="showQueriesButton"
-      (click)="onQueriesClick()">
+      (click)="onQueriesClick()"
+    >
       <span class="nav-icon">📊</span>
       <span class="nav-label">Consultas</span>
     </button>
@@ -18,7 +19,8 @@
       class="nav-item"
       aria-label="Ir a Administración"
       *ngIf="showAdminButton"
-      (click)="onAdminClick()">
+      (click)="onAdminClick()"
+    >
       <span class="nav-icon">⚙️</span>
       <span class="nav-label">Administración</span>
     </button>
@@ -32,7 +34,12 @@
         <span class="user-email">{{ currentUser.email }}</span>
         <span class="user-role">{{ currentUser.rol }}</span>
       </div>
-      <button class="btn-logout" aria-label="Cerrar sesión" *ngIf="showLogoutButton" (click)="onLogoutClick()">
+      <button
+        class="btn-logout"
+        aria-label="Cerrar sesión"
+        *ngIf="showLogoutButton"
+        (click)="onLogoutClick()"
+      >
         <span class="logout-icon">🚪</span>
         <span class="logout-text">Cerrar sesión</span>
       </button>
