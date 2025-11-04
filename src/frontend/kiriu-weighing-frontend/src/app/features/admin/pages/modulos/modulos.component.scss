@@ -83,6 +83,13 @@
     gap: 10px;
     align-items: center;
     flex-shrink: 0;
+
+    .btn-icon-img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      display: inline-block;
+    }
   }
 
   @media (max-width: 767px) {
@@ -157,10 +164,20 @@
     color: #334155;
     border: 1px solid #d1d5db !important;
 
+    .btn-icon-img,
+    .btn-icon-filter {
+      filter: invert(1) brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(198deg) brightness(97%) contrast(97%);
+    }
+
     &:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
       border-color: #d6deeb !important;
+
+      .btn-icon-img,
+      .btn-icon-filter {
+        filter: brightness(0) invert(1);
+      }
     }
   }
 
@@ -195,6 +212,15 @@
   cursor: pointer;
   transition: all 0.15s ease;
 
+  .action-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    display: block;
+    filter: brightness(0) saturate(100%) invert(47%) sepia(9%) saturate(830%) hue-rotate(183deg) brightness(92%) contrast(86%);
+    transition: filter 0.15s ease;
+  }
+
   &:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
@@ -212,6 +238,10 @@
     &:hover:not(:disabled) {
       background: rgba(59, 130, 246, 0.1);
       border-color: var(--info);
+
+      .action-icon {
+        filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(198deg) brightness(97%) contrast(97%);
+      }
     }
   }
 
@@ -222,6 +252,10 @@
     &:hover:not(:disabled) {
       background: rgba(245, 158, 11, 0.1);
       border-color: var(--warning);
+
+      .action-icon {
+        filter: brightness(0) saturate(100%) invert(56%) sepia(79%) saturate(1476%) hue-rotate(2deg) brightness(97%) contrast(97%);
+      }
     }
   }
 
@@ -232,6 +266,10 @@
     &:hover:not(:disabled) {
       background: rgba(239, 68, 68, 0.1);
       border-color: var(--danger);
+
+      .action-icon {
+        filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+      }
     }
   }
 
@@ -593,6 +631,15 @@
       gap: 8px;
       justify-content: flex-end;
       margin-top: 10px;
+
+      .btn-icon-filter {
+        width: 16px !important;
+        height: 16px !important;
+        max-width: 16px !important;
+        max-height: 16px !important;
+        object-fit: contain !important;
+        display: inline-block !important;
+      }
     }
   }
 }

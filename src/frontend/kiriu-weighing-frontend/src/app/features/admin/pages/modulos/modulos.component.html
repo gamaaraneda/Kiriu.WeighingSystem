@@ -22,7 +22,8 @@
         </div>
         <div class="hero-actions">
           <button type="button" class="btn btn-ghost" (click)="onGoBack()">
-            ← Regresar
+            <img src="ico/regresar.png" alt="" class="btn-icon-img" />
+            Regresar
           </button>
         </div>
       </section>
@@ -66,7 +67,8 @@
               class="btn btn-ghost"
               (click)="clearFilters()"
             >
-              ✕ Limpiar
+              <img src="ico/cancelar.png" alt="" class="btn-icon-filter" />
+              Limpiar
             </button>
           </div>
         </div>
@@ -81,7 +83,10 @@
         </div>
 
         <div class="table-container">
-          <table class="results-table" *ngIf="filteredModulos.length > 0; else emptyState">
+          <table
+            class="results-table"
+            *ngIf="filteredModulos.length > 0; else emptyState"
+          >
             <thead>
               <tr>
                 <th>Orden</th>
@@ -89,7 +94,7 @@
                 <th>Descripción</th>
                 <th>Permisos Asociados</th>
                 <th>Estado</th>
-                <th style="text-align: center;">Acciones</th>
+                <th style="text-align: center">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -144,7 +149,7 @@
                     [class.badge-success]="modulo.activo"
                     [class.badge-danger]="!modulo.activo"
                   >
-                    {{ modulo.activo ? 'Activo' : 'Inactivo' }}
+                    {{ modulo.activo ? "Activo" : "Inactivo" }}
                   </span>
                 </td>
                 <td>
@@ -155,7 +160,7 @@
                       (click)="viewModuleDetails(modulo)"
                       title="Ver permisos"
                     >
-                      👁️
+                      <img src="ico/vista.png" alt="Ver" class="action-icon" />
                     </button>
                   </div>
                 </td>
@@ -168,9 +173,7 @@
               <div class="empty-icon">🧩</div>
               <div class="empty-text">
                 <p class="empty-title">No se encontraron módulos</p>
-                <p class="empty-subtitle">
-                  Crea un nuevo módulo para comenzar
-                </p>
+                <p class="empty-subtitle">Crea un nuevo módulo para comenzar</p>
               </div>
             </div>
           </ng-template>
@@ -183,12 +186,18 @@
   <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>{{ selectedModulo ? 'Editar Módulo' : 'Nuevo Módulo' }}</h3>
-        <button type="button" class="modal-close" (click)="closeModal()">✕</button>
+        <h3>{{ selectedModulo ? "Editar Módulo" : "Nuevo Módulo" }}</h3>
+        <button type="button" class="modal-close" (click)="closeModal()">
+          ✕
+        </button>
       </div>
 
       <div class="modal-body">
-        <form [formGroup]="moduloForm" (ngSubmit)="onSubmit()" class="modulo-form">
+        <form
+          [formGroup]="moduloForm"
+          (ngSubmit)="onSubmit()"
+          class="modulo-form"
+        >
           <div class="form-grid">
             <div class="form-group">
               <label for="nombre" class="form-label">Nombre del Módulo *</label>
@@ -235,11 +244,7 @@
 
             <div class="form-group">
               <label for="icono" class="form-label">Ícono</label>
-              <select
-                id="icono"
-                class="select"
-                formControlName="icono"
-              >
+              <select id="icono" class="select" formControlName="icono">
                 <option value="">Seleccionar ícono</option>
                 <option *ngFor="let icon of iconOptions" [value]="icon.value">
                   {{ icon.label }}
@@ -310,11 +315,7 @@
       </div>
 
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          (click)="closeModal()"
-        >
+        <button type="button" class="btn btn-ghost" (click)="closeModal()">
           ✕ Cancelar
         </button>
         <button
@@ -323,18 +324,30 @@
           [disabled]="moduloForm.invalid || isLoading"
           (click)="onSubmit()"
         >
-          {{ isLoading ? '⏳ Guardando...' : (selectedModulo ? '✓ Actualizar' : '+ Crear') }}
+          {{
+            isLoading
+              ? "⏳ Guardando..."
+              : selectedModulo
+              ? "✓ Actualizar"
+              : "+ Crear"
+          }}
         </button>
       </div>
     </div>
   </div>
 
   <!-- Modal para ver detalles del módulo -->
-  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+  <div
+    class="modal-overlay"
+    *ngIf="showDetailsModal"
+    (click)="closeDetailsModal()"
+  >
     <div class="modal modal-lg" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h3>Detalles del Módulo</h3>
-        <button type="button" class="modal-close" (click)="closeDetailsModal()">✕</button>
+        <button type="button" class="modal-close" (click)="closeDetailsModal()">
+          ✕
+        </button>
       </div>
 
       <div class="modal-body" *ngIf="selectedModulo">
@@ -349,7 +362,10 @@
                 <p class="module-order">
                   Orden: <strong>{{ selectedModulo.orden }}</strong>
                 </p>
-                <p class="module-description" *ngIf="selectedModulo.descripcion">
+                <p
+                  class="module-description"
+                  *ngIf="selectedModulo.descripcion"
+                >
                   {{ selectedModulo.descripcion }}
                 </p>
               </div>
@@ -365,6 +381,7 @@
                 type="button"
                 class="btn btn-success btn-sm"
                 (click)="manageModulePermissions()"
+                style="display: none;"
               >
                 ⚙️ Gestionar Permisos
               </button>
@@ -381,7 +398,11 @@
                 >
                   <div class="permission-header">
                     <span class="permission-icon">
-                      {{ getIconEmojiForPermissionType(moduloPermiso.permiso.tipo) }}
+                      {{
+                        getIconEmojiForPermissionType(
+                          moduloPermiso.permiso.tipo
+                        )
+                      }}
                     </span>
                     <span class="permission-name">{{
                       moduloPermiso.permiso.nombre
@@ -389,9 +410,15 @@
                     <span
                       class="badge badge-sm"
                       [class.badge-info]="moduloPermiso.permiso.tipo === 'READ'"
-                      [class.badge-success]="moduloPermiso.permiso.tipo === 'WRITE'"
-                      [class.badge-danger]="moduloPermiso.permiso.tipo === 'DELETE'"
-                      [class.badge-warning]="moduloPermiso.permiso.tipo === 'ADMIN'"
+                      [class.badge-success]="
+                        moduloPermiso.permiso.tipo === 'WRITE'
+                      "
+                      [class.badge-danger]="
+                        moduloPermiso.permiso.tipo === 'DELETE'
+                      "
+                      [class.badge-warning]="
+                        moduloPermiso.permiso.tipo === 'ADMIN'
+                      "
                     >
                       {{ moduloPermiso.permiso.tipo }}
                     </span>
@@ -418,6 +445,7 @@
                   type="button"
                   class="btn btn-primary"
                   (click)="manageModulePermissions()"
+                  style="display: none;"
                 >
                   + Configurar Permisos
                 </button>
@@ -439,6 +467,7 @@
           type="button"
           class="btn btn-primary"
           (click)="editFromDetails()"
+          style="display: none;"
         >
           ✏️ Editar Módulo
         </button>
