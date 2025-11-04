@@ -1772,6 +1772,17 @@ img.btn-icon-refresh {
     }
   }
 
+  &.btn-warning {
+    background: var(--warning);
+    color: #ffffff;
+    border: 2px solid var(--warning);
+
+    &:hover {
+      background: #e67e3d;
+      border-color: #e67e3d;
+    }
+  }
+
   &.btn-save {
     background: var(--brand-primary);
     color: var(--brand-light);
