@@ -26,14 +26,12 @@
             class="btn btn-success"
             (click)="openCreateModal()"
           >
-            + Nuevo Usuario
+            <img src="ico/mas.png" alt="" class="btn-icon" />
+            Nuevo Usuario
           </button>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            (click)="onGoBack()"
-          >
-            ← Regresar
+          <button type="button" class="btn btn-ghost" (click)="onGoBack()">
+            <img src="ico/regresar.png" alt="" class="btn-icon" />
+            Regresar
           </button>
         </div>
       </section>
@@ -48,7 +46,7 @@
                 type="text"
                 id="searchName"
                 [(ngModel)]="searchFilters.search"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 placeholder="Buscar por nombre o email..."
                 class="input"
                 (keyup.enter)="onSearch()"
@@ -60,11 +58,14 @@
               <select
                 id="rolFilter"
                 [(ngModel)]="searchFilters.rolId"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 class="input select-input"
               >
                 <option value="">Todos los roles</option>
-                <option *ngFor="let option of roleOptions" [value]="option.value">
+                <option
+                  *ngFor="let option of roleOptions"
+                  [value]="option.value"
+                >
                   {{ option.label }}
                 </option>
               </select>
@@ -75,11 +76,14 @@
               <select
                 id="estadoFilter"
                 [(ngModel)]="searchFilters.activo"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 class="input select-input"
               >
                 <option [ngValue]="null">Todos los estados</option>
-                <option *ngFor="let option of estadoOptions" [ngValue]="option.value">
+                <option
+                  *ngFor="let option of estadoOptions"
+                  [ngValue]="option.value"
+                >
                   {{ option.label }}
                 </option>
               </select>
@@ -92,7 +96,12 @@
               class="btn btn-ghost"
               (click)="clearFilters()"
             >
-              ✕ Limpiar
+              <img
+                src="ico/cancelar-inverted.png"
+                alt=""
+                class="btn-icon-filter"
+              />
+              Limpiar
             </button>
             <button
               type="button"
@@ -101,7 +110,13 @@
               (click)="onSearch()"
             >
               <span *ngIf="isLoading" class="spinner"></span>
-              {{ isLoading ? "Buscando..." : "🔍 Buscar" }}
+              <img
+                *ngIf="!isLoading"
+                src="ico/buscar.png"
+                alt=""
+                class="btn-icon-filter"
+              />
+              {{ isLoading ? "Buscando..." : "Buscar" }}
             </button>
           </div>
         </form>
@@ -109,7 +124,10 @@
 
       <!-- Resultados -->
       <div class="results-section">
-        <div *ngIf="filteredUsuarios.length > 0; else emptyState" class="table-wrap">
+        <div
+          *ngIf="filteredUsuarios.length > 0; else emptyState"
+          class="table-wrap"
+        >
           <!-- Toolbar -->
           <div class="table-toolbar">
             <div class="toolbar-left">
@@ -133,13 +151,20 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let usuario of filteredUsuarios" [class.inactive-user]="!usuario.activo">
+                <tr
+                  *ngFor="let usuario of filteredUsuarios"
+                  [class.inactive-user]="!usuario.activo"
+                >
                   <td>
                     <div class="user-cell">
-                      <div class="user-avatar">{{ usuario.nombre.charAt(0).toUpperCase() }}</div>
+                      <div class="user-avatar">
+                        {{ usuario.nombre.charAt(0).toUpperCase() }}
+                      </div>
                       <div class="user-info">
                         <span class="user-name">{{ usuario.nombre }}</span>
-                        <span class="user-lastname" *ngIf="usuario.apellidos">{{ usuario.apellidos }}</span>
+                        <span class="user-lastname" *ngIf="usuario.apellidos">{{
+                          usuario.apellidos
+                        }}</span>
                       </div>
                     </div>
                   </td>
@@ -147,7 +172,9 @@
                   <td>
                     <span class="badge blue">{{ usuario.rol }}</span>
                   </td>
-                  <td>{{ usuario.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}</td>
+                  <td>
+                    {{ usuario.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}
+                  </td>
                   <td>
                     <span *ngIf="usuario.ultimoAcceso; else noAccess">
                       {{ usuario.ultimoAcceso | date : "dd/MM/yyyy HH:mm" }}
@@ -162,7 +189,7 @@
                       [class.green]="usuario.activo"
                       [class.red]="!usuario.activo"
                     >
-                      {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                      {{ usuario.activo ? "Activo" : "Inactivo" }}
                     </span>
                   </td>
                   <td>
@@ -172,7 +199,11 @@
                         title="Editar"
                         (click)="openEditModal(usuario)"
                       >
-                        ✏️
+                        <img
+                          src="ico/editar.png"
+                          alt="Editar"
+                          class="action-icon"
+                        />
                       </button>
                       <button
                         *ngIf="usuario.activo"
@@ -180,7 +211,11 @@
                         title="Desactivar"
                         (click)="confirmDelete(usuario)"
                       >
-                        🗑️
+                        <img
+                          src="ico/cancelar.png"
+                          alt="Desactivar"
+                          class="action-icon"
+                        />
                       </button>
                       <button
                         *ngIf="!usuario.activo"
@@ -188,7 +223,11 @@
                         title="Reactivar"
                         (click)="confirmReactivate(usuario)"
                       >
-                        ✔️
+                        <img
+                          src="ico/aprobar.png"
+                          alt="Reactivar"
+                          class="action-icon"
+                        />
                       </button>
                     </div>
                   </td>
@@ -199,24 +238,45 @@
 
           <!-- Paginación -->
           <div class="pagination">
-            <div class="pagination-info" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div
+              class="pagination-info"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                flex-wrap: wrap;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 0.5rem">
                 <span>Mostrar</span>
                 <select
                   id="pageSizeFilter"
                   [value]="pageSize"
                   (change)="onPageSizeChange($event)"
                   class="input select-input"
-                  style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.875rem;"
+                  style="
+                    width: auto;
+                    padding: 0.25rem 0.5rem;
+                    font-size: 0.875rem;
+                  "
                 >
-                  <option *ngFor="let option of pageSizeOptions" [value]="option.value">
+                  <option
+                    *ngFor="let option of pageSizeOptions"
+                    [value]="option.value"
+                  >
                     {{ option.label }}
                   </option>
                 </select>
                 <span>registros</span>
               </div>
               <span>
-                Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} de {{ totalCount }} registros
+                Mostrando {{ (currentPage - 1) * pageSize + 1 }} a
+                {{
+                  currentPage * pageSize > totalCount
+                    ? totalCount
+                    : currentPage * pageSize
+                }}
+                de {{ totalCount }} registros
               </span>
             </div>
             <div class="pagination-controls">
@@ -267,7 +327,9 @@
             <div class="empty-icon">👥</div>
             <div class="empty-text">
               <p class="empty-title">No se encontraron usuarios</p>
-              <p class="empty-subtitle">Intenta ajustar los filtros de búsqueda</p>
+              <p class="empty-subtitle">
+                Intenta ajustar los filtros de búsqueda
+              </p>
             </div>
           </div>
         </ng-template>
@@ -279,11 +341,19 @@
   <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2 class="modal-title">{{ selectedUsuario ? 'Editar Usuario' : 'Nuevo Usuario' }}</h2>
-        <button class="modal-close" (click)="closeModal()" type="button">✕</button>
+        <h2 class="modal-title">
+          {{ selectedUsuario ? "Editar Usuario" : "Nuevo Usuario" }}
+        </h2>
+        <button class="modal-close" (click)="closeModal()" type="button">
+          ✕
+        </button>
       </div>
 
-      <form [formGroup]="usuarioForm" (ngSubmit)="onSubmit()" class="modal-body">
+      <form
+        [formGroup]="usuarioForm"
+        (ngSubmit)="onSubmit()"
+        class="modal-body"
+      >
         <div class="form-grid">
           <div class="form-group">
             <label for="nombre" class="label">Nombre *</label>
@@ -293,9 +363,18 @@
               formControlName="nombre"
               placeholder="Nombre del usuario"
               class="input"
-              [class.input-error]="usuarioForm.get('nombre')?.invalid && usuarioForm.get('nombre')?.touched"
+              [class.input-error]="
+                usuarioForm.get('nombre')?.invalid &&
+                usuarioForm.get('nombre')?.touched
+              "
             />
-            <small class="field-error" *ngIf="usuarioForm.get('nombre')?.invalid && usuarioForm.get('nombre')?.touched">
+            <small
+              class="field-error"
+              *ngIf="
+                usuarioForm.get('nombre')?.invalid &&
+                usuarioForm.get('nombre')?.touched
+              "
+            >
               El nombre es requerido
             </small>
           </div>
@@ -319,11 +398,24 @@
               formControlName="email"
               placeholder="correo@ejemplo.com"
               class="input"
-              [class.input-error]="usuarioForm.get('email')?.invalid && usuarioForm.get('email')?.touched"
+              [class.input-error]="
+                usuarioForm.get('email')?.invalid &&
+                usuarioForm.get('email')?.touched
+              "
             />
-            <small class="field-error" *ngIf="usuarioForm.get('email')?.invalid && usuarioForm.get('email')?.touched">
-              <span *ngIf="usuarioForm.get('email')?.errors?.['required']">El email es requerido</span>
-              <span *ngIf="usuarioForm.get('email')?.errors?.['email']">Formato de email inválido</span>
+            <small
+              class="field-error"
+              *ngIf="
+                usuarioForm.get('email')?.invalid &&
+                usuarioForm.get('email')?.touched
+              "
+            >
+              <span *ngIf="usuarioForm.get('email')?.errors?.['required']"
+                >El email es requerido</span
+              >
+              <span *ngIf="usuarioForm.get('email')?.errors?.['email']"
+                >Formato de email inválido</span
+              >
             </small>
           </div>
 
@@ -333,12 +425,23 @@
               id="rol"
               formControlName="rolId"
               class="input select-input"
-              [class.input-error]="usuarioForm.get('rolId')?.invalid && usuarioForm.get('rolId')?.touched"
+              [class.input-error]="
+                usuarioForm.get('rolId')?.invalid &&
+                usuarioForm.get('rolId')?.touched
+              "
             >
               <option value="">Seleccionar rol</option>
-              <option *ngFor="let option of roleOptions" [value]="option.value">{{ option.label }}</option>
+              <option *ngFor="let option of roleOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
             </select>
-            <small class="field-error" *ngIf="usuarioForm.get('rolId')?.invalid && usuarioForm.get('rolId')?.touched">
+            <small
+              class="field-error"
+              *ngIf="
+                usuarioForm.get('rolId')?.invalid &&
+                usuarioForm.get('rolId')?.touched
+              "
+            >
               El rol es requerido
             </small>
           </div>
@@ -351,9 +454,18 @@
               formControlName="contrasena"
               placeholder="Contraseña del usuario"
               class="input"
-              [class.input-error]="usuarioForm.get('contrasena')?.invalid && usuarioForm.get('contrasena')?.touched"
+              [class.input-error]="
+                usuarioForm.get('contrasena')?.invalid &&
+                usuarioForm.get('contrasena')?.touched
+              "
             />
-            <small class="field-error" *ngIf="usuarioForm.get('contrasena')?.invalid && usuarioForm.get('contrasena')?.touched">
+            <small
+              class="field-error"
+              *ngIf="
+                usuarioForm.get('contrasena')?.invalid &&
+                usuarioForm.get('contrasena')?.touched
+              "
+            >
               La contraseña es requerida (mínimo 6 caracteres)
             </small>
           </div>
@@ -366,9 +478,18 @@
               formControlName="nuevaContrasena"
               placeholder="Dejar vacío para mantener la actual"
               class="input"
-              [class.input-error]="usuarioForm.get('nuevaContrasena')?.invalid && usuarioForm.get('nuevaContrasena')?.touched"
+              [class.input-error]="
+                usuarioForm.get('nuevaContrasena')?.invalid &&
+                usuarioForm.get('nuevaContrasena')?.touched
+              "
             />
-            <small class="field-error" *ngIf="usuarioForm.get('nuevaContrasena')?.invalid && usuarioForm.get('nuevaContrasena')?.touched">
+            <small
+              class="field-error"
+              *ngIf="
+                usuarioForm.get('nuevaContrasena')?.invalid &&
+                usuarioForm.get('nuevaContrasena')?.touched
+              "
+            >
               La contraseña debe tener al menos 6 caracteres
             </small>
           </div>
@@ -387,11 +508,7 @@
         </div>
 
         <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-ghost"
-            (click)="closeModal()"
-          >
+          <button type="button" class="btn btn-ghost" (click)="closeModal()">
             ✕ Cancelar
           </button>
           <button
@@ -400,7 +517,13 @@
             [disabled]="usuarioForm.invalid || isLoading"
           >
             <span *ngIf="isLoading" class="spinner"></span>
-            {{ isLoading ? 'Guardando...' : (selectedUsuario ? '✓ Actualizar' : '+ Crear') }}
+            {{
+              isLoading
+                ? "Guardando..."
+                : selectedUsuario
+                ? "✓ Actualizar"
+                : "+ Crear"
+            }}
           </button>
         </div>
       </form>
@@ -408,7 +531,11 @@
   </div>
 
   <!-- Modal de confirmación nativo -->
-  <div *ngIf="showConfirmModal" class="modal-overlay" (click)="closeConfirmModal()">
+  <div
+    *ngIf="showConfirmModal"
+    class="modal-overlay"
+    (click)="closeConfirmModal()"
+  >
     <div class="confirm-dialog" (click)="$event.stopPropagation()">
       <!-- Header -->
       <div class="confirm-dialog__header">
@@ -426,13 +553,22 @@
       <!-- Alert banner -->
       <div class="confirm-dialog__alert">
         <div class="confirm-dialog__alert-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </div>
-        <p class="confirm-dialog__alert-text">{{ confirmModalData?.message }}</p>
+        <p class="confirm-dialog__alert-text">
+          {{ confirmModalData?.message }}
+        </p>
       </div>
 
       <!-- Footer -->
