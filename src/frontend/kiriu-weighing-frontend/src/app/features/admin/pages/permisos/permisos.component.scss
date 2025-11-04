@@ -105,6 +105,13 @@
     gap: 10px;
     align-items: center;
     flex-shrink: 0;
+
+    .btn-icon {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      display: inline-block;
+    }
   }
 
   @media (max-width: 767px) {
@@ -217,6 +224,9 @@
   cursor: pointer !important;
   transition: transform var(--duration-1) var(--ease),
     box-shadow var(--duration-2) var(--ease) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 
   &:focus-visible {
     outline: none !important;
@@ -228,9 +238,17 @@
     border: 1px solid #e1e6f0 !important;
     color: #334155 !important;
 
+    .btn-icon {
+      filter: invert(1) brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(198deg) brightness(97%) contrast(97%);
+    }
+
     &:hover:not(:disabled) {
       background: #f3f7fb !important;
       transform: translateY(-1px) !important;
+
+      .btn-icon {
+        filter: brightness(0) invert(1);
+      }
     }
   }
 
@@ -238,6 +256,10 @@
     background: linear-gradient(135deg, var(--brand-500), var(--brand-600)) !important;
     color: #fff !important;
     box-shadow: var(--shadow-sm) !important;
+
+    .btn-icon {
+      filter: brightness(0) invert(1);
+    }
 
     &:hover:not(:disabled) {
       transform: translateY(-1px) !important;
@@ -281,10 +303,19 @@
     border-color var(--duration-2) var(--ease);
   font-size: var(--fs-md);
 
+  .action-icon {
+    filter: brightness(0) saturate(100%) invert(47%) sepia(9%) saturate(830%) hue-rotate(183deg) brightness(92%) contrast(86%);
+    transition: filter var(--duration-2) var(--ease);
+  }
+
   &:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
     border-color: #d6deeb;
+
+    .action-icon {
+      filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(198deg) brightness(97%) contrast(97%);
+    }
   }
 
   &.btn-danger {
@@ -341,6 +372,15 @@
     gap: 8px;
     justify-content: flex-end;
     margin-top: 10px;
+
+    .btn-icon-filter {
+      width: 16px !important;
+      height: 16px !important;
+      max-width: 16px !important;
+      max-height: 16px !important;
+      object-fit: contain !important;
+      display: inline-block !important;
+    }
 
     @media (max-width: 700px) {
       flex-direction: column;
@@ -519,6 +559,13 @@
     align-items: center;
     gap: 6px;
     justify-content: center;
+
+    .action-icon {
+      width: 16px;
+      height: 16px;
+      object-fit: contain;
+      display: block;
+    }
   }
 }
 

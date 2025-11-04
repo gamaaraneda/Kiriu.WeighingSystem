@@ -21,12 +21,9 @@
           <p>Administrar permisos y accesos del sistema</p>
         </div>
         <div class="hero-actions">
-          <button
-            type="button"
-            class="btn btn-ghost"
-            (click)="onGoBack()"
-          >
-            ← Regresar
+          <button type="button" class="btn btn-ghost" (click)="onGoBack()">
+            <img src="ico/regresar.png" alt="" class="btn-icon" />
+            Regresar
           </button>
         </div>
       </section>
@@ -41,7 +38,7 @@
                 type="text"
                 id="searchName"
                 [(ngModel)]="searchFilters.search"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 placeholder="Buscar por nombre..."
                 class="input"
                 (keyup.enter)="onSearch()"
@@ -53,11 +50,14 @@
               <select
                 id="estadoFilter"
                 [(ngModel)]="searchFilters.activo"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 class="input select-input"
               >
                 <option [ngValue]="null">Todos los estados</option>
-                <option *ngFor="let option of estadoOptions" [ngValue]="option.value">
+                <option
+                  *ngFor="let option of estadoOptions"
+                  [ngValue]="option.value"
+                >
                   {{ option.label }}
                 </option>
               </select>
@@ -70,7 +70,12 @@
               class="btn btn-ghost"
               (click)="clearFilters()"
             >
-              ✕ Limpiar
+              <img
+                src="ico/cancelar-inverted.png"
+                alt=""
+                class="btn-icon-filter"
+              />
+              Limpiar
             </button>
             <button
               type="button"
@@ -79,7 +84,13 @@
               (click)="onSearch()"
             >
               <span *ngIf="isLoading" class="spinner"></span>
-              {{ isLoading ? "Buscando..." : "🔍 Buscar" }}
+              <img
+                *ngIf="!isLoading"
+                src="ico/buscar.png"
+                alt=""
+                class="btn-icon-filter"
+              />
+              {{ isLoading ? "Buscando..." : "Buscar" }}
             </button>
           </div>
         </form>
@@ -87,7 +98,10 @@
 
       <!-- Resultados -->
       <div class="results-section">
-        <div *ngIf="filteredPermisos.length > 0; else emptyState" class="table-wrap">
+        <div
+          *ngIf="filteredPermisos.length > 0; else emptyState"
+          class="table-wrap"
+        >
           <!-- Toolbar -->
           <div class="table-toolbar">
             <div class="toolbar-left">
@@ -106,7 +120,7 @@
                   <th>Tipo</th>
                   <th>Fecha Creación</th>
                   <th>Estado</th>
-                  <th style="text-align: center;">Acciones</th>
+                  <th style="text-align: center">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,7 +134,9 @@
                         {{ getIconEmojiForPermissionType(permiso.tipo) }}
                       </div>
                       <div class="permission-info">
-                        <span class="permission-name">{{ permiso.nombre }}</span>
+                        <span class="permission-name">{{
+                          permiso.nombre
+                        }}</span>
                       </div>
                     </div>
                   </td>
@@ -141,12 +157,19 @@
                       class="badge"
                       [class]="'badge-type-' + permiso.tipo.toLowerCase()"
                     >
-                      {{ getIconEmojiForPermissionType(permiso.tipo) }} {{ getPermissionTypeLabel(permiso.tipo) }}
+                      {{ getIconEmojiForPermissionType(permiso.tipo) }}
+                      {{ getPermissionTypeLabel(permiso.tipo) }}
                     </span>
                   </td>
-                  <td>{{ permiso.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}</td>
                   <td>
-                    <span class="badge badge-estado" [class.green]="permiso.activo" [class.red]="!permiso.activo">
+                    {{ permiso.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}
+                  </td>
+                  <td>
+                    <span
+                      class="badge badge-estado"
+                      [class.green]="permiso.activo"
+                      [class.red]="!permiso.activo"
+                    >
                       {{ permiso.activo ? "Activo" : "Inactivo" }}
                     </span>
                   </td>
@@ -158,7 +181,7 @@
                         (click)="viewPermissionUsage(permiso)"
                         title="Ver uso del permiso"
                       >
-                        👁️
+                        <img src="ico/vista.png" alt="Ver" class="action-icon" />
                       </button>
                     </div>
                   </td>
@@ -169,24 +192,45 @@
 
           <!-- Paginación -->
           <div class="pagination">
-            <div class="pagination-info" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div
+              class="pagination-info"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                flex-wrap: wrap;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 0.5rem">
                 <span>Mostrar</span>
                 <select
                   id="pageSizeFilter"
                   [value]="pageSize"
                   (change)="onPageSizeChange($event)"
                   class="input select-input"
-                  style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.875rem;"
+                  style="
+                    width: auto;
+                    padding: 0.25rem 0.5rem;
+                    font-size: 0.875rem;
+                  "
                 >
-                  <option *ngFor="let option of pageSizeOptions" [value]="option.value">
+                  <option
+                    *ngFor="let option of pageSizeOptions"
+                    [value]="option.value"
+                  >
                     {{ option.label }}
                   </option>
                 </select>
                 <span>registros</span>
               </div>
               <span>
-                Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} de {{ totalCount }} registros
+                Mostrando {{ (currentPage - 1) * pageSize + 1 }} a
+                {{
+                  currentPage * pageSize > totalCount
+                    ? totalCount
+                    : currentPage * pageSize
+                }}
+                de {{ totalCount }} registros
               </span>
             </div>
             <div class="pagination-controls">
@@ -249,10 +293,18 @@
   <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2 class="modal-title">{{ selectedPermiso ? 'Editar Permiso' : 'Nuevo Permiso' }}</h2>
-        <button type="button" class="modal-close" (click)="closeModal()">✕</button>
+        <h2 class="modal-title">
+          {{ selectedPermiso ? "Editar Permiso" : "Nuevo Permiso" }}
+        </h2>
+        <button type="button" class="modal-close" (click)="closeModal()">
+          ✕
+        </button>
       </div>
-      <form [formGroup]="permisoForm" (ngSubmit)="onSubmit()" class="modal-body">
+      <form
+        [formGroup]="permisoForm"
+        (ngSubmit)="onSubmit()"
+        class="modal-body"
+      >
         <div class="form-grid">
           <div class="form-group">
             <label for="nombre" class="label">Nombre del Permiso *</label>
@@ -262,11 +314,17 @@
               formControlName="nombre"
               placeholder="Ej: USUARIOS.CREATE, REPORTES.READ"
               class="input"
-              [class.input-error]="permisoForm.get('nombre')?.invalid && permisoForm.get('nombre')?.touched"
+              [class.input-error]="
+                permisoForm.get('nombre')?.invalid &&
+                permisoForm.get('nombre')?.touched
+              "
             />
             <small
               class="field-error"
-              *ngIf="permisoForm.get('nombre')?.invalid && permisoForm.get('nombre')?.touched"
+              *ngIf="
+                permisoForm.get('nombre')?.invalid &&
+                permisoForm.get('nombre')?.touched
+              "
             >
               El nombre del permiso es requerido
             </small>
@@ -278,7 +336,10 @@
               id="tipo"
               formControlName="tipo"
               class="input select-input"
-              [class.input-error]="permisoForm.get('tipo')?.invalid && permisoForm.get('tipo')?.touched"
+              [class.input-error]="
+                permisoForm.get('tipo')?.invalid &&
+                permisoForm.get('tipo')?.touched
+              "
             >
               <option value="">Seleccionar tipo...</option>
               <option *ngFor="let option of tipoOptions" [value]="option.value">
@@ -287,13 +348,16 @@
             </select>
             <small
               class="field-error"
-              *ngIf="permisoForm.get('tipo')?.invalid && permisoForm.get('tipo')?.touched"
+              *ngIf="
+                permisoForm.get('tipo')?.invalid &&
+                permisoForm.get('tipo')?.touched
+              "
             >
               El tipo es requerido
             </small>
           </div>
 
-          <div class="form-group" style="grid-column: 1 / -1;">
+          <div class="form-group" style="grid-column: 1 / -1">
             <label for="descripcion" class="label">Descripción</label>
             <textarea
               id="descripcion"
@@ -301,7 +365,7 @@
               placeholder="Descripción detallada del permiso y su uso"
               rows="3"
               class="input"
-              style="resize: vertical; line-height: 1.5; padding: 8px 12px;"
+              style="resize: vertical; line-height: 1.5; padding: 8px 12px"
             ></textarea>
           </div>
 
@@ -322,11 +386,7 @@
         </div>
       </form>
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          (click)="closeModal()"
-        >
+        <button type="button" class="btn btn-ghost" (click)="closeModal()">
           Cancelar
         </button>
         <button
@@ -336,7 +396,13 @@
           (click)="onSubmit()"
         >
           <span *ngIf="isLoading" class="spinner"></span>
-          {{ isLoading ? "Guardando..." : (selectedPermiso ? "Actualizar" : "Crear") }}
+          {{
+            isLoading
+              ? "Guardando..."
+              : selectedPermiso
+              ? "Actualizar"
+              : "Crear"
+          }}
         </button>
       </div>
     </div>
@@ -344,23 +410,36 @@
 
   <!-- Modal para ver uso del permiso -->
   <div class="modal-overlay" *ngIf="showUsageModal" (click)="closeUsageModal()">
-    <div class="modal-content modal-content-lg" (click)="$event.stopPropagation()">
+    <div
+      class="modal-content modal-content-lg"
+      (click)="$event.stopPropagation()"
+    >
       <div class="modal-header">
         <h2 class="modal-title">Uso del Permiso</h2>
-        <button type="button" class="modal-close" (click)="closeUsageModal()">✕</button>
+        <button type="button" class="modal-close" (click)="closeUsageModal()">
+          ✕
+        </button>
       </div>
       <div class="modal-body" *ngIf="rolesUsingPermission">
         <div class="permission-info-header">
-          <div class="permission-icon-large" [class]="'icon-' + (selectedPermiso?.tipo || '').toLowerCase()">
-            {{ getIconEmojiForPermissionType(selectedPermiso?.tipo || '') }}
+          <div
+            class="permission-icon-large"
+            [class]="'icon-' + (selectedPermiso?.tipo || '').toLowerCase()"
+          >
+            {{ getIconEmojiForPermissionType(selectedPermiso?.tipo || "") }}
           </div>
           <div class="permission-details">
             <h3>{{ selectedPermiso?.nombre }}</h3>
             <p class="permission-description-large">
               {{ selectedPermiso?.descripcion || "Sin descripción" }}
             </p>
-            <span class="badge" [class]="'badge-type-' + (selectedPermiso?.tipo || '').toLowerCase()">
-              {{ getPermissionTypeLabel(selectedPermiso?.tipo || '') }}
+            <span
+              class="badge"
+              [class]="
+                'badge-type-' + (selectedPermiso?.tipo || '').toLowerCase()
+              "
+            >
+              {{ getPermissionTypeLabel(selectedPermiso?.tipo || "") }}
             </span>
           </div>
         </div>
@@ -373,21 +452,19 @@
             Roles que tienen este permiso ({{ rolesUsingPermission.length }})
           </h4>
           <div class="roles-grid">
-            <div
-              *ngFor="let rol of rolesUsingPermission"
-              class="role-card"
-            >
+            <div *ngFor="let rol of rolesUsingPermission" class="role-card">
               <div class="role-header">
                 <span class="role-icon">🛡️</span>
                 <span class="role-name">{{ rol.nombre }}</span>
-                <span class="badge" [class.green]="rol.activo" [class.red]="!rol.activo">
+                <span
+                  class="badge"
+                  [class.green]="rol.activo"
+                  [class.red]="!rol.activo"
+                >
                   {{ rol.activo ? "Activo" : "Inactivo" }}
                 </span>
               </div>
-              <p
-                class="role-description"
-                *ngIf="rol.descripcion"
-              >
+              <p class="role-description" *ngIf="rol.descripcion">
                 {{ rol.descripcion }}
               </p>
               <small class="role-code">
@@ -406,11 +483,7 @@
         </ng-template>
       </div>
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          (click)="closeUsageModal()"
-        >
+        <button type="button" class="btn btn-ghost" (click)="closeUsageModal()">
           Cerrar
         </button>
       </div>
@@ -418,7 +491,11 @@
   </div>
 
   <!-- Modal de confirmación nativo -->
-  <div *ngIf="showConfirmModal" class="modal-overlay" (click)="closeConfirmModal()">
+  <div
+    *ngIf="showConfirmModal"
+    class="modal-overlay"
+    (click)="closeConfirmModal()"
+  >
     <div class="confirm-dialog" (click)="$event.stopPropagation()">
       <!-- Header -->
       <div class="confirm-dialog__header">
@@ -436,13 +513,22 @@
       <!-- Alert banner -->
       <div class="confirm-dialog__alert">
         <div class="confirm-dialog__alert-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </div>
-        <p class="confirm-dialog__alert-text">{{ confirmModalData?.message }}</p>
+        <p class="confirm-dialog__alert-text">
+          {{ confirmModalData?.message }}
+        </p>
       </div>
 
       <!-- Footer -->
