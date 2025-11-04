@@ -48,6 +48,9 @@
                       (focus)="onEntrySearchFocus()"
                       (blur)="onEntrySearchBlur()"
                       autocomplete="off"
+                      maxlength="50"
+                      pattern="[a-zA-Z0-9-]*"
+                      (input)="onSearchInput($event)"
                     />
                     <button
                       type="button"

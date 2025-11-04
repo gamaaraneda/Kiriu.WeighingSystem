@@ -888,6 +888,29 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Filtrar caracteres no permitidos en tiempo real para el campo de búsqueda
+   * Solo permite letras, números y guion medio (-)
+   * Limita a 50 caracteres
+   */
+  onSearchInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras, números y guion medio
+    const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
+    // Limitar a 50 caracteres
+    const truncatedValue = filteredValue.substring(0, 50);
+
+    if (value !== truncatedValue) {
+      // Si hubo cambios, actualizar el valor del input y del formulario
+      input.value = truncatedValue;
+      this.exitForm.patchValue(
+        { trailerPlate: truncatedValue },
+        { emitEvent: false }
+      );
+    }
+  }
+
+  /**
    * Obtiene el error de un campo del formulario
    */
   getFieldError(fieldName: string): string {
