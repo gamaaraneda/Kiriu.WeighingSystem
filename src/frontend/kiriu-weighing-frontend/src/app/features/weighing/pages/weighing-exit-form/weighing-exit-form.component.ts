@@ -911,6 +911,27 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Filtrar caracteres no permitidos en tiempo real para inputs de registro de placas
+   * Solo permite letras, números y guion medio (-)
+   * Limita a 12 caracteres
+   */
+  onPlateRegistrationInput(event: Event, fieldName: string): void {
+    const input = event.target as HTMLInputElement;
+    let value = input.value;
+
+    // Solo permitir letras, números y guion medio
+    value = value.replace(/[^a-zA-Z0-9-]/g, '');
+
+    // Limitar a 12 caracteres
+    if (value.length > 12) {
+      value = value.substring(0, 12);
+    }
+
+    // Actualizar el valor del input
+    input.value = value;
+  }
+
+  /**
    * Obtiene el error de un campo del formulario
    */
   getFieldError(fieldName: string): string {

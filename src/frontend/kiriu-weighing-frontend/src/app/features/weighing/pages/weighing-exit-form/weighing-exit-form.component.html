@@ -263,6 +263,9 @@
                     placeholder="Placa del tráiler"
                     [readonly]="!manualEditEnabled['trailerPlate']"
                     (blur)="onPlateManualEdit('trailerPlate')"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateRegistrationInput($event, 'trailerPlate')"
                   />
                 </div>
 
@@ -376,6 +379,9 @@
                     placeholder="Placa del remolque 1"
                     [readonly]="!manualEditEnabled['remolque1Plate']"
                     (blur)="onPlateManualEdit('remolque1Plate')"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateRegistrationInput($event, 'remolque1Plate')"
                   />
                 </div>
 
@@ -640,6 +646,9 @@
                     placeholder="Placa del remolque 2"
                     [readonly]="!manualEditEnabled['remolque2Plate']"
                     (blur)="onPlateManualEdit('remolque2Plate')"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateRegistrationInput($event, 'remolque2Plate')"
                   />
                 </div>
 
@@ -998,6 +1007,9 @@
                     placeholder="Placa del tráiler"
                     [readonly]="!manualEditEnabled['trailerPlate']"
                     (blur)="onPlateManualEdit('trailerPlate')"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateRegistrationInput($event, 'trailerPlate')"
                   />
                 </div>
 
@@ -1102,6 +1114,9 @@
                     placeholder="Placa del remolque (si aplica)"
                     [readonly]="!manualEditEnabled['trailerPlate2']"
                     (blur)="onPlateManualEdit('trailerPlate2')"
+                    maxlength="12"
+                    pattern="[a-zA-Z0-9-]*"
+                    (input)="onPlateRegistrationInput($event, 'trailerPlate2')"
                   />
                 </div>
 
