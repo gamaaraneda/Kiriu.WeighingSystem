@@ -81,6 +81,8 @@
                 formControlName="folio"
                 placeholder="F001"
                 class="input"
+                maxlength="50"
+                (input)="onFolioInput($event)"
               />
             </div>
             <div>
@@ -91,6 +93,8 @@
                 formControlName="placas"
                 placeholder="ABC-123"
                 class="input"
+                maxlength="12"
+                (input)="onPlacasInput($event)"
               />
             </div>
             <div>

@@ -471,6 +471,28 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     return labels[estado] || estado;
   }
 
+  onPlacasInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras, números y guion medio, máximo 12 caracteres
+    const sanitized = value.replace(/[^A-Za-z0-9\-]/g, '').slice(0, 12);
+    if (value !== sanitized) {
+      input.value = sanitized;
+      this.filtersForm.patchValue({ placas: sanitized }, { emitEvent: false });
+    }
+  }
+
+  onFolioInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras, números y guion medio, máximo 50 caracteres
+    const sanitized = value.replace(/[^A-Za-z0-9\-]/g, '').slice(0, 50);
+    if (value !== sanitized) {
+      input.value = sanitized;
+      this.filtersForm.patchValue({ folio: sanitized }, { emitEvent: false });
+    }
+  }
+
   getTaraWeight(pesoBruto?: number, pesoNeto?: number): number | null {
     if (pesoBruto && pesoNeto) {
       return pesoBruto - pesoNeto;
