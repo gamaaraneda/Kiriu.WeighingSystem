@@ -26,14 +26,12 @@
             class="btn btn-success"
             (click)="openCreateModal()"
           >
-            + Nuevo Rol
+            <img src="ico/mas.png" alt="" class="btn-icon" />
+            Nuevo Rol
           </button>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            (click)="onGoBack()"
-          >
-            ← Regresar
+          <button type="button" class="btn btn-ghost" (click)="onGoBack()">
+            <img src="ico/regresar.png" alt="" class="btn-icon" />
+            Regresar
           </button>
         </div>
       </section>
@@ -48,7 +46,7 @@
                 type="text"
                 id="searchName"
                 [(ngModel)]="searchFilters.search"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 placeholder="Buscar por nombre..."
                 class="input"
                 (keyup.enter)="searchRoles()"
@@ -60,11 +58,14 @@
               <select
                 id="estadoFilter"
                 [(ngModel)]="searchFilters.activo"
-                [ngModelOptions]="{standalone: true}"
+                [ngModelOptions]="{ standalone: true }"
                 class="input select-input"
               >
                 <option [ngValue]="undefined">Todos los estados</option>
-                <option *ngFor="let option of estadoOptions" [ngValue]="option.value">
+                <option
+                  *ngFor="let option of estadoOptions"
+                  [ngValue]="option.value"
+                >
                   {{ option.label }}
                 </option>
               </select>
@@ -77,7 +78,12 @@
               class="btn btn-ghost"
               (click)="clearFilters()"
             >
-              ✕ Limpiar
+              <img
+                src="ico/cancelar-inverted.png"
+                alt=""
+                class="btn-icon-filter"
+              />
+              Limpiar
             </button>
             <button
               type="button"
@@ -86,7 +92,13 @@
               (click)="searchRoles()"
             >
               <span *ngIf="isSearching" class="spinner"></span>
-              {{ isSearching ? "Buscando..." : "🔍 Buscar" }}
+              <img
+                *ngIf="!isSearching"
+                src="ico/buscar.png"
+                alt=""
+                class="btn-icon-filter"
+              />
+              {{ isSearching ? "Buscando..." : "Buscar" }}
             </button>
           </div>
         </form>
@@ -94,7 +106,10 @@
 
       <!-- Resultados -->
       <div class="results-section">
-        <div *ngIf="filteredRoles.length > 0; else emptyState" class="table-wrap">
+        <div
+          *ngIf="filteredRoles.length > 0; else emptyState"
+          class="table-wrap"
+        >
           <!-- Toolbar -->
           <div class="table-toolbar">
             <div class="toolbar-left">
@@ -113,11 +128,14 @@
                   <th>Usuarios</th>
                   <th>Fecha Creación</th>
                   <th>Estado</th>
-                  <th style="text-align: center;">Acciones</th>
+                  <th style="text-align: center">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let rol of filteredRoles" [class.inactive-role]="!rol.activo">
+                <tr
+                  *ngFor="let rol of filteredRoles"
+                  [class.inactive-role]="!rol.activo"
+                >
                   <td>
                     <div class="role-cell">
                       <div class="role-icon">🛡️</div>
@@ -132,13 +150,21 @@
                     </span>
                   </td>
                   <td>
-                    <span class="badge" [class.blue]="rol.usuariosAsignados > 0" [class.gray]="rol.usuariosAsignados === 0">
+                    <span
+                      class="badge"
+                      [class.blue]="rol.usuariosAsignados > 0"
+                      [class.gray]="rol.usuariosAsignados === 0"
+                    >
                       👥 {{ rol.usuariosAsignados }}
                     </span>
                   </td>
                   <td>{{ rol.fechaCreacion | date : "dd/MM/yyyy HH:mm" }}</td>
                   <td>
-                    <span class="badge badge-estado" [class.green]="rol.activo" [class.red]="!rol.activo">
+                    <span
+                      class="badge badge-estado"
+                      [class.green]="rol.activo"
+                      [class.red]="!rol.activo"
+                    >
                       {{ rol.activo ? "Activo" : "Inactivo" }}
                     </span>
                   </td>
@@ -150,7 +176,11 @@
                         (click)="viewRolePermissions(rol)"
                         title="Ver permisos"
                       >
-                        👁️
+                        <img
+                          src="ico/vista.png"
+                          alt="Ver"
+                          class="action-icon"
+                        />
                       </button>
                       <button
                         type="button"
@@ -158,7 +188,11 @@
                         (click)="openEditModal(rol)"
                         title="Editar rol"
                       >
-                        ✏️
+                        <img
+                          src="ico/editar.png"
+                          alt="Editar"
+                          class="action-icon"
+                        />
                       </button>
                       <button
                         type="button"
@@ -166,9 +200,17 @@
                         *ngIf="rol.activo"
                         [disabled]="rol.usuariosAsignados > 0"
                         (click)="confirmDeactivate(rol)"
-                        [title]="rol.usuariosAsignados > 0 ? 'No se puede desactivar: tiene usuarios asignados' : 'Desactivar rol'"
+                        [title]="
+                          rol.usuariosAsignados > 0
+                            ? 'No se puede desactivar: tiene usuarios asignados'
+                            : 'Desactivar rol'
+                        "
                       >
-                        🗑️
+                        <img
+                          src="ico/cancelar.png"
+                          alt="Desactivar"
+                          class="action-icon"
+                        />
                       </button>
                       <button
                         type="button"
@@ -177,7 +219,11 @@
                         (click)="confirmReactivate(rol)"
                         title="Reactivar rol"
                       >
-                        ✔️
+                        <img
+                          src="ico/aprobar.png"
+                          alt="Reactivar"
+                          class="action-icon"
+                        />
                       </button>
                     </div>
                   </td>
@@ -188,24 +234,45 @@
 
           <!-- Paginación -->
           <div class="pagination">
-            <div class="pagination-info" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div
+              class="pagination-info"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                flex-wrap: wrap;
+              "
+            >
+              <div style="display: flex; align-items: center; gap: 0.5rem">
                 <span>Mostrar</span>
                 <select
                   id="pageSizeFilter"
                   [value]="pageSize"
                   (change)="onPageSizeChange($event)"
                   class="input select-input"
-                  style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.875rem;"
+                  style="
+                    width: auto;
+                    padding: 0.25rem 0.5rem;
+                    font-size: 0.875rem;
+                  "
                 >
-                  <option *ngFor="let option of pageSizeOptions" [value]="option.value">
+                  <option
+                    *ngFor="let option of pageSizeOptions"
+                    [value]="option.value"
+                  >
                     {{ option.label }}
                   </option>
                 </select>
                 <span>registros</span>
               </div>
               <span>
-                Mostrando {{ (currentPage - 1) * pageSize + 1 }} a {{ currentPage * pageSize > totalCount ? totalCount : currentPage * pageSize }} de {{ totalCount }} registros
+                Mostrando {{ (currentPage - 1) * pageSize + 1 }} a
+                {{
+                  currentPage * pageSize > totalCount
+                    ? totalCount
+                    : currentPage * pageSize
+                }}
+                de {{ totalCount }} registros
               </span>
             </div>
             <div class="pagination-controls">
@@ -268,8 +335,12 @@
   <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2 class="modal-title">{{ selectedRole ? 'Editar Rol' : 'Nuevo Rol' }}</h2>
-        <button type="button" class="modal-close" (click)="closeModal()">✕</button>
+        <h2 class="modal-title">
+          {{ selectedRole ? "Editar Rol" : "Nuevo Rol" }}
+        </h2>
+        <button type="button" class="modal-close" (click)="closeModal()">
+          ✕
+        </button>
       </div>
       <form [formGroup]="rolForm" (ngSubmit)="onSubmit()" class="modal-body">
         <div class="form-grid">
@@ -281,17 +352,21 @@
               formControlName="nombre"
               placeholder="Ej: Administrador, Operador, Supervisor"
               class="input"
-              [class.input-error]="rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched"
+              [class.input-error]="
+                rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched
+              "
             />
             <small
               class="field-error"
-              *ngIf="rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched"
+              *ngIf="
+                rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched
+              "
             >
               El nombre del rol es requerido
             </small>
           </div>
 
-          <div class="form-group" style="grid-column: 1 / -1;">
+          <div class="form-group" style="grid-column: 1 / -1">
             <label for="descripcion" class="label">Descripción</label>
             <textarea
               id="descripcion"
@@ -299,7 +374,7 @@
               placeholder="Descripción detallada del rol y sus responsabilidades"
               rows="3"
               class="input"
-              style="resize: vertical; line-height: 1.5; padding: 8px 12px;"
+              style="resize: vertical; line-height: 1.5; padding: 8px 12px"
             ></textarea>
           </div>
 
@@ -321,12 +396,15 @@
           <!-- Sección de permisos por módulo -->
           <div
             class="form-group"
-            style="grid-column: 1 / -1;"
+            style="grid-column: 1 / -1"
             *ngIf="availableModuloPermisos.length > 0"
           >
             <label class="label">
               <span class="permissions-header-title">🔐 Permisos del Rol</span>
-              <small class="permissions-help">Seleccione los permisos organizados por módulo que tendrá este rol</small>
+              <small class="permissions-help"
+                >Seleccione los permisos organizados por módulo que tendrá este
+                rol</small
+              >
             </label>
 
             <div class="permissions-selector">
@@ -335,8 +413,12 @@
                 <div
                   *ngFor="let moduloNombre of moduleNames"
                   class="permission-group-card"
-                  [class.permission-group-card--selected]="isModuleFullySelected(moduloNombre)"
-                  [class.permission-group-card--partial]="isModulePartiallySelected(moduloNombre)"
+                  [class.permission-group-card--selected]="
+                    isModuleFullySelected(moduloNombre)
+                  "
+                  [class.permission-group-card--partial]="
+                    isModulePartiallySelected(moduloNombre)
+                  "
                 >
                   <!-- Module Header -->
                   <div class="permission-group-header">
@@ -345,19 +427,31 @@
                         type="checkbox"
                         class="permission-group-checkbox"
                         [checked]="isModuleFullySelected(moduloNombre)"
-                        [indeterminate]="isModulePartiallySelected(moduloNombre)"
+                        [indeterminate]="
+                          isModulePartiallySelected(moduloNombre)
+                        "
                         (change)="selectAllInModule(moduloNombre, $event)"
                       />
-                      <span class="permission-group-icon">{{ getModuleIcon(moduloNombre) }}</span>
-                      <span class="permission-group-name">{{ moduloNombre }}</span>
-                      <span class="permission-group-count">({{ groupedModuloPermisos[moduloNombre].length }})</span>
+                      <span class="permission-group-icon">{{
+                        getModuleIcon(moduloNombre)
+                      }}</span>
+                      <span class="permission-group-name">{{
+                        moduloNombre
+                      }}</span>
+                      <span class="permission-group-count"
+                        >({{
+                          groupedModuloPermisos[moduloNombre].length
+                        }})</span
+                      >
                     </label>
                   </div>
 
                   <!-- ModuloPermisos in this module -->
                   <div class="permission-items">
                     <div
-                      *ngFor="let moduloPermiso of groupedModuloPermisos[moduloNombre]"
+                      *ngFor="
+                        let moduloPermiso of groupedModuloPermisos[moduloNombre]
+                      "
                       class="permission-item"
                     >
                       <label class="permission-checkbox-label">
@@ -366,15 +460,22 @@
                           [id]="'mp-' + moduloPermiso.id"
                           [value]="moduloPermiso.id"
                           class="permission-checkbox-input"
-                          (change)="onModuloPermisoChange($event, moduloPermiso.id)"
+                          (change)="
+                            onModuloPermisoChange($event, moduloPermiso.id)
+                          "
                           [checked]="isModuloPermisoSelected(moduloPermiso.id)"
                         />
                         <div class="permission-info">
                           <span class="permission-name">
-                            <span class="permission-icon">{{ getPermissionTypeIcon(moduloPermiso.permiso.tipo) }}</span>
+                            <span class="permission-icon">{{
+                              getPermissionTypeIcon(moduloPermiso.permiso.tipo)
+                            }}</span>
                             {{ moduloPermiso.codigo }}
                           </span>
-                          <span class="permission-description" *ngIf="moduloPermiso.descripcion">
+                          <span
+                            class="permission-description"
+                            *ngIf="moduloPermiso.descripcion"
+                          >
                             {{ moduloPermiso.descripcion }}
                           </span>
                         </div>
@@ -385,10 +486,14 @@
               </div>
 
               <!-- Quick stats -->
-              <div class="permissions-stats" *ngIf="rolForm.get('permisosIds')?.value?.length > 0">
+              <div
+                class="permissions-stats"
+                *ngIf="rolForm.get('permisosIds')?.value?.length > 0"
+              >
                 <div class="stats-icon">✓</div>
                 <span class="stats-text">
-                  {{ rolForm.get('permisosIds')?.value?.length }} permiso(s) seleccionado(s) de {{ availableModuloPermisos.length }}
+                  {{ rolForm.get("permisosIds")?.value?.length }} permiso(s)
+                  seleccionado(s) de {{ availableModuloPermisos.length }}
                 </span>
               </div>
             </div>
@@ -396,11 +501,7 @@
         </div>
       </form>
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          (click)="closeModal()"
-        >
+        <button type="button" class="btn btn-ghost" (click)="closeModal()">
           Cancelar
         </button>
         <button
@@ -410,18 +511,33 @@
           (click)="onSubmit()"
         >
           <span *ngIf="isLoading" class="spinner"></span>
-          {{ isLoading ? "Guardando..." : (selectedRole ? "Actualizar" : "Crear") }}
+          {{
+            isLoading ? "Guardando..." : selectedRole ? "Actualizar" : "Crear"
+          }}
         </button>
       </div>
     </div>
   </div>
 
   <!-- Modal para ver permisos del rol -->
-  <div class="modal-overlay" *ngIf="showPermissionsModal" (click)="closePermissionsModal()">
-    <div class="modal-content modal-content-lg" (click)="$event.stopPropagation()">
+  <div
+    class="modal-overlay"
+    *ngIf="showPermissionsModal"
+    (click)="closePermissionsModal()"
+  >
+    <div
+      class="modal-content modal-content-lg"
+      (click)="$event.stopPropagation()"
+    >
       <div class="modal-header">
         <h2 class="modal-title">Permisos del Rol</h2>
-        <button type="button" class="modal-close" (click)="closePermissionsModal()">✕</button>
+        <button
+          type="button"
+          class="modal-close"
+          (click)="closePermissionsModal()"
+        >
+          ✕
+        </button>
       </div>
       <div class="modal-body" *ngIf="selectedRolePermissions">
         <div class="role-info-header">
@@ -445,7 +561,9 @@
             >
               <div class="permission-header">
                 <span class="permission-icon">🔑</span>
-                <span class="permission-name">{{ permiso.permiso.nombre }}</span>
+                <span class="permission-name">{{
+                  permiso.permiso.nombre
+                }}</span>
                 <span class="badge blue">{{ permiso.permiso.tipo }}</span>
               </div>
               <p
@@ -470,7 +588,7 @@
               type="button"
               class="btn btn-primary"
               (click)="goToAssignPermissions()"
-              style="margin-top: 16px;"
+              style="margin-top: 16px"
             >
               + Asignar Permisos
             </button>
@@ -497,7 +615,11 @@
   </div>
 
   <!-- Modal de confirmación nativo -->
-  <div *ngIf="showConfirmModal" class="modal-overlay" (click)="closeConfirmModal()">
+  <div
+    *ngIf="showConfirmModal"
+    class="modal-overlay"
+    (click)="closeConfirmModal()"
+  >
     <div class="confirm-dialog" (click)="$event.stopPropagation()">
       <!-- Header -->
       <div class="confirm-dialog__header">
@@ -515,13 +637,22 @@
       <!-- Alert banner -->
       <div class="confirm-dialog__alert">
         <div class="confirm-dialog__alert-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </div>
-        <p class="confirm-dialog__alert-text">{{ confirmModalData?.message }}</p>
+        <p class="confirm-dialog__alert-text">
+          {{ confirmModalData?.message }}
+        </p>
       </div>
 
       <!-- Footer -->
