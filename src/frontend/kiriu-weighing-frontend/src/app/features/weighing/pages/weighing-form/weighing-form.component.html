@@ -205,11 +205,11 @@
                   class="btn btn-primary capture-all-photos-btn"
                   [disabled]="isCapturingAllPhotos || isLoading"
                   (click)="onCaptureAllPhotos()"
-                  title="Captura fotos del remolque 1 (tráiler + remolque1 + carga1)"
+                  title="Captura peso y fotos del remolque 1 (tráiler + remolque1 + carga1)"
                   style="width: 100%; margin-bottom: 16px"
                 >
-                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
-                  <span *ngIf="isCapturingAllPhotos"> Capturar Fotos </span>
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Datos</span>
+                  <span *ngIf="isCapturingAllPhotos">Capturando...</span>
                 </button>
 
                 <div class="inverted-order-section">
@@ -584,11 +584,11 @@
                     !canProceedToRemolque2()
                   "
                   (click)="onCaptureRemolque2Photos()"
-                  title="Captura fotos del remolque 2 (remolque2 + carga2)"
+                  title="Captura peso y fotos del remolque 2 (remolque2 + carga2)"
                   style="width: 100%; margin-bottom: 16px"
                 >
-                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
-                  <span *ngIf="isCapturingAllPhotos"> Capturar Fotos </span>
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Datos</span>
+                  <span *ngIf="isCapturingAllPhotos">Capturando...</span>
                 </button>
               </div>
 
@@ -861,11 +861,11 @@
                   class="btn btn-primary capture-all-photos-btn"
                   [disabled]="isCapturingAllPhotos || isLoading"
                   (click)="onCaptureAllPhotos()"
-                  title="Captura fotos para detectar automáticamente las placas del tráiler y remolque."
+                  title="Captura peso y fotos para detectar automáticamente las placas del tráiler y remolque."
                   style="width: 100%; margin-bottom: 16px"
                 >
-                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
-                  <span *ngIf="isCapturingAllPhotos"> Capturar Fotos </span>
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Datos</span>
+                  <span *ngIf="isCapturingAllPhotos">Capturando...</span>
                 </button>
 
                 <div class="inverted-order-section">
@@ -1289,7 +1289,7 @@
               </div>
             </div>
 
-            <div class="weight-actions">
+            <div class="weight-actions" style="display: none;">
               <button
                 type="button"
                 class="btn btn-primary request-weight-btn"

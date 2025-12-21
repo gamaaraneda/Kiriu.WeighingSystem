@@ -2940,6 +2940,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     );
 
     try {
+      // Solicitar peso antes de capturar fotos
+      this.requestCurrentWeight();
+
       this.showToast(
         'info',
         'Captura consolidada iniciada',
@@ -3078,6 +3081,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     console.log('🎯 [WEIGHING-FORM] Iniciando captura de fotos Remolque 2');
 
     try {
+      // Solicitar peso antes de capturar fotos
+      this.requestCurrentWeight();
+
       this.showToast(
         'info',
         'Capturando Remolque 2',
