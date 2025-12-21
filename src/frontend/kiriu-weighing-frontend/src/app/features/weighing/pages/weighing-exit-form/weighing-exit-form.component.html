@@ -195,17 +195,13 @@
                   (click)="onCaptureAllPhotos()"
                   [title]="
                     entryData?.tipoUnidad === 'doble-remolque'
-                      ? 'Captura fotos del remolque 1 (tráiler + remolque1 + carga1)'
-                      : 'Captura todas las fotos necesarias (tráiler, remolque, carga)'
+                      ? 'Captura peso y fotos del remolque 1 (tráiler + remolque1 + carga1)'
+                      : 'Captura peso y fotos necesarias (tráiler, remolque, carga)'
                   "
                   style="width: 100%; margin-bottom: 16px"
                 >
-                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
-                  <span *ngIf="isCapturingAllPhotos">
-                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}... ({{
-                      photosCaptureProgress.current
-                    }}/{{ photosCaptureProgress.total }})
-                  </span>
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Datos</span>
+                  <span *ngIf="isCapturingAllPhotos">Capturando...</span>
                 </button>
 
                 <div class="inverted-order-section">
@@ -599,15 +595,11 @@
                     isCapturingAllPhotos || isLoading || !isEntryFound
                   "
                   (click)="onCaptureRemolque2Photos()"
-                  title="Captura fotos del remolque 2 (remolque2 + carga2)"
+                  title="Captura peso y fotos del remolque 2 (remolque2 + carga2)"
                   style="width: 100%; margin-bottom: 16px"
                 >
-                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
-                  <span *ngIf="isCapturingAllPhotos">
-                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}... ({{
-                      photosCaptureProgress.current
-                    }}/{{ photosCaptureProgress.total }})
-                  </span>
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Datos</span>
+                  <span *ngIf="isCapturingAllPhotos">Capturando...</span>
                 </button>
               </div>
 
@@ -935,15 +927,11 @@
                     isCapturingAllPhotos || isLoading || !isEntryFound
                   "
                   (click)="onCaptureAllPhotos()"
-                  title="Captura todas las fotos necesarias (tráiler, remolque, carga)"
+                  title="Captura peso y fotos necesarias (tráiler, remolque, carga)"
                   style="width: 100%; margin-bottom: 16px"
                 >
-                  <span *ngIf="!isCapturingAllPhotos">Capturar Fotos</span>
-                  <span *ngIf="isCapturingAllPhotos">
-                    ⏳ Capturando {{ photosCaptureProgress.fieldName }}... ({{
-                      photosCaptureProgress.current
-                    }}/{{ photosCaptureProgress.total }})
-                  </span>
+                  <span *ngIf="!isCapturingAllPhotos">Capturar Datos</span>
+                  <span *ngIf="isCapturingAllPhotos">Capturando...</span>
                 </button>
 
                 <div class="inverted-order-section">
@@ -1430,7 +1418,7 @@
               ... contenido oculto ...
             </div> -->
 
-            <div class="weight-actions">
+            <div class="weight-actions" style="display: none;">
               <button
                 type="button"
                 class="btn btn-primary request-weight-btn full-width"

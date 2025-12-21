@@ -1851,6 +1851,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     console.log('🎯 [WEIGHING-EXIT-FORM] Iniciando captura consolidada - tipoUnidad:', this.entryData.tipoUnidad);
 
     try {
+      // Solicitar peso antes de capturar fotos
+      this.requestCurrentWeight();
+
       this.showToast('info', 'Captura consolidada iniciada', 'Capturando fotos en paralelo. Por favor espere...');
 
       let fotosExitosas = 0;
@@ -1959,6 +1962,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     console.log('🎯 [WEIGHING-EXIT-FORM] Iniciando captura de fotos Remolque 2');
 
     try {
+      // Solicitar peso antes de capturar fotos
+      this.requestCurrentWeight();
+
       this.showToast('info', 'Capturando Remolque 2', 'Capturando fotos del remolque 2. Por favor espere...');
 
       const totalFotos = 2;
