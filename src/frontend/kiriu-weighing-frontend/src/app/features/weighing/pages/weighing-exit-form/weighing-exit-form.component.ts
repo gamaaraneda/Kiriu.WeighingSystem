@@ -26,6 +26,7 @@ import { PesoRealtimeService, PesoData, ConnectionStatus } from '../../services/
 import { AnprService, AnprEvent } from '../../services/anpr.service';
 import { PdfGeneratorService, WeighingReceiptData } from '../../services/pdf-generator.service';
 import { CargoCameraService } from '../../services/cargo-camera.service';
+import { TrailerCameraService } from '../../services/trailer-camera.service';
 import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/services/auth.service';
 
@@ -53,6 +54,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private anprService = inject(AnprService);
   private pdfGeneratorService = inject(PdfGeneratorService);
   private cargoCameraService = inject(CargoCameraService);
+  private trailerCameraService = inject(TrailerCameraService);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
 
@@ -984,6 +986,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
                            fieldName === 'remolque1Plate' ? 'remolque 1' :
                            fieldName === 'remolque2Plate' ? 'remolque 2' : 'vehículo';
 
+    // Declarar variables fuera del try para acceso en catch
+    let orphanPhoto: any = null;
+
     try {
       // Paso 1: Intentar obtener foto huérfana de BD primero
       const isDoubleTrailer = this.entryData?.tipoUnidad === 'doble-remolque';
@@ -992,8 +997,6 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       // - Flujo doble remolque: SOLO para trailerPlate, remolque1Plate y remolque2Plate
       const shouldSearchDB = !isDoubleTrailer ||
                             (isDoubleTrailer && (fieldName === 'trailerPlate' || fieldName === 'remolque1Plate' || fieldName === 'remolque2Plate'));
-
-      let orphanPhoto: any = null; // Declarar fuera del bloque para acceso en polling
 
       if (shouldSearchDB) {
         console.log(`🔍 [WEIGHING-EXIT-FORM] Buscando foto en BD para photoType: ${fieldName}`);
@@ -1076,175 +1079,113 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         }
       }
 
-      // Paso 2: Si NO se encontró foto en BD, capturar desde cámara en tiempo real (SignalR)
-      this.showToast('info', 'Esperando lectura', `Esperando lectura de placa del ${plateTypeLabel} desde la cámara ANPR...`);
+      // Paso 2: Si NO se encontró foto en BD, capturar fallback INMEDIATO + escuchar SignalR en background
+      console.log(`🚀 [WEIGHING-EXIT-FORM] No hay foto en BD, capturando fallback inmediato...`);
 
-      // Iniciar polling a BD cada 3 segundos mientras espera SignalR
-      // Esto captura fotos que lleguen tarde a BD
-      // SOLO si NO se encontró foto en búsqueda inicial
-      let pollingInterval: any = null;
-      let photoFoundByPolling = false;
-      let pollingAttempts = 0;
-      const MAX_POLLING_ATTEMPTS = 3;
-
-      if (shouldSearchDB && !orphanPhoto) {
-        console.log(`🔄 [WEIGHING-EXIT-FORM] Iniciando polling limitado (${MAX_POLLING_ATTEMPTS} intentos) cada 3s mientras espera SignalR...`);
-
-        pollingInterval = setInterval(async () => {
-          try {
-            pollingAttempts++;
-            console.log(`📡 [POLLING-EXIT] Intento ${pollingAttempts}/${MAX_POLLING_ATTEMPTS} - Revisando BD para ${fieldName}...`);
-
-            // Detener polling después de 3 intentos
-            if (pollingAttempts >= MAX_POLLING_ATTEMPTS) {
-              console.log(`🛑 [POLLING-EXIT] Límite de intentos alcanzado (${MAX_POLLING_ATTEMPTS}), deteniendo polling`);
-              clearInterval(pollingInterval);
-              return;
-            }
-
-            // Determinar photoType y exclusión según el fieldName
-            const photoTypeMap: Record<string, string> = {
-              'trailerPlate': 'trailerPlate',
-              'trailerPlate2': 'remolque1Plate', // Flujo remolque único - buscar en remolque1Plate
-              'containerPlate': 'trailerPlate',   // Flujo solo contenedor - buscar en trailerPlate
-              'remolque1Plate': 'remolque1Plate', // Flujo doble remolque
-              'remolque2Plate': 'remolque1Plate'  // Flujo doble remolque - buscar en remolque1Plate porque backend guarda todo como remolque1Plate
-            };
-
-            let currentSearchPhotoType = photoTypeMap[fieldName];
-            let currentExcludePhotoId = (fieldName === 'remolque2Plate' && this.remolque1PhotoId) ? this.remolque1PhotoId : undefined;
-
-            let polledPhoto = await this.anprService.getLatestOrphanPhoto(currentSearchPhotoType, currentExcludePhotoId).toPromise();
-
-            if (polledPhoto && !photoFoundByPolling) {
-              photoFoundByPolling = true;
-              console.log(`✅ [POLLING-EXIT] Foto encontrada en BD durante polling: ${polledPhoto.photoUrl}`);
-
-              // Guardar la foto
-              this.photoData[fieldName as keyof ExitPhotoData] = polledPhoto.photoUrl;
-
-              // Guardar photoId si es remolque1
-              if (fieldName === 'remolque1Plate') {
-                this.remolque1PhotoId = polledPhoto.photoId;
-                console.log(`💾 [POLLING-EXIT] PhotoId de remolque1 guardado: ${this.remolque1PhotoId}`);
-              }
-
-              // Si viene la placa en la foto, también actualizarla en el formulario y validar
-              if (polledPhoto.licensePlate) {
-                this.exitForm.patchValue({ [fieldName]: polledPhoto.licensePlate });
-                console.log(`🔤 [POLLING-EXIT] Placa de ${plateTypeLabel} actualizada: ${polledPhoto.licensePlate}`);
-
-                // Validar placa contra la entrada (si existe)
-                if (this.entryData) {
-                  const expectedPlate = this.getExpectedPlate(fieldName);
-                  const isMatch = polledPhoto.licensePlate === expectedPlate;
-
-                  if (!isMatch && expectedPlate) {
-                    // Placa no coincide - marcar error
-                    this.plateValidations[fieldName] = {
-                      isValid: false,
-                      errorMessage: `Placa detectada (${polledPhoto.licensePlate}) no coincide con la entrada (${expectedPlate})`
-                    };
-                    console.log(`⚠️ [POLLING-EXIT] Placa no coincide: ${polledPhoto.licensePlate} vs ${expectedPlate}`);
-                    this.showToast('warn', 'Placa no coincide', `La placa encontrada "${polledPhoto.licensePlate}" no coincide con la entrada "${expectedPlate}". Puede editar manualmente si es correcto.`);
-                  } else {
-                    // Placa coincide - marcar válida
-                    this.plateValidations[fieldName] = {
-                      isValid: true,
-                      errorMessage: ''
-                    };
-                    console.log(`✅ [POLLING-EXIT] Placa validada correctamente: ${polledPhoto.licensePlate}`);
-                    this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);
-                  }
-                } else {
-                  // No hay entrada, solo mostrar éxito
-                  this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);
-                }
-              } else {
-                // No hay placa en la foto
-                this.showToast('success', 'Foto obtenida', `Foto de ${plateTypeLabel} obtenida durante espera`);
-              }
-
-              // No cancelamos SignalR, seguimos esperando por si llega una más reciente
-            }
-          } catch (error) {
-            console.error(`❌ [POLLING-EXIT] Error en polling:`, error);
-          }
-        }, 3000); // Cada 3 segundos
-      }
-
-      // Capturar placa con ANPR (30 segundos de timeout)
-      let anprEvent: AnprEvent;
+      // 2.1: Capturar fallback INMEDIATAMENTE (no esperar 30s)
+      let fallbackCaptured = false;
       try {
-        anprEvent = await this.anprService.capturePlate(cameraType, 30000);
-      } finally {
-        // Limpiar polling cuando termine (éxito o error)
-        if (pollingInterval) {
-          console.log(`🛑 [POLLING-EXIT] Deteniendo polling`);
-          clearInterval(pollingInterval);
+        this.showToast('info', 'Capturando foto', `Capturando foto desde cámara...`);
+
+        let fallbackPhotoUrl = '';
+
+        // Determinar cuál cámara usar según el tipo de foto
+        if (fieldName === 'trailerPlate' || fieldName === 'containerPlate') {
+          const photoType = fieldName === 'containerPlate' ? 'trailerPlate' : fieldName;
+          fallbackPhotoUrl = await this.trailerCameraService.captureAndSaveTrailerPhotoAsync(photoType);
+          this.photoData[fieldName as keyof ExitPhotoData] = fallbackPhotoUrl;
+          this.exitForm.patchValue({ [fieldName]: 'unknown' });
+          this.detectedPlates[fieldName] = 'unknown';
+        } else if (fieldName === 'trailerPlate2' || fieldName === 'remolque1Plate' || fieldName === 'remolque2Plate') {
+          const photoType = fieldName === 'trailerPlate2' ? 'trailerPlate2' :
+                           fieldName === 'remolque1Plate' ? 'remolque1Plate' : 'remolque2Plate';
+          fallbackPhotoUrl = await this.trailerCameraService.captureAndSaveRemolquePhotoAsync(photoType);
+          this.photoData[fieldName as keyof ExitPhotoData] = fallbackPhotoUrl;
+          this.exitForm.patchValue({ [fieldName]: 'unknown' });
+          this.detectedPlates[fieldName] = 'unknown';
         }
-      }
 
-      // Guardar la imagen URL
-      this.photoData[fieldName as keyof ExitPhotoData] = anprEvent.imageUrl;
+        fallbackCaptured = true;
+        console.log(`✅ [FALLBACK-EXIT] Foto capturada inmediatamente: ${fallbackPhotoUrl}`);
+        this.showToast('success', 'Foto capturada', `Foto capturada. Esperando ANPR en segundo plano...`);
 
-      // Guardar la placa detectada
-      this.detectedPlates[fieldName] = anprEvent.licensePlate;
-
-      // Actualizar el formulario con la placa detectada
-      this.exitForm.get(fieldName)?.setValue(anprEvent.licensePlate);
-
-      console.log('✅ Placa detectada por ANPR:', anprEvent.licensePlate);
-      console.log('Imagen guardada en:', anprEvent.imageUrl);
-      console.log('Confianza:', anprEvent.confidenceLevel + '%');
-
-      // Si es doble remolque y remolque1, obtener el photoId de la foto recién guardada
-      if (isDoubleTrailer && fieldName === 'remolque1Plate') {
-        // Esperar un momento para que la foto se guarde en BD
-        setTimeout(async () => {
-          const searchPhotoType = 'remolque1Plate';
-          const recentPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType).toPromise();
-          if (recentPhoto) {
-            this.remolque1PhotoId = recentPhoto.photoId;
-            console.log(`💾 [WEIGHING-EXIT-FORM] PhotoId de remolque1 guardado desde SignalR: ${this.remolque1PhotoId}`);
+        // Validar placa "unknown" contra la entrada (si existe)
+        if (this.entryData) {
+          const expectedPlate = this.getExpectedPlate(fieldName);
+          if (expectedPlate && expectedPlate !== 'unknown') {
+            this.plateValidations[fieldName] = {
+              isValid: false,
+              errorMessage: `Placa establecida como "unknown" (ANPR no disponible). Placa de entrada: ${expectedPlate}`
+            };
+            this.showToast('warn', 'Verificación manual requerida', `Foto capturada con placa "unknown". Verifique contra entrada "${expectedPlate}".`);
           }
-        }, 500); // Esperar 500ms para que se guarde en BD
-      }
-
-      // Validar placa contra la entrada (si existe)
-      if (this.entryData) {
-        const expectedPlate = this.getExpectedPlate(fieldName);
-        const isMatch = anprEvent.licensePlate === expectedPlate;
-
-        if (!isMatch && expectedPlate) {
-          // Placa no coincide - marcar error
-          this.plateValidations[fieldName] = {
-            isValid: false,
-            errorMessage: `Placa detectada (${anprEvent.licensePlate}) no coincide con la entrada (${expectedPlate})`
-          };
-
-          this.showToast('warn', 'Placa no coincide', `La placa detectada "${anprEvent.licensePlate}" no coincide con la de entrada "${expectedPlate}". Puede editar manualmente si es correcto.`);
-        } else {
-          // Placa coincide - marcar válida
-          this.plateValidations[fieldName] = {
-            isValid: true,
-            errorMessage: ''
-          };
-
-          this.showToast('success', 'Placa verificada', `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} verificada correctamente`);
         }
-      } else {
-        // No hay datos de entrada aún, solo mostrar éxito
-        this.showToast('success', 'Placa capturada', `Placa ${anprEvent.licensePlate} del ${plateTypeLabel} detectada con ${anprEvent.confidenceLevel}% de confianza`);
+      } catch (fallbackError) {
+        console.error('❌ [FALLBACK-EXIT] Error capturando fallback inmediato:', fallbackError);
+        this.showToast('warn', 'Advertencia', 'No se pudo capturar foto de cámara. Esperando ANPR...');
       }
 
-    } catch (error: any) {
-      console.error(`❌ Error capturando placa del ${plateTypeLabel}:`, error);
-      const errorMessage = error?.message?.includes('timeout')
-        ? 'Tiempo de espera agotado (30s). No se detectó ninguna placa.'
-        : 'Error al capturar placa desde la cámara ANPR';
+      // 2.2: Escuchar SignalR en BACKGROUND (no bloquea, usuario puede continuar)
+      console.log(`🔄 [BACKGROUND-EXIT] Iniciando escucha de SignalR en segundo plano (30s)...`);
 
-      this.showToast('error', 'Error de captura', errorMessage);
+      // Iniciar captura ANPR en background (sin await - no bloquea)
+      this.anprService.capturePlate(cameraType, 30000)
+        .then((anprEvent: AnprEvent) => {
+          // Si llega ANPR, REEMPLAZAR el fallback
+          console.log(`✅ [BACKGROUND-EXIT] ANPR recibido después del fallback: ${anprEvent.licensePlate}`);
+
+          // Guardar la imagen URL (REEMPLAZA fallback)
+          this.photoData[fieldName as keyof ExitPhotoData] = anprEvent.imageUrl;
+          this.detectedPlates[fieldName] = anprEvent.licensePlate;
+          this.exitForm.get(fieldName)?.setValue(anprEvent.licensePlate);
+
+          // Guardar photoId si es remolque1
+          if (isDoubleTrailer && fieldName === 'remolque1Plate') {
+            setTimeout(async () => {
+              const searchPhotoType = 'remolque1Plate';
+              const recentPhoto = await this.anprService.getLatestOrphanPhoto(searchPhotoType).toPromise();
+              if (recentPhoto) {
+                this.remolque1PhotoId = recentPhoto.photoId;
+                console.log(`💾 [BACKGROUND-EXIT] PhotoId de remolque1 guardado: ${this.remolque1PhotoId}`);
+              }
+            }, 500);
+          }
+
+          // Validar placa contra la entrada (si existe)
+          if (this.entryData) {
+            const expectedPlate = this.getExpectedPlate(fieldName);
+            const isMatch = anprEvent.licensePlate === expectedPlate;
+
+            if (!isMatch && expectedPlate) {
+              this.plateValidations[fieldName] = {
+                isValid: false,
+                errorMessage: `Placa detectada (${anprEvent.licensePlate}) no coincide con la entrada (${expectedPlate})`
+              };
+              this.showToast('warn', 'Placa actualizada', `Placa "${anprEvent.licensePlate}" detectada por ANPR, pero no coincide con entrada "${expectedPlate}".`);
+            } else {
+              this.plateValidations[fieldName] = {
+                isValid: true,
+                errorMessage: ''
+              };
+              this.showToast('success', 'Foto actualizada', `Placa ${anprEvent.licensePlate} detectada por ANPR con ${anprEvent.confidenceLevel}% de confianza`);
+            }
+          } else {
+            this.showToast('success', 'Foto actualizada', `Placa ${anprEvent.licensePlate} detectada por ANPR con ${anprEvent.confidenceLevel}% de confianza`);
+          }
+        })
+        .catch((error: any) => {
+          // Si SignalR falla (timeout u otro error), ya tenemos el fallback
+          console.log(`ℹ️ [BACKGROUND-EXIT] SignalR timeout/error, manteniendo foto fallback`);
+          // NO mostrar error porque ya tenemos fallback capturado
+        });
+
+      // RETORNAR INMEDIATAMENTE - Usuario puede continuar con el fallback
+      console.log(`🚀 [WEIGHING-EXIT-FORM] Retornando inmediatamente con fallback, SignalR en background`);
+      return;
+    } catch (error: any) {
+      // Si falla la captura del fallback, mostrar error y continuar
+      console.error('❌ Error en flujo de captura:', error);
+      this.showToast('error', 'Error de captura', 'No se pudo capturar foto desde la cámara');
     }
   }
 
