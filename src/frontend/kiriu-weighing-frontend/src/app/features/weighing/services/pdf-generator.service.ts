@@ -236,10 +236,10 @@ export class PdfGeneratorService {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(6);
     doc.setTextColor(0, 0, 0);
-    doc.text('Entrada', tableX + 1, yPosition + 3.5);
-    doc.text('Peso Ent.', tableX + colWidths[0] + 1, yPosition + 3.5);
-    doc.text('Salida', tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
-    doc.text('Peso Sal.', tableX + colWidths[0] + colWidths[1] + colWidths[2] + 1, yPosition + 3.5);
+    doc.text('Hora de entrada', tableX + 1, yPosition + 3.5);
+    doc.text('Peso a la entrada', tableX + colWidths[0] + 1, yPosition + 3.5);
+    doc.text('Hora de salida', tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
+    doc.text('Peso a la salida', tableX + colWidths[0] + colWidths[1] + colWidths[2] + 1, yPosition + 3.5);
     yPosition += rowHeight;
 
     // Datos
