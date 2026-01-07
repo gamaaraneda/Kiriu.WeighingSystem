@@ -48,7 +48,7 @@ public class WeighingApplicationService : IWeighingApplicationService
             var operation = new WeighingOperation
             {
                 Id = Guid.NewGuid(),
-                Folio = _weighingService.GenerateFolio(),
+                Folio = await _weighingService.GenerateFolioAsync(),
                 UnitType = request.UnitType,
                 OperationType = request.OperationType,
                 // Convertir strings vacíos a null para campos opcionales (flujo contenedor)
@@ -102,7 +102,7 @@ public class WeighingApplicationService : IWeighingApplicationService
             var operation = new WeighingOperation
             {
                 Id = Guid.NewGuid(),
-                Folio = _weighingService.GenerateFolio(),
+                Folio = await _weighingService.GenerateFolioAsync(),
                 UnitType = request.UnitType,
                 OperationType = "entry",
                 TrailerPlate = request.TrailerPlaca,

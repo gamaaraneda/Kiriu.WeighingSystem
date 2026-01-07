@@ -4,7 +4,7 @@ namespace Kiriu.WeighingSystem.Domain.Interfaces;
 
 public interface IWeighingService
 {
-    string GenerateFolio();
+    Task<string> GenerateFolioAsync();
     Task<bool> ValidateUniqueEntryAsync(string plate);
     Task<WeighingOperation?> FindActiveEntryAsync(string plate);
     Task<List<string>> GetAllPlatesFromOperation(WeighingOperation operation);

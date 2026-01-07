@@ -24,6 +24,9 @@ public class WeighingDbContext : DbContext
     
     // Audit entities
     public DbSet<AuditLog> AuditLogs { get; set; }
+    
+    // Folio sequence entity
+    public DbSet<FolioSequence> FolioSequences { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -228,6 +231,16 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             entity.HasIndex(e => new { e.UsuarioId, e.Timestamp }).HasDatabaseName("IX_AuditLogs_Usuario_Timestamp");
             entity.HasIndex(e => new { e.Recurso, e.Timestamp }).HasDatabaseName("IX_AuditLogs_Recurso_Timestamp");
             entity.HasIndex(e => e.Dispositivo).HasDatabaseName("IX_AuditLogs_Dispositivo");
+        });
+        
+        // Folio sequence configuration
+        modelBuilder.Entity<FolioSequence>(entity =>
+        {
+            entity.ToTable("FolioSequence", "weighing");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever(); // No auto-generate, always 1
+            entity.Property(e => e.CurrentSequence).IsRequired();
+            entity.Property(e => e.UpdatedAt).HasColumnType("DATETIME").IsRequired();
         });
     }
 } 
