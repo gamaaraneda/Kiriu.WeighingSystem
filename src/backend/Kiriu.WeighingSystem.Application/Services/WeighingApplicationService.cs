@@ -685,23 +685,26 @@ public class WeighingApplicationService : IWeighingApplicationService
             if (!string.IsNullOrEmpty(request.TipoUnidad))
                 operation.TipoUnidad = request.TipoUnidad;
 
-            if (!string.IsNullOrEmpty(request.TrailerPlate))
-                operation.TrailerPlate = request.TrailerPlate;
+            // AJUSTE PARA LIMPIEZA DE PLACAS AL CAMBIAR TIPO DE UNIDAD:
+            // Si es edición manual y se proporcionan campos de placas (aunque sean vacíos/null),
+            // aplicarlos para permitir limpieza de placas no aplicables al nuevo tipo
+            if (request.EsEdicionManual && request.TrailerPlate != null)
+                operation.TrailerPlate = string.IsNullOrEmpty(request.TrailerPlate) ? null : request.TrailerPlate;
 
-            if (!string.IsNullOrEmpty(request.TrailerPlate2))
-                operation.TrailerPlate2 = request.TrailerPlate2;
+            if (request.EsEdicionManual && request.TrailerPlate2 != null)
+                operation.TrailerPlate2 = string.IsNullOrEmpty(request.TrailerPlate2) ? null : request.TrailerPlate2;
 
-            if (!string.IsNullOrEmpty(request.TrailerPlateContenedor))
-                operation.TrailerPlateContenedor = request.TrailerPlateContenedor;
+            if (request.EsEdicionManual && request.TrailerPlateContenedor != null)
+                operation.TrailerPlateContenedor = string.IsNullOrEmpty(request.TrailerPlateContenedor) ? null : request.TrailerPlateContenedor;
 
-            if (!string.IsNullOrEmpty(request.RemolquePlateContenedor))
-                operation.RemolquePlateContenedor = request.RemolquePlateContenedor;
+            if (request.EsEdicionManual && request.RemolquePlateContenedor != null)
+                operation.RemolquePlateContenedor = string.IsNullOrEmpty(request.RemolquePlateContenedor) ? null : request.RemolquePlateContenedor;
 
-            if (!string.IsNullOrEmpty(request.PlacaRemolque1))
-                operation.PlacaRemolque1 = request.PlacaRemolque1;
+            if (request.EsEdicionManual && request.PlacaRemolque1 != null)
+                operation.PlacaRemolque1 = string.IsNullOrEmpty(request.PlacaRemolque1) ? null : request.PlacaRemolque1;
 
-            if (!string.IsNullOrEmpty(request.PlacaRemolque2))
-                operation.PlacaRemolque2 = request.PlacaRemolque2;
+            if (request.EsEdicionManual && request.PlacaRemolque2 != null)
+                operation.PlacaRemolque2 = string.IsNullOrEmpty(request.PlacaRemolque2) ? null : request.PlacaRemolque2;
 
             if (!string.IsNullOrEmpty(request.Product))
                 operation.Product = request.Product;

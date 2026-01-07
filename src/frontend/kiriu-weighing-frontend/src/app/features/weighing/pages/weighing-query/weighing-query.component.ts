@@ -147,8 +147,9 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
   private setupFormSubscriptions(): void {
     // Suscripción al cambio de tipo de unidad para reasignar placas
-    this.editForm.get('tipoUnidad')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
+    this.editForm
+      .get('tipoUnidad')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe((nuevoTipo: string) => {
         // Solo ejecutar si estamos en el modal de edición y NO estamos cargando datos
         if (!this.showEditModal || this.isLoadingEditData) return;
@@ -157,35 +158,73 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         const cv = this.editForm.value;
 
         // Identificar placas disponibles (placa del tráiler siempre es la primera)
-        const placaTractorActual = cv.trailerPlate || cv.trailerPlateContenedor || '';
+        const placaTractorActual =
+          cv.trailerPlate || cv.trailerPlateContenedor || '';
 
         // Identificar placa secundaria según el tipo actual
         let placaSecundariaActual = '';
-        if (cv.trailerPlate2) placaSecundariaActual = cv.trailerPlate2; // Remolque
-        else if (cv.placaRemolque1) placaSecundariaActual = cv.placaRemolque1; // Doble-remolque
-        else if (cv.remolquePlateContenedor) placaSecundariaActual = cv.remolquePlateContenedor; // Contenedor
+        if (cv.trailerPlate2)
+          placaSecundariaActual = cv.trailerPlate2; // Remolque
+        else if (cv.placaRemolque1)
+          placaSecundariaActual = cv.placaRemolque1; // Doble-remolque
+        else if (cv.remolquePlateContenedor)
+          placaSecundariaActual = cv.remolquePlateContenedor; // Contenedor
 
         // Mapear valores según el nuevo tipo seleccionado
         if (nuevoTipo === 'remolque') {
           // REMOLQUE: Tráiler + Remolque
-          this.editForm.patchValue({
-            trailerPlate: placaTractorActual,
-            trailerPlate2: placaSecundariaActual,
-          }, { emitEvent: false });
+          // - Asignar solo campos válidos para remolque
+          // - Limpiar campos de doble-remolque y contenedor para evitar duplicados
+          this.editForm.patchValue(
+            {
+              // Placas remolque
+              trailerPlate: placaTractorActual,
+              trailerPlate2: placaSecundariaActual,
+              // Limpiar doble-remolque
+              placaRemolque1: '',
+              placaRemolque2: '',
+              // Limpiar contenedor
+              trailerPlateContenedor: '',
+              remolquePlateContenedor: '',
+            },
+            { emitEvent: false }
+          );
         } else if (nuevoTipo === 'doble-remolque') {
           // DOBLE-REMOLQUE: Tráiler + Remolque1 + Remolque2
-          // Preservar valores si ya existen, sino mapear desde otras fuentes
-          this.editForm.patchValue({
-            trailerPlate: placaTractorActual,
-            placaRemolque1: cv.placaRemolque1 || placaSecundariaActual,
-            placaRemolque2: cv.placaRemolque2 || '', // Mantener si existe, sino vacío
-          }, { emitEvent: false });
+          // - Preservar valores si ya existen, sino mapear desde otras fuentes
+          // - Limpiar campos de remolque simple y contenedor para evitar duplicados
+          this.editForm.patchValue(
+            {
+              // Placas doble-remolque
+              trailerPlate: placaTractorActual,
+              placaRemolque1: cv.placaRemolque1 || placaSecundariaActual,
+              placaRemolque2: cv.placaRemolque2 || '', // Mantener si existe, sino vacío
+              // Limpiar remolque simple
+              trailerPlate2: '',
+              // Limpiar contenedor
+              trailerPlateContenedor: '',
+              remolquePlateContenedor: '',
+            },
+            { emitEvent: false }
+          );
         } else if (nuevoTipo === 'contenedor') {
           // CONTENEDOR: Tráiler + Contenedor
-          this.editForm.patchValue({
-            trailerPlateContenedor: placaTractorActual,
-            remolquePlateContenedor: placaSecundariaActual,
-          }, { emitEvent: false });
+          // - Asignar solo campos válidos para contenedor
+          // - Limpiar campos de remolque y doble-remolque para evitar duplicados
+          this.editForm.patchValue(
+            {
+              // Placas contenedor
+              trailerPlateContenedor: placaTractorActual,
+              remolquePlateContenedor: placaSecundariaActual,
+              // Limpiar remolque simple
+              trailerPlate: '',
+              trailerPlate2: '',
+              // Limpiar doble-remolque
+              placaRemolque1: '',
+              placaRemolque2: '',
+            },
+            { emitEvent: false }
+          );
         }
       });
   }
@@ -361,7 +400,9 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
   getPhotosByType(photoType: string): any[] {
     if (!this.selectedOperation || !this.selectedOperation.photos) return [];
-    return this.selectedOperation.photos.filter(p => p.photoType === photoType);
+    return this.selectedOperation.photos.filter(
+      (p) => p.photoType === photoType
+    );
   }
 
   getPhotoUrl(photoId: string): string {
@@ -371,20 +412,20 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
   hasPhotoType(photoType: string): boolean {
     if (!this.selectedOperation || !this.selectedOperation.photos) return false;
-    return this.selectedOperation.photos.some(p => p.photoType === photoType);
+    return this.selectedOperation.photos.some((p) => p.photoType === photoType);
   }
 
   getPhotoLabel(photoType: string): string {
     const labels: { [key: string]: string } = {
-      'trailerPlate': 'Placa del Tráiler',
-      'trailerPlate2': 'Placa del Remolque',
-      'cargo': 'Carga',
-      'cargoState': 'Estado de Carga',
-      'containerPlate': 'Placa del Contenedor',
-      'remolque1Plate': 'Placa Remolque 1',
-      'remolque2Plate': 'Placa Remolque 2',
-      'cargoRemolque1': 'Carga Remolque 1',
-      'cargoRemolque2': 'Carga Remolque 2'
+      trailerPlate: 'Placa del Tráiler',
+      trailerPlate2: 'Placa del Remolque',
+      cargo: 'Carga',
+      cargoState: 'Estado de Carga',
+      containerPlate: 'Placa del Contenedor',
+      remolque1Plate: 'Placa Remolque 1',
+      remolque2Plate: 'Placa Remolque 2',
+      cargoRemolque1: 'Carga Remolque 1',
+      cargoRemolque2: 'Carga Remolque 2',
     };
     return labels[photoType] || photoType;
   }
@@ -392,7 +433,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   onPhotoError(event: Event): void {
     // Si la foto no existe, mostrar placeholder
     const img = event.target as HTMLImageElement;
-    img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"%3E%3Crect width="200" height="150" fill="%23f1f5f9"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%2394a3b8"%3ENo disponible%3C/text%3E%3C/svg%3E';
+    img.src =
+      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"%3E%3Crect width="200" height="150" fill="%23f1f5f9"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%2394a3b8"%3ENo disponible%3C/text%3E%3C/svg%3E';
   }
 
   async onReprint(operation: WeighingQueryResult): Promise<void> {
@@ -419,10 +461,14 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
     try {
       // Obtener la operación completa desde el backend para tener todos los datos
-      const fullOperation = await this.weighingService.getOperationById(operation.id).toPromise();
+      const fullOperation = await this.weighingService
+        .getOperationById(operation.id)
+        .toPromise();
 
       if (!fullOperation) {
-        throw new Error('No se pudo obtener los datos completos de la operación');
+        throw new Error(
+          'No se pudo obtener los datos completos de la operación'
+        );
       }
 
       // Construir los datos para el PDF usando la misma lógica que en weighing-exit-form
@@ -438,9 +484,10 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         fechaEntrada: fullOperation.createdAt,
         pesoBrutoEntrada: fullOperation.entryWeight || 0,
         placaTrailer: fullOperation.trailerPlate || '',
-        placaRemolque: fullOperation.tipoUnidad === 'doble-remolque'
-          ? fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || ''
-          : fullOperation.trailerPlate2 || '',
+        placaRemolque:
+          fullOperation.tipoUnidad === 'doble-remolque'
+            ? fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || ''
+            : fullOperation.trailerPlate2 || '',
 
         // Datos de salida - pasar strings directamente del backend
         fechaSalida: fullOperation.updatedAt || fullOperation.createdAt,
@@ -451,7 +498,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
       // Si es doble remolque, agregar datos de los remolques
       if (fullOperation.tipoUnidad === 'doble-remolque') {
-        const placaRemolque1 = fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || '';
+        const placaRemolque1 =
+          fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || '';
         const placaRemolque2 = fullOperation.placaRemolque2 || '';
         const pesoBrutoBase = fullOperation.entryWeight || 0;
         const pesoTaraBase = (fullOperation.exitWeight || 0) / 2;
@@ -585,7 +633,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         // MAPEO INTELIGENTE: Si el tipoUnidad es "contenedor" pero las placas están
         // en los campos de remolque, mapearlas a los campos de contenedor
         let trailerPlateContenedor = fullOperation.trailerPlateContenedor || '';
-        let remolquePlateContenedor = fullOperation.remolquePlateContenedor || '';
+        let remolquePlateContenedor =
+          fullOperation.remolquePlateContenedor || '';
 
         if (fullOperation.tipoUnidad === 'contenedor') {
           // Si los campos de contenedor están vacíos, usar los de remolque
@@ -600,7 +649,10 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         this.editForm.patchValue({
           tipo: fullOperation.unitType || operation.tipo || '',
           tipoUnidad: fullOperation.tipoUnidad || operation.tipoUnidad || '',
-          clienteProveedor: fullOperation.clientProviderName || operation.clienteProveedor || '',
+          clienteProveedor:
+            fullOperation.clientProviderName ||
+            operation.clienteProveedor ||
+            '',
           producto: fullOperation.product || operation.producto || '',
           // Placas para remolque
           trailerPlate: fullOperation.trailerPlate || '',
@@ -614,7 +666,10 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         });
 
         // Log del estado del formulario después de patchValue (TEMPORAL)
-        console.log('📝 Estado del formulario después de patchValue:', this.editForm.value);
+        console.log(
+          '📝 Estado del formulario después de patchValue:',
+          this.editForm.value
+        );
 
         this.isLoadingEditData = false; // Desactivar flag después de cargar
 
@@ -650,7 +705,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
         // Forzar detección de cambios después de abrir el modal
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -667,10 +722,66 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     }
 
     const formValue = this.editForm.value;
+    const tipoUnidad = formValue.tipoUnidad;
 
     // LOG DIAGNÓSTICO (TEMPORAL)
     console.log('💾 GUARDANDO - Valores del formulario:', formValue);
     console.log('💾 Operación original:', this.operationToEdit);
+
+    // Construir payload según la estructura de BD mostrada:
+    // REMOLQUE: TrailerPlate + TrailerPlate2 (resto NULL)
+    // CONTENEDOR: TrailerPlate + TrailerPlate2 (resto NULL)
+    // DOBLE-REMOLQUE: TrailerPlate + PlacaRemolque1 + PlacaRemolque2 (resto NULL)
+    // 
+    // IMPORTANTE: Backend solo actualiza campos NO vacíos (línea 688-704 WeighingApplicationService)
+    // Por eso, para limpiar campos no aplicables, debemos enviar string vacío "" 
+    // en lugar de undefined, de lo contrario el backend ignora el cambio y mantiene el valor anterior
+    let trailerPlate: string | undefined = undefined;
+    let trailerPlate2: string | undefined = undefined;
+    let placaRemolque1: string | undefined = undefined;
+    let placaRemolque2: string | undefined = undefined;
+    let trailerPlateContenedor: string | undefined = undefined;
+    let remolquePlateContenedor: string | undefined = undefined;
+
+    if (tipoUnidad === 'remolque') {
+      // REMOLQUE: TrailerPlate + TrailerPlate2
+      trailerPlate = formValue.trailerPlate || '';
+      trailerPlate2 = formValue.trailerPlate2 || '';
+      // Resto explícitamente string vacío para forzar limpieza en BD
+      placaRemolque1 = '';
+      placaRemolque2 = '';
+      trailerPlateContenedor = '';
+      remolquePlateContenedor = '';
+    } else if (tipoUnidad === 'contenedor') {
+      // CONTENEDOR: TrailerPlate + TrailerPlate2 (mismo que remolque según BD)
+      // Mapear desde los campos de contenedor del formulario
+      trailerPlate = formValue.trailerPlateContenedor || '';
+      trailerPlate2 = formValue.remolquePlateContenedor || '';
+      // Resto explícitamente string vacío para forzar limpieza en BD
+      placaRemolque1 = '';
+      placaRemolque2 = '';
+      trailerPlateContenedor = '';
+      remolquePlateContenedor = '';
+    } else if (tipoUnidad === 'doble-remolque') {
+      // DOBLE-REMOLQUE: TrailerPlate + PlacaRemolque1 + PlacaRemolque2
+      trailerPlate = formValue.trailerPlate || '';
+      placaRemolque1 = formValue.placaRemolque1 || '';
+      placaRemolque2 = formValue.placaRemolque2 || '';
+      // Resto explícitamente string vacío para forzar limpieza en BD
+      trailerPlate2 = '';
+      trailerPlateContenedor = '';
+      remolquePlateContenedor = '';
+    }
+
+    console.log('📤 PAYLOAD SEGÚN ESTRUCTURA BD:', {
+      tipoUnidad,
+      trailerPlate,
+      trailerPlate2,
+      placaRemolque1,
+      placaRemolque2,
+      trailerPlateContenedor,
+      remolquePlateContenedor,
+    });
 
     this.isLoading = true;
 
@@ -678,15 +789,15 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       .updateOperationData(
         this.operationToEdit.id,
         formValue.tipo,
-        formValue.tipoUnidad,
+        tipoUnidad,
         formValue.clienteProveedor,
         formValue.producto,
-        formValue.trailerPlate,
-        formValue.trailerPlate2,
-        formValue.placaRemolque1,
-        formValue.placaRemolque2,
-        formValue.trailerPlateContenedor,
-        formValue.remolquePlateContenedor
+        trailerPlate,
+        trailerPlate2,
+        placaRemolque1,
+        placaRemolque2,
+        trailerPlateContenedor,
+        remolquePlateContenedor
       )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -753,7 +864,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     // Auto-remove después de 5 segundos
     setTimeout(() => {
       if (toast.parentElement) {
-        toast.style.animation = 'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
+        toast.style.animation =
+          'toast-out 0.18s cubic-bezier(0.22, 0.61, 0.36, 1) both';
         setTimeout(() => {
           toast.remove();
         }, 180);
