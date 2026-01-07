@@ -333,10 +333,11 @@ export class PdfGeneratorService {
     );
     yPosition += netRowHeight + 4;
 
-    // Si es doble remolque, mostrar tabla de remolques compacta
+    // Sección de remolques deshabilitada para doble remolque
+    // No se muestra la tabla de remolques cuando el tipo de unidad es "doble-remolque"
     if (
       data.tipoUnidad === 'doble-remolque' &&
-      (data.remolque1 || data.remolque2)
+      data.tipoUnidad !== 'doble-remolque' // Condición siempre falsa para deshabilitar la sección
     ) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(13);
