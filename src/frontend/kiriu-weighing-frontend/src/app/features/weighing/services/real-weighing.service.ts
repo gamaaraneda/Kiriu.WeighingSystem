@@ -39,6 +39,8 @@ export interface WeighingOperationDto {
   operationType: string;
   trailerPlate: string;
   trailerPlate2?: string;
+  trailerPlateContenedor?: string;
+  remolquePlateContenedor?: string;
   placaRemolque1?: string;
   placaRemolque2?: string;
   product: string;

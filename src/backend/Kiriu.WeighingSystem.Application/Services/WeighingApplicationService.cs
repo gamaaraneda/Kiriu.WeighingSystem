@@ -635,54 +635,86 @@ public class WeighingApplicationService : IWeighingApplicationService
             // Detectar si se están editando las placas o pesos manualmente
             bool plateFieldsChanged = HasPlateFieldsChanged(operation, request);
             bool weightFieldsChanged = HasWeightFieldsChanged(operation, request);
+            bool otherFieldsChanged = HasOtherFieldsChanged(operation, request);
 
-            // Marcar como editado manualmente si se cambiaron las placas o los pesos
-            if (request.EsEdicionManual && (plateFieldsChanged || weightFieldsChanged))
+            // LOG DIAGNÓSTICO (TEMPORAL)
+            _logger.LogInformation(
+                "🔍 DIAGNÓSTICO - OperationId: {OperationId}, PlacasEditadas: {PlacasEditadas}, PesosEditados: {PesosEditados}, OtrosCamposEditados: {OtrosCamposEditados}",
+                operationId,
+                plateFieldsChanged,
+                weightFieldsChanged,
+                otherFieldsChanged
+            );
+
+            // LOG DETALLE (TEMPORAL)
+            _logger.LogInformation(
+                "📊 VALORES - Original: [UnitType={OrigUnitType}, TipoUnidad={OrigTipoUnidad}, Product={OrigProduct}, ClientName={OrigClientName}] | Request: [UnitType={ReqUnitType}, TipoUnidad={ReqTipoUnidad}, Product={ReqProduct}, ClientName={ReqClientName}]",
+                operation.UnitType, operation.TipoUnidad, operation.Product, operation.ClientProviderName,
+                request.UnitType ?? "null", request.TipoUnidad ?? "null", request.Product ?? "null", request.ClientProviderName ?? "null"
+            );
+
+            // Marcar como editado manualmente si se cambió cualquier campo editable
+            if (request.EsEdicionManual && (plateFieldsChanged || weightFieldsChanged || otherFieldsChanged))
             {
                 operation.FueEditado = true;
                 operation.FechaUltimaEdicion = DateTime.UtcNow;
                 operation.UsuarioEditor = request.UsuarioEditor;
 
                 _logger.LogInformation(
-                    "Registro editado manualmente - OperationId: {OperationId}, Usuario: {Usuario}, PlacasEditadas: {PlacasEditadas}, PesosEditados: {PesosEditados}",
+                    "✅ Registro editado manualmente - OperationId: {OperationId}, Usuario: {Usuario}, PlacasEditadas: {PlacasEditadas}, PesosEditados: {PesosEditados}, OtrosCamposEditados: {OtrosCamposEditados}",
                     operationId,
                     request.UsuarioEditor,
                     plateFieldsChanged,
-                    weightFieldsChanged
+                    weightFieldsChanged,
+                    otherFieldsChanged
+                );
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "⚠️ NO se marcó como editado - OperationId: {OperationId}, EsEdicionManual: {EsEdicionManual}",
+                    operationId,
+                    request.EsEdicionManual
                 );
             }
 
             // Actualizar campos si se proporcionan
+            if (!string.IsNullOrEmpty(request.UnitType))
+                operation.UnitType = request.UnitType;
+
+            if (!string.IsNullOrEmpty(request.TipoUnidad))
+                operation.TipoUnidad = request.TipoUnidad;
+
             if (!string.IsNullOrEmpty(request.TrailerPlate))
                 operation.TrailerPlate = request.TrailerPlate;
-            
+
             if (!string.IsNullOrEmpty(request.TrailerPlate2))
                 operation.TrailerPlate2 = request.TrailerPlate2;
-            
+
             if (!string.IsNullOrEmpty(request.TrailerPlateContenedor))
                 operation.TrailerPlateContenedor = request.TrailerPlateContenedor;
-            
+
             if (!string.IsNullOrEmpty(request.RemolquePlateContenedor))
                 operation.RemolquePlateContenedor = request.RemolquePlateContenedor;
-            
+
             if (!string.IsNullOrEmpty(request.PlacaRemolque1))
                 operation.PlacaRemolque1 = request.PlacaRemolque1;
-            
+
             if (!string.IsNullOrEmpty(request.PlacaRemolque2))
                 operation.PlacaRemolque2 = request.PlacaRemolque2;
-            
+
             if (!string.IsNullOrEmpty(request.Product))
                 operation.Product = request.Product;
-            
+
             if (!string.IsNullOrEmpty(request.ClientProviderName))
                 operation.ClientProviderName = request.ClientProviderName;
-            
+
             if (!string.IsNullOrEmpty(request.ClientProviderRfc))
                 operation.ClientProviderRfc = request.ClientProviderRfc;
-            
+
             if (request.EntryWeight.HasValue)
                 operation.EntryWeight = request.EntryWeight.Value;
-            
+
             if (request.ExitWeight.HasValue)
                 operation.ExitWeight = request.ExitWeight.Value;
 
@@ -745,6 +777,14 @@ public class WeighingApplicationService : IWeighingApplicationService
     {
         return (request.EntryWeight.HasValue && request.EntryWeight.Value != original.EntryWeight) ||
                (request.ExitWeight.HasValue && request.ExitWeight.Value != original.ExitWeight);
+    }
+
+    private bool HasOtherFieldsChanged(WeighingOperation original, UpdateWeighingOperationRequest request)
+    {
+        return (!string.IsNullOrEmpty(request.UnitType) && request.UnitType != original.UnitType) ||
+               (!string.IsNullOrEmpty(request.TipoUnidad) && request.TipoUnidad != original.TipoUnidad) ||
+               (!string.IsNullOrEmpty(request.Product) && request.Product != original.Product) ||
+               (!string.IsNullOrEmpty(request.ClientProviderName) && request.ClientProviderName != original.ClientProviderName);
     }
 
     public async Task<PhotoBinaryDataDto?> GetPhotoDataAsync(Guid photoId)

@@ -2,6 +2,8 @@ namespace Kiriu.WeighingSystem.Application.DTOs.Weighing;
 
 public class UpdateWeighingOperationRequest
 {
+    public string? UnitType { get; set; }
+    public string? TipoUnidad { get; set; }
     public string? TrailerPlate { get; set; }
     public string? TrailerPlate2 { get; set; }
     public string? TrailerPlateContenedor { get; set; }

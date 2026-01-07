@@ -168,4 +168,38 @@ export class WeighingQueryService {
     };
     return this.http.put(url, payload);
   }
+
+  updateOperationData(
+    operationId: string,
+    tipo?: string,
+    tipoUnidad?: string,
+    clienteProveedor?: string,
+    producto?: string,
+    trailerPlate?: string,
+    trailerPlate2?: string,
+    placaRemolque1?: string,
+    placaRemolque2?: string,
+    trailerPlateContenedor?: string,
+    remolquePlateContenedor?: string
+  ): Observable<any> {
+    const url = `${environment.apiUrl}/weighing/operations/${operationId}`;
+    const payload = {
+      unitType: tipo,
+      tipoUnidad: tipoUnidad,
+      clientProviderName: clienteProveedor,
+      product: producto,
+      trailerPlate: trailerPlate,
+      trailerPlate2: trailerPlate2,
+      placaRemolque1: placaRemolque1,
+      placaRemolque2: placaRemolque2,
+      trailerPlateContenedor: trailerPlateContenedor,
+      remolquePlateContenedor: remolquePlateContenedor,
+      esEdicionManual: true
+    };
+
+    // LOG DIAGNÓSTICO (TEMPORAL)
+    console.log('📤 PAYLOAD ENVIADO AL BACKEND:', payload);
+
+    return this.http.put(url, payload);
+  }
 }

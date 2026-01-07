@@ -55,6 +55,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   showEditModal = false;
   operationToEdit: WeighingQueryResult | null = null;
   editForm!: FormGroup;
+  private isLoadingEditData = false; // Flag para evitar ejecución durante carga inicial
 
   // Permission state
   hasReportsPermission = false;
@@ -128,13 +129,65 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
   private initializeEditForm(): void {
     this.editForm = this.fb.group({
-      entryWeight: [null],
-      exitWeight: [null],
+      tipo: [''],
+      tipoUnidad: [''],
+      clienteProveedor: [''],
+      producto: [''],
+      // Placas para remolque
+      trailerPlate: [''],
+      trailerPlate2: [''],
+      // Placas para doble-remolque
+      placaRemolque1: [''],
+      placaRemolque2: [''],
+      // Placas para contenedor
+      trailerPlateContenedor: [''],
+      remolquePlateContenedor: [''],
     });
   }
 
   private setupFormSubscriptions(): void {
-    // No hay suscripciones automáticas - la búsqueda solo se dispara con el botón
+    // Suscripción al cambio de tipo de unidad para reasignar placas
+    this.editForm.get('tipoUnidad')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((nuevoTipo: string) => {
+        // Solo ejecutar si estamos en el modal de edición y NO estamos cargando datos
+        if (!this.showEditModal || this.isLoadingEditData) return;
+
+        // Obtener valores actuales de todos los campos de placas
+        const cv = this.editForm.value;
+
+        // Identificar placas disponibles (placa del tráiler siempre es la primera)
+        const placaTractorActual = cv.trailerPlate || cv.trailerPlateContenedor || '';
+
+        // Identificar placa secundaria según el tipo actual
+        let placaSecundariaActual = '';
+        if (cv.trailerPlate2) placaSecundariaActual = cv.trailerPlate2; // Remolque
+        else if (cv.placaRemolque1) placaSecundariaActual = cv.placaRemolque1; // Doble-remolque
+        else if (cv.remolquePlateContenedor) placaSecundariaActual = cv.remolquePlateContenedor; // Contenedor
+
+        // Mapear valores según el nuevo tipo seleccionado
+        if (nuevoTipo === 'remolque') {
+          // REMOLQUE: Tráiler + Remolque
+          this.editForm.patchValue({
+            trailerPlate: placaTractorActual,
+            trailerPlate2: placaSecundariaActual,
+          }, { emitEvent: false });
+        } else if (nuevoTipo === 'doble-remolque') {
+          // DOBLE-REMOLQUE: Tráiler + Remolque1 + Remolque2
+          // Preservar valores si ya existen, sino mapear desde otras fuentes
+          this.editForm.patchValue({
+            trailerPlate: placaTractorActual,
+            placaRemolque1: cv.placaRemolque1 || placaSecundariaActual,
+            placaRemolque2: cv.placaRemolque2 || '', // Mantener si existe, sino vacío
+          }, { emitEvent: false });
+        } else if (nuevoTipo === 'contenedor') {
+          // CONTENEDOR: Tráiler + Contenedor
+          this.editForm.patchValue({
+            trailerPlateContenedor: placaTractorActual,
+            remolquePlateContenedor: placaSecundariaActual,
+          }, { emitEvent: false });
+        }
+      });
   }
 
   onSearch(): void {
@@ -512,15 +565,93 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     }
 
     this.operationToEdit = operation;
+    this.isLoadingEditData = true; // Activar flag para evitar ejecución de suscripción
 
     // Prellenar el formulario con los valores actuales
-    this.editForm.patchValue({
-      entryWeight: operation.pesoBruto || null,
-      exitWeight: operation.pesoSalida || null,
-    });
+    // Primero obtener la operación completa para tener todos los campos de placas
+    this.weighingService.getOperationById(operation.id).subscribe({
+      next: (fullOperation) => {
+        // Log para diagnóstico (TEMPORAL - remover después)
+        console.log('🔍 Datos cargados del backend:', {
+          tipoUnidad: fullOperation.tipoUnidad,
+          trailerPlate: fullOperation.trailerPlate,
+          trailerPlate2: fullOperation.trailerPlate2,
+          trailerPlateContenedor: fullOperation.trailerPlateContenedor,
+          remolquePlateContenedor: fullOperation.remolquePlateContenedor,
+          placaRemolque1: fullOperation.placaRemolque1,
+          placaRemolque2: fullOperation.placaRemolque2,
+        });
 
-    this.showEditModal = true;
-    document.body.classList.add('km-scroll-lock');
+        // MAPEO INTELIGENTE: Si el tipoUnidad es "contenedor" pero las placas están
+        // en los campos de remolque, mapearlas a los campos de contenedor
+        let trailerPlateContenedor = fullOperation.trailerPlateContenedor || '';
+        let remolquePlateContenedor = fullOperation.remolquePlateContenedor || '';
+
+        if (fullOperation.tipoUnidad === 'contenedor') {
+          // Si los campos de contenedor están vacíos, usar los de remolque
+          if (!trailerPlateContenedor && fullOperation.trailerPlate) {
+            trailerPlateContenedor = fullOperation.trailerPlate;
+          }
+          if (!remolquePlateContenedor && fullOperation.trailerPlate2) {
+            remolquePlateContenedor = fullOperation.trailerPlate2;
+          }
+        }
+
+        this.editForm.patchValue({
+          tipo: fullOperation.unitType || operation.tipo || '',
+          tipoUnidad: fullOperation.tipoUnidad || operation.tipoUnidad || '',
+          clienteProveedor: fullOperation.clientProviderName || operation.clienteProveedor || '',
+          producto: fullOperation.product || operation.producto || '',
+          // Placas para remolque
+          trailerPlate: fullOperation.trailerPlate || '',
+          trailerPlate2: fullOperation.trailerPlate2 || '',
+          // Placas para doble-remolque
+          placaRemolque1: fullOperation.placaRemolque1 || '',
+          placaRemolque2: fullOperation.placaRemolque2 || '',
+          // Placas para contenedor (con mapeo inteligente)
+          trailerPlateContenedor: trailerPlateContenedor,
+          remolquePlateContenedor: remolquePlateContenedor,
+        });
+
+        // Log del estado del formulario después de patchValue (TEMPORAL)
+        console.log('📝 Estado del formulario después de patchValue:', this.editForm.value);
+
+        this.isLoadingEditData = false; // Desactivar flag después de cargar
+
+        // Forzar detección de cambios para asegurar que Angular actualice la vista
+        this.cdr.detectChanges();
+
+        // Abrir modal DESPUÉS de cargar los datos
+        this.showEditModal = true;
+        document.body.classList.add('km-scroll-lock');
+
+        // Forzar detección de cambios después de abrir el modal
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error al cargar operación completa:', error);
+        // Fallback: usar datos básicos de la query
+        this.editForm.patchValue({
+          tipo: operation.tipo || '',
+          tipoUnidad: operation.tipoUnidad || '',
+          clienteProveedor: operation.clienteProveedor || '',
+          producto: operation.producto || '',
+          trailerPlate: operation.placas || '',
+        });
+
+        this.isLoadingEditData = false; // Desactivar flag después de cargar
+
+        // Forzar detección de cambios
+        this.cdr.detectChanges();
+
+        // Abrir modal incluso si hay error (con datos básicos)
+        this.showEditModal = true;
+        document.body.classList.add('km-scroll-lock');
+
+        // Forzar detección de cambios después de abrir el modal
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   onCloseEditModal(): void {
@@ -535,12 +666,28 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const { entryWeight, exitWeight } = this.editForm.value;
+    const formValue = this.editForm.value;
+
+    // LOG DIAGNÓSTICO (TEMPORAL)
+    console.log('💾 GUARDANDO - Valores del formulario:', formValue);
+    console.log('💾 Operación original:', this.operationToEdit);
 
     this.isLoading = true;
 
     this.weighingQueryService
-      .updateWeights(this.operationToEdit.id, entryWeight, exitWeight)
+      .updateOperationData(
+        this.operationToEdit.id,
+        formValue.tipo,
+        formValue.tipoUnidad,
+        formValue.clienteProveedor,
+        formValue.producto,
+        formValue.trailerPlate,
+        formValue.trailerPlate2,
+        formValue.placaRemolque1,
+        formValue.placaRemolque2,
+        formValue.trailerPlateContenedor,
+        formValue.remolquePlateContenedor
+      )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -549,7 +696,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           this.showToast(
             'success',
             'Actualización exitosa',
-            `Los pesos del folio ${this.operationToEdit?.folio} han sido actualizados`
+            `Los datos del folio ${this.operationToEdit?.folio} han sido actualizados`
           );
 
           // Cerrar el modal
@@ -561,7 +708,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         error: (error) => {
           this.isLoading = false;
           const errorMessage = extractErrorMessage(error);
-          this.handleError('Error al actualizar pesos: ' + errorMessage);
+          this.handleError('Error al actualizar datos: ' + errorMessage);
           console.error('Error en actualización:', error);
         },
       });
