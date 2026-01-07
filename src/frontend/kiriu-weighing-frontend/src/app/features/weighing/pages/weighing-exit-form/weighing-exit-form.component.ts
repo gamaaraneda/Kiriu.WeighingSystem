@@ -319,9 +319,10 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    * Valida que una placa coincida con la esperada
    */
   private validatePlate(fieldName: string, expectedPlate?: string): void {
-    const detectedPlate = this.detectedPlates[fieldName];
+    // Usar el valor del formulario (respeta edición manual)
+    const currentPlate = this.exitForm.get(fieldName)?.value || '';
 
-    if (!expectedPlate || !detectedPlate) {
+    if (!expectedPlate || !currentPlate) {
       this.plateValidations[fieldName] = {
         isValid: true,
         errorMessage: ''
@@ -329,14 +330,14 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const matches = detectedPlate.toLowerCase() === expectedPlate.toLowerCase();
+    const matches = currentPlate.toLowerCase() === expectedPlate.toLowerCase();
     this.plateValidations[fieldName] = {
       isValid: matches,
-      errorMessage: matches ? '' : `Placa detectada no coincide con la esperada: ${expectedPlate}`
+      errorMessage: matches ? '' : `Placa ingresada no coincide con la esperada: ${expectedPlate}`
     };
 
     if (!matches) {
-      this.showToast('warn', 'Placa no coincide', `La placa detectada (${detectedPlate}) no coincide con la esperada (${expectedPlate})`);
+      this.showToast('warn', 'Placa no coincide', `La placa ingresada (${currentPlate}) no coincide con la esperada (${expectedPlate})`);
     }
   }
 
