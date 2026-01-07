@@ -504,7 +504,7 @@ export class PdfGeneratorService {
       });
 
       // QR más pequeño para media página
-      const qrSize = 25;
+      const qrSize = 45; // Aumentado 50% desde 25
       const qrX = (pageWidth - qrSize) / 2;
       doc.addImage(qrCodeDataUrl, 'PNG', qrX, yPosition, qrSize, qrSize);
       yPosition += qrSize + 2;
