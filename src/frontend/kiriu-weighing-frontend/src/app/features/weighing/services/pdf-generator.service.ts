@@ -112,7 +112,7 @@ export class PdfGeneratorService {
       doc.roundedRect(x, y, width, height, 2, 2);
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
+      doc.setFontSize(16);
       doc.setTextColor(0, 0, 0);
       const textWidth = doc.getTextWidth(text);
       doc.text(text, x + (width - textWidth) / 2, y + height / 2 + 1.5);
@@ -125,11 +125,11 @@ export class PdfGeneratorService {
 
     // Título y Folio en la misma línea
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(18);
     doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
     doc.text('KIRIU - Ticket de Pesaje', margin, yPosition);
 
-    doc.setFontSize(10);
+    doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
     const folioText = `Folio: ${data.folio}`;
     const folioWidth = doc.getTextWidth(folioText);
@@ -139,7 +139,7 @@ export class PdfGeneratorService {
 
     // Fecha
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(14);
     const fechaText = `Fecha: ${this.formatDate(data.fecha)}`;
     doc.text(fechaText, margin, yPosition);
 
@@ -154,20 +154,24 @@ export class PdfGeneratorService {
 
     // INFORMACIÓN GENERAL (compacta)
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(13);
     doc.setTextColor(0, 0, 0);
 
     // Primera línea: Tipo de Unidad y Movimiento
     doc.text('Tipo:', margin, yPosition);
     doc.setFont('helvetica', 'normal');
-    doc.text(this.getTipoUnidadDisplayName(data.tipoUnidad), margin + 10, yPosition);
+    doc.text(
+      this.getTipoUnidadDisplayName(data.tipoUnidad),
+      margin + 15,
+      yPosition
+    );
 
     doc.setFont('helvetica', 'bold');
     const midPoint = pageWidth / 2;
     doc.text('Movimiento:', midPoint, yPosition);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 150, 0);
-    doc.text('SALIDA', midPoint + 20, yPosition);
+    doc.text('SALIDA', midPoint + 30, yPosition);
     doc.setTextColor(0, 0, 0);
     yPosition += 4;
 
@@ -175,24 +179,28 @@ export class PdfGeneratorService {
     doc.setFont('helvetica', 'bold');
     doc.text('Cliente/Prov:', margin, yPosition);
     doc.setFont('helvetica', 'normal');
-    doc.text(data.clienteProveedor, margin + 24, yPosition);
+    doc.text(data.clienteProveedor, margin + 30, yPosition);
 
     doc.setFont('helvetica', 'bold');
     doc.text('Tipo:', midPoint, yPosition);
     doc.setFont('helvetica', 'normal');
-    doc.text(data.tipo === 'client' ? 'Cliente' : 'Proveedor', midPoint + 10, yPosition);
+    doc.text(
+      data.tipo === 'client' ? 'Cliente' : 'Proveedor',
+      midPoint + 15,
+      yPosition
+    );
     yPosition += 4;
 
     // Tercera línea: Producto
     doc.setFont('helvetica', 'bold');
     doc.text('Producto:', margin, yPosition);
     doc.setFont('helvetica', 'normal');
-    doc.text(data.producto, margin + 17, yPosition);
+    doc.text(data.producto, margin + 23, yPosition);
     yPosition += 5;
 
     // SECCIÓN PLACAS (compacta)
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(13);
     doc.text('Placas:', margin, yPosition);
 
     doc.setFont('helvetica', 'normal');
@@ -213,7 +221,7 @@ export class PdfGeneratorService {
     }
 
     const placasText = placas.join(' | ');
-    doc.text(placasText, margin + 13, yPosition);
+    doc.text(placasText, margin + 20, yPosition);
     yPosition += 5;
 
     const tableX = margin;
@@ -221,7 +229,12 @@ export class PdfGeneratorService {
     const rowHeight = 5;
 
     // TABLA COMPACTA DE PESAJE
-    const colWidths = [tableWidth / 4, tableWidth / 4, tableWidth / 4, tableWidth / 4];
+    const colWidths = [
+      tableWidth / 4,
+      tableWidth / 4,
+      tableWidth / 4,
+      tableWidth / 4,
+    ];
     const pesoBrutoSalida =
       data.tipoUnidad === 'doble-remolque'
         ? this.getDoubleTrailerExitWeight(data)
@@ -229,97 +242,237 @@ export class PdfGeneratorService {
 
     // Encabezado
     drawBox(tableX, yPosition, colWidths[0], rowHeight, lightGray);
-    drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight, lightGray);
-    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, lightGray);
-    drawBox(tableX + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowHeight, lightGray);
+    drawBox(
+      tableX + colWidths[0],
+      yPosition,
+      colWidths[1],
+      rowHeight,
+      lightGray
+    );
+    drawBox(
+      tableX + colWidths[0] + colWidths[1],
+      yPosition,
+      colWidths[2],
+      rowHeight,
+      lightGray
+    );
+    drawBox(
+      tableX + colWidths[0] + colWidths[1] + colWidths[2],
+      yPosition,
+      colWidths[3],
+      rowHeight,
+      lightGray
+    );
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6);
+    doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text('Hora de entrada', tableX + 1, yPosition + 3.5);
     doc.text('Peso a la entrada', tableX + colWidths[0] + 1, yPosition + 3.5);
-    doc.text('Hora de salida', tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
-    doc.text('Peso a la salida', tableX + colWidths[0] + colWidths[1] + colWidths[2] + 1, yPosition + 3.5);
+    doc.text(
+      'Hora de salida',
+      tableX + colWidths[0] + colWidths[1] + 1,
+      yPosition + 3.5
+    );
+    doc.text(
+      'Peso a la salida',
+      tableX + colWidths[0] + colWidths[1] + colWidths[2] + 1,
+      yPosition + 3.5
+    );
     yPosition += rowHeight;
 
     // Datos
     drawBox(tableX, yPosition, colWidths[0], rowHeight);
     drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight);
-    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
-    drawBox(tableX + colWidths[0] + colWidths[1] + colWidths[2], yPosition, colWidths[3], rowHeight);
+    drawBox(
+      tableX + colWidths[0] + colWidths[1],
+      yPosition,
+      colWidths[2],
+      rowHeight
+    );
+    drawBox(
+      tableX + colWidths[0] + colWidths[1] + colWidths[2],
+      yPosition,
+      colWidths[3],
+      rowHeight
+    );
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6);
+    doc.setFontSize(12);
     doc.text(this.formatDate(data.fechaEntrada), tableX + 1, yPosition + 3.5);
-    doc.text(`${this.formatWeight(data.pesoBrutoEntrada)} kg`, tableX + colWidths[0] + 1, yPosition + 3.5);
-    doc.text(this.formatDate(data.fechaSalida), tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
-    doc.text(`${this.formatWeight(pesoBrutoSalida)} kg`, tableX + colWidths[0] + colWidths[1] + colWidths[2] + 1, yPosition + 3.5);
+    doc.text(
+      `${this.formatWeight(data.pesoBrutoEntrada)} kg`,
+      tableX + colWidths[0] + 1,
+      yPosition + 3.5
+    );
+    doc.text(
+      this.formatDate(data.fechaSalida),
+      tableX + colWidths[0] + colWidths[1] + 1,
+      yPosition + 3.5
+    );
+    doc.text(
+      `${this.formatWeight(pesoBrutoSalida)} kg`,
+      tableX + colWidths[0] + colWidths[1] + colWidths[2] + 1,
+      yPosition + 3.5
+    );
     yPosition += rowHeight;
 
     // Peso Neto
     const netRowHeight = 6;
     drawBox(tableX, yPosition, tableWidth, netRowHeight, lightGray);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(13);
     doc.text('Peso Neto', tableX + 2, yPosition + 4);
     doc.setFont('helvetica', 'normal');
     const pesoNetoText = `${this.formatWeight(data.pesoNeto)} kg`;
     const pesoNetoTextWidth = doc.getTextWidth(pesoNetoText);
-    doc.text(pesoNetoText, tableX + tableWidth - pesoNetoTextWidth - 2, yPosition + 4);
+    doc.text(
+      pesoNetoText,
+      tableX + tableWidth - pesoNetoTextWidth - 2,
+      yPosition + 4
+    );
     yPosition += netRowHeight + 4;
 
     // Si es doble remolque, mostrar tabla de remolques compacta
-    if (data.tipoUnidad === 'doble-remolque' && (data.remolque1 || data.remolque2)) {
+    if (
+      data.tipoUnidad === 'doble-remolque' &&
+      (data.remolque1 || data.remolque2)
+    ) {
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
+      doc.setFontSize(13);
       doc.text('Remolques:', margin, yPosition);
       yPosition += 4;
 
-      const colWidthsRem = [tableWidth / 4, tableWidth / 4, tableWidth / 4, tableWidth / 4];
+      const colWidthsRem = [
+        tableWidth / 4,
+        tableWidth / 4,
+        tableWidth / 4,
+        tableWidth / 4,
+      ];
 
       // Encabezado
       drawBox(tableX, yPosition, colWidthsRem[0], rowHeight, lightGray);
-      drawBox(tableX + colWidthsRem[0], yPosition, colWidthsRem[1], rowHeight, lightGray);
-      drawBox(tableX + colWidthsRem[0] + colWidthsRem[1], yPosition, colWidthsRem[2], rowHeight, lightGray);
-      drawBox(tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2], yPosition, colWidthsRem[3], rowHeight, lightGray);
+      drawBox(
+        tableX + colWidthsRem[0],
+        yPosition,
+        colWidthsRem[1],
+        rowHeight,
+        lightGray
+      );
+      drawBox(
+        tableX + colWidthsRem[0] + colWidthsRem[1],
+        yPosition,
+        colWidthsRem[2],
+        rowHeight,
+        lightGray
+      );
+      drawBox(
+        tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2],
+        yPosition,
+        colWidthsRem[3],
+        rowHeight,
+        lightGray
+      );
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6);
+      doc.setFontSize(12);
       doc.text('Remolque', tableX + 1, yPosition + 3.5);
       doc.text('Bruto', tableX + colWidthsRem[0] + 1, yPosition + 3.5);
-      doc.text('Tara', tableX + colWidthsRem[0] + colWidthsRem[1] + 1, yPosition + 3.5);
-      doc.text('Neto', tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1, yPosition + 3.5);
+      doc.text(
+        'Tara',
+        tableX + colWidthsRem[0] + colWidthsRem[1] + 1,
+        yPosition + 3.5
+      );
+      doc.text(
+        'Neto',
+        tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1,
+        yPosition + 3.5
+      );
       yPosition += rowHeight;
 
       // Remolque 1
       if (data.remolque1) {
         drawBox(tableX, yPosition, colWidthsRem[0], rowHeight);
-        drawBox(tableX + colWidthsRem[0], yPosition, colWidthsRem[1], rowHeight);
-        drawBox(tableX + colWidthsRem[0] + colWidthsRem[1], yPosition, colWidthsRem[2], rowHeight);
-        drawBox(tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2], yPosition, colWidthsRem[3], rowHeight);
+        drawBox(
+          tableX + colWidthsRem[0],
+          yPosition,
+          colWidthsRem[1],
+          rowHeight
+        );
+        drawBox(
+          tableX + colWidthsRem[0] + colWidthsRem[1],
+          yPosition,
+          colWidthsRem[2],
+          rowHeight
+        );
+        drawBox(
+          tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2],
+          yPosition,
+          colWidthsRem[3],
+          rowHeight
+        );
 
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6);
+        doc.setFontSize(12);
         doc.text('R1', tableX + 1, yPosition + 3.5);
-        doc.text(this.formatWeight(data.remolque1.pesoBruto), tableX + colWidthsRem[0] + 1, yPosition + 3.5);
-        doc.text(this.formatWeight(data.remolque1.pesoTara), tableX + colWidthsRem[0] + colWidthsRem[1] + 1, yPosition + 3.5);
-        doc.text(this.formatWeight(data.remolque1.pesoNeto), tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1, yPosition + 3.5);
+        doc.text(
+          this.formatWeight(data.remolque1.pesoBruto),
+          tableX + colWidthsRem[0] + 1,
+          yPosition + 3.5
+        );
+        doc.text(
+          this.formatWeight(data.remolque1.pesoTara),
+          tableX + colWidthsRem[0] + colWidthsRem[1] + 1,
+          yPosition + 3.5
+        );
+        doc.text(
+          this.formatWeight(data.remolque1.pesoNeto),
+          tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1,
+          yPosition + 3.5
+        );
         yPosition += rowHeight;
       }
 
       // Remolque 2
       if (data.remolque2) {
         drawBox(tableX, yPosition, colWidthsRem[0], rowHeight);
-        drawBox(tableX + colWidthsRem[0], yPosition, colWidthsRem[1], rowHeight);
-        drawBox(tableX + colWidthsRem[0] + colWidthsRem[1], yPosition, colWidthsRem[2], rowHeight);
-        drawBox(tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2], yPosition, colWidthsRem[3], rowHeight);
+        drawBox(
+          tableX + colWidthsRem[0],
+          yPosition,
+          colWidthsRem[1],
+          rowHeight
+        );
+        drawBox(
+          tableX + colWidthsRem[0] + colWidthsRem[1],
+          yPosition,
+          colWidthsRem[2],
+          rowHeight
+        );
+        drawBox(
+          tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2],
+          yPosition,
+          colWidthsRem[3],
+          rowHeight
+        );
 
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6);
+        doc.setFontSize(12);
         doc.text('R2', tableX + 1, yPosition + 3.5);
-        doc.text(this.formatWeight(data.remolque2.pesoBruto), tableX + colWidthsRem[0] + 1, yPosition + 3.5);
-        doc.text(this.formatWeight(data.remolque2.pesoTara), tableX + colWidthsRem[0] + colWidthsRem[1] + 1, yPosition + 3.5);
-        doc.text(this.formatWeight(data.remolque2.pesoNeto), tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1, yPosition + 3.5);
+        doc.text(
+          this.formatWeight(data.remolque2.pesoBruto),
+          tableX + colWidthsRem[0] + 1,
+          yPosition + 3.5
+        );
+        doc.text(
+          this.formatWeight(data.remolque2.pesoTara),
+          tableX + colWidthsRem[0] + colWidthsRem[1] + 1,
+          yPosition + 3.5
+        );
+        doc.text(
+          this.formatWeight(data.remolque2.pesoNeto),
+          tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1,
+          yPosition + 3.5
+        );
         yPosition += rowHeight;
       }
 
@@ -358,7 +511,7 @@ export class PdfGeneratorService {
 
       // Texto debajo del QR
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5);
+      doc.setFontSize(9);
       doc.setTextColor(0, 0, 0);
       const qrText = 'Escanea el código QR';
       const qrTextWidth = doc.getTextWidth(qrText);
@@ -371,7 +524,7 @@ export class PdfGeneratorService {
     // FOOTER COMPACTO
     const maxFooterY = startY + halfPageHeight - 3;
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(5);
+    doc.setFontSize(9);
     doc.setTextColor(128, 128, 128);
     const footerText = `Impreso: ${this.formatDate(new Date())}`;
     const footerWidth = doc.getTextWidth(footerText);
