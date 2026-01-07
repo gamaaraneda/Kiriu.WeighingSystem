@@ -720,49 +720,50 @@
       </header>
       <div class="km-modal__body" *ngIf="operationToEdit">
         <form [formGroup]="editForm">
-          <div class="edit-info-banner">
-            <span class="edit-info-icon">ℹ️</span>
-            <div class="edit-info-content">
-              <strong>Información:</strong>
-              <p>
-                Solo puedes editar los pesos. Los datos de cliente, producto y
-                fotos no pueden modificarse.
-              </p>
-            </div>
-          </div>
-
           <!-- Información no editable -->
           <div class="readonly-section">
             <h4 class="section-title">Información General (Solo lectura)</h4>
             <div class="readonly-grid">
-              <div class="readonly-field">
-                <span class="readonly-label">Cliente/Proveedor:</span>
-                <span class="readonly-value">{{
-                  operationToEdit.clienteProveedor
-                }}</span>
-              </div>
-              <div class="readonly-field">
-                <span class="readonly-label">Producto:</span>
-                <span class="readonly-value">{{
-                  operationToEdit.producto
-                }}</span>
-              </div>
-              <div class="readonly-field">
-                <span class="readonly-label">Placas:</span>
-                <span class="readonly-value">{{ operationToEdit.placas }}</span>
-              </div>
               <div class="readonly-field">
                 <span class="readonly-label">Estado:</span>
                 <span class="readonly-value">{{
                   getEstadoLabel(operationToEdit.estado)
                 }}</span>
               </div>
+              <div class="readonly-field">
+                <span class="readonly-label">Fecha:</span>
+                <span class="readonly-value">{{
+                  operationToEdit.fecha | date : "dd/MM/yyyy HH:mm"
+                }}</span>
+              </div>
+              <div class="readonly-field">
+                <span class="readonly-label">Peso de entrada:</span>
+                <span class="readonly-value">
+                  <span *ngIf="operationToEdit.pesoBruto"
+                    >{{ operationToEdit.pesoBruto | number : "1.0-0" }} kg</span
+                  >
+                  <span *ngIf="!operationToEdit.pesoBruto" class="peso-empty"
+                    >—</span
+                  >
+                </span>
+              </div>
+              <div class="readonly-field">
+                <span class="readonly-label">Peso de salida:</span>
+                <span class="readonly-value">
+                  <span *ngIf="operationToEdit.pesoSalida"
+                    >{{ operationToEdit.pesoSalida | number : "1.0-0" }} kg</span
+                  >
+                  <span *ngIf="!operationToEdit.pesoSalida" class="peso-empty"
+                    >—</span
+                  >
+                </span>
+              </div>
             </div>
           </div>
 
           <!-- Campos editables -->
           <div class="editable-section">
-            <h4 class="section-title">Pesos (Editables)</h4>
+            <h4 class="section-title">Datos editables</h4>
             <div class="form-grid">
               <div class="form-field">
                 <label class="label" for="entryWeight"
