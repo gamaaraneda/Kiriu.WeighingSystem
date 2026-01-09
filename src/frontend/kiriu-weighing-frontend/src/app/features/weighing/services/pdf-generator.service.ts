@@ -136,7 +136,7 @@ export class PdfGeneratorService {
     const folioWidth = doc.getTextWidth(folioText);
     doc.text(folioText, pageWidth - margin - folioWidth, yPosition);
 
-    yPosition += 5;
+    yPosition += 9;
 
     // Fecha
     doc.setFont('helvetica', 'normal');
@@ -144,14 +144,14 @@ export class PdfGeneratorService {
     const fechaText = `Fecha: ${this.formatDate(data.fecha)}`;
     doc.text(fechaText, margin, yPosition);
 
-    yPosition += 2;
+    yPosition += 6;
 
     // Línea separadora
     doc.setDrawColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
     doc.setLineWidth(0.3);
     doc.line(margin, yPosition, pageWidth - margin, yPosition);
 
-    yPosition += 5;
+    yPosition += 9;
 
     // INFORMACIÓN GENERAL (compacta)
     doc.setFont('helvetica', 'bold');
@@ -174,7 +174,7 @@ export class PdfGeneratorService {
     doc.setTextColor(0, 150, 0);
     doc.text('SALIDA', midPoint + 30, yPosition);
     doc.setTextColor(0, 0, 0);
-    yPosition += 4;
+    yPosition += 8;
 
     // Segunda línea: Cliente/Proveedor y Tipo
     doc.setFont('helvetica', 'bold');
@@ -190,7 +190,7 @@ export class PdfGeneratorService {
       midPoint + 15,
       yPosition
     );
-    yPosition += 4;
+    yPosition += 8;
 
     // Tercera línea: Producto y Registrado por
     doc.setFont('helvetica', 'bold');
@@ -206,7 +206,7 @@ export class PdfGeneratorService {
       doc.text(this.extractUsername(data.createdBy), midPoint + 35, yPosition);
     }
 
-    yPosition += 5;
+    yPosition += 9;
 
     // SECCIÓN PLACAS (compacta)
     doc.setFont('helvetica', 'bold');
@@ -232,7 +232,7 @@ export class PdfGeneratorService {
 
     const placasText = placas.join(' | ');
     doc.text(placasText, margin + 20, yPosition);
-    yPosition += 5;
+    yPosition += 9;
 
     const tableX = margin;
     const tableWidth = pageWidth - margin * 2;
@@ -341,7 +341,7 @@ export class PdfGeneratorService {
       tableX + tableWidth - pesoNetoTextWidth - 2,
       yPosition + 4
     );
-    yPosition += netRowHeight + 4;
+    yPosition += netRowHeight + 7;
 
     // Sección de remolques deshabilitada para doble remolque
     // No se muestra la tabla de remolques cuando el tipo de unidad es "doble-remolque"
@@ -518,7 +518,7 @@ export class PdfGeneratorService {
       const qrSize = 45; // Aumentado 50% desde 25
       const qrX = (pageWidth - qrSize) / 2;
       doc.addImage(qrCodeDataUrl, 'PNG', qrX, yPosition, qrSize, qrSize);
-      yPosition += qrSize + 2;
+      yPosition += qrSize + 5;
 
       // Texto debajo del QR
       doc.setFont('helvetica', 'normal');
@@ -527,7 +527,7 @@ export class PdfGeneratorService {
       const qrText = 'Escanea el código QR';
       const qrTextWidth = doc.getTextWidth(qrText);
       doc.text(qrText, (pageWidth - qrTextWidth) / 2, yPosition);
-      yPosition += 3;
+      yPosition += 7;
     } catch (error) {
       console.error('Error generando código QR:', error);
     }
