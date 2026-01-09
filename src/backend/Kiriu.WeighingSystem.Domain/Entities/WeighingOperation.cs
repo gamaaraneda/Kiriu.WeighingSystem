@@ -85,7 +85,14 @@ public class WeighingOperation
     /// </summary>
     [MaxLength(100)]
     public string? UsuarioEditor { get; set; }
-    
+
+    /// <summary>
+    /// Email del usuario que creó el registro de pesaje
+    /// Se llena automáticamente al crear la operación
+    /// </summary>
+    [MaxLength(255)]
+    public string? CreatedBy { get; set; }
+
     // Navigation properties
     public virtual ICollection<WeighingPhoto> Photos { get; set; } = new List<WeighingPhoto>();
     public virtual ICollection<WeighingRemolque> Remolques { get; set; } = new List<WeighingRemolque>();

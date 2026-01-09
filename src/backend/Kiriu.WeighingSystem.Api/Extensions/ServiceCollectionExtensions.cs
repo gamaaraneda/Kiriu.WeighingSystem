@@ -7,6 +7,7 @@ using Kiriu.WeighingSystem.Domain.Interfaces;
 using Kiriu.WeighingSystem.Infrastructure.Data;
 using Kiriu.WeighingSystem.Infrastructure.Repositories;
 using Kiriu.WeighingSystem.Infrastructure.Services;
+using Kiriu.WeighingSystem.Infrastructure.Interceptors;
 using Kiriu.WeighingSystem.Api.Services;
 
 namespace Kiriu.WeighingSystem.Api.Extensions;
@@ -66,13 +67,19 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<WeighingDbContext>(options =>
+        // Registrar el interceptor para auditoría de CreatedBy
+        services.AddScoped<AuditInterceptor>();
+
+        services.AddDbContext<WeighingDbContext>((serviceProvider, options) =>
         {
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
-            
+
             // Configurar SQL Server para usar configuración básica sin cultura específica
             options.ConfigureWarnings(warnings => warnings.Ignore(
                 Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored));
+
+            // Agregar interceptor para poblar CreatedBy automáticamente
+            options.AddInterceptors(serviceProvider.GetRequiredService<AuditInterceptor>());
         });
 
         return services;

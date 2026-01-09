@@ -18,6 +18,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure Settings from appsettings.json
 builder.Services.Configure<PhotoSettings>(builder.Configuration.GetSection("PhotoSettings"));
 
+// Add HttpContextAccessor for user tracking
+builder.Services.AddHttpContextAccessor();
+
 // Configure Services
 builder.Services
     .ConfigureCulture()
