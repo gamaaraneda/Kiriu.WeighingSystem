@@ -199,12 +199,13 @@ export class PdfGeneratorService {
     doc.text(data.producto, margin + 23, yPosition);
 
     // Registrado por (mismo nivel que Producto, a la derecha)
-    if (data.createdBy) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Registrado por:', midPoint, yPosition);
-      doc.setFont('helvetica', 'normal');
-      doc.text(this.extractUsername(data.createdBy), midPoint + 35, yPosition);
-    }
+    doc.setFont('helvetica', 'bold');
+    doc.text('Registrado por:', midPoint, yPosition);
+    doc.setFont('helvetica', 'normal');
+    const createdByText = (data.createdBy && data.createdBy.trim() !== '') 
+      ? this.extractUsername(data.createdBy) 
+      : '--';
+    doc.text(createdByText, midPoint + 35, yPosition);
 
     yPosition += 9;
 
