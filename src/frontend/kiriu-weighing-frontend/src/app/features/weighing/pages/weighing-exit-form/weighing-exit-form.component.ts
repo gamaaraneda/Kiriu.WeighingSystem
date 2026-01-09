@@ -760,6 +760,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       placaRemolque2: operation.placaRemolque2,
       placaTrailerContenedor: operation.trailerPlateContenedor,
       placaRemolqueContenedor: operation.remolquePlateContenedor,
+      createdBy: operation.createdBy,
       fotos: {
         fotoEntradaTrailer: '',
         fotoEntradaRemolque: '',
@@ -1619,6 +1620,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         clienteProveedor: this.entryData.clientProviderName || '',
         tipo: 'client', // Por defecto, ya que EntrySearchData no tiene este campo
         producto: this.entryData.product || '',
+        createdBy: this.entryData.createdBy,
 
         // Datos de entrada - pasar strings directamente del backend
         fechaEntrada: this.entryData.createdAt || new Date().toISOString(),

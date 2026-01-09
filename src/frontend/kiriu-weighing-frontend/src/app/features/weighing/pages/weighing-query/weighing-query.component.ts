@@ -481,6 +481,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         clienteProveedor: fullOperation.clientProviderName,
         tipo: fullOperation.unitType || 'cliente',
         producto: fullOperation.product,
+        createdBy: fullOperation.createdBy,
 
         // Datos de entrada - pasar strings directamente del backend
         fechaEntrada: fullOperation.createdAt,

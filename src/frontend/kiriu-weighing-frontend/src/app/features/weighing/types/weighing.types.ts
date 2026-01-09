@@ -121,6 +121,7 @@ export interface EntrySearchData {
   fueEditado?: boolean;
   fechaUltimaEdicion?: Date;
   usuarioEditor?: string;
+  createdBy?: string;
   fotos: {
     fotoEntradaTrailer?: string;
     fotoEntradaRemolque?: string;

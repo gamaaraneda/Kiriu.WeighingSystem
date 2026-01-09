@@ -56,6 +56,7 @@ export interface WeighingOperationDto {
   fueEditado?: boolean;
   fechaUltimaEdicion?: string;
   usuarioEditor?: string;
+  createdBy?: string;
 }
 
 export interface CreateDoubleTrailerEntryRequest {

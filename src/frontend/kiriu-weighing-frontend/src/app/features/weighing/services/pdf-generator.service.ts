@@ -9,6 +9,7 @@ export interface WeighingReceiptData {
   clienteProveedor: string;
   tipo: string;
   producto: string;
+  createdBy?: string;
 
   // Datos de entrada
   fechaEntrada: Date | string;
@@ -191,11 +192,20 @@ export class PdfGeneratorService {
     );
     yPosition += 4;
 
-    // Tercera línea: Producto
+    // Tercera línea: Producto y Registrado por
     doc.setFont('helvetica', 'bold');
     doc.text('Producto:', margin, yPosition);
     doc.setFont('helvetica', 'normal');
     doc.text(data.producto, margin + 23, yPosition);
+
+    // Registrado por (mismo nivel que Producto, a la derecha)
+    if (data.createdBy) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Registrado por:', midPoint, yPosition);
+      doc.setFont('helvetica', 'normal');
+      doc.text(this.extractUsername(data.createdBy), midPoint + 35, yPosition);
+    }
+
     yPosition += 5;
 
     // SECCIÓN PLACAS (compacta)
@@ -639,5 +649,15 @@ export class PdfGeneratorService {
       'contenedor-con-remolque': 'Contenedor con Remolque',
     };
     return displayNames[tipoUnidad] || tipoUnidad;
+  }
+
+  /**
+   * Extrae el nombre de usuario de un correo electrónico
+   * Ejemplo: "juan.perez@empresa.com" -> "juan.perez"
+   */
+  private extractUsername(email: string): string {
+    if (!email) return '';
+    const parts = email.split('@');
+    return parts[0] || email;
   }
 }
