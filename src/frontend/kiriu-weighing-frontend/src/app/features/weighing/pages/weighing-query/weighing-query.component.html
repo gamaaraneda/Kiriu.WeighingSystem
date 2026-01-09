@@ -196,6 +196,7 @@
                   <th class="col-peso">Peso Salida</th>
                   <th class="col-peso">Peso Neto</th>
                   <th class="col-estado">Estado</th>
+                  <th class="col-usuario">Registrado Por</th>
                   <th class="col-acciones">Acciones</th>
                 </tr>
               </thead>
@@ -302,6 +303,11 @@
                         Editado
                       </span>
                     </div>
+                  </td>
+                  <td class="col-usuario">
+                    <span class="text-muted">{{
+                      operation.createdBy | username
+                    }}</span>
                   </td>
                   <td class="col-acciones">
                     <div class="actions-group">
@@ -751,7 +757,10 @@
                 <span class="readonly-label">Peso de salida:</span>
                 <span class="readonly-value">
                   <span *ngIf="operationToEdit.pesoSalida"
-                    >{{ operationToEdit.pesoSalida | number : "1.0-0" }} kg</span
+                    >{{
+                      operationToEdit.pesoSalida | number : "1.0-0"
+                    }}
+                    kg</span
                   >
                   <span *ngIf="!operationToEdit.pesoSalida" class="peso-empty"
                     >—</span
@@ -815,9 +824,7 @@
               </div>
 
               <!-- Placas dinámicas según tipo de unidad -->
-              <ng-container
-                [ngSwitch]="editForm.get('tipoUnidad')?.value"
-              >
+              <ng-container [ngSwitch]="editForm.get('tipoUnidad')?.value">
                 <!-- Remolque: TrailerPlate y TrailerPlate2 -->
                 <ng-container *ngSwitchCase="'remolque'">
                   <div class="form-field">

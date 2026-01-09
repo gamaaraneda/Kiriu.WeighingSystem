@@ -20,6 +20,7 @@ import {
 } from '../../services/pdf-generator.service';
 import { RealWeighingService } from '../../services/real-weighing.service';
 import { environment } from '../../../../../environments/environment';
+import { UsernamePipe } from '../../../../shared/pipes/username.pipe';
 
 @Component({
   selector: 'app-weighing-query',
@@ -30,6 +31,7 @@ import { environment } from '../../../../../environments/environment';
     HeaderComponent,
     BreadcrumbComponent,
     HasPermissionDirective,
+    UsernamePipe,
   ],
   templateUrl: './weighing-query.component.html',
   styleUrls: ['./weighing-query.component.scss'],

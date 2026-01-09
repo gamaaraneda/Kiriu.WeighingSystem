@@ -24,6 +24,7 @@ public class WeighingOperationDto
     public bool FueEditado { get; set; } = false;
     public DateTime? FechaUltimaEdicion { get; set; }
     public string? UsuarioEditor { get; set; }
+    public string? CreatedBy { get; set; }
 }
 
 public class EntrySearchDataDto

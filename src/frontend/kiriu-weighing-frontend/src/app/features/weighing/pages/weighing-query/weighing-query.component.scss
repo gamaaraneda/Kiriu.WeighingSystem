@@ -2069,3 +2069,22 @@
     gap: 12px;
   }
 }
+
+/* ============================================================================
+ * COLUMNA DE USUARIO (CREADO POR)
+ * ============================================================================ */
+
+.col-usuario {
+  min-width: 120px;
+  max-width: 150px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-usuario .text-muted {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  font-weight: var(--fw-regular);
+}

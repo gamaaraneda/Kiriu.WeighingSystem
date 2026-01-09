@@ -37,6 +37,7 @@ export interface WeighingQueryResult {
   fechaEdicion?: Date;
   puedeReimprimir: boolean;
   photos: WeighingPhotoDto[];
+  createdBy?: string | null; // Email del usuario que creó el pesaje
 }
 
 export interface WeighingQueryResponse {

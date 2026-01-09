@@ -62,6 +62,7 @@ public class WeighingQueryService : IWeighingQueryService
                 FueEditado = op.FueEditado,
                 FechaEdicion = op.FechaUltimaEdicion,
                 PuedeReimprimir = op.Status == "SALIDA_REGISTRADA",
+                CreatedBy = op.CreatedBy,
                 Photos = op.Photos?.Select(p => new WeighingPhotoDto
                 {
                     Id = p.Id.ToString(),
