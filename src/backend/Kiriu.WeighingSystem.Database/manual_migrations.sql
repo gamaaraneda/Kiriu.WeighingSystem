@@ -16,7 +16,7 @@ GO
 -- =====================================================
 -- VARIABLES DE CONTROL
 -- =====================================================
-DECLARE @CurrentVersion INT = 5; -- Versión actual del script
+DECLARE @CurrentVersion INT = 6; -- Versión actual del script
 DECLARE @SchemaVersion INT;
 
 -- Crear tabla de versiones si no existe
@@ -457,6 +457,40 @@ END
 ELSE
 BEGIN
     PRINT 'Versión 5 ya aplicada, saltando...';
+END
+
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 6: AGREGAR COLUMNA ExitRegisteredBy
+-- =====================================================
+IF @SchemaVersion < 6
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 6: AGREGAR COLUMNA ExitRegisteredBy';
+    PRINT '==========================================';
+
+    -- Agregar columna ExitRegisteredBy a WeighingOperations
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('WeighingOperations') AND name = 'ExitRegisteredBy')
+    BEGIN
+        ALTER TABLE [dbo].[WeighingOperations]
+        ADD [ExitRegisteredBy] NVARCHAR(255) NULL;
+
+        PRINT '✓ Columna ExitRegisteredBy agregada exitosamente.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Columna ExitRegisteredBy ya existe.';
+    END
+
+    -- Registrar migración
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (6, 'Agregar columna ExitRegisteredBy para rastrear usuario que registra salida', 'manual_migrations.sql');
+
+    PRINT '✓ Versión 6 aplicada exitosamente.';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'Versión 6 ya aplicada, saltando...';
 END
 
 -- Mostrar historial de migraciones

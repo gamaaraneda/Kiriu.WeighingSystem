@@ -148,9 +148,9 @@ public class WeighingController : ControllerBase
         try
         {
             _logger.LogInformation("Registrando salida para folio: {Folio}", request.Folio);
-            
+
             var result = await _weighingService.CreateExitAsync(request);
-            
+
             if (!result.Success)
             {
                 return result.Message?.Contains("no encontrado") == true ? NotFound(result) : BadRequest(result);
@@ -176,9 +176,9 @@ public class WeighingController : ControllerBase
         try
         {
             _logger.LogInformation("Registrando salida con doble remolque para folio: {Folio}", request.Folio);
-            
+
             var result = await _weighingService.CreateDoubleTrailerExitAsync(request);
-            
+
             if (!result.Success)
             {
                 return result.Message?.Contains("no encontrado") == true ? NotFound(result) : BadRequest(result);

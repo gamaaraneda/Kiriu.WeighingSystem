@@ -8,7 +8,8 @@ namespace Kiriu.WeighingSystem.Infrastructure.Interceptors;
 
 /// <summary>
 /// Interceptor que automáticamente llena el campo CreatedBy en WeighingOperation
-/// al momento de crear nuevos registros, usando el email del usuario autenticado
+/// al momento de crear nuevos registros, y ExitRegisteredBy al registrar salidas,
+/// usando el email del usuario autenticado
 /// </summary>
 public class AuditInterceptor : SaveChangesInterceptor
 {
@@ -42,7 +43,7 @@ public class AuditInterceptor : SaveChangesInterceptor
 
         var userEmail = GetCurrentUserEmail();
 
-        // Solo aplicar a entidades WeighingOperation que están siendo creadas
+        // Aplicar a entidades WeighingOperation que están siendo creadas
         var weighingEntries = context.ChangeTracker
             .Entries<WeighingOperation>()
             .Where(e => e.State == EntityState.Added);
@@ -54,6 +55,18 @@ public class AuditInterceptor : SaveChangesInterceptor
             {
                 entry.Entity.CreatedBy = userEmail ?? "SYSTEM";
             }
+        }
+
+        // Aplicar a entidades WeighingOperation que están siendo modificadas a estado SALIDA_REGISTRADA
+        var modifiedWeighingEntries = context.ChangeTracker
+            .Entries<WeighingOperation>()
+            .Where(e => e.State == EntityState.Modified &&
+                        e.Entity.Status == "SALIDA_REGISTRADA" &&
+                        string.IsNullOrEmpty(e.Entity.ExitRegisteredBy));
+
+        foreach (var entry in modifiedWeighingEntries)
+        {
+            entry.Entity.ExitRegisteredBy = userEmail ?? "SYSTEM";
         }
     }
 

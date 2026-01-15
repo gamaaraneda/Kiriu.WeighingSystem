@@ -93,6 +93,13 @@ public class WeighingOperation
     [MaxLength(255)]
     public string? CreatedBy { get; set; }
 
+    /// <summary>
+    /// Email del usuario que registró la salida
+    /// Se llena automáticamente al registrar la salida
+    /// </summary>
+    [MaxLength(255)]
+    public string? ExitRegisteredBy { get; set; }
+
     // Navigation properties
     public virtual ICollection<WeighingPhoto> Photos { get; set; } = new List<WeighingPhoto>();
     public virtual ICollection<WeighingRemolque> Remolques { get; set; } = new List<WeighingRemolque>();
