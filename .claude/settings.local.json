@@ -59,7 +59,8 @@
       "Read(//d/**)",
       "Bash(Select-String -Pattern \"error |warning \")",
       "Bash(Select-Object -First 20)",
-      "Bash(Select-String -Pattern \"error \")"
+      "Bash(Select-String -Pattern \"error \")",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
