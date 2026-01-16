@@ -603,8 +603,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     const value = input.value;
     // Solo permitir letras, números y guion medio
     const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
-    // Limitar a 12 caracteres
-    const truncatedValue = filteredValue.substring(0, 12);
+    // Limitar a 20 caracteres
+    const truncatedValue = filteredValue.substring(0, 20);
 
     if (value !== truncatedValue) {
       // Si hubo cambios, actualizar el valor del input y del formulario
@@ -616,13 +616,31 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Filtrar caracteres no permitidos en tiempo real para campos alfanuméricos (producto, cliente)
-  // (reutilizado del formulario de entrada)
+  // Filtrar caracteres no permitidos en tiempo real para cliente/proveedor
   onAlphanumericInput(event: Event, fieldName: string): void {
     const input = event.target as HTMLInputElement;
     const value = input.value;
-    // Solo permitir letras, números y espacios
-    const filteredValue = value.replace(/[^a-zA-Z0-9\s]/g, '');
+    // Solo permitir letras, números, espacios y guion medio
+    const filteredValue = value.replace(/[^a-zA-Z0-9\s-]/g, '');
+    // Limitar a 50 caracteres
+    const truncatedValue = filteredValue.substring(0, 50);
+
+    if (value !== truncatedValue) {
+      // Si hubo cambios, actualizar el valor del input y del formulario
+      input.value = truncatedValue;
+      this.editForm.patchValue(
+        { [fieldName]: truncatedValue },
+        { emitEvent: false }
+      );
+    }
+  }
+
+  // Filtrar caracteres no permitidos en tiempo real para producto
+  onProductInput(event: Event, fieldName: string): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras, números, espacios y los caracteres especiales: - / # .
+    const filteredValue = value.replace(/[^a-zA-Z0-9\s\-\/#.]/g, '');
     // Limitar a 50 caracteres
     const truncatedValue = filteredValue.substring(0, 50);
 

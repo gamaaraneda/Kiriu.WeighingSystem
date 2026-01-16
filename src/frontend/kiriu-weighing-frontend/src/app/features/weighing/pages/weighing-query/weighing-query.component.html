@@ -763,6 +763,12 @@
                 </span>
               </div>
               <div class="readonly-field">
+                <span class="readonly-label">Pesado a la entrada por:</span>
+                <span class="readonly-value">{{
+                  operationToEdit.createdBy | username
+                }}</span>
+              </div>
+              <div class="readonly-field">
                 <span class="readonly-label">Peso de salida:</span>
                 <span class="readonly-value">
                   <span *ngIf="operationToEdit.pesoSalida"
@@ -775,6 +781,12 @@
                     >—</span
                   >
                 </span>
+              </div>
+              <div class="readonly-field">
+                <span class="readonly-label">Pesado a la salida por:</span>
+                <span class="readonly-value">{{
+                  operationToEdit.exitRegisteredBy | username
+                }}</span>
               </div>
             </div>
           </div>
@@ -828,7 +840,7 @@
                   class="input"
                   placeholder="Nombre del producto"
                   maxlength="50"
-                  (input)="onAlphanumericInput($event, 'producto')"
+                  (input)="onProductInput($event, 'producto')"
                 />
               </div>
 
@@ -846,7 +858,7 @@
                       formControlName="trailerPlate"
                       class="input"
                       placeholder="ABC-123"
-                      maxlength="12"
+                      maxlength="20"
                       (input)="onPlateInput($event, 'trailerPlate')"
                     />
                   </div>
@@ -861,7 +873,7 @@
                       formControlName="trailerPlate2"
                       class="input"
                       placeholder="XYZ-456"
-                      maxlength="12"
+                      maxlength="20"
                       (input)="onPlateInput($event, 'trailerPlate2')"
                     />
                   </div>
@@ -879,7 +891,7 @@
                       formControlName="trailerPlate"
                       class="input"
                       placeholder="ABC-123"
-                      maxlength="12"
+                      maxlength="20"
                       (input)="onPlateInput($event, 'trailerPlate')"
                     />
                   </div>
@@ -894,7 +906,7 @@
                       formControlName="placaRemolque1"
                       class="input"
                       placeholder="REM1-123"
-                      maxlength="12"
+                      maxlength="20"
                       (input)="onPlateInput($event, 'placaRemolque1')"
                     />
                   </div>
@@ -909,7 +921,7 @@
                       formControlName="placaRemolque2"
                       class="input"
                       placeholder="REM2-456"
-                      maxlength="12"
+                      maxlength="20"
                       (input)="onPlateInput($event, 'placaRemolque2')"
                     />
                   </div>
@@ -927,7 +939,7 @@
                       formControlName="trailerPlateContenedor"
                       class="input"
                       placeholder="ABC-123"
-                      maxlength="12"
+                      maxlength="20"
                       (input)="onPlateInput($event, 'trailerPlateContenedor')"
                     />
                   </div>
@@ -942,7 +954,7 @@
                       formControlName="remolquePlateContenedor"
                       class="input"
                       placeholder="CONT-789"
-                      maxlength="12"
+                      maxlength="20"
                       (input)="onPlateInput($event, 'remolquePlateContenedor')"
                     />
                   </div>
@@ -958,7 +970,7 @@
                       formControlName="trailerPlate"
                       class="input"
                       placeholder="ABC-123"
-                      maxlength="12"
+                      maxlength="20"
                       (input)="onPlateInput($event, 'trailerPlate')"
                     />
                   </div>
