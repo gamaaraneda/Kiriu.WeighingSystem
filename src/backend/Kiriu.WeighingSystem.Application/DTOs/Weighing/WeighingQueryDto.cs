@@ -30,6 +30,9 @@ public class WeighingQueryResultDto
     public DateTime? FechaEdicion { get; set; }
     public bool PuedeReimprimir { get; set; }
     public string? CreatedBy { get; set; }
+    public string? ExitRegisteredBy { get; set; }
+    public string? UsuarioEditor { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     public List<WeighingPhotoDto> Photos { get; set; } = new();
 }
 

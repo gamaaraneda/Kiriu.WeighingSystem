@@ -680,23 +680,32 @@
           </div>
         </div>
 
-        <!-- Información de edición -->
-        <div
-          class="edit-info"
-          *ngIf="selectedOperation.fueEditado && selectedOperation.fechaEdicion"
-        >
+        <!-- Información de registro y edición -->
+        <div class="edit-info">
           <div class="edit-info-row">
-            <span class="edit-info-label">Creado por:</span>
-            <span class="edit-info-value">operador@kiriu.com</span>
+            <span class="edit-info-label">Pesado a la entrada por:</span>
+            <span class="edit-info-value">{{
+              selectedOperation.createdBy | username
+            }}</span>
           </div>
           <div class="edit-info-row">
-            <span class="edit-info-label">Origen:</span>
-            <span class="edit-info-value">Báscula 02</span>
+            <span class="edit-info-label">Pesado a la salida por:</span>
+            <span class="edit-info-value">{{
+              selectedOperation.exitRegisteredBy | username
+            }}</span>
+          </div>
+          <div class="edit-info-row">
+            <span class="edit-info-label">Editado por:</span>
+            <span class="edit-info-value">{{
+              selectedOperation.usuarioEditor | username
+            }}</span>
           </div>
           <div class="edit-info-row">
             <span class="edit-info-label">Última edición:</span>
             <span class="edit-info-value">{{
-              selectedOperation.fechaEdicion | date : "dd/MM/yyyy HH:mm"
+              selectedOperation.updatedAt
+                ? (selectedOperation.updatedAt | date : "dd/MM/yyyy HH:mm")
+                : "--"
             }}</span>
           </div>
         </div>
