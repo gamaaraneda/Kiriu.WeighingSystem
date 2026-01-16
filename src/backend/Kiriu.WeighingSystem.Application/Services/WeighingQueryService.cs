@@ -117,6 +117,9 @@ public class WeighingQueryService : IWeighingQueryService
                 Folio = op.Folio,
                 Fecha = op.CreatedAt,
                 Placas = BuildPlacasString(op),
+                PlacaT = GetPlacaTrailer(op),
+                PlacaR = GetPlacaRemolque(op),
+                PlacaR2 = GetPlacaRemolque2(op),
                 ClienteProveedor = op.ClientProviderName,
                 Producto = op.Product,
                 Tipo = op.UnitType,
@@ -125,6 +128,8 @@ public class WeighingQueryService : IWeighingQueryService
                 PesoSalida = op.ExitWeight,
                 PesoNeto = op.NetWeight,
                 Estado = op.Status,
+                PesadoEntradaPor = FormatUsername(op.CreatedBy),
+                PesadoSalidaPor = FormatUsername(op.ExitRegisteredBy),
                 FechaEntrada = op.EntryDate,
                 FechaSalida = op.ExitDate,
                 EditadoPor = op.UsuarioEditor ?? "",
@@ -146,22 +151,61 @@ public class WeighingQueryService : IWeighingQueryService
 
         if (!string.IsNullOrEmpty(operation.TrailerPlate))
             placas.Add(operation.TrailerPlate);
-        
+
         if (!string.IsNullOrEmpty(operation.TrailerPlate2))
             placas.Add(operation.TrailerPlate2);
-        
+
         if (!string.IsNullOrEmpty(operation.TrailerPlateContenedor))
             placas.Add(operation.TrailerPlateContenedor);
-        
+
         if (!string.IsNullOrEmpty(operation.RemolquePlateContenedor))
             placas.Add(operation.RemolquePlateContenedor);
-        
+
         if (!string.IsNullOrEmpty(operation.PlacaRemolque1))
             placas.Add(operation.PlacaRemolque1);
-        
+
         if (!string.IsNullOrEmpty(operation.PlacaRemolque2))
             placas.Add(operation.PlacaRemolque2);
 
         return string.Join(", ", placas.Where(p => !string.IsNullOrEmpty(p)));
+    }
+
+    private static string GetPlacaTrailer(Domain.Entities.WeighingOperation operation)
+    {
+        // La placa del tráiler es siempre la primera placa disponible
+        return operation.TrailerPlate ?? operation.TrailerPlateContenedor ?? string.Empty;
+    }
+
+    private static string GetPlacaRemolque(Domain.Entities.WeighingOperation operation)
+    {
+        // La placa del remolque depende del tipo de unidad
+        if (operation.TipoUnidad == "doble-remolque")
+        {
+            return operation.PlacaRemolque1 ?? string.Empty;
+        }
+
+        // Para remolque simple y contenedor
+        return operation.TrailerPlate2 ?? operation.RemolquePlateContenedor ?? string.Empty;
+    }
+
+    private static string GetPlacaRemolque2(Domain.Entities.WeighingOperation operation)
+    {
+        // Solo para doble-remolque
+        if (operation.TipoUnidad == "doble-remolque")
+        {
+            return operation.PlacaRemolque2 ?? string.Empty;
+        }
+
+        return string.Empty;
+    }
+
+    private static string FormatUsername(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return string.Empty;
+
+        // Extraer solo el nombre de usuario antes del @
+        var atIndex = email.IndexOf('@');
+        return atIndex > 0 ? email.Substring(0, atIndex) : email;
     }
 }

@@ -54,6 +54,9 @@ public class WeighingExportDto
     public string Folio { get; set; } = string.Empty;
     public DateTime Fecha { get; set; }
     public string Placas { get; set; } = string.Empty;
+    public string PlacaT { get; set; } = string.Empty; // Placa del tráiler
+    public string PlacaR { get; set; } = string.Empty; // Placa del remolque
+    public string PlacaR2 { get; set; } = string.Empty; // Placa del remolque 2
     public string ClienteProveedor { get; set; } = string.Empty;
     public string Producto { get; set; } = string.Empty;
     public string Tipo { get; set; } = string.Empty;
@@ -62,6 +65,8 @@ public class WeighingExportDto
     public decimal? PesoSalida { get; set; }
     public decimal? PesoNeto { get; set; }
     public string Estado { get; set; } = string.Empty;
+    public string PesadoEntradaPor { get; set; } = string.Empty; // CreatedBy sin dominio
+    public string PesadoSalidaPor { get; set; } = string.Empty; // ExitRegisteredBy sin dominio
     public DateTime? FechaEntrada { get; set; }
     public DateTime? FechaSalida { get; set; }
     public string EditadoPor { get; set; } = string.Empty;
