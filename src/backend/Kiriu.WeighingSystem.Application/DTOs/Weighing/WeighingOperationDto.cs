@@ -25,6 +25,7 @@ public class WeighingOperationDto
     public DateTime? FechaUltimaEdicion { get; set; }
     public string? UsuarioEditor { get; set; }
     public string? CreatedBy { get; set; }
+    public string? ExitRegisteredBy { get; set; }
 }
 
 public class EntrySearchDataDto
@@ -78,6 +79,7 @@ public class ExitResponseDto
     public DateTime FechaSalida { get; set; }
     public decimal PesoNeto { get; set; }
     public string Mensaje { get; set; } = string.Empty;
+    public string? ExitRegisteredBy { get; set; }
 }
 
 public class DoubleTrailerEntryResponseDto

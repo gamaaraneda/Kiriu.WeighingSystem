@@ -272,11 +272,12 @@ public class WeighingApplicationService : IWeighingApplicationService
 
             var response = new ExitResponseDto
             {
-                Folio = entry.Folio,
-                Estado = entry.Status,
-                FechaSalida = entry.ExitDate ?? DateTime.UtcNow,
-                PesoNeto = entry.NetWeight ?? 0,
-                Mensaje = "Registro de salida completado"
+                Folio = updatedEntry.Folio,
+                Estado = updatedEntry.Status,
+                FechaSalida = updatedEntry.ExitDate ?? DateTime.UtcNow,
+                PesoNeto = updatedEntry.NetWeight ?? 0,
+                Mensaje = "Registro de salida completado",
+                ExitRegisteredBy = updatedEntry.ExitRegisteredBy
             };
 
             return ApiResponse<ExitResponseDto>.CreateSuccess(response, "Registro de salida completado");
@@ -332,15 +333,16 @@ public class WeighingApplicationService : IWeighingApplicationService
                 await ProcessDoubleTrailerExitPhotosFromRequestAsync(entry.Id, request.Fotos);
             }
 
-            await _weighingRepository.UpdateAsync(entry);
+            var updatedEntry = await _weighingRepository.UpdateAsync(entry);
 
             var response = new ExitResponseDto
             {
-                Folio = entry.Folio,
-                Estado = entry.Status,
-                FechaSalida = entry.ExitDate ?? DateTime.UtcNow,
-                PesoNeto = entry.NetWeight ?? 0,
-                Mensaje = "Salida con doble remolque registrada exitosamente"
+                Folio = updatedEntry.Folio,
+                Estado = updatedEntry.Status,
+                FechaSalida = updatedEntry.ExitDate ?? DateTime.UtcNow,
+                PesoNeto = updatedEntry.NetWeight ?? 0,
+                Mensaje = "Salida con doble remolque registrada exitosamente",
+                ExitRegisteredBy = updatedEntry.ExitRegisteredBy
             };
 
             return ApiResponse<ExitResponseDto>.CreateSuccess(response, "Registro de salida completado");

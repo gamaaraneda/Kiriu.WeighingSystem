@@ -1621,6 +1621,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         tipo: 'client', // Por defecto, ya que EntrySearchData no tiene este campo
         producto: this.entryData.product || '',
         createdBy: this.entryData.createdBy,
+        exitRegisteredBy: response.exitRegisteredBy || this.entryData.createdBy || '',
 
         // Datos de entrada - pasar strings directamente del backend
         fechaEntrada: this.entryData.createdAt || new Date().toISOString(),

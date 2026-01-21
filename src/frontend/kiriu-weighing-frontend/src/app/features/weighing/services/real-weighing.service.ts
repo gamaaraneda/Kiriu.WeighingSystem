@@ -57,6 +57,7 @@ export interface WeighingOperationDto {
   fechaUltimaEdicion?: string;
   usuarioEditor?: string;
   createdBy?: string;
+  exitRegisteredBy?: string;
 }
 
 export interface CreateDoubleTrailerEntryRequest {
@@ -198,6 +199,7 @@ export interface ExitResponseDto {
   fechaSalida: string;
   pesoNeto: number;
   mensaje: string;
+  exitRegisteredBy?: string;
 }
 
 // Interfaces del frontend (reutilizamos las existentes)

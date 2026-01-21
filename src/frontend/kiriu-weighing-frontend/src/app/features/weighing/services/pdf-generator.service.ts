@@ -10,6 +10,7 @@ export interface WeighingReceiptData {
   tipo: string;
   producto: string;
   createdBy?: string;
+  exitRegisteredBy?: string;
 
   // Datos de entrada
   fechaEntrada: Date | string;
@@ -157,62 +158,29 @@ export class PdfGeneratorService {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(0, 0, 0);
-
-    // Primera línea: Tipo de Unidad y Movimiento
-    doc.text('Tipo:', margin, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(
-      this.getTipoUnidadDisplayName(data.tipoUnidad),
-      margin + 15,
-      yPosition
-    );
-
-    doc.setFont('helvetica', 'bold');
     const midPoint = pageWidth / 2;
-    doc.text('Movimiento:', midPoint, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 150, 0);
-    doc.text('SALIDA', midPoint + 30, yPosition);
-    doc.setTextColor(0, 0, 0);
-    yPosition += 8;
 
-    // Segunda línea: Cliente/Proveedor y Tipo
-    doc.setFont('helvetica', 'bold');
-    doc.text('Cliente/Prov:', margin, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.clienteProveedor, margin + 30, yPosition);
+    // Guardar posición inicial para segunda columna
+    const startYPosition = yPosition;
+    let leftColumnY = yPosition;
+    let rightColumnY = yPosition;
 
-    doc.setFont('helvetica', 'bold');
-    doc.text('Tipo:', midPoint, yPosition);
+    // PRIMERA COLUMNA (IZQUIERDA)
+
+    // Tipo
+    doc.text('Tipo:', margin, leftColumnY);
     doc.setFont('helvetica', 'normal');
     doc.text(
       data.tipo === 'client' ? 'Cliente' : 'Proveedor',
-      midPoint + 15,
-      yPosition
+      margin + 15,
+      leftColumnY
     );
-    yPosition += 8;
+    leftColumnY += 8;
 
-    // Tercera línea: Producto y Registrado por
-    doc.setFont('helvetica', 'bold');
-    doc.text('Producto:', margin, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(data.producto, margin + 23, yPosition);
-
-    // Registrado por (mismo nivel que Producto, a la derecha)
-    doc.setFont('helvetica', 'bold');
-    doc.text('Registrado por:', midPoint, yPosition);
-    doc.setFont('helvetica', 'normal');
-    const createdByText = (data.createdBy && data.createdBy.trim() !== '') 
-      ? this.extractUsername(data.createdBy) 
-      : '--';
-    doc.text(createdByText, midPoint + 35, yPosition);
-
-    yPosition += 9;
-
-    // SECCIÓN PLACAS (compacta)
+    // Placas
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.text('Placas:', margin, yPosition);
+    doc.text('Placas:', margin, leftColumnY);
 
     doc.setFont('helvetica', 'normal');
     const placas: string[] = [];
@@ -232,117 +200,131 @@ export class PdfGeneratorService {
     }
 
     const placasText = placas.join(' | ');
-    doc.text(placasText, margin + 20, yPosition);
-    yPosition += 9;
+    doc.text(placasText, margin + 20, leftColumnY);
+    leftColumnY += 8;
+
+    // Empresa
+    doc.setFont('helvetica', 'bold');
+    doc.text('Empresa:', margin, leftColumnY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(data.clienteProveedor, margin + 22, leftColumnY);
+    leftColumnY += 8;
+
+    // Material
+    doc.setFont('helvetica', 'bold');
+    doc.text('Material-Chofer:', margin, leftColumnY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(data.producto, margin + 37, leftColumnY);
+    leftColumnY += 8;
+
+    const createdByText = (data.createdBy && data.createdBy.trim() !== '')
+      ? this.extractUsername(data.createdBy)
+      : '--';
+
+    // SEGUNDA COLUMNA (DERECHA)
+
+    // Tipo de unidad
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tipo de unidad:', midPoint, rightColumnY);
+    doc.setFont('helvetica', 'normal');
+    doc.text(
+      this.getTipoUnidadDisplayName(data.tipoUnidad),
+      midPoint + 35,
+      rightColumnY
+    );
+    rightColumnY += 8;
+
+    // Espacio reservado previo a la tabla
+    rightColumnY += 0;
+
+    // Avanzar yPosition al punto más bajo de ambas columnas
+    yPosition = Math.max(leftColumnY, rightColumnY) + 1;
 
     const tableX = margin;
     const tableWidth = pageWidth - margin * 2;
     const rowHeight = 5;
 
-    // TABLA COMPACTA DE PESAJE
+    // TABLA COMPACTA DE PESAJE - Nueva estructura con 3 columnas y 3 filas
     const colWidths = [
+      tableWidth / 3,
       tableWidth / 4,
-      tableWidth / 4,
-      tableWidth / 4,
-      tableWidth / 4,
+      tableWidth / 2.5,
     ];
     const pesoBrutoSalida =
       data.tipoUnidad === 'doble-remolque'
         ? this.getDoubleTrailerExitWeight(data)
         : data.pesoBrutoSalida;
-
-    // Encabezado
+        
+        yPosition-=5;
+    // Encabezado de la tabla
     drawBox(tableX, yPosition, colWidths[0], rowHeight, lightGray);
-    drawBox(
-      tableX + colWidths[0],
-      yPosition,
-      colWidths[1],
-      rowHeight,
-      lightGray
-    );
-    drawBox(
-      tableX + colWidths[0] + colWidths[1],
-      yPosition,
-      colWidths[2],
-      rowHeight,
-      lightGray
-    );
-    drawBox(
-      tableX + colWidths[0] + colWidths[1] + colWidths[2],
-      yPosition,
-      colWidths[3],
-      rowHeight,
-      lightGray
-    );
+    drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight, lightGray);
+    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, lightGray);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text('Hora de entrada', tableX + 1, yPosition + 3.5);
     doc.text('Peso a la entrada', tableX + colWidths[0] + 1, yPosition + 3.5);
-    doc.text(
-      'Hora de salida',
-      tableX + colWidths[0] + colWidths[1] + 1,
-      yPosition + 3.5
-    );
-    doc.text(
-      'Peso a la salida',
-      tableX + colWidths[0] + colWidths[1] + colWidths[2] + 1,
-      yPosition + 3.5
-    );
+    doc.text('Almacenista que realiza el pesaje', tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
     yPosition += rowHeight;
 
-    // Datos
+    // Fila 1: Datos de entrada
     drawBox(tableX, yPosition, colWidths[0], rowHeight);
     drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight);
-    drawBox(
-      tableX + colWidths[0] + colWidths[1],
-      yPosition,
-      colWidths[2],
-      rowHeight
-    );
-    drawBox(
-      tableX + colWidths[0] + colWidths[1] + colWidths[2],
-      yPosition,
-      colWidths[3],
-      rowHeight
-    );
+    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
     doc.text(this.formatDate(data.fechaEntrada), tableX + 1, yPosition + 3.5);
-    doc.text(
-      `${this.formatWeight(data.pesoBrutoEntrada)} kg`,
-      tableX + colWidths[0] + 1,
-      yPosition + 3.5
-    );
-    doc.text(
-      this.formatDate(data.fechaSalida),
-      tableX + colWidths[0] + colWidths[1] + 1,
-      yPosition + 3.5
-    );
-    doc.text(
-      `${this.formatWeight(pesoBrutoSalida)} kg`,
-      tableX + colWidths[0] + colWidths[1] + colWidths[2] + 1,
-      yPosition + 3.5
-    );
+    doc.text(`${this.formatWeight(data.pesoBrutoEntrada)} kg`, tableX + colWidths[0] + 1, yPosition + 3.5);
+    const entryUserText = (data.createdBy && data.createdBy.trim() !== '')
+      ? this.extractUsername(data.createdBy)
+      : '--';
+    doc.text(entryUserText, tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
     yPosition += rowHeight;
 
-    // Peso Neto
+    // Encabezado fila 2 (salida)
+    drawBox(tableX, yPosition, colWidths[0], rowHeight, lightGray);
+    drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight, lightGray);
+    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, lightGray);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Hora de salida', tableX + 1, yPosition + 3.5);
+    doc.text('Peso a la salida', tableX + colWidths[0] + 1, yPosition + 3.5);
+    doc.text('Almacenista que realiza el pesaje', tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
+    yPosition += rowHeight;
+
+    // Fila 2: Datos de salida
+    drawBox(tableX, yPosition, colWidths[0], rowHeight);
+    drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight);
+    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
+
+    doc.setFont('helvetica', 'normal');
+    doc.text(this.formatDate(data.fechaSalida), tableX + 1, yPosition + 3.5);
+    doc.text(`${this.formatWeight(pesoBrutoSalida)} kg`, tableX + colWidths[0] + 1, yPosition + 3.5);
+    const exitUserText = (data.exitRegisteredBy && data.exitRegisteredBy.trim() !== '')
+      ? this.extractUsername(data.exitRegisteredBy)
+      : '--';
+    doc.text(exitUserText, tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
+    yPosition += rowHeight;
+
+    // Fila 3: Peso Neto
     const netRowHeight = 6;
-    drawBox(tableX, yPosition, tableWidth, netRowHeight, lightGray);
+    drawBox(tableX, yPosition, colWidths[0], netRowHeight, lightGray);
+    // Combinar columnas 2 y 3
+    const combinedWidth = colWidths[1] + colWidths[2];
+    drawBox(tableX + colWidths[0], yPosition, combinedWidth, netRowHeight,lightGray);
+
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text('Peso Neto', tableX + 2, yPosition + 4);
     doc.setFont('helvetica', 'normal');
     const pesoNetoText = `${this.formatWeight(data.pesoNeto)} kg`;
-    const pesoNetoTextWidth = doc.getTextWidth(pesoNetoText);
-    doc.text(
-      pesoNetoText,
-      tableX + tableWidth - pesoNetoTextWidth - 2,
-      yPosition + 4
-    );
-    yPosition += netRowHeight + 7;
+    // Centrar el texto en la caja combinada
+    const textX = tableX + colWidths[0] + (combinedWidth / 2) - (doc.getTextWidth(pesoNetoText) / 2);
+    doc.text(pesoNetoText, textX, yPosition + 4);
+    yPosition += netRowHeight + 1;
 
     // Sección de remolques deshabilitada para doble remolque
     // No se muestra la tabla de remolques cuando el tipo de unidad es "doble-remolque"
