@@ -634,10 +634,16 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         );
       }
 
+      // DEBUG: Verificar valores de fechas
+      
+      // Determinar fechas finales a usar
+      const fechaEntradaFinal = operation.entryDate || fullOperation.createdAt;
+      const fechaSalidaFinal = operation.exitDate || fullOperation.updatedAt || fullOperation.createdAt;
+     
       // Construir los datos para el PDF usando la misma lógica que en weighing-exit-form
       const receiptData: WeighingReceiptData = {
         folio: fullOperation.folio,
-        fecha: fullOperation.updatedAt || fullOperation.createdAt,
+        fecha: fechaSalidaFinal,
         tipoUnidad: fullOperation.tipoUnidad || 'remolque',
         clienteProveedor: fullOperation.clientProviderName,
         tipo: fullOperation.unitType || 'cliente',
@@ -645,8 +651,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         createdBy: fullOperation.createdBy,
         exitRegisteredBy: fullOperation.exitRegisteredBy || fullOperation.createdBy,
 
-        // Datos de entrada - pasar strings directamente del backend
-        fechaEntrada: fullOperation.createdAt,
+        // Datos de entrada - usar entryDate del query result
+        fechaEntrada: fechaEntradaFinal,
         pesoBrutoEntrada: fullOperation.entryWeight || 0,
         placaTrailer: fullOperation.trailerPlate || '',
         placaRemolque:
@@ -654,8 +660,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
             ? fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || ''
             : fullOperation.trailerPlate2 || '',
 
-        // Datos de salida - pasar strings directamente del backend
-        fechaSalida: fullOperation.updatedAt || fullOperation.createdAt,
+        // Datos de salida - usar exitDate del query result
+        fechaSalida: fechaSalidaFinal,
         pesoBrutoSalida: fullOperation.exitWeight || 0,
         pesoTara: fullOperation.exitWeight || 0,
         pesoNeto: fullOperation.netWeight || 0,
