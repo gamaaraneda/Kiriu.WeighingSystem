@@ -43,6 +43,7 @@ public class WeighingPhotoDto
     public string Id { get; set; } = string.Empty;
     public string PhotoType { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 
 public class WeighingQueryResponseDto

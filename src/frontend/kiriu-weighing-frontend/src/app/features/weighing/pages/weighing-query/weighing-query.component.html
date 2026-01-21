@@ -637,18 +637,18 @@
                 selectedOperation.photos.length > 0
               "
             >
-              <!-- Iterar sobre todas las fotos disponibles -->
+              <!-- Iterar sobre todas las fotos ordenadas (entrada primero, luego salida) -->
               <div
                 class="photo-item"
-                *ngFor="let photo of selectedOperation.photos"
+                *ngFor="let photo of getSortedPhotos()"
               >
                 <div class="photo-label">
-                  {{ getPhotoLabel(photo.photoType) }}
+                  {{ getPhotoLabel(photo) }}
                 </div>
                 <div class="photo-frame">
                   <img
                     [src]="getPhotoUrl(photo.id)"
-                    [alt]="photo.description || getPhotoLabel(photo.photoType)"
+                    [alt]="photo.description || getPhotoLabel(photo)"
                     class="photo-img"
                     (error)="onPhotoError($event)"
                   />

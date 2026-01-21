@@ -72,7 +72,8 @@ public class WeighingQueryService : IWeighingQueryService
                 {
                     Id = p.Id.ToString(),
                     PhotoType = p.PhotoType,
-                    Description = p.Description
+                    Description = p.Description,
+                    CreatedAt = p.CreatedAt
                 }).ToList() ?? new List<WeighingPhotoDto>()
             }).ToList();
 

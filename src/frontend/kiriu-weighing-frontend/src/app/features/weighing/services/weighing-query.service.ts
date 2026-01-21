@@ -18,6 +18,7 @@ export interface WeighingPhotoDto {
   id: string;
   photoType: string;
   description?: string;
+  createdAt: Date;
 }
 
 export interface WeighingQueryResult {

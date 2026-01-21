@@ -9,6 +9,7 @@ import {
   WeighingQueryService,
   WeighingQueryFilters,
   WeighingQueryResult,
+  WeighingPhotoDto,
 } from '../../services/weighing-query.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
@@ -383,6 +384,79 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     document.body.classList.add('km-scroll-lock');
   }
 
+  getSortedPhotos(): WeighingPhotoDto[] {
+    if (!this.selectedOperation || !this.selectedOperation.photos) {
+      return [];
+    }
+
+    const entryOnlyTypes = ['cargoEntry'];
+    const exitOnlyTypes = ['cargoState', 'cargoExit'];
+
+    // Agrupar fotos por tipo
+    const photosByType = new Map<string, WeighingPhotoDto[]>();
+
+    this.selectedOperation.photos.forEach(photo => {
+      if (!photosByType.has(photo.photoType)) {
+        photosByType.set(photo.photoType, []);
+      }
+      photosByType.get(photo.photoType)!.push(photo);
+    });
+
+    // Clasificar cada foto
+    const photosWithClassification = this.selectedOperation.photos.map(photo => {
+      const photoTime = new Date(photo.createdAt).getTime();
+      let isEntry = false;
+
+      // Tipos que siempre son entrada
+      if (entryOnlyTypes.includes(photo.photoType)) {
+        isEntry = true;
+      }
+      // Tipos que siempre son salida
+      else if (exitOnlyTypes.includes(photo.photoType)) {
+        isEntry = false;
+      }
+      // Tipos que pueden ser entrada o salida (placas)
+      else {
+        const photosOfSameType = photosByType.get(photo.photoType)!;
+
+        if (photosOfSameType.length === 1) {
+          // Si solo hay una foto de este tipo, clasificar por posición global
+          const allPhotos = this.selectedOperation?.photos || [];
+          const sortedAllPhotos = [...allPhotos].sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          const middleIndex = Math.floor(sortedAllPhotos.length / 2);
+          const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
+          isEntry = photoIndex < middleIndex;
+        } else {
+          // Si hay múltiples fotos del mismo tipo, la más antigua es entrada
+          const sortedByTime = [...photosOfSameType].sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+          isEntry = photo.id === sortedByTime[0].id;
+        }
+      }
+
+      return {
+        photo,
+        isEntry,
+        timestamp: photoTime
+      };
+    });
+
+    // Ordenar: primero las de entrada, luego las de salida
+    // Dentro de cada grupo, ordenar por timestamp ascendente
+    return photosWithClassification
+      .sort((a, b) => {
+        // Primero ordenar por grupo (entrada primero)
+        if (a.isEntry && !b.isEntry) return -1;
+        if (!a.isEntry && b.isEntry) return 1;
+        // Dentro del mismo grupo, ordenar por timestamp
+        return a.timestamp - b.timestamp;
+      })
+      .map(item => item.photo);
+  }
+
   onCloseDetailModal(): void {
     this.showDetailModal = false;
     this.selectedOperation = null;
@@ -417,19 +491,106 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     return this.selectedOperation.photos.some((p) => p.photoType === photoType);
   }
 
-  getPhotoLabel(photoType: string): string {
-    const labels: { [key: string]: string } = {
+  getPhotoLabel(photo: WeighingPhotoDto): string {
+    // Etiquetas base por tipo de fotografía
+    const baseLabels: { [key: string]: string } = {
       trailerPlate: 'Placa del Tráiler',
       trailerPlate2: 'Placa del Remolque',
-      cargo: 'Carga',
-      cargoState: 'Estado de Carga',
+      cargo: 'Estado de la Carga',
+      cargoEntry: 'Estado de la Carga',
+      cargoExit: 'Estado de la Carga',
+      cargoState: 'Estado de la Carga',
       containerPlate: 'Placa del Contenedor',
-      remolque1Plate: 'Placa Remolque 1',
+      remolque1Plate: 'Placa Remolque',
       remolque2Plate: 'Placa Remolque 2',
       cargoRemolque1: 'Carga Remolque 1',
       cargoRemolque2: 'Carga Remolque 2',
     };
-    return labels[photoType] || photoType;
+
+    const baseLabel = baseLabels[photo.photoType] || photo.photoType;
+
+    // Tipos que SIEMPRE son de entrada
+    const entryOnlyTypes = ['cargoEntry'];
+
+    // Tipos que SIEMPRE son de salida
+    const exitOnlyTypes = ['cargoState', 'cargoExit'];
+
+    let suffix = '';
+    let finalLabel = baseLabel;
+
+    // Para doble remolque, primero identificar el número de remolque por la placa
+    let plateIdentifier = photo.photoType; // Identificador único para agrupar
+    if (photo.photoType === 'remolque1Plate' && this.selectedOperation) {
+      const plateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+      if (plateMatch) {
+        const plateName = plateMatch[1];
+        plateIdentifier = `remolque1Plate_${plateName}`; // Agrupar por placa específica
+
+        const remolquePlates = this.selectedOperation.photos
+          .filter(p => p.photoType === 'remolque1Plate' && p.description)
+          .map(p => {
+            const match = p.description!.match(/Placa ANPR: ([A-Z0-9]+)/);
+            return match ? match[1] : null;
+          })
+          .filter((p): p is string => p !== null);
+
+        const uniquePlates = Array.from(new Set(remolquePlates)).sort();
+        const remolqueNumber = uniquePlates.indexOf(plateName) + 1;
+        finalLabel = `Placa Remolque ${remolqueNumber}`;
+      }
+    }
+
+    // Clasificar según el tipo
+    if (entryOnlyTypes.includes(photo.photoType)) {
+      suffix = ' – Entrada';
+    } else if (exitOnlyTypes.includes(photo.photoType)) {
+      suffix = ' – Salida';
+    } else if (this.selectedOperation && photo.createdAt) {
+      // Para tipos que pueden estar en entrada o salida (placas)
+      // Buscar todas las fotos con el mismo identificador (tipo + placa en caso de remolques)
+      const photosOfSameType = this.selectedOperation.photos.filter(p => {
+        if (p.photoType !== photo.photoType) return false;
+
+        // Para remolques, agrupar por placa específica
+        if (photo.photoType === 'remolque1Plate') {
+          const pPlateMatch = p.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+          const currentPlateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+          if (pPlateMatch && currentPlateMatch) {
+            return pPlateMatch[1] === currentPlateMatch[1];
+          }
+        }
+
+        return true;
+      });
+
+      // Si solo hay una foto con este identificador, clasificar por timestamp global
+      if (photosOfSameType.length === 1) {
+        const allPhotos = this.selectedOperation.photos;
+        const photoTime = new Date(photo.createdAt).getTime();
+        const sortedAllPhotos = [...allPhotos].sort((a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+
+        const middleIndex = Math.floor(sortedAllPhotos.length / 2);
+        const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
+
+        suffix = photoIndex < middleIndex ? ' – Entrada' : ' – Salida';
+      } else {
+        // Ordenar fotos del mismo identificador por timestamp
+        const sortedByTime = [...photosOfSameType].sort((a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+
+        // La primera (más antigua) es entrada, la última (más reciente) es salida
+        if (photo.id === sortedByTime[0].id) {
+          suffix = ' – Entrada';
+        } else if (photo.id === sortedByTime[sortedByTime.length - 1].id) {
+          suffix = ' – Salida';
+        }
+      }
+    }
+
+    return `${finalLabel}${suffix}`;
   }
 
   onPhotoError(event: Event): void {
