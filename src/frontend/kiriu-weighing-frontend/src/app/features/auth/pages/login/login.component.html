@@ -9,6 +9,12 @@
       Ingresa tus credenciales para acceder al sistema
     </p>
 
+    <!-- Mensaje de sesión invalidada -->
+    <div *ngIf="sessionMessage" class="session-message" role="alert">
+      <i class="pi pi-info-circle"></i>
+      <span>{{ sessionMessage }}</span>
+    </div>
+
     <!-- Formulario de login -->
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
       <!-- Campo Email -->

@@ -25,6 +25,9 @@ public class WeighingDbContext : DbContext
     // Audit entities
     public DbSet<AuditLog> AuditLogs { get; set; }
     
+    // User sessions for concurrent session control
+    public DbSet<UserSession> UserSessions { get; set; }
+    
     // Folio sequence entity
     public DbSet<FolioSequence> FolioSequences { get; set; }
 
@@ -241,6 +244,33 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             entity.Property(e => e.Id).ValueGeneratedNever(); // No auto-generate, always 1
             entity.Property(e => e.CurrentSequence).IsRequired();
             entity.Property(e => e.UpdatedAt).HasColumnType("DATETIME").IsRequired();
+        });
+        
+        // User session configuration for concurrent session control
+        modelBuilder.Entity<UserSession>(entity =>
+        {
+            entity.ToTable("UserSessions", "defutlt");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenJti).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.RefreshToken).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.DeviceInfo).HasMaxLength(500);
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.Property(e => e.CreatedAt).HasColumnType("DATETIME").IsRequired();
+            entity.Property(e => e.ExpiresAt).HasColumnType("DATETIME").IsRequired();
+            entity.Property(e => e.RevokedAt).HasColumnType("DATETIME");
+            entity.Property(e => e.IsActive).HasColumnType("bit").IsRequired();
+            entity.Property(e => e.RevocationReason).HasMaxLength(200);
+            
+            entity.HasOne(d => d.Usuario)
+                  .WithMany()
+                  .HasForeignKey(d => d.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            
+            // Índices para optimizar consultas
+            entity.HasIndex(e => e.UserId).HasDatabaseName("IX_UserSessions_UserId");
+            entity.HasIndex(e => e.TokenJti).HasDatabaseName("IX_UserSessions_TokenJti");
+            entity.HasIndex(e => e.RefreshToken).HasDatabaseName("IX_UserSessions_RefreshToken");
+            entity.HasIndex(e => new { e.UserId, e.IsActive }).HasDatabaseName("IX_UserSessions_UserId_IsActive");
         });
     }
 } 

@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using Kiriu.WeighingSystem.Domain.Interfaces;
 
 namespace Kiriu.WeighingSystem.Api.Extensions;
 
@@ -76,12 +78,28 @@ public static class AuthenticationExtensions
                     
                     return Task.CompletedTask;
                 },
-                OnTokenValidated = context =>
+                OnTokenValidated = async context =>
                 {
                     var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                    var sessionService = context.HttpContext.RequestServices.GetService<IUserSessionService>();
+                    
+                    // Extraer el JTI del token para validar la sesión
+                    var jti = context.Principal?.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+                    
+                    if (sessionService != null && !string.IsNullOrEmpty(jti))
+                    {
+                        var isSessionActive = await sessionService.IsSessionActiveAsync(jti);
+                        
+                        if (!isSessionActive)
+                        {
+                            logger.LogWarning("🔒 Sesión invalidada - JTI: {Jti}. El usuario puede haber iniciado sesión en otro dispositivo.", jti);
+                            context.Fail("La sesión ha sido invalidada. Por favor, inicie sesión nuevamente.");
+                            return;
+                        }
+                    }
+                    
                     logger.LogInformation("Token validated successfully for user: {User}", 
                         context.Principal?.Identity?.Name ?? "Unknown");
-                    return Task.CompletedTask;
                 },
                 OnChallenge = context =>
                 {

@@ -254,6 +254,25 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  /**
+   * Limpia la sesión localmente sin hacer llamada al backend.
+   * Útil cuando la sesión ya fue invalidada por el backend (ej: login en otro dispositivo).
+   * No redirige al login (el interceptor se encarga de eso).
+   */
+  clearSessionLocally(): void {
+    if (!this.isBrowser) return;
+
+    console.log('🧹 AuthService: Limpiando sesión local (sin llamada al backend)');
+
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.refreshTokenKey);
+    localStorage.removeItem(this.userKey);
+    localStorage.removeItem('token-expires-at');
+
+    this.currentUserSubject.next(null);
+    this.clearTokenRefresh();
+  }
+
   private getUserFromStorage(): UserInfo | null {
     if (!this.isBrowser) return null;
 
@@ -336,6 +355,7 @@ export class AuthService {
 
   private handleError = (error: HttpErrorResponse) => {
     let errorMessage = 'Error desconocido';
+    let errorCode = '';
 
     if (error.error instanceof ErrorEvent) {
       // Error del cliente
@@ -346,14 +366,31 @@ export class AuthService {
         const apiError = error.error as Record<string, unknown>;
         if (apiError['message'] && typeof apiError['message'] === 'string') {
           errorMessage = apiError['message'];
-        } else if (apiError['errors'] && Array.isArray(apiError['errors'])) {
-          errorMessage = (apiError['errors'] as string[]).join(', ');
+        }
+        // Detectar errores específicos
+        if (apiError['errors'] && Array.isArray(apiError['errors'])) {
+          const errors = apiError['errors'] as string[];
+          // Verificar si es error de sesión activa existente
+          if (errors.includes('ACTIVE_SESSION_EXISTS')) {
+            errorCode = 'ACTIVE_SESSION_EXISTS';
+            console.log('🚫 AuthService: Sesión activa existente detectada', errors);
+          }
+          // Solo agregar errores si no tenemos mensaje
+          if (!errorMessage || errorMessage === 'Error desconocido') {
+            errorMessage = errors.join(', ');
+          }
         }
       } else {
         errorMessage = `Error ${error.status}: ${error.message}`;
       }
     }
 
-    return throwError(() => new Error(errorMessage));
+    // Crear error personalizado con código
+    const customError = new Error(errorMessage) as Error & { code?: string };
+    if (errorCode) {
+      customError.code = errorCode;
+    }
+
+    return throwError(() => customError);
   };
 }

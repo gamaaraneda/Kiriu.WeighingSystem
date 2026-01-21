@@ -10,6 +10,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { apiResponseInterceptor } from './core/interceptors/api-response.interceptor';
 import { tokenRefreshInterceptor } from './core/interceptors/token-refresh.interceptor';
 import { spinnerInterceptor } from './core/interceptors/spinner-interceptor';
+import { authErrorInterceptor } from './core/interceptors/auth-error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,6 +21,7 @@ export const appConfig: ApplicationConfig = {
         tokenRefreshInterceptor, // Verificar si necesita refresh
         authInterceptor, // Agregar el token
         apiResponseInterceptor, // Procesar la respuesta
+        authErrorInterceptor, // Manejar errores 401 (sesión invalidada)
       ])
     ),
     provideAnimations(),

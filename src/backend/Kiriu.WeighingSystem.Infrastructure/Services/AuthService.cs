@@ -26,7 +26,7 @@ public class AuthService : IAuthService, IPasswordService
         _logger = logger;
     }
 
-    public async Task<string> GenerateJwtTokenAsync(Usuario usuario)
+    public async Task<(string Token, string Jti)> GenerateJwtTokenAsync(Usuario usuario, string? jti = null)
     {
         var permissions = await GetUserPermissionsAsync(usuario.Id);
 
@@ -45,12 +45,16 @@ public class AuthService : IAuthService, IPasswordService
             usuario = usuarioConRol;
         }
 
+        // Generar JTI si no se proporciona (para control de sesiones)
+        var tokenJti = jti ?? Guid.NewGuid().ToString();
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
             new(ClaimTypes.Name, usuario.Nombre),
             new(ClaimTypes.Email, usuario.Email),
-            new(ClaimTypes.Role, usuario.Rol.Nombre)
+            new(ClaimTypes.Role, usuario.Rol.Nombre),
+            new(JwtRegisteredClaimNames.Jti, tokenJti) // JWT ID para control de sesiones
         };
 
         // Agregar permisos como claims
@@ -70,7 +74,11 @@ public class AuthService : IAuthService, IPasswordService
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        
+        _logger.LogInformation("🔑 JWT generado para usuario {Email} con JTI: {Jti}", usuario.Email, tokenJti);
+        
+        return (tokenString, tokenJti);
     }
 
     public Task<string> GenerateRefreshTokenAsync()

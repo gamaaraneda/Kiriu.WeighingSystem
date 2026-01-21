@@ -32,6 +32,10 @@ public class AuthController : ControllerBase
     {
         try
         {
+            // Capturar información del dispositivo y IP desde el contexto HTTP
+            request.DeviceInfo = Request.Headers.UserAgent.ToString();
+            request.IpAddress = GetClientIpAddress();
+            
             var response = await _authApplicationService.LoginAsync(request);
 
             // Auditar login exitoso manualmente (sin credenciales en payload)
@@ -42,6 +46,23 @@ public class AuthController : ControllerBase
                 Success = true,
                 Data = response,
                 Message = "Login exitoso"
+            });
+        }
+        catch (ActiveSessionExistsException ex)
+        {
+            _logger.LogWarning("Login bloqueado para {Email}: sesión activa existente", request.Email);
+            
+            // Retornar 409 Conflict para indicar que ya existe una sesión activa
+            return Conflict(new ApiResponse<LoginResponse>
+            {
+                Success = false,
+                Message = ex.Message,
+                Errors = new List<string> 
+                { 
+                    "ACTIVE_SESSION_EXISTS",
+                    $"Dispositivo: {ex.DeviceInfo ?? "Desconocido"}",
+                    $"Sesión iniciada: {ex.SessionCreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Desconocido"}"
+                }
             });
         }
         catch (UnauthorizedException ex)

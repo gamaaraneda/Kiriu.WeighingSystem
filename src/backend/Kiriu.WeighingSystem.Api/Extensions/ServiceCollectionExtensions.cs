@@ -47,6 +47,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasswordService, AuthService>(); // AuthService implementa IPasswordService
         services.AddScoped<IHealthCheckService, HealthCheckService>();
         
+        // User Session Services (para control de sesiones concurrentes)
+        services.AddScoped<IUserSessionRepository, UserSessionRepository>();
+        services.AddScoped<IUserSessionService, UserSessionService>();
+        
         // Admin Services
         services.AddScoped<IRolRepository, RolRepository>();
         services.AddScoped<IPermisoRepository, PermisoRepository>();

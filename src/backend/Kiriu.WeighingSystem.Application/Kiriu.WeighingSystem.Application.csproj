@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Kiriu.WeighingSystem.Domain\Kiriu.WeighingSystem.Domain.csproj" />
@@ -8,6 +8,7 @@
     <PackageReference Include="FluentValidation" Version="11.3.0" />
     <PackageReference Include="Mapster" Version="7.4.0" />
     <PackageReference Include="MediatR" Version="13.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

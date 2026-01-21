@@ -88,6 +88,43 @@
   line-height: 1.5;
 }
 
+// Mensaje de sesión invalidada
+.session-message {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  border: 1px solid #ffc107;
+  text-align: left;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: slideIn 0.3s ease-out;
+
+  i {
+    font-size: 18px;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  span {
+    line-height: 1.5;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 // Campos del formulario
 .field {
   margin-bottom: 24px;
