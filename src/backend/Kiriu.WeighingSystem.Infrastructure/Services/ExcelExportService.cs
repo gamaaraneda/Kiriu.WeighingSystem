@@ -19,7 +19,6 @@ public class ExcelExportService : IExcelExportService
         var headers = new[]
         {
             "Folio",
-            "Fecha",
             "Placa T",
             "Placa R",
             "Placa R2",
@@ -56,24 +55,23 @@ public class ExcelExportService : IExcelExportService
             var excelRow = row + 2; // Empezar en la fila 2 (después de encabezados)
 
             worksheet.Cells[excelRow, 1].Value = item.Folio;
-            worksheet.Cells[excelRow, 2].Value = item.Fecha.ToString("dd/MM/yyyy HH:mm");
-            worksheet.Cells[excelRow, 3].Value = item.PlacaT;
-            worksheet.Cells[excelRow, 4].Value = item.PlacaR;
-            worksheet.Cells[excelRow, 5].Value = item.PlacaR2;
-            worksheet.Cells[excelRow, 6].Value = item.ClienteProveedor;
-            worksheet.Cells[excelRow, 7].Value = item.Producto;
-            worksheet.Cells[excelRow, 8].Value = item.Tipo == "client" ? "Cliente" : item.Tipo == "provider" ? "Proveedor" : item.Tipo;
-            worksheet.Cells[excelRow, 9].Value = item.TipoUnidad;
-            worksheet.Cells[excelRow, 10].Value = item.PesoBruto;
-            worksheet.Cells[excelRow, 11].Value = item.PesoSalida;
-            worksheet.Cells[excelRow, 12].Value = item.PesoNeto;
-            worksheet.Cells[excelRow, 13].Value = item.Estado;
-            worksheet.Cells[excelRow, 14].Value = item.PesadoEntradaPor;
-            worksheet.Cells[excelRow, 15].Value = item.PesadoSalidaPor;
-            worksheet.Cells[excelRow, 16].Value = item.FechaEntrada?.ToString("dd/MM/yyyy HH:mm") ?? "";
-            worksheet.Cells[excelRow, 17].Value = item.FechaSalida?.ToString("dd/MM/yyyy HH:mm") ?? "";
-            worksheet.Cells[excelRow, 18].Value = item.EditadoPor;
-            worksheet.Cells[excelRow, 19].Value = item.FechaEdicion?.ToString("dd/MM/yyyy HH:mm") ?? "";
+            worksheet.Cells[excelRow, 2].Value = item.PlacaT;
+            worksheet.Cells[excelRow, 3].Value = item.PlacaR;
+            worksheet.Cells[excelRow, 4].Value = item.PlacaR2;
+            worksheet.Cells[excelRow, 5].Value = item.ClienteProveedor;
+            worksheet.Cells[excelRow, 6].Value = item.Producto;
+            worksheet.Cells[excelRow, 7].Value = item.Tipo == "client" ? "Cliente" : item.Tipo == "provider" ? "Proveedor" : item.Tipo;
+            worksheet.Cells[excelRow, 8].Value = item.TipoUnidad;
+            worksheet.Cells[excelRow, 9].Value = item.PesoBruto;
+            worksheet.Cells[excelRow, 10].Value = item.PesoSalida;
+            worksheet.Cells[excelRow, 11].Value = item.PesoNeto;
+            worksheet.Cells[excelRow, 12].Value = item.Estado;
+            worksheet.Cells[excelRow, 13].Value = item.PesadoEntradaPor;
+            worksheet.Cells[excelRow, 14].Value = item.PesadoSalidaPor;
+            worksheet.Cells[excelRow, 15].Value = item.FechaEntrada?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
+            worksheet.Cells[excelRow, 16].Value = item.FechaSalida?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
+            worksheet.Cells[excelRow, 17].Value = item.EditadoPor;
+            worksheet.Cells[excelRow, 18].Value = item.FechaEdicion?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
 
             // Aplicar bordes a todas las celdas de datos
             for (int col = 1; col <= headers.Length; col++)
