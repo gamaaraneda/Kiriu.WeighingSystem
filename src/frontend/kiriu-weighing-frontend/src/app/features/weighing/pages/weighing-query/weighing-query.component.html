@@ -248,37 +248,37 @@
                   </td>
                   <td class="col-peso">
                     <span
-                      *ngIf="operation.pesoBruto"
+                      *ngIf="operation.pesoBruto != null"
                       class="peso-value peso-bruto"
                     >
                       {{ operation.pesoBruto | number : "1.0-0" }}
                       <span class="peso-unit">kg</span>
                     </span>
-                    <span *ngIf="!operation.pesoBruto" class="peso-empty"
+                    <span *ngIf="operation.pesoBruto == null" class="peso-empty"
                       >—</span
                     >
                   </td>
                   <td class="col-peso">
                     <span
-                      *ngIf="operation.pesoSalida"
+                      *ngIf="operation.pesoSalida != null"
                       class="peso-value peso-salida"
                     >
                       {{ operation.pesoSalida | number : "1.0-0" }}
                       <span class="peso-unit">kg</span>
                     </span>
-                    <span *ngIf="!operation.pesoSalida" class="peso-empty"
+                    <span *ngIf="operation.pesoSalida == null" class="peso-empty"
                       >—</span
                     >
                   </td>
                   <td class="col-peso">
                     <span
-                      *ngIf="operation.pesoNeto"
+                      *ngIf="operation.pesoNeto != null"
                       class="peso-value peso-neto"
                     >
                       {{ operation.pesoNeto | number : "1.0-0" }}
                       <span class="peso-unit">kg</span>
                     </span>
-                    <span *ngIf="!operation.pesoNeto" class="peso-empty"
+                    <span *ngIf="operation.pesoNeto == null" class="peso-empty"
                       >—</span
                     >
                   </td>
@@ -527,13 +527,13 @@
               <div class="pesaje-row">
                 <span class="pesaje-label">Peso Bruto</span>
                 <span class="pesaje-value peso-highlight">
-                  <span *ngIf="selectedOperation.pesoBruto"
+                  <span *ngIf="selectedOperation.pesoBruto != null"
                     >{{
                       selectedOperation.pesoBruto | number : "1.0-0"
                     }}
                     kg</span
                   >
-                  <span *ngIf="!selectedOperation.pesoBruto" class="peso-empty"
+                  <span *ngIf="selectedOperation.pesoBruto == null" class="peso-empty"
                     >—</span
                   >
                 </span>
@@ -593,13 +593,13 @@
               <div class="pesaje-row">
                 <span class="pesaje-label">Peso Bruto</span>
                 <span class="pesaje-value peso-highlight">
-                  <span *ngIf="selectedOperation.pesoSalida"
+                  <span *ngIf="selectedOperation.pesoSalida != null"
                     >{{
                       selectedOperation.pesoSalida | number : "1.0-0"
                     }}
                     kg</span
                   >
-                  <span *ngIf="!selectedOperation.pesoSalida" class="peso-empty"
+                  <span *ngIf="selectedOperation.pesoSalida == null" class="peso-empty"
                     >—</span
                   >
                 </span>
@@ -610,10 +610,10 @@
             <div class="total-neto-card">
               <span class="total-label">Total Neto</span>
               <span class="total-value">
-                <span *ngIf="selectedOperation.pesoNeto"
+                <span *ngIf="selectedOperation.pesoNeto != null"
                   >{{ selectedOperation.pesoNeto | number : "1.0-0" }} kg</span
                 >
-                <span *ngIf="!selectedOperation.pesoNeto" class="peso-empty"
+                <span *ngIf="selectedOperation.pesoNeto == null" class="peso-empty"
                   >—</span
                 >
               </span>
@@ -754,10 +754,10 @@
               <div class="readonly-field">
                 <span class="readonly-label">Peso de entrada:</span>
                 <span class="readonly-value">
-                  <span *ngIf="operationToEdit.pesoBruto"
+                  <span *ngIf="operationToEdit.pesoBruto != null"
                     >{{ operationToEdit.pesoBruto | number : "1.0-0" }} kg</span
                   >
-                  <span *ngIf="!operationToEdit.pesoBruto" class="peso-empty"
+                  <span *ngIf="operationToEdit.pesoBruto == null" class="peso-empty"
                     >—</span
                   >
                 </span>
@@ -771,13 +771,13 @@
               <div class="readonly-field">
                 <span class="readonly-label">Peso de salida:</span>
                 <span class="readonly-value">
-                  <span *ngIf="operationToEdit.pesoSalida"
+                  <span *ngIf="operationToEdit.pesoSalida != null"
                     >{{
                       operationToEdit.pesoSalida | number : "1.0-0"
                     }}
                     kg</span
                   >
-                  <span *ngIf="!operationToEdit.pesoSalida" class="peso-empty"
+                  <span *ngIf="operationToEdit.pesoSalida == null" class="peso-empty"
                     >—</span
                   >
                 </span>
