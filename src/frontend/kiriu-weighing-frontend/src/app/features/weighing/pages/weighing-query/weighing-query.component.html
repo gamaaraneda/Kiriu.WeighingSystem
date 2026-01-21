@@ -488,12 +488,7 @@
               </span>
             </div>
 
-            <div class="info-row">
-              <span class="info-label">Fecha</span>
-              <span class="info-value">{{
-                selectedOperation.fecha | date : "dd/MM/yyyy HH:mm"
-              }}</span>
-            </div>
+          
 
             <div class="info-row">
               <span class="info-label">Cliente/Proveedor</span>
@@ -521,7 +516,7 @@
               <div class="pesaje-row">
                 <span class="pesaje-label">Fecha</span>
                 <span class="pesaje-value">{{
-                  selectedOperation.fecha | date : "dd/MM/yyyy HH:mm"
+                  selectedOperation.entryDate | date : "dd/MM/yyyy HH:mm"
                 }}</span>
               </div>
               <div class="pesaje-row">
@@ -577,15 +572,10 @@
               <div class="pesaje-row">
                 <span class="pesaje-label">Fecha</span>
                 <span class="pesaje-value">
-                  <span
-                    *ngIf="selectedOperation.estado === 'SALIDA_REGISTRADA'"
-                    >{{
-                      selectedOperation.fecha | date : "dd/MM/yyyy HH:mm"
-                    }}</span
-                  >
-                  <span
-                    *ngIf="selectedOperation.estado !== 'SALIDA_REGISTRADA'"
-                    class="peso-empty"
+                  <span *ngIf="selectedOperation.exitDate">{{
+                    selectedOperation.exitDate | date : "dd/MM/yyyy HH:mm"
+                  }}</span>
+                  <span *ngIf="!selectedOperation.exitDate" class="peso-empty"
                     >—</span
                   >
                 </span>

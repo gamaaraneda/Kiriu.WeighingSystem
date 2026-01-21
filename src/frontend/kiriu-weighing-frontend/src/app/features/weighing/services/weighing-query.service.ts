@@ -41,6 +41,8 @@ export interface WeighingQueryResult {
   exitRegisteredBy?: string | null; // Email del usuario que registró la salida
   updatedAt?: Date | null; // Fecha de última actualización
   usuarioEditor?: string | null; // Usuario que editó el registro
+  entryDate?: Date | null; // Fecha de entrada del pesaje
+  exitDate?: Date | null; // Fecha de salida del pesaje
 }
 
 export interface WeighingQueryResponse {

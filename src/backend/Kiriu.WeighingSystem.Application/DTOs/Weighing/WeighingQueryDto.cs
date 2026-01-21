@@ -33,6 +33,8 @@ public class WeighingQueryResultDto
     public string? ExitRegisteredBy { get; set; }
     public string? UsuarioEditor { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? EntryDate { get; set; }
+    public DateTime? ExitDate { get; set; }
     public List<WeighingPhotoDto> Photos { get; set; } = new();
 }
 

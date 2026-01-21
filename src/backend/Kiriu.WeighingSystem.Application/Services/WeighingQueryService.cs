@@ -66,6 +66,8 @@ public class WeighingQueryService : IWeighingQueryService
                 ExitRegisteredBy = op.ExitRegisteredBy,
                 UsuarioEditor = op.UsuarioEditor,
                 UpdatedAt = op.UpdatedAt,
+                EntryDate = op.EntryDate,
+                ExitDate = op.ExitDate,
                 Photos = op.Photos?.Select(p => new WeighingPhotoDto
                 {
                     Id = p.Id.ToString(),
