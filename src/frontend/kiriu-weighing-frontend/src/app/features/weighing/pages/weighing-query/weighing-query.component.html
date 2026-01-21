@@ -251,7 +251,7 @@
                       *ngIf="operation.pesoBruto != null"
                       class="peso-value peso-bruto"
                     >
-                      {{ operation.pesoBruto | number : "1.0-0" }}
+                      {{ operation.pesoBruto | number : "1.2-2" }}
                       <span class="peso-unit">kg</span>
                     </span>
                     <span *ngIf="operation.pesoBruto == null" class="peso-empty"
@@ -263,7 +263,7 @@
                       *ngIf="operation.pesoSalida != null"
                       class="peso-value peso-salida"
                     >
-                      {{ operation.pesoSalida | number : "1.0-0" }}
+                      {{ operation.pesoSalida | number : "1.2-2" }}
                       <span class="peso-unit">kg</span>
                     </span>
                     <span *ngIf="operation.pesoSalida == null" class="peso-empty"
@@ -275,7 +275,7 @@
                       *ngIf="operation.pesoNeto != null"
                       class="peso-value peso-neto"
                     >
-                      {{ operation.pesoNeto | number : "1.0-0" }}
+                      {{ operation.pesoNeto | number : "1.2-2" }}
                       <span class="peso-unit">kg</span>
                     </span>
                     <span *ngIf="operation.pesoNeto == null" class="peso-empty"
@@ -529,7 +529,7 @@
                 <span class="pesaje-value peso-highlight">
                   <span *ngIf="selectedOperation.pesoBruto != null"
                     >{{
-                      selectedOperation.pesoBruto | number : "1.0-0"
+                      selectedOperation.pesoBruto | number : "1.2-2"
                     }}
                     kg</span
                   >
@@ -595,7 +595,7 @@
                 <span class="pesaje-value peso-highlight">
                   <span *ngIf="selectedOperation.pesoSalida != null"
                     >{{
-                      selectedOperation.pesoSalida | number : "1.0-0"
+                      selectedOperation.pesoSalida | number : "1.2-2"
                     }}
                     kg</span
                   >
@@ -611,7 +611,7 @@
               <span class="total-label">Total Neto</span>
               <span class="total-value">
                 <span *ngIf="selectedOperation.pesoNeto != null"
-                  >{{ selectedOperation.pesoNeto | number : "1.0-0" }} kg</span
+                  >{{ selectedOperation.pesoNeto | number : "1.2-2" }} kg</span
                 >
                 <span *ngIf="selectedOperation.pesoNeto == null" class="peso-empty"
                   >—</span
@@ -755,7 +755,7 @@
                 <span class="readonly-label">Peso de entrada:</span>
                 <span class="readonly-value">
                   <span *ngIf="operationToEdit.pesoBruto != null"
-                    >{{ operationToEdit.pesoBruto | number : "1.0-0" }} kg</span
+                    >{{ operationToEdit.pesoBruto | number : "1.2-2" }} kg</span
                   >
                   <span *ngIf="operationToEdit.pesoBruto == null" class="peso-empty"
                     >—</span
@@ -773,7 +773,7 @@
                 <span class="readonly-value">
                   <span *ngIf="operationToEdit.pesoSalida != null"
                     >{{
-                      operationToEdit.pesoSalida | number : "1.0-0"
+                      operationToEdit.pesoSalida | number : "1.2-2"
                     }}
                     kg</span
                   >
