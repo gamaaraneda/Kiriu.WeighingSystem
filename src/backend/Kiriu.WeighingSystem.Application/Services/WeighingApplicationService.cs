@@ -15,19 +15,22 @@ public class WeighingApplicationService : IWeighingApplicationService
     private readonly IWeighingService _weighingService;
     private readonly IAuditLogger _auditLogger;
     private readonly ILogger<WeighingApplicationService> _logger;
+    private readonly IWeighingEditHistoryRepository _editHistoryRepository;
 
     public WeighingApplicationService(
         IWeighingOperationRepository weighingRepository,
         IWeighingPhotoRepository photoRepository,
         IWeighingService weighingService,
         IAuditLogger auditLogger,
-        ILogger<WeighingApplicationService> logger)
+        ILogger<WeighingApplicationService> logger,
+        IWeighingEditHistoryRepository editHistoryRepository)
     {
         _weighingRepository = weighingRepository;
         _photoRepository = photoRepository;
         _weighingService = weighingService;
         _auditLogger = auditLogger;
         _logger = logger;
+        _editHistoryRepository = editHistoryRepository;
     }
 
     public async Task<ApiResponse<WeighingOperationDto>> CreateEntryAsync(CreateEntryRequest request)
@@ -655,17 +658,44 @@ public class WeighingApplicationService : IWeighingApplicationService
                 request.UnitType ?? "null", request.TipoUnidad ?? "null", request.Product ?? "null", request.ClientProviderName ?? "null"
             );
 
+            // Capturar valores originales ANTES de aplicar cambios para el histórico
+            var valoresOriginales = new
+            {
+                Tipo = operation.UnitType,
+                TipoUnidad = operation.TipoUnidad,
+                ClienteProveedor = operation.ClientProviderName,
+                Producto = operation.Product,
+                TrailerPlate = operation.TrailerPlate,
+                TrailerPlate2 = operation.TrailerPlate2,
+                PlacaRemolque1 = operation.PlacaRemolque1,
+                PlacaRemolque2 = operation.PlacaRemolque2,
+                TrailerPlateContenedor = operation.TrailerPlateContenedor,
+                RemolquePlateContenedor = operation.RemolquePlateContenedor
+            };
+
             // Marcar como editado manualmente si se cambió cualquier campo editable
             if (request.EsEdicionManual && (plateFieldsChanged || weightFieldsChanged || otherFieldsChanged))
             {
+                // Validar justificación obligatoria
+                if (string.IsNullOrWhiteSpace(request.Justificacion))
+                {
+                    return ApiResponse<WeighingOperationDto>.CreateError("La justificación es obligatoria para editar el registro");
+                }
+
+                if (request.Justificacion.Length > 70)
+                {
+                    return ApiResponse<WeighingOperationDto>.CreateError("La justificación no puede exceder 70 caracteres");
+                }
+
                 operation.FueEditado = true;
                 operation.FechaUltimaEdicion = DateTime.UtcNow;
                 operation.UsuarioEditor = request.UsuarioEditor;
 
                 _logger.LogInformation(
-                    "✅ Registro editado manualmente - OperationId: {OperationId}, Usuario: {Usuario}, PlacasEditadas: {PlacasEditadas}, PesosEditados: {PesosEditados}, OtrosCamposEditados: {OtrosCamposEditados}",
+                    "✅ Registro editado manualmente - OperationId: {OperationId}, Usuario: {Usuario}, Justificación: {Justificacion}, PlacasEditadas: {PlacasEditadas}, PesosEditados: {PesosEditados}, OtrosCamposEditados: {OtrosCamposEditados}",
                     operationId,
                     request.UsuarioEditor,
+                    request.Justificacion,
                     plateFieldsChanged,
                     weightFieldsChanged,
                     otherFieldsChanged
@@ -727,6 +757,30 @@ public class WeighingApplicationService : IWeighingApplicationService
             operation.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _weighingRepository.UpdateAsync(operation);
+
+            // Guardar entrada en histórico de ediciones DESPUÉS de actualizar la operación
+            if (request.EsEdicionManual && (plateFieldsChanged || weightFieldsChanged || otherFieldsChanged))
+            {
+                var historyEntry = new WeighingEditHistory
+                {
+                    Id = Guid.NewGuid(),
+                    WeighingOperationId = operationId,
+                    Justificacion = request.Justificacion!,
+                    ValoresOriginales = System.Text.Json.JsonSerializer.Serialize(valoresOriginales),
+                    FechaEdicion = DateTime.UtcNow,
+                    UsuarioEditor = request.UsuarioEditor
+                };
+
+                // Guardar usando el repositorio para evitar problemas de concurrencia
+                await _editHistoryRepository.CreateAsync(historyEntry);
+
+                _logger.LogInformation(
+                    "✅ Entrada de histórico creada - HistoryId: {HistoryId}, OperationId: {OperationId}, Justificación: {Justificacion}",
+                    historyEntry.Id,
+                    operationId,
+                    request.Justificacion
+                );
+            }
 
             // Registrar en auditoría si fue una edición manual
             if (request.EsEdicionManual && (plateFieldsChanged || weightFieldsChanged))
@@ -869,6 +923,35 @@ public class WeighingApplicationService : IWeighingApplicationService
         {
             _logger.LogError(ex, "Error al buscar entradas pendientes con término: {SearchTerm}", searchTerm);
             return ApiResponse<List<PendingExitSearchResultDto>>.CreateError("Error al buscar entradas pendientes");
+        }
+    }
+
+    public async Task<ApiResponse<List<WeighingEditHistoryDto>>> GetEditHistoryAsync(Guid operationId)
+    {
+        try
+        {
+            // Obtener el histórico usando el repositorio
+            var historyEntries = await _editHistoryRepository.GetByOperationIdAsync(operationId);
+
+            var history = historyEntries
+                .OrderByDescending(h => h.FechaEdicion)
+                .Select(h => new WeighingEditHistoryDto
+                {
+                    Id = h.Id.ToString(),
+                    WeighingOperationId = h.WeighingOperationId.ToString(),
+                    Justificacion = h.Justificacion,
+                    FechaEdicion = h.FechaEdicion,
+                    UsuarioEditor = h.UsuarioEditor,
+                    ValoresOriginales = System.Text.Json.JsonSerializer.Deserialize<OriginalValuesDto>(h.ValoresOriginales)
+                })
+                .ToList();
+
+            return ApiResponse<List<WeighingEditHistoryDto>>.CreateSuccess(history);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener histórico de ediciones para operación: {OperationId}", operationId);
+            return ApiResponse<List<WeighingEditHistoryDto>>.CreateError("Error al obtener histórico de ediciones");
         }
     }
 }

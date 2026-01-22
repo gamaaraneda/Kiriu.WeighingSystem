@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface WeighingQueryFilters {
@@ -67,6 +68,28 @@ export interface WeighingOperationsStats {
     tipo: string;
     cantidad: number;
   }>;
+}
+
+export interface OriginalValues {
+  tipo?: string;
+  tipoUnidad?: string;
+  clienteProveedor?: string;
+  producto?: string;
+  trailerPlate?: string;
+  trailerPlate2?: string;
+  placaRemolque1?: string;
+  placaRemolque2?: string;
+  trailerPlateContenedor?: string;
+  remolquePlateContenedor?: string;
+}
+
+export interface WeighingEditHistory {
+  id: string;
+  weighingOperationId: string;
+  justificacion: string;
+  fechaEdicion: Date;
+  usuarioEditor?: string;
+  valoresOriginales?: OriginalValues;
 }
 
 
@@ -187,7 +210,8 @@ export class WeighingQueryService {
     placaRemolque1?: string,
     placaRemolque2?: string,
     trailerPlateContenedor?: string,
-    remolquePlateContenedor?: string
+    remolquePlateContenedor?: string,
+    justificacion?: string
   ): Observable<any> {
     const url = `${environment.apiUrl}/weighing/operations/${operationId}`;
     const payload = {
@@ -201,12 +225,20 @@ export class WeighingQueryService {
       placaRemolque2: placaRemolque2,
       trailerPlateContenedor: trailerPlateContenedor,
       remolquePlateContenedor: remolquePlateContenedor,
-      esEdicionManual: true
+      esEdicionManual: true,
+      justificacion: justificacion
     };
 
     // LOG DIAGNÓSTICO (TEMPORAL)
     console.log('📤 PAYLOAD ENVIADO AL BACKEND:', payload);
 
     return this.http.put(url, payload);
+  }
+
+  getEditHistory(operationId: string): Observable<{ success: boolean; data: WeighingEditHistory[] }> {
+    const url = `${environment.apiUrl}/weighing/operations/${operationId}/history`;
+    return this.http.get<WeighingEditHistory[]>(url).pipe(
+      map(data => ({ success: true, data }))
+    );
   }
 }

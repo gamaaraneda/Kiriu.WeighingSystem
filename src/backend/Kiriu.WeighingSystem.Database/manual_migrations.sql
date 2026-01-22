@@ -16,7 +16,7 @@ GO
 -- =====================================================
 -- VARIABLES DE CONTROL
 -- =====================================================
-DECLARE @CurrentVersion INT = 6; -- Versión actual del script
+DECLARE @CurrentVersion INT = 7; -- Versión actual del script
 DECLARE @SchemaVersion INT;
 
 -- Crear tabla de versiones si no existe
@@ -491,6 +491,58 @@ END
 ELSE
 BEGIN
     PRINT 'Versión 6 ya aplicada, saltando...';
+END
+
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 7: TABLA DE HISTÓRICO DE EDICIONES
+-- =====================================================
+IF @SchemaVersion < 7
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 7: TABLA DE HISTÓRICO DE EDICIONES';
+    PRINT '==========================================';
+
+    -- Crear tabla WeighingEditHistory para almacenar el histórico de ediciones
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'weighing' AND TABLE_NAME = 'WeighingEditHistory')
+    BEGIN
+        CREATE TABLE [weighing].[WeighingEditHistory] (
+            [Id] UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+            [WeighingOperationId] UNIQUEIDENTIFIER NOT NULL,
+            [Justificacion] NVARCHAR(70) NOT NULL,
+            [ValoresOriginales] NVARCHAR(MAX) NOT NULL, -- JSON con los valores antes de editar
+            [FechaEdicion] DATETIME2 NOT NULL DEFAULT GETDATE(),
+            [UsuarioEditor] NVARCHAR(255) NULL,
+
+            CONSTRAINT [PK_WeighingEditHistory] PRIMARY KEY ([Id]),
+            CONSTRAINT [FK_WeighingEditHistory_WeighingOperation]
+                FOREIGN KEY ([WeighingOperationId])
+                REFERENCES [weighing].[WeighingOperations]([Id])
+                ON DELETE CASCADE
+        );
+
+        -- Índices para WeighingEditHistory
+        CREATE INDEX [IX_WeighingEditHistory_WeighingOperationId]
+            ON [weighing].[WeighingEditHistory] ([WeighingOperationId]);
+        CREATE INDEX [IX_WeighingEditHistory_FechaEdicion]
+            ON [weighing].[WeighingEditHistory] ([FechaEdicion]);
+
+        PRINT '✓ Tabla WeighingEditHistory creada exitosamente.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Tabla WeighingEditHistory ya existe.';
+    END
+
+    -- Registrar migración
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (7, 'Crear tabla de histórico de ediciones', 'manual_migrations.sql');
+
+    PRINT '✓ Versión 7 aplicada exitosamente.';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'Versión 7 ya aplicada, saltando...';
 END
 
 -- Mostrar historial de migraciones

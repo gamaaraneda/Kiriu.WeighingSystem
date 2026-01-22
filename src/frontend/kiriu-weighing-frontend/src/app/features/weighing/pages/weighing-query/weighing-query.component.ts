@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { HeaderComponent } from '../../../../layout/header/header.component';
 import { BreadcrumbComponent } from '../../../../shared/components/breadcrumb/breadcrumb.component';
 import {
@@ -10,6 +11,7 @@ import {
   WeighingQueryFilters,
   WeighingQueryResult,
   WeighingPhotoDto,
+  WeighingEditHistory,
 } from '../../services/weighing-query.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { extractErrorMessage } from '../../../../shared/utils/error.utils';
@@ -29,6 +31,7 @@ import { UsernamePipe } from '../../../../shared/pipes/username.pipe';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    ProgressSpinnerModule,
     HeaderComponent,
     BreadcrumbComponent,
     HasPermissionDirective,
@@ -59,6 +62,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   operationToEdit: WeighingQueryResult | null = null;
   editForm!: FormGroup;
   private isLoadingEditData = false; // Flag para evitar ejecución durante carga inicial
+  editHistory: WeighingEditHistory[] = [];
+  isLoadingHistory = false; // Flag para mostrar spinner mientras carga el histórico
 
   // Permission state
   hasReportsPermission = false;
@@ -145,6 +150,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       // Placas para contenedor
       trailerPlateContenedor: [''],
       remolquePlateContenedor: [''],
+      // Campo de justificación (obligatorio)
+      justificacion: ['', [Validators.required, Validators.maxLength(70)]],
     });
   }
 
@@ -842,6 +849,40 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
     this.operationToEdit = operation;
     this.isLoadingEditData = true; // Activar flag para evitar ejecución de suscripción
+    this.isLoadingHistory = true; // Activar spinner de carga
+
+    // Cargar histórico de ediciones
+    console.log('🔍 Solicitando histórico para:', operation.id);
+    this.weighingQueryService.getEditHistory(operation.id).subscribe({
+      next: (response) => {
+        console.log('✅ Respuesta recibida:', response);
+        console.log('✅ response.success:', response.success);
+        console.log('✅ response.data:', response.data);
+        console.log('✅ Array.isArray(response.data):', Array.isArray(response.data));
+
+        if (response.success && response.data) {
+          this.editHistory = response.data;
+          console.log('📋 Histórico asignado:', this.editHistory);
+          console.log('📋 Cantidad de ediciones:', this.editHistory.length);
+          console.log('📋 Primera edición:', this.editHistory[0]);
+
+          // Forzar detección de cambios
+          this.cdr.detectChanges();
+
+          console.log('✅ detectChanges ejecutado');
+        } else {
+          console.warn('⚠️ Condición no cumplida - success:', response.success, 'data:', response.data);
+          this.editHistory = [];
+        }
+
+        this.isLoadingHistory = false; // Desactivar spinner
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar el histórico:', error);
+        this.editHistory = [];
+        this.isLoadingHistory = false; // Desactivar spinner
+      }
+    });
 
     // Prellenar el formulario con los valores actuales
     // Primero obtener la operación completa para tener todos los campos de placas
@@ -940,6 +981,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   onCloseEditModal(): void {
     this.showEditModal = false;
     this.operationToEdit = null;
+    this.editHistory = [];
+    this.isLoadingHistory = false; // Reset loading state
     this.editForm.reset();
     document.body.classList.remove('km-scroll-lock');
   }
@@ -1013,6 +1056,16 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
 
+    // Validar que la justificación no esté vacía
+    if (!formValue.justificacion || formValue.justificacion.trim() === '') {
+      this.showToast(
+        'error',
+        'Campo requerido',
+        'Debe ingresar una justificación para guardar los cambios'
+      );
+      return;
+    }
+
     this.weighingQueryService
       .updateOperationData(
         this.operationToEdit.id,
@@ -1025,7 +1078,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         placaRemolque1,
         placaRemolque2,
         trailerPlateContenedor,
-        remolquePlateContenedor
+        remolquePlateContenedor,
+        formValue.justificacion
       )
       .pipe(takeUntil(this.destroy$))
       .subscribe({

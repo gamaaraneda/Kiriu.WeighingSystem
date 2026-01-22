@@ -966,6 +966,62 @@
                   </div>
                 </ng-container>
               </ng-container>
+
+              <!-- Campo de justificación (obligatorio) -->
+              <div class="form-field form-field--full">
+                <label class="label label--required" for="justificacion">
+                  Justificación de la edición
+                  <span class="field-hint">(Máximo 70 caracteres)</span>
+                </label>
+                <textarea
+                  id="justificacion"
+                  formControlName="justificacion"
+                  class="textarea"
+                  placeholder="Explique brevemente el motivo de la edición"
+                  maxlength="70"
+                  rows="2"
+                  required
+                ></textarea>
+                <div class="char-counter">
+                  {{ editForm.get('justificacion')?.value?.length || 0 }}/70
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección de histórico de ediciones (solo se muestra si hay historial) -->
+          <div class="history-section" *ngIf="editHistory && editHistory.length > 0">
+            <h4 class="section-title">
+              Histórico de Ediciones
+              <span style="font-size: 12px; color: #999; font-weight: normal; margin-left: 8px;">
+                ({{ editHistory.length }} {{ editHistory.length === 1 ? 'edición' : 'ediciones' }})
+              </span>
+            </h4>
+
+            <!-- Lista de ediciones -->
+            <div class="history-list">
+              <div class="history-item" *ngFor="let item of editHistory">
+                <div class="history-header">
+                  <span class="history-date">{{ item.fechaEdicion | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  <span class="history-user">{{ item.usuarioEditor | username }}</span>
+                </div>
+                <div class="history-justification">
+                  <strong>Justificación:</strong> {{ item.justificacion }}
+                </div>
+                <div class="history-changes" *ngIf="item.valoresOriginales">
+                  <strong>Valores originales:</strong>
+                  <div class="history-values">
+                    <span *ngIf="item.valoresOriginales.tipo" class="history-value">Tipo: {{ item.valoresOriginales.tipo }}</span>
+                    <span *ngIf="item.valoresOriginales.tipoUnidad" class="history-value">Tipo Unidad: {{ getUnidadLabel(item.valoresOriginales.tipoUnidad) }}</span>
+                    <span *ngIf="item.valoresOriginales.clienteProveedor" class="history-value">Cliente/Proveedor: {{ item.valoresOriginales.clienteProveedor }}</span>
+                    <span *ngIf="item.valoresOriginales.producto" class="history-value">Producto: {{ item.valoresOriginales.producto }}</span>
+                    <span *ngIf="item.valoresOriginales.trailerPlate" class="history-value">Tráiler: {{ item.valoresOriginales.trailerPlate }}</span>
+                    <span *ngIf="item.valoresOriginales.trailerPlate2" class="history-value">Remolque: {{ item.valoresOriginales.trailerPlate2 }}</span>
+                    <span *ngIf="item.valoresOriginales.placaRemolque1" class="history-value">Remolque 1: {{ item.valoresOriginales.placaRemolque1 }}</span>
+                    <span *ngIf="item.valoresOriginales.placaRemolque2" class="history-value">Remolque 2: {{ item.valoresOriginales.placaRemolque2 }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </form>
@@ -983,7 +1039,7 @@
           type="button"
           class="btn btn-primary"
           (click)="onSaveWeights()"
-          [disabled]="isLoading || !editForm.valid"
+          [disabled]="isLoading || !editForm.valid || !editForm.get('justificacion')?.value?.trim()"
         >
           <span *ngIf="isLoading" class="spinner"></span>
           {{ isLoading ? "Guardando..." : "Guardar Cambios" }}

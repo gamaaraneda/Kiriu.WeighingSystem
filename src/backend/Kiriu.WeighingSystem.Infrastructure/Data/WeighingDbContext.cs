@@ -21,6 +21,7 @@ public class WeighingDbContext : DbContext
     public DbSet<WeighingOperation> WeighingOperations { get; set; }
     public DbSet<WeighingPhoto> WeighingPhotos { get; set; }
     public DbSet<WeighingRemolque> WeighingRemolques { get; set; }
+    public DbSet<WeighingEditHistory> WeighingEditHistories { get; set; }
     
     // Audit entities
     public DbSet<AuditLog> AuditLogs { get; set; }
@@ -187,7 +188,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
       // Deshabilita la cláusula OUTPUT para tablas con triggers
       table.HasTrigger("TR_WeighingRemolques_UpdatedAt");
   });
-            
+
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Numero).IsRequired();
             entity.Property(e => e.Placa).HasMaxLength(20).IsRequired();
@@ -199,11 +200,29 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             entity.Property(e => e.FotoPlacaCapturada).HasColumnType("bit").IsRequired();
             entity.Property(e => e.CreatedAt).HasColumnType("DATETIME").IsRequired();
             entity.Property(e => e.UpdatedAt).HasColumnType("DATETIME").IsRequired();
-            
+
             entity.HasOne(d => d.WeighingOperation)
                   .WithMany(p => p.Remolques)
                   .HasForeignKey(d => d.WeighingOperationId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WeighingEditHistory>(entity =>
+        {
+            entity.ToTable("WeighingEditHistory", "weighing");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Justificacion).HasMaxLength(70).IsRequired();
+            entity.Property(e => e.ValoresOriginales).HasColumnType("NVARCHAR(MAX)").IsRequired();
+            entity.Property(e => e.FechaEdicion).HasColumnType("DATETIME2").IsRequired();
+            entity.Property(e => e.UsuarioEditor).HasMaxLength(255);
+
+            entity.HasOne(d => d.WeighingOperation)
+                  .WithMany(p => p.EditHistory)
+                  .HasForeignKey(d => d.WeighingOperationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.WeighingOperationId);
+            entity.HasIndex(e => e.FechaEdicion);
         });
         
         // Audit log configuration

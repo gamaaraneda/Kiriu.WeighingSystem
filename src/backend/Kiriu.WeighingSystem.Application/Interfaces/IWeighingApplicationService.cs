@@ -25,4 +25,5 @@ public interface IWeighingApplicationService
     Task<ApiResponse<List<string>>> SearchProductsAsync(string searchTerm, int limit = 10);
     Task<ApiResponse<List<string>>> SearchClientsAsync(string searchTerm, int limit = 10);
     Task<ApiResponse<List<PendingExitSearchResultDto>>> SearchPendingExitsAsync(string searchTerm, int limit = 10, string? unitType = null);
+    Task<ApiResponse<List<WeighingEditHistoryDto>>> GetEditHistoryAsync(Guid operationId);
 }

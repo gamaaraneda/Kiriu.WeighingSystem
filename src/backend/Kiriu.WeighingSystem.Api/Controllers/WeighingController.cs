@@ -360,38 +360,90 @@ public class WeighingController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene el nombre del usuario actual desde el token JWT
+    /// [DEBUG] Endpoint temporal para verificar los claims del token JWT
+    /// </summary>
+    [HttpGet("debug/claims")]
+    public IActionResult GetClaims()
+    {
+        var claims = User.Claims.Select(c => new
+        {
+            Type = c.Type,
+            Value = c.Value
+        }).ToList();
+
+        return Ok(new
+        {
+            success = true,
+            identityName = User.Identity?.Name,
+            isAuthenticated = User.Identity?.IsAuthenticated,
+            claims = claims,
+            userFromMethod = GetCurrentUser()
+        });
+    }
+
+    /// <summary>
+    /// Obtiene el email del usuario actual desde el token JWT
+    /// Prioriza el email sobre otros claims
     /// </summary>
     private string? GetCurrentUser()
     {
         try
         {
-            // Intentar obtener el nombre del usuario desde diferentes claims
-            var userName = User.Identity?.Name;
-            if (!string.IsNullOrEmpty(userName))
-                return userName;
+            // PRIORIDAD 1: Intentar obtener el email del claim estándar
+            var emailClaim = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (!string.IsNullOrEmpty(emailClaim))
+            {
+                _logger.LogDebug("Email obtenido de ClaimTypes.Email: {Email}", emailClaim);
+                return emailClaim;
+            }
 
-            // Si no está en Identity.Name, intentar con el claim "name"
+            // PRIORIDAD 2: Intentar con el claim "email" (lowercase)
+            emailClaim = User.FindFirst("email")?.Value;
+            if (!string.IsNullOrEmpty(emailClaim))
+            {
+                _logger.LogDebug("Email obtenido de claim 'email': {Email}", emailClaim);
+                return emailClaim;
+            }
+
+            // PRIORIDAD 3: Intentar con User.Identity.Name (puede ser email o username)
+            var identityName = User.Identity?.Name;
+            if (!string.IsNullOrEmpty(identityName))
+            {
+                _logger.LogDebug("Valor obtenido de Identity.Name: {Name}", identityName);
+                return identityName;
+            }
+
+            // PRIORIDAD 4: Intentar con el claim "name"
             var nameClaim = User.FindFirst(ClaimTypes.Name)?.Value;
             if (!string.IsNullOrEmpty(nameClaim))
+            {
+                _logger.LogDebug("Valor obtenido de ClaimTypes.Name: {Name}", nameClaim);
                 return nameClaim;
+            }
 
-            // Si no está en "name", intentar con el claim "sub" (subject)
+            // PRIORIDAD 5: Intentar con el claim "sub" (subject/identifier)
             var subClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!string.IsNullOrEmpty(subClaim))
+            {
+                _logger.LogDebug("Valor obtenido de ClaimTypes.NameIdentifier: {Sub}", subClaim);
                 return subClaim;
+            }
 
-            // Como último recurso, intentar con "username" o "email"
-            var usernameClaim = User.FindFirst("username")?.Value ?? User.FindFirst("email")?.Value;
+            // PRIORIDAD 6: Intentar con "username"
+            var usernameClaim = User.FindFirst("username")?.Value;
             if (!string.IsNullOrEmpty(usernameClaim))
+            {
+                _logger.LogDebug("Valor obtenido de claim 'username': {Username}", usernameClaim);
                 return usernameClaim;
+            }
 
             // Si ninguno está disponible, usar un identificador genérico
+            _logger.LogWarning("No se pudo obtener el email del usuario del token JWT, usando 'Sistema'");
             return "Sistema";
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error al obtener usuario actual del token JWT");
+            _logger.LogWarning(ex, "Error al obtener email del usuario actual del token JWT");
             return "Sistema";
         }
     }
@@ -577,6 +629,50 @@ public class WeighingController : ControllerBase
         {
             _logger.LogError(ex, "Error al obtener última foto huérfana para tipo: {PhotoType}", photoType);
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el historial de ediciones de una operación de pesaje
+    /// </summary>
+    /// <param name="operationId">ID de la operación</param>
+    /// <returns>Lista del historial de ediciones</returns>
+    [HttpGet("operations/{operationId}/history")]
+    public async Task<IActionResult> GetEditHistory(Guid operationId)
+    {
+        try
+        {
+            _logger.LogInformation("Obteniendo histórico de ediciones para operación: {OperationId}", operationId);
+
+            var result = await _weighingService.GetEditHistoryAsync(operationId);
+
+            if (!result.Success)
+            {
+                _logger.LogWarning("Error al obtener histórico: {Message}", result.Message);
+                return NotFound(new {
+                    success = false,
+                    data = new List<object>(),
+                    message = result.Message
+                });
+            }
+
+            // Retornar en el formato correcto para el frontend
+            return Ok(new {
+                success = true,
+                data = result.Data,  // Array directo, no envuelto
+                message = result.Message,
+                errors = result.Errors,
+                metadata = result.Metadata
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener histórico de ediciones para operación: {OperationId}", operationId);
+            return StatusCode(500, new {
+                success = false,
+                data = new List<object>(),
+                message = "Error interno del servidor"
+            });
         }
     }
 }

@@ -103,4 +103,5 @@ public class WeighingOperation
     // Navigation properties
     public virtual ICollection<WeighingPhoto> Photos { get; set; } = new List<WeighingPhoto>();
     public virtual ICollection<WeighingRemolque> Remolques { get; set; } = new List<WeighingRemolque>();
+    public virtual ICollection<WeighingEditHistory> EditHistory { get; set; } = new List<WeighingEditHistory>();
 }
