@@ -474,17 +474,39 @@ export class PdfGeneratorService {
     }
 
     // CÓDIGO QR COMPACTO
+    // Formatear fechas en formato DD/MM/YYYY HH:mm con zona horaria ajustada
+    const fechaFormateada = this.formatDateForQR(data.fecha);
+    const fechaEntradaFormateada = this.formatDateForQR(data.fechaEntrada);
+    const fechaSalidaFormateada = this.formatDateForQR(data.fechaSalida);
+
+    // Extraer nombres de usuario de los almacenistas
+    const almacenistaEntrada = (data.createdBy && data.createdBy.trim() !== '')
+      ? this.extractUsername(data.createdBy)
+      : '';
+    const almacenistaSalida = (data.exitRegisteredBy && data.exitRegisteredBy.trim() !== '')
+      ? this.extractUsername(data.exitRegisteredBy)
+      : '';
+
+    // Mapear tipo: "client" -> "cliente", "proveedor" -> "proveedor"
+    const tipoQR = data.tipo === 'client' ? 'cliente' : (data.tipo || 'cliente');
+
+    // Construir datos del QR según estructura requerida
     const qrData = JSON.stringify({
       folio: data.folio,
-      fecha: data.fecha,
+      fecha: fechaFormateada,
+      tipo: tipoQR,
       tipoUnidad: data.tipoUnidad,
-      clienteProveedor: data.clienteProveedor,
-      producto: data.producto,
-      placaTrailer: data.placaTrailer,
-      placaRemolque: data.placaRemolque,
-      pesoNeto: data.pesoNeto,
-      fechaEntrada: data.fechaEntrada,
-      fechaSalida: data.fechaSalida,
+      empresa: data.clienteProveedor || '',
+      materialChofer: data.producto || '',
+      placaTrailer: data.placaTrailer || '',
+      placaRemolque: data.placaRemolque || '',
+      pesoEntrada: data.pesoBrutoEntrada ? data.pesoBrutoEntrada.toString() : '',
+      pesoSalida: data.pesoBrutoSalida ? data.pesoBrutoSalida.toString() : '',
+      pesoNeto: data.pesoNeto || 0,
+      almacenistaEntrada: almacenistaEntrada,
+      almacenistaSalida: almacenistaSalida,
+      fechaEntrada: fechaEntradaFormateada,
+      fechaSalida: fechaSalidaFormateada,
     });
 
     try {
@@ -595,6 +617,99 @@ export class PdfGeneratorService {
     // mexicoDateParts = ['20', '10', '2025', '13', '00', '00']
     const [day, month, year, hours, minutes, seconds] = mexicoDateParts;
     return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+  }
+
+  /**
+   * Formatea una fecha a ISO 8601 ajustando a la zona horaria de México
+   * Convierte de UTC a hora local de México (America/Mexico_City) y devuelve en formato ISO 8601
+   */
+  private formatDateToISO(date: Date | string): string {
+    if (!date) return '';
+
+    // Si es string, asegurar que tiene 'Z' al final para que se interprete como UTC
+    let dateObj: Date;
+    if (typeof date === 'string') {
+      // Si el string no termina en 'Z', agregarlo (viene del backend sin 'Z')
+      const dateStr = date.endsWith('Z') ? date : date + 'Z';
+      dateObj = new Date(dateStr);
+    } else {
+      dateObj = new Date(date);
+    }
+
+    // Validar que la fecha sea válida
+    if (isNaN(dateObj.getTime())) {
+      return '';
+    }
+
+    // Obtener componentes de la fecha en zona horaria de México usando Intl.DateTimeFormat
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+
+    const parts = formatter.formatToParts(dateObj);
+    const year = parts.find(p => p.type === 'year')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const day = parts.find(p => p.type === 'day')?.value || '';
+    const hours = parts.find(p => p.type === 'hour')?.value || '';
+    const minutes = parts.find(p => p.type === 'minute')?.value || '';
+    const seconds = parts.find(p => p.type === 'second')?.value || '';
+
+    // Obtener milisegundos de la fecha original (no cambian con zona horaria)
+    const milliseconds = dateObj.getMilliseconds().toString().padStart(3, '0');
+
+    // Formato ISO 8601: YYYY-MM-DDTHH:mm:ss.sssZ
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;
+  }
+
+  /**
+   * Formatea una fecha para el QR en formato DD/MM/YYYY HH:mm
+   * Convierte de UTC a hora local de México (America/Mexico_City)
+   */
+  private formatDateForQR(date: Date | string): string {
+    if (!date) return '';
+
+    // Si es string, asegurar que tiene 'Z' al final para que se interprete como UTC
+    let dateObj: Date;
+    if (typeof date === 'string') {
+      // Si el string no termina en 'Z', agregarlo (viene del backend sin 'Z')
+      const dateStr = date.endsWith('Z') ? date : date + 'Z';
+      dateObj = new Date(dateStr);
+    } else {
+      dateObj = new Date(date);
+    }
+
+    // Validar que la fecha sea válida
+    if (isNaN(dateObj.getTime())) {
+      return '';
+    }
+
+    // Obtener componentes de la fecha en zona horaria de México usando Intl.DateTimeFormat
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Mexico_City',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+
+    const parts = formatter.formatToParts(dateObj);
+    const year = parts.find(p => p.type === 'year')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const day = parts.find(p => p.type === 'day')?.value || '';
+    const hours = parts.find(p => p.type === 'hour')?.value || '';
+    const minutes = parts.find(p => p.type === 'minute')?.value || '';
+
+    // Formato: DD/MM/YYYY HH:mm
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   /**
