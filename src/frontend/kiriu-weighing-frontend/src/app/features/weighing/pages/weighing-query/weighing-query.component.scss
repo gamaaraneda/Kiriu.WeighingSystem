@@ -2121,7 +2121,7 @@
   font-size: var(--fs-sm);
   font-family: inherit;
   resize: vertical;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
 
   &:focus {
     outline: none;
@@ -2132,6 +2132,14 @@
   &::placeholder {
     color: var(--muted);
   }
+
+  &:disabled,
+  &.textarea--disabled {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
 }
 
 .char-counter {
@@ -2139,6 +2147,20 @@
   color: var(--muted);
   text-align: right;
   margin-top: 4px;
+}
+
+.validation-error {
+  display: block;
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--error);
+  font-weight: var(--fw-medium);
+  line-height: 1.4;
+
+  span {
+    display: block;
+    margin-top: 2px;
+  }
 }
 
 /* ============================================================================

@@ -64,6 +64,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   private isLoadingEditData = false; // Flag para evitar ejecución durante carga inicial
   editHistory: WeighingEditHistory[] = [];
   isLoadingHistory = false; // Flag para mostrar spinner mientras carga el histórico
+  hasEditableChanges = false; // Flag para detectar cambios en campos editables
+  private initialFormValues: any = null; // Valores iniciales del formulario
 
   // Permission state
   hasReportsPermission = false;
@@ -151,11 +153,29 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       trailerPlateContenedor: [''],
       remolquePlateContenedor: [''],
       // Campo de justificación (obligatorio)
-      justificacion: ['', [Validators.required, Validators.maxLength(70)]],
+      justificacion: ['', [
+        Validators.required,
+        Validators.maxLength(70),
+        Validators.pattern(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\-\/#\. \n\r]+$/)
+      ]],
     });
   }
 
   private setupFormSubscriptions(): void {
+    // Suscripción a TODOS los campos editables para detectar cambios
+    this.editForm.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(100),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        // Solo verificar cambios si NO estamos cargando datos iniciales
+        if (!this.isLoadingEditData && this.showEditModal) {
+          this.checkForEditableChanges();
+        }
+      });
+
     // Suscripción al cambio de tipo de unidad para reasignar placas
     this.editForm
       .get('tipoUnidad')
@@ -236,6 +256,9 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
             { emitEvent: false }
           );
         }
+
+        // Verificar cambios después de reasignar placas
+        this.checkForEditableChanges();
       });
   }
 
@@ -742,6 +765,14 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     return labels[tipoUnidad] || tipoUnidad;
   }
 
+  getTipoLabel(tipo: string): string {
+    const labels: { [key: string]: string } = {
+      client: 'Cliente',
+      provider: 'Proveedor',
+    };
+    return labels[tipo] || tipo;
+  }
+
   getEstadoLabel(estado: string): string {
     const labels: { [key: string]: string } = {
       ENTRADA_REGISTRADA: 'Entrada',
@@ -834,6 +865,44 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       return pesoBruto - pesoNeto;
     }
     return null;
+  }
+
+  // Detectar cambios en los campos editables
+  private checkForEditableChanges(): void {
+    if (!this.initialFormValues) {
+      this.hasEditableChanges = false;
+      return;
+    }
+
+    const currentValues = this.editForm.value;
+    const tipoUnidad = currentValues.tipoUnidad;
+
+    // Campos comunes que siempre se comparan
+    const commonFieldsChanged =
+      currentValues.tipo !== this.initialFormValues.tipo ||
+      currentValues.tipoUnidad !== this.initialFormValues.tipoUnidad ||
+      currentValues.clienteProveedor !== this.initialFormValues.clienteProveedor ||
+      currentValues.producto !== this.initialFormValues.producto;
+
+    // Campos de placas según el tipo de unidad
+    let plateFieldsChanged = false;
+
+    if (tipoUnidad === 'remolque') {
+      plateFieldsChanged =
+        currentValues.trailerPlate !== this.initialFormValues.trailerPlate ||
+        currentValues.trailerPlate2 !== this.initialFormValues.trailerPlate2;
+    } else if (tipoUnidad === 'doble-remolque') {
+      plateFieldsChanged =
+        currentValues.trailerPlate !== this.initialFormValues.trailerPlate ||
+        currentValues.placaRemolque1 !== this.initialFormValues.placaRemolque1 ||
+        currentValues.placaRemolque2 !== this.initialFormValues.placaRemolque2;
+    } else if (tipoUnidad === 'contenedor') {
+      plateFieldsChanged =
+        currentValues.trailerPlateContenedor !== this.initialFormValues.trailerPlateContenedor ||
+        currentValues.remolquePlateContenedor !== this.initialFormValues.remolquePlateContenedor;
+    }
+
+    this.hasEditableChanges = commonFieldsChanged || plateFieldsChanged;
   }
 
   onEditWeights(operation: WeighingQueryResult): void {
@@ -934,6 +1003,10 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           remolquePlateContenedor: remolquePlateContenedor,
         });
 
+        // Guardar valores iniciales para detectar cambios
+        this.initialFormValues = { ...this.editForm.value };
+        this.hasEditableChanges = false;
+
         // Log del estado del formulario después de patchValue (TEMPORAL)
         console.log(
           '📝 Estado del formulario después de patchValue:',
@@ -983,6 +1056,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     this.operationToEdit = null;
     this.editHistory = [];
     this.isLoadingHistory = false; // Reset loading state
+    this.initialFormValues = null; // Limpiar valores iniciales
+    this.hasEditableChanges = false; // Reset flag de cambios
     this.editForm.reset();
     document.body.classList.remove('km-scroll-lock');
   }

@@ -969,18 +969,40 @@
 
               <!-- Campo de justificación (obligatorio) -->
               <div class="form-field form-field--full">
-                
+                <label class="label" for="justificacion">
+                 
+                  <span class="required-asterisk">*</span>
+                  <span *ngIf="!hasEditableChanges" class="field-hint" style="color: #94a3b8; font-weight: normal; margin-left: 8px;">
+                    
+                  </span>
+                </label>
                 <textarea
                   id="justificacion"
                   formControlName="justificacion"
                   class="textarea"
+                  [class.textarea--disabled]="!hasEditableChanges"
                   placeholder="Explique brevemente el motivo de la edición"
                   maxlength="70"
                   rows="2"
                   required
+                  [disabled]="!hasEditableChanges"
                 ></textarea>
                 <div class="char-counter">
                   {{ editForm.get('justificacion')?.value?.length || 0 }}/70
+                </div>
+                <div
+                  *ngIf="editForm.get('justificacion')?.invalid && editForm.get('justificacion')?.touched"
+                  class="validation-error"
+                >
+                  <span *ngIf="editForm.get('justificacion')?.errors?.['required']">
+                    La justificación es obligatoria
+                  </span>
+                  <span *ngIf="editForm.get('justificacion')?.errors?.['pattern']">
+                    Solo se permiten letras (incluido español), números y los caracteres: - / # .
+                  </span>
+                  <span *ngIf="editForm.get('justificacion')?.errors?.['maxlength']">
+                    Máximo 70 caracteres
+                  </span>
                 </div>
               </div>
             </div>
@@ -1008,7 +1030,7 @@
                 <div class="history-changes" *ngIf="item.valoresOriginales">
                   <strong>Valores originales:</strong>
                   <div class="history-values">
-                    <span *ngIf="item.valoresOriginales.tipo" class="history-value">Tipo: {{ item.valoresOriginales.tipo }}</span>
+                    <span *ngIf="item.valoresOriginales.tipo" class="history-value">Tipo: {{ getTipoLabel(item.valoresOriginales.tipo) }}</span>
                     <span *ngIf="item.valoresOriginales.tipoUnidad" class="history-value">Tipo Unidad: {{ getUnidadLabel(item.valoresOriginales.tipoUnidad) }}</span>
                     <span *ngIf="item.valoresOriginales.clienteProveedor" class="history-value">Cliente/Proveedor: {{ item.valoresOriginales.clienteProveedor }}</span>
                     <span *ngIf="item.valoresOriginales.producto" class="history-value">Producto: {{ item.valoresOriginales.producto }}</span>
@@ -1036,7 +1058,8 @@
           type="button"
           class="btn btn-primary"
           (click)="onSaveWeights()"
-          [disabled]="isLoading || !editForm.valid || !editForm.get('justificacion')?.value?.trim()"
+          [disabled]="isLoading || !hasEditableChanges || !editForm.valid || !editForm.get('justificacion')?.value?.trim()"
+          [title]="!hasEditableChanges ? 'Debe modificar al menos un campo para guardar' : ''"
         >
           <span *ngIf="isLoading" class="spinner"></span>
           {{ isLoading ? "Guardando..." : "Guardar Cambios" }}
