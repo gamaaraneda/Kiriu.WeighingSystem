@@ -262,8 +262,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (!pattern.test(value)) {
       return { invalidPlate: true };
     }
-    // Máximo 12 caracteres
-    if (value.length > 12) {
+    // Máximo 20 caracteres
+    if (value.length > 20) {
       return { maxLength: true };
     }
     return null;
@@ -275,8 +275,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const value = input.value;
     // Solo permitir letras, números y guion medio
     const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
-    // Limitar a 12 caracteres
-    const truncatedValue = filteredValue.substring(0, 12);
+    // Limitar a 20 caracteres
+    const truncatedValue = filteredValue.substring(0, 20);
 
     if (value !== truncatedValue) {
       // Si hubo cambios, actualizar el valor del input y del formulario
@@ -292,8 +292,19 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   onAlphanumericInput(event: Event, fieldName: string): void {
     const input = event.target as HTMLInputElement;
     const value = input.value;
-    // Solo permitir letras, números y espacios
-    const filteredValue = value.replace(/[^a-zA-Z0-9\s]/g, '');
+
+    let filteredValue: string;
+    if (fieldName === 'product') {
+      // Para producto: permitir letras, números, espacios y los caracteres especiales: - / # .
+      filteredValue = value.replace(/[^a-zA-Z0-9\s\-\/#.]/g, '');
+    } else if (fieldName === 'clientProviderName') {
+      // Para nombre/razón social: permitir letras, números, espacios y guion
+      filteredValue = value.replace(/[^a-zA-Z0-9\s-]/g, '');
+    } else {
+      // Para otros campos: solo letras, números y espacios
+      filteredValue = value.replace(/[^a-zA-Z0-9\s]/g, '');
+    }
+
     // Limitar a 50 caracteres
     const truncatedValue = filteredValue.substring(0, 50);
 

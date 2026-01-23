@@ -263,7 +263,7 @@
                     [class.error]="getFieldError('trailerPlate')"
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate"
-                    maxlength="9"
+                    maxlength="20"
                     pattern="[a-zA-Z0-9-]*"
                     (input)="onPlateInput($event, 'trailerPlate')"
                   />
@@ -358,7 +358,7 @@
                     [class.error]="getFieldError('remolque1Plate')"
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.remolque1Plate"
-                    maxlength="9"
+                    maxlength="20"
                     pattern="[a-zA-Z0-9-]*"
                     (input)="onPlateInput($event, 'remolque1Plate')"
                   />
@@ -626,7 +626,7 @@
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.remolque2Plate"
                     [disabled]="!canProceedToRemolque2()"
-                    maxlength="9"
+                    maxlength="20"
                     pattern="[a-zA-Z0-9-]*"
                     (input)="onPlateInput($event, 'remolque2Plate')"
                   />
@@ -919,7 +919,7 @@
                     [class.error]="getFieldError('trailerPlate')"
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate"
-                    maxlength="9"
+                    maxlength="20"
                     pattern="[a-zA-Z0-9-]*"
                     (input)="onPlateInput($event, 'trailerPlate')"
                   />
@@ -1012,7 +1012,7 @@
                     placeholder="La placa se detectará automáticamente de la foto"
                     [readonly]="!manualEditEnabled.trailerPlate2"
                     [disabled]="weighingForm.get('containerOnly')?.value"
-                    maxlength="9"
+                    maxlength="20"
                     pattern="[a-zA-Z0-9-]*"
                     (input)="onPlateInput($event, 'trailerPlate2')"
                   />
