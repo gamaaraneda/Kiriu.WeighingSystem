@@ -1352,10 +1352,10 @@
   font-size: var(--fs-sm);
   font-weight: 700;
   font-family: 'Courier New', monospace;
-  background: var(--brand-dark);
+  background: transparent;
   color: var(--brand-secondary);
-  border: 2px solid var(--brand-primary);
-  box-shadow: var(--shadow-sm);
+  border: none;
+  box-shadow: none;
 }
 
 /* Secciones de pesaje */

@@ -752,8 +752,16 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   }
 
   onLogout(): void {
-    this.authService.logout();
-    this.router.navigate(['/auth/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        // La redirección al login la maneja automáticamente el AuthService
+        console.log('✅ Logout exitoso - redirigiendo al login');
+      },
+      error: (error) => {
+        // Incluso si hay error, el AuthService limpia la sesión localmente
+        console.error('❌ Error en logout, pero la sesión fue limpiada:', error);
+      }
+    });
   }
 
   getUnidadLabel(tipoUnidad: string): string {
