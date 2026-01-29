@@ -85,8 +85,8 @@ public class AuthApplicationService : IAuthApplicationService
                     minutesRemaining);
 
                 var message = minutesRemaining == 1
-                    ? $"Ya tienes una sesión activa en otro dispositivo. Podrás iniciar sesión en {minutesRemaining} minuto."
-                    : $"Ya tienes una sesión activa en otro dispositivo. Podrás iniciar sesión en {minutesRemaining} minutos.";
+                    ? $"Ya existe una sesión activa para este usuario. Podrás iniciar sesión en {minutesRemaining} minuto."
+                    : $"Ya tienes una sesión activa para este usuario. Podrás iniciar sesión en {minutesRemaining} minutos.";
 
                 throw new ActiveSessionExistsException(
                     message,
