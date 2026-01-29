@@ -491,7 +491,7 @@
           
 
             <div class="info-row">
-              <span class="info-label">Cliente/Proveedor</span>
+              <span class="info-label">Empresa</span>
               <span class="info-value">{{
                 selectedOperation.clienteProveedor
               }}</span>
@@ -548,7 +548,7 @@
             </div>
 
             <div class="info-row">
-              <span class="info-label">Producto</span>
+              <span class="info-label">Material-Chofer</span>
               <span class="info-value">{{ selectedOperation.producto }}</span>
             </div>
 
@@ -808,7 +808,7 @@
 
               <div class="form-field">
                 <label class="label" for="clienteProveedor"
-                  >Cliente / Proveedor</label
+                  >Empresa</label
                 >
                 <input
                   type="text"
@@ -822,7 +822,7 @@
               </div>
 
               <div class="form-field">
-                <label class="label" for="producto">Producto</label>
+                <label class="label" for="producto">Material-Chofer</label>
                 <input
                   type="text"
                   id="producto"
@@ -970,7 +970,7 @@
               <!-- Campo de justificación (obligatorio) -->
               <div class="form-field form-field--full">
                 <label class="label" for="justificacion">
-                 
+                  Explique brevemente el motivo de la edición:
                   <span class="required-asterisk">*</span>
                   <span *ngIf="!hasEditableChanges" class="field-hint" style="color: #94a3b8; font-weight: normal; margin-left: 8px;">
                     
@@ -981,8 +981,7 @@
                   formControlName="justificacion"
                   class="textarea"
                   [class.textarea--disabled]="!hasEditableChanges"
-                  placeholder="Explique brevemente el motivo de la edición"
-                  maxlength="70"
+                  placeholder="Ingrese su justificación aquí.."
                   rows="2"
                   required
                   [disabled]="!hasEditableChanges"
@@ -998,7 +997,7 @@
                     La justificación es obligatoria
                   </span>
                   <span *ngIf="editForm.get('justificacion')?.errors?.['pattern']">
-                    Solo se permiten letras (incluido español), números y los caracteres: - / # .
+                    Solo se permiten letras, números y los caracteres: - / # .
                   </span>
                   <span *ngIf="editForm.get('justificacion')?.errors?.['maxlength']">
                     Máximo 70 caracteres
