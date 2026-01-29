@@ -157,12 +157,53 @@ export class UsuariosComponent implements OnInit {
   private initializeForms(): void {
     this.usuarioForm = this.fb.group(
       {
-        nombre: ['', [Validators.required]],
-        apellidos: [''],
-        email: ['', [Validators.required, Validators.email]],
+        nombre: [
+          '',
+          {
+            validators: [
+              Validators.required,
+              Validators.pattern('^[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]{1,50}$'),
+            ],
+            updateOn: 'change',
+          },
+        ],
+        apellidos: [
+          '',
+          {
+            validators: [Validators.pattern('^[A-Za-zÁÉÍÓÚáéíóúÑñ\\s]{0,50}$')],
+            updateOn: 'change',
+          },
+        ],
+        email: [
+          '',
+          {
+            validators: [
+              Validators.required,
+              Validators.pattern('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'),
+            ],
+            updateOn: 'change',
+          },
+        ],
         rolId: ['', [Validators.required]],
-        contrasena: ['', [Validators.required, Validators.minLength(6)]],
-        nuevaContrasena: [''],
+        contrasena: [
+          '',
+          {
+            validators: [
+              Validators.required,
+              Validators.pattern('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[#\\-/.]).{8,20}$'),
+            ],
+            updateOn: 'change',
+          },
+        ],
+        nuevaContrasena: [
+          '',
+          {
+            validators: [
+              Validators.pattern('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[#\\-/.]).{8,20}$'),
+            ],
+            updateOn: 'change',
+          },
+        ],
         activo: [true],
       },
       { validators: this.passwordMatchValidator }
@@ -716,6 +757,90 @@ export class UsuariosComponent implements OnInit {
       field.errors[errorType] &&
       field.touched
     );
+  }
+
+  // Método para validar solo letras (nombre y apellidos)
+  onlyLettersInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const regex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]*$/;
+    let value = input.value;
+
+    // Remover caracteres inválidos
+    if (!regex.test(value)) {
+      value = value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+    }
+
+    // Limitar a 50 caracteres
+    if (value.length > 50) {
+      value = value.substring(0, 50);
+    }
+
+    // Actualizar el input y el FormControl si hubo cambios
+    if (input.value !== value) {
+      input.value = value;
+
+      const controlName = input.getAttribute('formControlName');
+      if (controlName) {
+        this.usuarioForm.get(controlName)?.setValue(value, { emitEvent: false });
+        // Marcar como dirty para mostrar error
+        this.usuarioForm.get(controlName)?.markAsDirty();
+      }
+    }
+  }
+
+  // Método para validar email - solo caracteres válidos según RFC 5322
+  onlyValidEmailInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    // Permitir: letras, números, @ . _ - +
+    const regex = /^[A-Za-z0-9@._+\-]*$/;
+    let value = input.value;
+
+    // Remover caracteres inválidos (no permitir ?, ), paréntesis, etc.)
+    if (!regex.test(value)) {
+      value = value.replace(/[^A-Za-z0-9@._+\-]/g, '');
+    }
+
+    // Actualizar el input y el FormControl si hubo cambios
+    if (input.value !== value) {
+      input.value = value;
+
+      const controlName = input.getAttribute('formControlName');
+      if (controlName) {
+        this.usuarioForm.get(controlName)?.setValue(value, { emitEvent: false });
+        // Marcar como dirty para mostrar error
+        this.usuarioForm.get(controlName)?.markAsDirty();
+      }
+    }
+  }
+
+  // Método para validar contraseña - caracteres seguros y estándar
+  onlyValidPasswordInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    // Permitir: letras, números y solo los caracteres especiales: # - / .
+    const regex = /^[A-Za-z0-9#\-/.]*$/;
+    let value = input.value;
+
+    // Remover caracteres inválidos
+    if (!regex.test(value)) {
+      value = value.replace(/[^A-Za-z0-9#\-/.]/g, '');
+    }
+
+    // Limitar a 20 caracteres
+    if (value.length > 20) {
+      value = value.substring(0, 20);
+    }
+
+    // Actualizar el input y el FormControl si hubo cambios
+    if (input.value !== value) {
+      input.value = value;
+
+      const controlName = input.getAttribute('formControlName');
+      if (controlName) {
+        this.usuarioForm.get(controlName)?.setValue(value, { emitEvent: false });
+        // Marcar como dirty para mostrar error
+        this.usuarioForm.get(controlName)?.markAsDirty();
+      }
+    }
   }
 
   // Navigation methods

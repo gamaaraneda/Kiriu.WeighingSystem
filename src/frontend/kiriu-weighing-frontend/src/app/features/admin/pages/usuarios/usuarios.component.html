@@ -361,21 +361,27 @@
               type="text"
               id="nombre"
               formControlName="nombre"
-              placeholder="Nombre del usuario"
+              placeholder="Nombre del usuario (máximo 50 caracteres)"
               class="input"
+              (input)="onlyLettersInput($event)"
               [class.input-error]="
                 usuarioForm.get('nombre')?.invalid &&
-                usuarioForm.get('nombre')?.touched
+                usuarioForm.get('nombre')?.dirty
               "
             />
             <small
               class="field-error"
               *ngIf="
                 usuarioForm.get('nombre')?.invalid &&
-                usuarioForm.get('nombre')?.touched
+                usuarioForm.get('nombre')?.dirty
               "
             >
-              El nombre es requerido
+              <span *ngIf="usuarioForm.get('nombre')?.errors?.['required']"
+                >El nombre es requerido</span
+              >
+              <span *ngIf="usuarioForm.get('nombre')?.errors?.['pattern']"
+                >Solo se permiten letras (incluyendo ñ/Ñ y acentos), máximo 50 caracteres</span
+              >
             </small>
           </div>
 
@@ -385,9 +391,25 @@
               type="text"
               id="apellidos"
               formControlName="apellidos"
-              placeholder="Apellidos del usuario"
+              placeholder="Apellidos del usuario (máximo 50 caracteres)"
               class="input"
+              (input)="onlyLettersInput($event)"
+              [class.input-error]="
+                usuarioForm.get('apellidos')?.invalid &&
+                usuarioForm.get('apellidos')?.dirty
+              "
             />
+            <small
+              class="field-error"
+              *ngIf="
+                usuarioForm.get('apellidos')?.invalid &&
+                usuarioForm.get('apellidos')?.dirty
+              "
+            >
+              <span *ngIf="usuarioForm.get('apellidos')?.errors?.['pattern']"
+                >Solo se permiten letras (incluyendo ñ/Ñ y acentos), máximo 50 caracteres</span
+              >
+            </small>
           </div>
 
           <div class="form-group">
@@ -398,23 +420,24 @@
               formControlName="email"
               placeholder="correo@ejemplo.com"
               class="input"
+              (input)="onlyValidEmailInput($event)"
               [class.input-error]="
                 usuarioForm.get('email')?.invalid &&
-                usuarioForm.get('email')?.touched
+                usuarioForm.get('email')?.dirty
               "
             />
             <small
               class="field-error"
               *ngIf="
                 usuarioForm.get('email')?.invalid &&
-                usuarioForm.get('email')?.touched
+                usuarioForm.get('email')?.dirty
               "
             >
               <span *ngIf="usuarioForm.get('email')?.errors?.['required']"
                 >El email es requerido</span
               >
-              <span *ngIf="usuarioForm.get('email')?.errors?.['email']"
-                >Formato de email inválido</span
+              <span *ngIf="usuarioForm.get('email')?.errors?.['pattern']"
+                >Formato de email inválido (ejemplo: usuario@dominio.com)</span
               >
             </small>
           </div>
@@ -452,21 +475,27 @@
               type="password"
               id="contrasena"
               formControlName="contrasena"
-              placeholder="Contraseña del usuario"
+              placeholder="Ingrese contraseña (8-20 caracteres)"
               class="input"
+              (input)="onlyValidPasswordInput($event)"
               [class.input-error]="
                 usuarioForm.get('contrasena')?.invalid &&
-                usuarioForm.get('contrasena')?.touched
+                usuarioForm.get('contrasena')?.dirty
               "
             />
             <small
               class="field-error"
               *ngIf="
                 usuarioForm.get('contrasena')?.invalid &&
-                usuarioForm.get('contrasena')?.touched
+                usuarioForm.get('contrasena')?.dirty
               "
             >
-              La contraseña es requerida (mínimo 6 caracteres)
+              <span *ngIf="usuarioForm.get('contrasena')?.errors?.['required']"
+                >La contraseña es requerida</span
+              >
+              <span *ngIf="usuarioForm.get('contrasena')?.errors?.['pattern']"
+                >Debe contener 8-20 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial (# - / .)</span
+              >
             </small>
           </div>
 
@@ -476,21 +505,24 @@
               type="password"
               id="nuevaContrasena"
               formControlName="nuevaContrasena"
-              placeholder="Dejar vacío para mantener la actual"
+              placeholder="Dejar vacío para mantener actual (8-20 caracteres)"
               class="input"
+              (input)="onlyValidPasswordInput($event)"
               [class.input-error]="
                 usuarioForm.get('nuevaContrasena')?.invalid &&
-                usuarioForm.get('nuevaContrasena')?.touched
+                usuarioForm.get('nuevaContrasena')?.dirty
               "
             />
             <small
               class="field-error"
               *ngIf="
                 usuarioForm.get('nuevaContrasena')?.invalid &&
-                usuarioForm.get('nuevaContrasena')?.touched
+                usuarioForm.get('nuevaContrasena')?.dirty
               "
             >
-              La contraseña debe tener al menos 6 caracteres
+              <span *ngIf="usuarioForm.get('nuevaContrasena')?.errors?.['pattern']"
+                >Debe contener 8-20 caracteres, al menos una mayúscula, una minúscula, un número y un carácter especial (# - / .)</span
+              >
             </small>
           </div>
 
