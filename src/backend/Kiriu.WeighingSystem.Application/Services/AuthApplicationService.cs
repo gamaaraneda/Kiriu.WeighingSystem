@@ -60,17 +60,42 @@ public class AuthApplicationService : IAuthApplicationService
         if (hasActiveSession)
         {
             var activeSession = await _sessionService.GetActiveSessionAsync(usuario.Id);
-            _logger.LogWarning("🚫 Login bloqueado para {Email}: ya tiene sesión activa desde {Device} ({IP})", 
-                request.Email, 
-                activeSession?.DeviceInfo ?? "Dispositivo desconocido",
-                activeSession?.IpAddress ?? "IP desconocida");
-            
-            throw new ActiveSessionExistsException(
-                "Ya existe una sesión activa para este usuario. Cierre sesión en el otro dispositivo antes de iniciar sesión aquí.",
-                activeSession?.DeviceInfo,
-                activeSession?.IpAddress,
-                activeSession?.CreatedAt
-            );
+
+            // Obtener la vigencia configurada del token en minutos
+            var sessionValidityMinutes = Convert.ToInt32(_configuration["JwtSettings:SessionValidityInMinutes"] ?? "10");
+
+            // Calcular el tiempo transcurrido desde la creación de la sesión
+            var sessionAge = DateTime.UtcNow - activeSession.CreatedAt;
+            var minutesRemaining = sessionValidityMinutes - (int)sessionAge.TotalMinutes;
+
+            // Si ya expiró el tiempo de vigencia, permitir login
+            if (minutesRemaining <= 0)
+            {
+                _logger.LogInformation("✅ Sesión anterior expiró. Permitiendo nuevo login para {Email}", request.Email);
+                // Revocar la sesión expirada
+                await _sessionService.RevokeSessionAsync(activeSession.TokenJti);
+            }
+            else
+            {
+                // Token todavía vigente, bloquear login
+                _logger.LogWarning("🚫 Login bloqueado para {Email}: ya tiene sesión activa desde {Device} ({IP}). {Minutes} minutos restantes.",
+                    request.Email,
+                    activeSession?.DeviceInfo ?? "Dispositivo desconocido",
+                    activeSession?.IpAddress ?? "IP desconocida",
+                    minutesRemaining);
+
+                var message = minutesRemaining == 1
+                    ? $"Ya tienes una sesión activa en otro dispositivo. Podrás iniciar sesión en {minutesRemaining} minuto."
+                    : $"Ya tienes una sesión activa en otro dispositivo. Podrás iniciar sesión en {minutesRemaining} minutos.";
+
+                throw new ActiveSessionExistsException(
+                    message,
+                    activeSession?.DeviceInfo,
+                    activeSession?.IpAddress,
+                    activeSession?.CreatedAt,
+                    minutesRemaining
+                );
+            }
         }
 
         // Actualizar último acceso

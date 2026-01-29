@@ -50,18 +50,20 @@ public class AuthController : ControllerBase
         }
         catch (ActiveSessionExistsException ex)
         {
-            _logger.LogWarning("Login bloqueado para {Email}: sesión activa existente", request.Email);
-            
+            _logger.LogWarning("Login bloqueado para {Email}: sesión activa existente. {Minutes} minutos restantes",
+                request.Email, ex.MinutesRemaining ?? 0);
+
             // Retornar 409 Conflict para indicar que ya existe una sesión activa
             return Conflict(new ApiResponse<LoginResponse>
             {
                 Success = false,
                 Message = ex.Message,
-                Errors = new List<string> 
-                { 
+                Errors = new List<string>
+                {
                     "ACTIVE_SESSION_EXISTS",
                     $"Dispositivo: {ex.DeviceInfo ?? "Desconocido"}",
-                    $"Sesión iniciada: {ex.SessionCreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Desconocido"}"
+                    $"Sesión iniciada: {ex.SessionCreatedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Desconocido"}",
+                    $"MinutosRestantes: {ex.MinutesRemaining ?? 0}"
                 }
             });
         }

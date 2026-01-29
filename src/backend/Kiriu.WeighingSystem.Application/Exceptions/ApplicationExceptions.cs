@@ -30,27 +30,34 @@ public class ActiveSessionExistsException : Exception
     /// Información del dispositivo donde está activa la sesión
     /// </summary>
     public string? DeviceInfo { get; }
-    
+
     /// <summary>
     /// Dirección IP donde está activa la sesión
     /// </summary>
     public string? IpAddress { get; }
-    
+
     /// <summary>
     /// Fecha de creación de la sesión activa
     /// </summary>
     public DateTime? SessionCreatedAt { get; }
 
+    /// <summary>
+    /// Minutos restantes para que el token caduque
+    /// </summary>
+    public int? MinutesRemaining { get; }
+
     public ActiveSessionExistsException(string message) : base(message) { }
-    
+
     public ActiveSessionExistsException(
-        string message, 
-        string? deviceInfo = null, 
+        string message,
+        string? deviceInfo = null,
         string? ipAddress = null,
-        DateTime? sessionCreatedAt = null) : base(message)
+        DateTime? sessionCreatedAt = null,
+        int? minutesRemaining = null) : base(message)
     {
         DeviceInfo = deviceInfo;
         IpAddress = ipAddress;
         SessionCreatedAt = sessionCreatedAt;
+        MinutesRemaining = minutesRemaining;
     }
 } 
