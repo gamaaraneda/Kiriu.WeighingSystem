@@ -295,11 +295,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
     let filteredValue: string;
     if (fieldName === 'product') {
-      // Para producto: permitir letras, números, espacios y los caracteres especiales: - / # .
-      filteredValue = value.replace(/[^a-zA-Z0-9\s\-\/#.]/g, '');
+      // Para producto: permitir letras, números, espacios, ñ/Ñ y los caracteres especiales: - / # .
+      filteredValue = value.replace(/[^a-zA-ZñÑ0-9\s\-\/#.]/g, '');
     } else if (fieldName === 'clientProviderName') {
-      // Para nombre/razón social: permitir letras, números, espacios y guion
-      filteredValue = value.replace(/[^a-zA-Z0-9\s-]/g, '');
+      // Para nombre/razón social: permitir letras, números, espacios, ñ/Ñ y guion
+      filteredValue = value.replace(/[^a-zA-ZñÑ0-9\s-]/g, '');
     } else {
       // Para otros campos: solo letras, números y espacios
       filteredValue = value.replace(/[^a-zA-Z0-9\s]/g, '');

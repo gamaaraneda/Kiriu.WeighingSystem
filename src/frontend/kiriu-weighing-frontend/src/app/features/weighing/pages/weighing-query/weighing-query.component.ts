@@ -826,8 +826,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   onAlphanumericInput(event: Event, fieldName: string): void {
     const input = event.target as HTMLInputElement;
     const value = input.value;
-    // Solo permitir letras, números, espacios y guion medio
-    const filteredValue = value.replace(/[^a-zA-Z0-9\s-]/g, '');
+    // Solo permitir letras, números, espacios, guion medio y ñ/Ñ
+    const filteredValue = value.replace(/[^a-zA-ZñÑ0-9\s-]/g, '');
     // Limitar a 50 caracteres
     const truncatedValue = filteredValue.substring(0, 50);
 
@@ -845,8 +845,8 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   onProductInput(event: Event, fieldName: string): void {
     const input = event.target as HTMLInputElement;
     const value = input.value;
-    // Solo permitir letras, números, espacios y los caracteres especiales: - / # .
-    const filteredValue = value.replace(/[^a-zA-Z0-9\s\-\/#.]/g, '');
+    // Solo permitir letras, números, espacios, ñ/Ñ y los caracteres especiales: - / # .
+    const filteredValue = value.replace(/[^a-zA-ZñÑ0-9\s\-\/#.]/g, '');
     // Limitar a 50 caracteres
     const truncatedValue = filteredValue.substring(0, 50);
 
