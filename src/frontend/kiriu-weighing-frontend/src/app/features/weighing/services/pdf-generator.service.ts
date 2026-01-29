@@ -319,10 +319,10 @@ export class PdfGeneratorService {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.text('Peso Neto', tableX + 2, yPosition + 4);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('helvetica', 'bold');
     const pesoNetoText = `${this.formatWeight(data.pesoNeto)} kg`;
     // Centrar el texto en la caja combinada
-    const textX = tableX + colWidths[0] + (combinedWidth / 2) - (doc.getTextWidth(pesoNetoText) / 2);
+    const textX = tableX + colWidths[0] + 1;
     doc.text(pesoNetoText, textX, yPosition + 4);
     yPosition += netRowHeight + 1;
 
