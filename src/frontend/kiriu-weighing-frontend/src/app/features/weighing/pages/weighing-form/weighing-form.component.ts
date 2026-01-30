@@ -782,8 +782,8 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             `Peso del remolque 1: ${this.weightData.capturedWeight} kg. Ahora suba el segundo remolque.`,
           );
 
-          // Avanzar al siguiente paso
-          this.doubleTrailerState.currentStep = 'remolque2';
+          // No avanzar a remolque2 aquí: la sección Remolque 2 solo se muestra al continuar
+          // (modo continue o acción explícita), para mantenerla oculta durante el registro del Remolque 1.
 
           // Actualizar el estado de los pasos del proceso
           setTimeout(() => this.updateProcessStepsStatus(), 0);
@@ -3282,6 +3282,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     );
 
     try {
+      // Doble remolque entrada: asegurar que el paso sea remolque1 antes de solicitar peso,
+      // para que cuando la respuesta del peso llegue (asíncrona) processDoubleTrailerWeight()
+      // asigne el peso al Remolque 1 en el primer clic (evitar que currentStep siga en 'trailer').
+      if (isDoubleTrailer) {
+        this.doubleTrailerState.currentStep = 'remolque1';
+      }
+
       // Solicitar peso antes de capturar fotos
       this.requestCurrentWeight();
 

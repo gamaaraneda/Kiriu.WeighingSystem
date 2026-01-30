@@ -576,13 +576,11 @@
               </div>
             </div>
 
-            <!-- Sección: Remolque 2 (oculta mientras se registra Remolque 1; visible al entrar a remolque 2 o en modo continue) -->
+            <!-- Sección: Remolque 2 (oculta durante registro Remolque 1; visible solo cuando currentStep es remolque2, p. ej. modo continue) -->
             <div
               *ngIf="
                 weighingForm.get('doubleTrailer')?.value &&
-                (canProceedToRemolque2() ||
-                  (currentOperationFolio &&
-                    doubleTrailerState.currentStep === 'remolque2'))
+                doubleTrailerState.currentStep === 'remolque2'
               "
               class="form-section remolque-section"
               [class.disabled]="!canProceedToRemolque2()"
