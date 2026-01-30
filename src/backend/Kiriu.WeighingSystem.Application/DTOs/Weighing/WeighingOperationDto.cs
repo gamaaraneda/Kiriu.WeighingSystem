@@ -68,6 +68,8 @@ public class ExitValidationDto
 public class EntryOperationDto
 {
     public string Id { get; set; } = string.Empty;
+    /// <summary>Folio de la operación (para cargar salida parcial por folio cuando Status == SALIDA_PARCIAL_R1).</summary>
+    public string Folio { get; set; } = string.Empty;
     public decimal EntryWeight { get; set; }
     public string Status { get; set; } = string.Empty;
 }

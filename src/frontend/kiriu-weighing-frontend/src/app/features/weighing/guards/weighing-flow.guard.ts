@@ -27,8 +27,31 @@ export const weighingFlowGuard: CanActivateFn = (route, state) => {
     return true;
   }
 
+  // Si estamos en el formulario de salida con modo continuar doble remolque
+  if (state.url.includes('/weighing-exit/')) {
+    const queryParams = route.queryParamMap;
+    const mode = queryParams.get('mode');
+    const folio = queryParams.get('folio');
+    if (mode === 'continue-double-trailer-exit' && folio) {
+      return true;
+    }
+  }
+
   // Si estamos en el formulario de pesaje
   if (state.url.includes('/weighing/')) {
+    // EXCEPCIÓN: Permitir acceso directo en modo continue-double-trailer
+    const queryParams = route.queryParamMap;
+    const mode = queryParams.get('mode');
+    const folio = queryParams.get('folio');
+
+    if (mode === 'continue-double-trailer' && folio) {
+      console.log(
+        '✅ Modo continue-double-trailer detectado, permitiendo acceso directo',
+      );
+      // En modo continue, se establecerá el flujo dentro del componente
+      return true;
+    }
+
     if (
       !unitType ||
       !operationType ||
@@ -44,7 +67,7 @@ export const weighingFlowGuard: CanActivateFn = (route, state) => {
     if (!flowValidation.isValid) {
       console.warn(
         'Flujo inválido, redirigiendo al dashboard:',
-        flowValidation.missingSteps
+        flowValidation.missingSteps,
       );
       router.navigate(['/dashboard']);
       return false;

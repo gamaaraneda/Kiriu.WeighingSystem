@@ -26,4 +26,16 @@ public interface IWeighingApplicationService
     Task<ApiResponse<List<string>>> SearchClientsAsync(string searchTerm, int limit = 10);
     Task<ApiResponse<List<PendingExitSearchResultDto>>> SearchPendingExitsAsync(string searchTerm, int limit = 10, string? unitType = null);
     Task<ApiResponse<List<WeighingEditHistoryDto>>> GetEditHistoryAsync(Guid operationId);
+
+    // Métodos para doble remolque interrumpible (entrada)
+    Task<ApiResponse<PartialDoubleTrailerEntryResponseDto>> CreatePartialDoubleTrailerEntryAsync(CreatePartialDoubleTrailerEntryRequest request);
+    Task<ApiResponse<DoubleTrailerEntryResponseDto>> ContinueDoubleTrailerEntryAsync(ContinueDoubleTrailerEntryRequest request);
+    Task<ApiResponse<List<PendingDoubleTrailerSearchResultDto>>> SearchPendingDoubleTrailersAsync(string searchTerm, int limit = 10);
+    Task<ApiResponse<PartialDoubleTrailerEntryResponseDto>> GetPendingDoubleTrailerByFolioAsync(string folio);
+
+    // Métodos para doble remolque interrumpible (salida)
+    Task<ApiResponse<PartialDoubleTrailerExitResponseDto>> CreatePartialDoubleTrailerExitAsync(CreatePartialDoubleTrailerExitRequest request);
+    Task<ApiResponse<ExitResponseDto>> ContinueDoubleTrailerExitAsync(ContinueDoubleTrailerExitRequest request);
+    Task<ApiResponse<List<PendingDoubleTrailerExitSearchResultDto>>> SearchPendingDoubleTrailerExitsAsync(string searchTerm, int limit = 10);
+    Task<ApiResponse<PartialDoubleTrailerExitResponseDto>> GetPendingDoubleTrailerExitByFolioAsync(string folio);
 }

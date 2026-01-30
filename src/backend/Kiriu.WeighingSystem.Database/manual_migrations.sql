@@ -16,7 +16,7 @@ GO
 -- =====================================================
 -- VARIABLES DE CONTROL
 -- =====================================================
-DECLARE @CurrentVersion INT = 7; -- Versión actual del script
+DECLARE @CurrentVersion INT = 9; -- Versión actual del script
 DECLARE @SchemaVersion INT;
 
 -- Crear tabla de versiones si no existe
@@ -543,6 +543,200 @@ END
 ELSE
 BEGIN
     PRINT 'Versión 7 ya aplicada, saltando...';
+END
+
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 8: SOPORTE PARA DOBLE REMOLQUE INTERRUMPIBLE
+-- =====================================================
+IF @SchemaVersion < 8
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 8: DOBLE REMOLQUE INTERRUMPIBLE';
+    PRINT '==========================================';
+
+    -- 1. Agregar nuevos campos a WeighingRemolques
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = 'weighing'
+                   AND TABLE_NAME = 'WeighingRemolques'
+                   AND COLUMN_NAME = 'RegistradoPor')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingRemolques]
+        ADD [RegistradoPor] NVARCHAR(255) NULL;
+        PRINT '✓ Campo RegistradoPor agregado a WeighingRemolques.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Campo RegistradoPor ya existe en WeighingRemolques.';
+    END
+
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = 'weighing'
+                   AND TABLE_NAME = 'WeighingRemolques'
+                   AND COLUMN_NAME = 'FechaRegistro')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingRemolques]
+        ADD [FechaRegistro] DATETIME2 NULL;
+        PRINT '✓ Campo FechaRegistro agregado a WeighingRemolques.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Campo FechaRegistro ya existe en WeighingRemolques.';
+    END
+
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = 'weighing'
+                   AND TABLE_NAME = 'WeighingRemolques'
+                   AND COLUMN_NAME = 'Estado')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingRemolques]
+        ADD [Estado] NVARCHAR(30) NOT NULL DEFAULT 'PENDIENTE'
+        CONSTRAINT [CK_WeighingRemolques_Estado] CHECK ([Estado] IN ('PENDIENTE', 'REGISTRADO'));
+        PRINT '✓ Campo Estado agregado a WeighingRemolques.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Campo Estado ya existe en WeighingRemolques.';
+    END
+
+    -- 2. Actualizar constraint de Status en WeighingOperations para incluir nuevos estados
+    IF EXISTS (SELECT * FROM sys.check_constraints
+               WHERE name = 'CK_WeighingOperations_Status'
+               AND parent_object_id = OBJECT_ID('[weighing].[WeighingOperations]'))
+    BEGIN
+        ALTER TABLE [weighing].[WeighingOperations]
+        DROP CONSTRAINT [CK_WeighingOperations_Status];
+        PRINT '✓ Constraint antiguo CK_WeighingOperations_Status eliminado.';
+    END
+
+    ALTER TABLE [weighing].[WeighingOperations]
+    ADD CONSTRAINT [CK_WeighingOperations_Status] CHECK ([Status] IN (
+        'ENTRADA_REGISTRADA',
+        'SALIDA_REGISTRADA',
+        'ENTRADA_PARCIAL_R1',
+        'ENTRADA_COMPLETA',
+        'SALIDA_PARCIAL_R1',
+        'SALIDA_COMPLETA'
+    ));
+    PRINT '✓ Constraint CK_WeighingOperations_Status actualizado con nuevos estados.';
+
+    -- 3. Crear índice para búsqueda eficiente de operaciones parciales
+    IF NOT EXISTS (SELECT * FROM sys.indexes
+                   WHERE name = 'IX_WeighingOperations_Status_TipoUnidad_Parcial'
+                   AND object_id = OBJECT_ID('[weighing].[WeighingOperations]'))
+    BEGIN
+        CREATE INDEX [IX_WeighingOperations_Status_TipoUnidad_Parcial]
+        ON [weighing].[WeighingOperations] ([Status], [TipoUnidad])
+        WHERE [TipoUnidad] = 'doble-remolque'
+          AND [Status] IN ('ENTRADA_PARCIAL_R1', 'SALIDA_PARCIAL_R1');
+        PRINT '✓ Índice IX_WeighingOperations_Status_TipoUnidad_Parcial creado.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Índice IX_WeighingOperations_Status_TipoUnidad_Parcial ya existe.';
+    END
+
+    -- 4. Crear índice para búsqueda por folio y placa de remolque
+    IF NOT EXISTS (SELECT * FROM sys.indexes
+                   WHERE name = 'IX_WeighingOperations_Folio_PlacaRemolque1'
+                   AND object_id = OBJECT_ID('[weighing].[WeighingOperations]'))
+    BEGIN
+        CREATE INDEX [IX_WeighingOperations_Folio_PlacaRemolque1]
+        ON [weighing].[WeighingOperations] ([Folio], [PlacaRemolque1]);
+        PRINT '✓ Índice IX_WeighingOperations_Folio_PlacaRemolque1 creado.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Índice IX_WeighingOperations_Folio_PlacaRemolque1 ya existe.';
+    END
+
+    -- 5. Actualizar registros existentes de doble remolque
+    -- Migrar estado 'ENTRADA_REGISTRADA' a 'ENTRADA_COMPLETA' para doble remolque ya completados
+    UPDATE [weighing].[WeighingOperations]
+    SET [Status] = 'ENTRADA_COMPLETA'
+    WHERE [TipoUnidad] = 'doble-remolque'
+      AND [Status] = 'ENTRADA_REGISTRADA'
+      AND [PlacaRemolque1] IS NOT NULL
+      AND [PlacaRemolque2] IS NOT NULL;
+
+    DECLARE @UpdatedEntries INT = @@ROWCOUNT;
+    PRINT '✓ ' + CAST(@UpdatedEntries AS NVARCHAR(10)) + ' entradas de doble remolque migradas a ENTRADA_COMPLETA.';
+
+    -- Migrar estado 'SALIDA_REGISTRADA' a 'SALIDA_COMPLETA' para doble remolque ya completados
+    UPDATE [weighing].[WeighingOperations]
+    SET [Status] = 'SALIDA_COMPLETA'
+    WHERE [TipoUnidad] = 'doble-remolque'
+      AND [Status] = 'SALIDA_REGISTRADA'
+      AND [PlacaRemolque1] IS NOT NULL
+      AND [PlacaRemolque2] IS NOT NULL;
+
+    DECLARE @UpdatedExits INT = @@ROWCOUNT;
+    PRINT '✓ ' + CAST(@UpdatedExits AS NVARCHAR(10)) + ' salidas de doble remolque migradas a SALIDA_COMPLETA.';
+
+    -- Actualizar remolques existentes con estado 'REGISTRADO'
+    UPDATE [weighing].[WeighingRemolques]
+    SET [Estado] = 'REGISTRADO',
+        [FechaRegistro] = [CreatedAt]
+    WHERE [Estado] = 'PENDIENTE';
+
+    DECLARE @UpdatedRemolques INT = @@ROWCOUNT;
+    PRINT '✓ ' + CAST(@UpdatedRemolques AS NVARCHAR(10)) + ' remolques actualizados a estado REGISTRADO.';
+
+    -- Registrar migración
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (8, 'Soporte para doble remolque interrumpible', 'manual_migrations.sql');
+
+    PRINT '✓ Versión 8 aplicada exitosamente.';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'Versión 8 ya aplicada, saltando...';
+END
+
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 9: SALIDA EN PARTES (DOBLE REMOLQUE)
+-- =====================================================
+IF @SchemaVersion < 9
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 9: SALIDA EN PARTES';
+    PRINT '==========================================';
+
+    -- 1. FechaSalida en WeighingRemolques (cuándo se registró la salida de ese remolque)
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = 'weighing'
+                   AND TABLE_NAME = 'WeighingRemolques'
+                   AND COLUMN_NAME = 'FechaSalida')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingRemolques]
+        ADD [FechaSalida] DATETIME2 NULL;
+        PRINT '✓ Campo FechaSalida agregado a WeighingRemolques.';
+    END
+    ELSE
+        PRINT '⚠ Campo FechaSalida ya existe en WeighingRemolques.';
+
+    -- 2. RegistradoPorSalida en WeighingRemolques (quién registró la salida de ese remolque)
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = 'weighing'
+                   AND TABLE_NAME = 'WeighingRemolques'
+                   AND COLUMN_NAME = 'RegistradoPorSalida')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingRemolques]
+        ADD [RegistradoPorSalida] NVARCHAR(255) NULL;
+        PRINT '✓ Campo RegistradoPorSalida agregado a WeighingRemolques.';
+    END
+    ELSE
+        PRINT '⚠ Campo RegistradoPorSalida ya existe en WeighingRemolques.';
+
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (9, 'Salida en partes (doble remolque): FechaSalida y RegistradoPorSalida en WeighingRemolques', 'manual_migrations.sql');
+
+    PRINT '✓ Versión 9 aplicada exitosamente.';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'Versión 9 ya aplicada, saltando...';
 END
 
 -- Mostrar historial de migraciones

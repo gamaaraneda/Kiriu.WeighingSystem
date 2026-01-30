@@ -1,0 +1,366 @@
+<div class="continue-container">
+  <app-header></app-header>
+
+  <div class="continue-content">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">Pesaje</span>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-item active">Continuar Doble Remolque</span>
+      </div>
+
+      <h1 class="page-title">🔄 Continuar Doble Remolque</h1>
+      <p class="page-subtitle">
+        Busque una operación pendiente y complete el registro del remolque 2
+      </p>
+
+      <!-- Tabs Entrada / Salida pendiente -->
+      <div class="tabs-row">
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="searchMode === 'entry'"
+          (click)="setSearchMode('entry')"
+        >
+          📥 Entrada pendiente
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="searchMode === 'exit'"
+          (click)="setSearchMode('exit')"
+        >
+          📤 Salida pendiente
+        </button>
+      </div>
+
+      <!-- Sección de búsqueda -->
+      <div *ngIf="!selectedOperation" class="search-section">
+        <form [formGroup]="searchForm" class="search-form">
+          <div class="search-input-group">
+            <label for="searchTerm" class="search-label">
+              Buscar por Folio o Placa
+            </label>
+            <input
+              type="text"
+              id="searchTerm"
+              formControlName="searchTerm"
+              [placeholder]="
+                searchMode === 'exit'
+                  ? 'Ingrese folio o placa (salida parcial)...'
+                  : 'Ingrese folio (CLI-ENT-XXXXXX) o placa...'
+              "
+              class="search-input"
+            />
+            <div *ngIf="isSearching" class="search-loader">🔍 Buscando...</div>
+          </div>
+        </form>
+
+        <!-- Resultados: Entrada pendiente -->
+        <div
+          *ngIf="
+            searchMode === 'entry' && showResults && searchResults.length > 0
+          "
+          class="search-results"
+        >
+          <h3 class="results-title">
+            Operaciones Parciales Encontradas ({{ searchResults.length }})
+          </h3>
+          <div class="results-list">
+            <div
+              *ngFor="let result of searchResults"
+              (click)="selectOperation(result)"
+              class="result-item"
+            >
+              <div class="result-header">
+                <div class="result-folio">
+                  <strong>{{ result.folio }}</strong>
+                  <span class="status-badge">{{ result.status }}</span>
+                </div>
+                <span class="result-date">{{
+                  result.fechaRegistroR1 | date: "short"
+                }}</span>
+              </div>
+              <div class="result-body">
+                <div class="result-row">
+                  <span class="label">Tráiler:</span
+                  ><span class="value">{{ result.trailerPlaca }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Remolque 1:</span
+                  ><span class="value">{{ result.placaRemolque1 }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Peso Bruto R1:</span
+                  ><span class="value"
+                    >{{ result.pesoBrutoR1 | number: "1.2-2" }} kg</span
+                  >
+                </div>
+                <div class="result-row">
+                  <span class="label">Producto:</span
+                  ><span class="value">{{ result.product }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Cliente/Proveedor:</span
+                  ><span class="value">{{ result.clientProviderName }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Registrado por:</span
+                  ><span class="value">{{ result.usuarioRegistroR1 }}</span>
+                </div>
+              </div>
+              <div class="result-footer">
+                <button type="button" class="btn-select">
+                  Seleccionar y Continuar →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultados: Salida pendiente -->
+        <div
+          *ngIf="
+            searchMode === 'exit' && showResults && searchResultsExit.length > 0
+          "
+          class="search-results"
+        >
+          <h3 class="results-title">
+            Salidas Parciales Encontradas ({{ searchResultsExit.length }})
+          </h3>
+          <div class="results-list">
+            <div
+              *ngFor="let result of searchResultsExit"
+              (click)="selectOperationExit(result)"
+              class="result-item"
+            >
+              <div class="result-header">
+                <div class="result-folio">
+                  <strong>{{ result.folio }}</strong>
+                  <span class="status-badge">{{ result.status }}</span>
+                </div>
+                <span class="result-date">{{
+                  result.fechaSalidaR1 | date: "short"
+                }}</span>
+              </div>
+              <div class="result-body">
+                <div class="result-row">
+                  <span class="label">Tráiler:</span
+                  ><span class="value">{{ result.trailerPlaca }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Remolque 1:</span
+                  ><span class="value">{{ result.placaRemolque1 }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Peso salida R1:</span
+                  ><span class="value"
+                    >{{ result.pesoTaraR1 | number: "1.2-2" }} kg</span
+                  >
+                </div>
+                <div class="result-row">
+                  <span class="label">Remolque 2:</span
+                  ><span class="value">{{ result.placaRemolque2 }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Producto:</span
+                  ><span class="value">{{ result.product }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Cliente/Proveedor:</span
+                  ><span class="value">{{ result.clientProviderName }}</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">Salida R1 por:</span
+                  ><span class="value">{{
+                    result.usuarioRegistroSalidaR1
+                  }}</span>
+                </div>
+              </div>
+              <div class="result-footer">
+                <button type="button" class="btn-select">
+                  Seleccionar y Completar Salida →
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          *ngIf="
+            showResults &&
+            (searchMode === 'entry'
+              ? searchResults.length === 0
+              : searchResultsExit.length === 0)
+          "
+          class="no-results"
+        >
+          <p>📭 No se encontraron operaciones pendientes</p>
+          <p class="help-text">
+            Intente buscar por folio completo o parte de la placa
+          </p>
+        </div>
+      </div>
+
+      <!-- Formulario de remolque 2 -->
+      <div *ngIf="selectedOperation" class="remolque2-section">
+        <div class="operation-info">
+          <h2 class="section-title">📋 Información de la Operación</h2>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Folio:</span>
+              <span class="info-value">{{ selectedOperation.folio }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Tráiler:</span>
+              <span class="info-value">{{
+                selectedOperation.trailerPlaca
+              }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Remolque 1:</span>
+              <span class="info-value">{{
+                selectedOperation.remolque1.placa
+              }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Peso Bruto R1:</span>
+              <span class="info-value">
+                {{ selectedOperation.remolque1.pesoBruto | number: "1.2-2" }} kg
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Producto:</span>
+              <span class="info-value">{{ selectedOperation.product }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Cliente/Proveedor:</span>
+              <span class="info-value">{{
+                selectedOperation.clientProviderName
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <form [formGroup]="remolque2Form" class="remolque2-form">
+          <h2 class="section-title">🚛 Registro de Remolque 2</h2>
+
+          <!-- Placa del Remolque 2 -->
+          <div class="form-group">
+            <label for="remolque2Plate" class="form-label">
+              Placa del Remolque 2 *
+            </label>
+            <div class="input-with-button">
+              <button
+                type="button"
+                class="btn-capture"
+                (click)="onPhotoCapture('remolque2Plate')"
+                title="Capturar foto de placa"
+              >
+                📷
+              </button>
+              <input
+                type="text"
+                id="remolque2Plate"
+                formControlName="remolque2Plate"
+                placeholder="Se detectará automáticamente"
+                class="form-input"
+              />
+            </div>
+
+            <div *ngIf="photoData.remolque2Plate" class="photo-preview">
+              <img
+                [src]="photoData.remolque2Plate"
+                alt="Placa Remolque 2"
+                class="preview-image"
+              />
+            </div>
+          </div>
+
+          <!-- Peso -->
+          <div class="form-group">
+            <label class="form-label"
+              >Peso Bruto (Tráiler + Remolque 2) *</label
+            >
+            <div class="weight-display">
+              <div class="current-weight">
+                <span class="weight-value">{{
+                  currentWeight | number: "1.2-2"
+                }}</span>
+                <span class="weight-unit">kg</span>
+              </div>
+              <div class="weight-status">
+                <span *ngIf="isWeightStable" class="status-stable"
+                  >✅ Estable</span
+                >
+                <span *ngIf="!isWeightStable" class="status-unstable"
+                  >⚠️ Inestable</span
+                >
+              </div>
+              <button
+                type="button"
+                class="btn-capture-weight"
+                (click)="captureWeight()"
+                [disabled]="!isWeightStable || weightCaptured"
+              >
+                {{ weightCaptured ? "✅ Peso Capturado" : "📊 Capturar Peso" }}
+              </button>
+            </div>
+
+            <div *ngIf="weightCaptured" class="captured-weight-info">
+              <strong>Peso capturado:</strong>
+              {{ capturedWeight | number: "1.2-2" }} kg
+            </div>
+          </div>
+
+          <!-- Foto de carga -->
+          <div class="form-group">
+            <label class="form-label">Foto de Carga del Remolque 2 *</label>
+            <button
+              type="button"
+              class="btn-capture-photo"
+              (click)="onPhotoCapture('cargoRemolque2')"
+            >
+              📷 Capturar Foto de Carga
+            </button>
+
+            <div *ngIf="photoData.cargoRemolque2" class="photo-preview">
+              <img
+                [src]="photoData.cargoRemolque2"
+                alt="Carga Remolque 2"
+                class="preview-image"
+              />
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="cancel()"
+              [disabled]="isLoading"
+            >
+              ← Cancelar
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="submitRemolque2()"
+              [disabled]="!canSubmit() || isLoading"
+            >
+              {{
+                isLoading ? "⏳ Guardando..." : "✅ Completar Doble Remolque"
+              }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p-toast></p-toast>

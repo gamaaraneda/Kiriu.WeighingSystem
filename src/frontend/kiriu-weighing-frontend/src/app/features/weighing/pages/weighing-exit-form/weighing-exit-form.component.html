@@ -28,8 +28,8 @@
         <!-- Columna izquierda: Formulario -->
         <div class="form-column">
           <form [formGroup]="exitForm" class="weighing-exit-form">
-            <!-- Sección: Búsqueda de Entrada -->
-            <div class="form-section">
+            <!-- Sección: Búsqueda de Entrada (oculta en modo continuar salida) -->
+            <div *ngIf="!currentOperationFolio" class="form-section">
               <h2 class="section-title">Búsqueda de Entrada</h2>
 
               <div class="form-group">
@@ -83,6 +83,11 @@
                         <div class="entry-main">
                           <strong>{{ entry.folio }}</strong> -
                           {{ entry.trailerPlate }}
+                          <span
+                            *ngIf="entry.pendingType === 'continue_remolque2'"
+                            class="entry-badge continue-remolque2"
+                            >Continuar remolque 2</span
+                          >
                         </div>
                         <div class="entry-details">
                           <span class="entry-client">{{
@@ -90,7 +95,7 @@
                           }}</span>
                           <span class="entry-product">{{ entry.product }}</span>
                           <span class="entry-weight"
-                            >{{ entry.entryWeight | number : "1.2-2" }} kg</span
+                            >{{ entry.entryWeight | number: "1.2-2" }} kg</span
                           >
                         </div>
                       </div>
@@ -125,11 +130,11 @@
                   <div class="detail-item">
                     <span class="label">Fecha de Entrada:</span>
                     <span class="value">{{
-                      entryData.createdAt | date : "dd/MM/yyyy HH:mm"
+                      entryData.createdAt | date: "dd/MM/yyyy HH:mm"
                     }}</span>
                   </div>
                   <div class="detail-item">
-                  <!--  <span class="label">{{ unitTypeTitle }}:</span> -->
+                    <!--  <span class="label">{{ unitTypeTitle }}:</span> -->
                     <span class="label">Empresa</span>
                     <span class="value">{{
                       entryData.clientProviderName
@@ -148,7 +153,7 @@
                   <div class="detail-item">
                     <span class="label">Peso Bruto (Entrada):</span>
                     <span class="value"
-                      >{{ entryData.entryWeight | number : "1.0-0" }} kg</span
+                      >{{ entryData.entryWeight | number: "1.0-0" }} kg</span
                     >
                   </div>
                 </div>
@@ -327,12 +332,13 @@
               </div>
             </div>
 
-            <!-- Sección: Remolque 1 - Solo para Doble Remolque -->
+            <!-- Sección: Remolque 1 - Solo para Doble Remolque (oculta en modo continuar) -->
             <div
               *ngIf="
                 isEntryFound &&
                 entryData &&
-                entryData.tipoUnidad === 'doble-remolque'
+                entryData.tipoUnidad === 'doble-remolque' &&
+                !currentOperationFolio
               "
               class="form-section remolque-section"
             >
@@ -530,7 +536,7 @@
                     >
                       {{
                         exitForm.get("pesoTaraRemolque1")?.value
-                          | number : "1.0-0"
+                          | number: "1.0-0"
                       }}
                       kg
                     </span>
@@ -568,6 +574,64 @@
                 >
                   {{ getFieldError("pesoTaraRemolque1") }}
                 </div>
+              </div>
+
+              <!-- Botón guardar salida parcial (solo remolque 1) -->
+              <div
+                *ngIf="canSavePartialRemolque1()"
+                class="partial-save-section"
+              >
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-save-partial"
+                  (click)="savePartialDoubleTrailerExit()"
+                  [disabled]="isLoading"
+                >
+                  💾 Guardar salida Remolque 1 y continuar después
+                </button>
+                <p class="help-text">
+                  Puede registrar solo el remolque 1 ahora y completar el
+                  remolque 2 posteriormente.
+                </p>
+              </div>
+            </div>
+
+            <!-- Resumen Remolque 1 (modo continuar salida) -->
+            <div
+              *ngIf="
+                currentOperationFolio &&
+                partialExitData &&
+                isEntryFound &&
+                entryData?.tipoUnidad === 'doble-remolque'
+              "
+              class="remolque1-summary-section"
+            >
+              <div class="summary-header">
+                <span class="summary-icon">✅</span>
+                <h3 class="summary-title">Remolque 1 ya registrado (salida)</h3>
+              </div>
+              <div class="summary-details">
+                <p><strong>Folio:</strong> {{ partialExitData.folio }}</p>
+                <p>
+                  <strong>Tráiler:</strong> {{ partialExitData.trailerPlaca }}
+                </p>
+                <p>
+                  <strong>Remolque 1:</strong>
+                  {{ partialExitData.remolque1.placa }} — Peso salida:
+                  {{
+                    partialExitData.remolque1.pesoTaraSalida | number: "1.0-0"
+                  }}
+                  kg
+                </p>
+                <p>
+                  <strong>Remolque 2:</strong>
+                  {{
+                    partialExitData.placaRemolque2 || entryData?.placaRemolque2
+                  }}
+                </p>
+                <p class="summary-note">
+                  Capture peso y fotos del remolque 2 para completar la salida.
+                </p>
               </div>
             </div>
 
@@ -793,7 +857,7 @@
                     >
                       {{
                         exitForm.get("pesoTaraRemolque2")?.value
-                          | number : "1.0-0"
+                          | number: "1.0-0"
                       }}
                       kg
                     </span>
@@ -853,7 +917,7 @@
                 >
                 <div class="weight-display readonly">
                   <span class="weight-value"
-                    >{{ entryData.entryWeight | number : "1.0-0" }} kg</span
+                    >{{ entryData.entryWeight | number: "1.0-0" }} kg</span
                   >
                   <span class="weight-label">Recuperado de entrada</span>
                 </div>
@@ -866,7 +930,7 @@
                 <div class="weight-display calculated">
                   <span class="weight-value"
                     >{{
-                      exitForm.get("netWeight")?.value | number : "1.0-0"
+                      exitForm.get("netWeight")?.value | number: "1.0-0"
                     }}
                     kg</span
                   >
@@ -887,7 +951,7 @@
                     {{ entryData.placaRemolque1 }} -
                     {{
                       exitForm.get("pesoTaraRemolque1")?.value || 0
-                        | number : "1.0-0"
+                        | number: "1.0-0"
                     }}
                     kg
                   </span>
@@ -898,7 +962,7 @@
                     {{ entryData.placaRemolque2 }} -
                     {{
                       exitForm.get("pesoTaraRemolque2")?.value || 0
-                        | number : "1.0-0"
+                        | number: "1.0-0"
                     }}
                     kg
                   </span>
@@ -1254,7 +1318,7 @@
                 >
                 <div class="weight-display readonly">
                   <span class="weight-value"
-                    >{{ entryData.entryWeight | number : "1.0-0" }} kg</span
+                    >{{ entryData.entryWeight | number: "1.0-0" }} kg</span
                   >
                   <span class="weight-label">Solo lectura</span>
                 </div>
@@ -1269,7 +1333,7 @@
                     <span
                       *ngIf="exitForm.get('exitWeight')?.value; else noWeight"
                     >
-                      {{ exitForm.get("exitWeight")?.value | number : "1.0-0" }}
+                      {{ exitForm.get("exitWeight")?.value | number: "1.0-0" }}
                       kg
                     </span>
                     <ng-template #noWeight>
@@ -1311,7 +1375,7 @@
                 <div class="weight-display calculated">
                   <span class="weight-value"
                     >{{
-                      exitForm.get("netWeight")?.value | number : "1.0-0"
+                      exitForm.get("netWeight")?.value | number: "1.0-0"
                     }}
                     kg</span
                   >
@@ -1419,7 +1483,7 @@
               ... contenido oculto ...
             </div> -->
 
-            <div class="weight-actions" style="display: none;">
+            <div class="weight-actions" style="display: none">
               <button
                 type="button"
                 class="btn btn-primary request-weight-btn full-width"
@@ -1453,11 +1517,11 @@
                 <span class="captured-label">Peso Capturado</span>
               </div>
               <div class="captured-weight-value">
-                {{ weightData.capturedWeight | number : "1.0-0" }} kg
+                {{ weightData.capturedWeight | number: "1.0-0" }} kg
               </div>
               <div class="captured-weight-timestamp">
                 Capturado el
-                {{ weightData.capturedAt | date : "dd/MM/yyyy HH:mm" }}
+                {{ weightData.capturedAt | date: "dd/MM/yyyy HH:mm" }}
               </div>
             </div>
           </div>

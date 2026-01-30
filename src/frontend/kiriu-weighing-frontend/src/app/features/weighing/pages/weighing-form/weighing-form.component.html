@@ -33,6 +33,7 @@
             <!-- Sección: Tipo de Unidad -->
             <div class="form-section">
               <h2 class="section-title">Tipo de Unidad</h2>
+
               <div class="checkbox-group checkbox-group-horizontal">
                 <label class="checkbox-label">
                   <input
@@ -64,6 +65,8 @@
               class="form-section"
             >
               <h2 class="section-title">Datos Generales del Viaje</h2>
+
+              <!-- Indicador de solo lectura en modo continue -->
 
               <div class="form-group">
                 <label for="product" class="form-label"
@@ -196,8 +199,57 @@
             >
               <h2 class="section-title">Datos del Tráiler</h2>
 
-              <!-- Subsección: Captura de placas -->
-              <div class="plate-capture-subsection">
+              <!-- Resumen de remolque 1 (cuando estamos en modo continue) -->
+              <div
+                *ngIf="
+                  currentOperationFolio &&
+                  doubleTrailerState.currentStep === 'remolque2'
+                "
+                class="remolque1-summary-section"
+              >
+                <div class="summary-header">
+                  <span class="summary-icon">✅</span>
+                  <h3 class="summary-title">Remolque 1 ya registrado</h3>
+                </div>
+                <div class="summary-details">
+                  <div class="summary-row">
+                    <span class="summary-label">Folio:</span>
+                    <span class="summary-value">{{
+                      currentOperationFolio
+                    }}</span>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label">Placa Tráiler:</span>
+                    <span class="summary-value">{{
+                      doubleTrailerState.trailerPlaca
+                    }}</span>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label">Placa Remolque 1:</span>
+                    <span class="summary-value">{{
+                      doubleTrailerState.remolque1.placa
+                    }}</span>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label">Peso Remolque 1:</span>
+                    <span class="summary-value"
+                      >{{
+                        doubleTrailerState.remolque1.pesoBruto | number: "1.0-0"
+                      }}
+                      kg</span
+                    >
+                  </div>
+                </div>
+                <p class="summary-note">
+                  Ahora capture los datos del remolque 2
+                </p>
+              </div>
+
+              <!-- Subsección: Captura de placas (ocultar en modo continue) -->
+              <div
+                *ngIf="!currentOperationFolio"
+                class="plate-capture-subsection"
+              >
                 <h3 class="subsection-title">Captura de placas</h3>
 
                 <button
@@ -232,7 +284,8 @@
                 </div>
               </div>
 
-              <div class="form-group">
+              <!-- Ocultar campos de tráiler y remolque 1 en modo continue -->
+              <div *ngIf="!currentOperationFolio" class="form-group">
                 <label for="trailerPlate" class="form-label"
                   >Placa del Tráiler *</label
                 >
@@ -317,9 +370,12 @@
               </div>
             </div>
 
-            <!-- Sección: Remolque 1 -->
+            <!-- Sección: Remolque 1 (ocultar en modo continue) -->
             <div
-              *ngIf="weighingForm.get('doubleTrailer')?.value"
+              *ngIf="
+                weighingForm.get('doubleTrailer')?.value &&
+                !currentOperationFolio
+              "
               class="form-section remolque-section"
             >
               <h2 class="section-title">
@@ -494,8 +550,7 @@
                       "
                     >
                       {{
-                        doubleTrailerState.remolque1.pesoBruto
-                          | number : "1.0-2"
+                        doubleTrailerState.remolque1.pesoBruto | number: "1.0-2"
                       }}
                       kg
                     </span>
@@ -519,6 +574,30 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Botón para guardar parcialmente (solo mostrar cuando remolque 1 está completo) -->
+            <div
+              *ngIf="
+                weighingForm.get('doubleTrailer')?.value &&
+                (doubleTrailerState.currentStep === 'remolque1' || doubleTrailerState.currentStep === 'remolque2') &&
+                canSavePartialRemolque1() &&
+                !currentOperationFolio
+              "
+              class="partial-save-section"
+            >
+              <button
+                type="button"
+                class="btn btn-secondary btn-save-partial"
+                (click)="savePartialDoubleTrailerEntry()"
+                [disabled]="isLoading"
+              >
+                💾 Guardar Remolque 1 y Continuar Después
+              </button>
+              <p class="help-text">
+                Puede guardar el remolque 1 ahora y continuar con el remolque 2
+                posteriormente (sin límite de tiempo).
+              </p>
             </div>
 
             <!-- Sección: Remolque 2 (deshabilitada hasta completar Remolque 1) -->
@@ -763,8 +842,7 @@
                       "
                     >
                       {{
-                        doubleTrailerState.remolque2.pesoBruto
-                          | number : "1.0-2"
+                        doubleTrailerState.remolque2.pesoBruto | number: "1.0-2"
                       }}
                       kg
                     </span>
@@ -1289,7 +1367,7 @@
               </div>
             </div>
 
-            <div class="weight-actions" style="display: none;">
+            <div class="weight-actions" style="display: none">
               <button
                 type="button"
                 class="btn btn-primary request-weight-btn"
@@ -1314,10 +1392,10 @@
                 <span class="captured-label">Peso Capturado</span>
               </div>
               <div class="captured-weight-value">
-                {{ weightData.capturedWeight | number : "1.0-2" }} kg
+                {{ weightData.capturedWeight | number: "1.0-2" }} kg
               </div>
               <div class="captured-weight-timestamp">
-                Capturado el {{ getCurrentTime() | date : "dd/MM/yyyy HH:mm" }}
+                Capturado el {{ getCurrentTime() | date: "dd/MM/yyyy HH:mm" }}
               </div>
             </div>
           </div>

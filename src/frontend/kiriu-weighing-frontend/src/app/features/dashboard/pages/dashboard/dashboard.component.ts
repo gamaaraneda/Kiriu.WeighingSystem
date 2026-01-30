@@ -113,4 +113,12 @@ export class DashboardComponent implements OnInit {
     // return this.authService.hasPermission('ADMIN_ACCESS');
     return true;
   }
+
+  /**
+   * Maneja la navegación para continuar con doble remolque pendiente
+   */
+  onContinueDoubleTrailer(): void {
+    console.log('Navegando a continuar doble remolque...');
+    this.router.navigate(['/continue-double-trailer']);
+  }
 }

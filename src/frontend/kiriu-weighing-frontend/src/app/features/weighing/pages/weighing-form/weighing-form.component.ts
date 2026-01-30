@@ -22,6 +22,8 @@ import {
   RemolqueData,
   CreateEntryRequest,
   CreateDoubleTrailerEntryRequest,
+  CreatePartialDoubleTrailerEntryRequest,
+  ContinueDoubleTrailerEntryRequest,
   CreateExitRequest,
   CreateDoubleTrailerExitRequest,
   ExitPhotoDataDto,
@@ -155,6 +157,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   connectionStatusSubscription: Subscription | undefined;
   hasManualEdits = false;
   currentOperationId: string | null = null;
+  currentOperationFolio: string | null = null; // Para modo continue-double-trailer
 
   // Control para captura consolidada de fotos
   isCapturingAllPhotos = false;
@@ -183,29 +186,42 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   clientSearchSubscription: Subscription | undefined;
 
   ngOnInit(): void {
-    this.route.params.subscribe((params) => {
-      this.unitType = params['unitType'];
-      this.operationType = params['operationType'];
-      this.updateTitles();
-      this.initializeForm();
-      this.startRealtimeWeightUpdates();
-      this.loadExistingData();
+    // Primero verificar si estamos en modo continue-double-trailer
+    this.route.queryParams.subscribe(queryParams => {
+      const mode = queryParams['mode'];
+      const folio = queryParams['folio'];
 
-      // Validar que el flujo sea correcto
-      this.validateFlow();
+      if (mode === 'continue-double-trailer' && folio) {
+        // Modo especial: continuar operación parcial con remolque 2
+        this.loadPartialOperationForContinue(folio);
+        return;
+      }
+
+      // Flujo normal: procesar parámetros de ruta estándar
+      this.route.params.subscribe((params) => {
+        this.unitType = params['unitType'];
+        this.operationType = params['operationType'];
+        this.updateTitles();
+        this.initializeForm();
+        this.startRealtimeWeightUpdates();
+        this.loadExistingData();
+
+        // Validar que el flujo sea correcto
+        this.validateFlow();
+      });
+
+      // Actualizar el estado de los pasos del proceso después de la inicialización
+      setTimeout(() => this.updateProcessStepsStatus(), 100);
+
+      // Configurar detección de edición manual
+      this.setupManualEditDetection();
+
+      // Configurar búsqueda de productos con debounce
+      this.setupProductSearch();
+
+      // Configurar búsqueda de clientes/proveedores con debounce
+      this.setupClientSearch();
     });
-
-    // Actualizar el estado de los pasos del proceso después de la inicialización
-    setTimeout(() => this.updateProcessStepsStatus(), 100);
-
-    // Configurar detección de edición manual
-    this.setupManualEditDetection();
-
-    // Configurar búsqueda de productos con debounce
-    this.setupProductSearch();
-
-    // Configurar búsqueda de clientes/proveedores con debounce
-    this.setupClientSearch();
   }
 
   ngOnDestroy(): void {
@@ -1420,6 +1436,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           console.log(`✅ [FALLBACK] Foto capturada inmediatamente: ${fallbackPhotoUrl}`);
           this.showToast('success', 'Foto capturada', `Foto capturada. Esperando ANPR en segundo plano...`);
 
+          // Marcar para detección de cambios después del fallback
+          this.cdr.markForCheck();
+
           // Actualizar el estado de los pasos del proceso
           setTimeout(() => this.updateProcessStepsStatus(), 0);
         } catch (fallbackError) {
@@ -1474,6 +1493,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
 
             console.log('✅ [BACKGROUND] Foto actualizada con ANPR:', anprEvent.licensePlate);
             this.showToast('success', 'Foto actualizada', `Placa ${anprEvent.licensePlate} detectada por ANPR con ${anprEvent.confidenceLevel}% de confianza`);
+
+            // Marcar para detección de cambios
+            this.cdr.markForCheck();
 
             // Actualizar el estado de los pasos del proceso
             setTimeout(() => this.updateProcessStepsStatus(), 0);
@@ -1557,6 +1579,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         // NO marcar fotosCapturadas aquí, solo se marca cuando se captura la foto de carga
         // this.doubleTrailerState.remolque2.fotosCapturadas = true;
       }
+
+      // Marcar para detección de cambios
+      this.cdr.markForCheck();
     } else if (photoType === 'cargo') {
       // Capturar foto real desde la cámara de carga
       try {
@@ -1735,7 +1760,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
   }
 
   onSave(): void {
-    if (this.weighingForm.valid && this.weightData.capturedWeight) {
+    // En modo continue, permitir guardado sin validar weightData.capturedWeight
+    const canSaveInContinueMode = this.currentOperationFolio &&
+                                   this.weighingForm.get('doubleTrailer')?.value &&
+                                   this.doubleTrailerState.remolque2.pesoCapturado;
+
+    if ((this.weighingForm.valid && this.weightData.capturedWeight) || canSaveInContinueMode) {
       this.isLoading = true;
 
       // Usar getRawValue() para incluir campos deshabilitados (ej: trailerPlate2 en modo containerOnly)
@@ -1767,11 +1797,23 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         }
       }
     } else {
+      console.log('❌ onSave bloqueado - Validaciones:', {
+        formValid: this.weighingForm.valid,
+        capturedWeight: this.weightData.capturedWeight,
+        currentOperationFolio: this.currentOperationFolio,
+        remolque2Peso: this.doubleTrailerState.remolque2.pesoCapturado
+      });
       this.markFormGroupTouched();
     }
   }
 
   private saveDoubleTrailerEntry(formData: Record<string, unknown>): void {
+    // Si estamos en modo continue (completando remolque 2), usar endpoint específico
+    if (this.currentOperationFolio) {
+      this.submitContinueDoubleTrailer(formData);
+      return;
+    }
+
     if (!this.doubleTrailerState.isComplete) {
       this.showToast(
         'error',
@@ -1858,6 +1900,159 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.showToast('error', 'Error al registrar', errorMessage);
       },
     });
+  }
+
+  /**
+   * Completar entrada de doble remolque con remolque 2 (modo continue)
+   */
+  private submitContinueDoubleTrailer(formData: Record<string, unknown>): void {
+    if (!this.doubleTrailerState.remolque2.pesoCapturado) {
+      this.showToast(
+        'error',
+        'Datos incompletos',
+        'Debe capturar el peso del remolque 2 antes de guardar.'
+      );
+      this.isLoading = false;
+      return;
+    }
+
+    const request: ContinueDoubleTrailerEntryRequest = {
+      folio: this.currentOperationFolio!,
+      remolque2: {
+        numero: 2,
+        placa: this.doubleTrailerState.remolque2.placa || '',
+        pesoBruto: this.doubleTrailerState.remolque2.pesoBruto || 0,
+        fotos: this.doubleTrailerState.remolque2.fotos || [],
+        pesoCapturado: this.doubleTrailerState.remolque2.pesoCapturado || false,
+        fotosCapturadas: this.doubleTrailerState.remolque2.fotosCapturadas || false,
+        fotoCargaCapturada: this.doubleTrailerState.remolque2.fotoCargaCapturada || false,
+        fotoPlacaCapturada: this.doubleTrailerState.remolque2.fotoPlacaCapturada || false,
+      },
+      tieneEdicionesManuale: this.hasManualEdits,
+    };
+
+    console.log('🔄 Continuando entrada de doble remolque:', request);
+
+    this.weighingService.continueDoubleTrailerEntry(request).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        console.log('✅ Doble remolque completado:', response);
+
+        // Guardar el ID de la operación
+        this.currentOperationId = response.id;
+
+        this.showToast(
+          'success',
+          'Operación completada',
+          `Doble remolque completado exitosamente. Folio: ${response.folio}`
+        );
+
+        // Generar ticket para entrada con doble remolque completada
+        this.generateTicket('double', response);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('❌ Error al completar doble remolque:', error);
+
+        let errorMessage = 'No se pudo completar la operación.';
+        if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
+        this.showToast('error', 'Error al completar', errorMessage);
+      },
+    });
+  }
+
+  /**
+   * Guardar entrada parcial de doble remolque (solo remolque 1)
+   */
+  savePartialDoubleTrailerEntry(): void {
+    // Validar que todos los datos necesarios estén completos
+    if (!this.canSavePartialRemolque1()) {
+      this.showToast(
+        'error',
+        'Datos incompletos',
+        'Complete todos los campos obligatorios del remolque 1 antes de guardar'
+      );
+      return;
+    }
+
+    this.isLoading = true;
+
+    const formData = this.weighingForm.value;
+
+    const request: CreatePartialDoubleTrailerEntryRequest = {
+      unitType: this.unitType as 'client' | 'provider',
+      tipoUnidad: 'doble-remolque',
+      trailerPlaca: this.doubleTrailerState.trailerPlaca,
+      trailerPlacaFoto: this.photoData.trailerPlate || undefined,
+      remolque1: {
+        numero: 1,
+        placa: this.doubleTrailerState.remolque1.placa || '',
+        pesoBruto: this.doubleTrailerState.remolque1.pesoBruto || 0,
+        fotos: this.doubleTrailerState.remolque1.fotos || [],
+        pesoCapturado: this.doubleTrailerState.remolque1.pesoCapturado || false,
+        fotosCapturadas: this.doubleTrailerState.remolque1.fotosCapturadas || false,
+        fotoCargaCapturada: this.doubleTrailerState.remolque1.fotoCargaCapturada || false,
+        fotoPlacaCapturada: this.doubleTrailerState.remolque1.fotoPlacaCapturada || false,
+      },
+      product: formData['product'] as string,
+      clientProviderName: formData['clientProviderName'] as string,
+      clientProviderRfc: (formData['clientProviderRfc'] as string) || undefined,
+      tieneEdicionesManuale: this.hasManualEdits,
+    };
+
+    console.log('🔄 Guardando entrada parcial de doble remolque:', request);
+
+    this.weighingService.createPartialDoubleTrailerEntry(request).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        console.log('✅ Entrada parcial registrada:', response);
+
+        this.showToast(
+          'success',
+          'Remolque 1 guardado',
+          `Remolque 1 registrado exitosamente. Folio: ${response.data.folio}. Puede continuar con remolque 2 posteriormente.`
+        );
+
+        // Redirigir al dashboard o a la pantalla de inicio
+        setTimeout(() => {
+          this.router.navigate(['/weighing']);
+        }, 2000);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('❌ Error al guardar entrada parcial:', error);
+
+        let errorMessage = 'No se pudo guardar la entrada parcial.';
+        if (error.status === 409) {
+          errorMessage = 'La placa ya tiene una entrada registrada previamente.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+
+        this.showToast('error', 'Error al guardar', errorMessage);
+      },
+    });
+  }
+
+  /**
+   * Verificar si se puede guardar parcialmente el remolque 1
+   */
+  canSavePartialRemolque1(): boolean {
+    const formData = this.weighingForm.value;
+    const product = formData['product'] as string;
+    const clientProviderName = formData['clientProviderName'] as string;
+
+    return !!(
+      this.doubleTrailerState.trailerPlaca &&
+      this.doubleTrailerState.remolque1.placa &&
+      (this.doubleTrailerState.remolque1.pesoBruto ?? 0) > 0 &&
+      this.doubleTrailerState.remolque1.pesoCapturado &&
+      product &&
+      clientProviderName
+    );
   }
 
   private saveNormalEntry(formData: Record<string, unknown>): void {
@@ -2157,6 +2352,107 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Carga una operación parcial de doble remolque para continuar con el remolque 2
+   * Reutiliza toda la lógica de captura de peso/fotos existente
+   */
+  private loadPartialOperationForContinue(folio: string): void {
+    this.isLoading = true;
+
+    this.weighingService.getPendingDoubleTrailerByFolio(folio).subscribe({
+      next: (operation) => {
+        console.log('✅ Operación parcial cargada:', operation);
+
+        // Configurar tipo y operación
+        this.unitType = 'client'; // Las operaciones parciales son siempre de cliente por ahora
+        this.operationType = 'entry';
+        this.updateTitles();
+
+        // Inicializar formulario
+        this.initializeForm();
+
+        // Iniciar servicios de peso en tiempo real
+        this.startRealtimeWeightUpdates();
+
+        // Precargar datos existentes de la operación
+        this.weighingForm.patchValue({
+          doubleTrailer: true,
+          trailerPlate: operation.trailerPlaca,
+          product: operation.product,
+          clientProviderName: operation.clientProviderName,
+          comments: operation.comments || '',
+          remolque1Plate: operation.remolque1.placa,
+        });
+
+        // Deshabilitar campos de datos generales y tipo de unidad (solo lectura)
+        this.weighingForm.get('product')?.disable();
+        this.weighingForm.get('clientProviderName')?.disable();
+        this.weighingForm.get('comments')?.disable();
+        this.weighingForm.get('doubleTrailer')?.disable();
+        this.weighingForm.get('containerOnly')?.disable();
+
+        // Configurar estado de doble remolque - CLAVE: empezar en remolque2
+        this.doubleTrailerState = {
+          currentStep: 'remolque2',
+          trailerPlaca: operation.trailerPlaca,
+          remolque1: {
+            numero: 1,
+            placa: operation.remolque1.placa,
+            pesoBruto: operation.remolque1.pesoBruto,
+            fotos: operation.remolque1.fotos || [],
+            pesoCapturado: true,
+            fotoCargaCapturada: true,
+            fotoPlacaCapturada: true,
+            fotosCapturadas: true,
+          },
+          remolque2: {
+            numero: 2,
+            placa: '',
+            pesoBruto: 0,
+            fotos: [],
+            fotoCargaCapturada: false,
+            fotoPlacaCapturada: false,
+            fotosCapturadas: false,
+          },
+          pesoBrutoTotal: 0,
+          isComplete: false,
+        };
+
+        // Guardar folio para el submit
+        this.currentOperationFolio = folio;
+
+        // Configurar detección de edición manual
+        this.setupManualEditDetection();
+
+        // Configurar búsqueda de productos con debounce
+        this.setupProductSearch();
+
+        // Configurar búsqueda de clientes/proveedores con debounce
+        this.setupClientSearch();
+
+        // Actualizar estado de pasos
+        setTimeout(() => this.updateProcessStepsStatus(), 100);
+
+        this.isLoading = false;
+        this.cdr.markForCheck();
+
+        this.notificationService.showInfo(
+          'Continuando operación',
+          `Remolque 1 ya registrado (${operation.remolque1.placa}). Ahora capture remolque 2.`
+        );
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('❌ Error al cargar operación parcial:', err);
+        this.notificationService.showError(
+          'Error',
+          'No se pudo cargar la operación parcial. Verifique el folio.'
+        );
+        this.router.navigate(['/dashboard']);
+      },
+    });
+  }
+
   onQueries(): void {
     console.log('Navegando a consultas...');
     this.router.navigate(['/weighing-query']);
@@ -2220,6 +2516,23 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     // Obligatorios: producto, cliente, placa tráiler, placas remolques y pesos
     // Opcionales: fotos
     if (isDoubleTrailer) {
+      // MODO CONTINUE: Solo validar remolque 2 (remolque 1 ya está registrado)
+      if (this.currentOperationFolio) {
+        const validations = {
+          remolque2Placa: !!this.doubleTrailerState.remolque2.placa,
+          remolque2Peso: !!this.doubleTrailerState.remolque2.pesoCapturado,
+        };
+
+        console.log('🔍 isFormValid - Modo Continue (solo remolque 2):', validations);
+
+        const result = validations.remolque2Placa && validations.remolque2Peso;
+
+        console.log('🔍 isFormValid result (continue):', result);
+
+        return result;
+      }
+
+      // MODO NORMAL: Validar ambos remolques
       const validations = {
         formValid: this.weighingForm.valid,
         isComplete: this.doubleTrailerState.isComplete,

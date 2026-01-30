@@ -158,8 +158,10 @@ public class WeighingOperationRepository : IWeighingOperationRepository
                 }
             }
 
-            // Handle remolques updates
-            foreach (var remolque in operation.Remolques ?? new List<WeighingRemolque>())
+            // Handle remolques updates - iterar sobre copia para evitar "Collection was modified"
+            // (la colección puede cambiar por fixup de EF durante el await)
+            var remolquesSnapshot = (operation.Remolques ?? new List<WeighingRemolque>()).ToList();
+            foreach (var remolque in remolquesSnapshot)
             {
                 var existingRemolque = await _context.WeighingRemolques
                     .FirstOrDefaultAsync(r => r.Id == remolque.Id);
@@ -170,6 +172,12 @@ public class WeighingOperationRepository : IWeighingOperationRepository
                     existingRemolque.FotoCargaCapturada = remolque.FotoCargaCapturada;
                     existingRemolque.UpdatedAt = DateTime.UtcNow;
                     Console.WriteLine($"[UpdateAsync] Updated remolque: {remolque.Placa}");
+                }
+                else
+                {
+                    // Remolque nuevo (ej. remolque 2 en flujo continue-double-trailer)
+                    _context.WeighingRemolques.Add(remolque);
+                    Console.WriteLine($"[UpdateAsync] Adding new remolque: {remolque.Placa}");
                 }
             }
 
@@ -206,13 +214,14 @@ public class WeighingOperationRepository : IWeighingOperationRepository
 
     public async Task<WeighingOperation?> GetActiveEntryByPlateAsync(string plate)
     {
+        // Incluye: entradas pendientes de salida (ENTRADA_REGISTRADA) y salidas parciales pendientes de remolque 2 (SALIDA_PARCIAL_R1)
         return await _context.WeighingOperations
             .Include(w => w.Photos)
             .Include(w => w.Remolques)
-            .FirstOrDefaultAsync(w => w.Status == "ENTRADA_REGISTRADA" && 
-                                    (w.TrailerPlate == plate || 
-                                     w.TrailerPlate2 == plate || 
-                                     w.TrailerPlateContenedor == plate || 
+            .FirstOrDefaultAsync(w => (w.Status == "ENTRADA_REGISTRADA" || w.Status == "SALIDA_PARCIAL_R1") &&
+                                    (w.TrailerPlate == plate ||
+                                     w.TrailerPlate2 == plate ||
+                                     w.TrailerPlateContenedor == plate ||
                                      w.RemolquePlateContenedor == plate ||
                                      w.PlacaRemolque1 == plate ||
                                      w.PlacaRemolque2 == plate ||
@@ -422,5 +431,61 @@ public class WeighingOperationRepository : IWeighingOperationRepository
             .ToListAsync();
 
         return results;
+    }
+
+    public async Task<List<WeighingOperation>> SearchPendingDoubleTrailersAsync(string searchTerm, int limit = 10, string? status = null)
+    {
+        // Búsqueda inteligente: detecta si es folio o placa
+        var isFolioSearch = searchTerm.Contains("-ENT-") || searchTerm.Contains("-SAL-");
+
+        // Estado por defecto: operaciones parciales pendientes
+        var targetStatus = status ?? "ENTRADA_PARCIAL_R1";
+
+        IQueryable<WeighingOperation> query = _context.WeighingOperations
+            .Include(w => w.Remolques)
+            .Where(w => w.TipoUnidad == "doble-remolque" && w.Status == targetStatus);
+
+        if (isFolioSearch)
+        {
+            // Búsqueda por folio
+            query = query.Where(w => w.Folio.Contains(searchTerm));
+        }
+        else
+        {
+            // Búsqueda por placa (trailer o remolque 1)
+            query = query.Where(w =>
+                w.TrailerPlate!.Contains(searchTerm) ||
+                (!string.IsNullOrEmpty(w.PlacaRemolque1) && w.PlacaRemolque1.Contains(searchTerm))
+            );
+        }
+
+        var results = await query
+            .OrderByDescending(w => w.CreatedAt) // Más recientes primero
+            .Take(limit)
+            .ToListAsync();
+
+        return results;
+    }
+
+    public async Task<WeighingOperation?> GetPendingDoubleTrailerByFolioAsync(string folio)
+    {
+        return await _context.WeighingOperations
+            .Include(w => w.Photos)
+            .Include(w => w.Remolques)
+            .FirstOrDefaultAsync(w =>
+                w.Folio == folio &&
+                w.TipoUnidad == "doble-remolque" &&
+                w.Status == "ENTRADA_PARCIAL_R1");
+    }
+
+    public async Task<WeighingOperation?> GetPendingDoubleTrailerExitByFolioAsync(string folio)
+    {
+        return await _context.WeighingOperations
+            .Include(w => w.Photos)
+            .Include(w => w.Remolques)
+            .FirstOrDefaultAsync(w =>
+                w.Folio == folio &&
+                w.TipoUnidad == "doble-remolque" &&
+                w.Status == "SALIDA_PARCIAL_R1");
     }
 }

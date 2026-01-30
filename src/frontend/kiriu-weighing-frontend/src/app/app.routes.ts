@@ -53,6 +53,14 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'continue-double-trailer',
+    loadComponent: () =>
+      import(
+        './features/weighing/pages/continue-double-trailer/continue-double-trailer.component'
+      ).then((m) => m.ContinueDoubleTrailerComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'admin',
     loadChildren: () =>
       import('./features/admin/admin.routes').then((m) => m.adminRoutes),

@@ -15,6 +15,27 @@
     Selecciona el tipo de unidad para continuar con el registro
   </p>
 
+  <!-- Botón para continuar doble remolque -->
+  <section class="continue-section">
+    <div class="continue-banner">
+      <div class="banner-icon">🔄</div>
+      <div class="banner-content">
+        <h3 class="banner-title">¿Tienes una operación de doble remolque pendiente?</h3>
+        <p class="banner-text">
+          Continúa el registro del remolque 2 de una operación que iniciaste previamente
+        </p>
+      </div>
+      <button
+        type="button"
+        class="btn-continue"
+        (click)="onContinueDoubleTrailer()"
+        aria-label="Continuar Doble Remolque"
+      >
+        Continuar Doble Remolque →
+      </button>
+    </div>
+  </section>
+
   <section class="choice-grid">
     <!-- Cliente -->
     <article class="choice-card" tabindex="0" aria-labelledby="cliente-title">

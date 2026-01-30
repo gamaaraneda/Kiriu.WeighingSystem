@@ -1,23 +1,23 @@
 // Variables de la paleta Kiriu
 :host {
   /* Brand */
-  --brand-primary: #398DF1;
-  --brand-secondary: #005BB5;
+  --brand-primary: #398df1;
+  --brand-secondary: #005bb5;
   --brand-dark: #000000;
-  --brand-light: #FFFFFF;
-  --brand-neutral: #ECECEC;
+  --brand-light: #ffffff;
+  --brand-neutral: #ececec;
   --brand-disabled: #545454;
 
   /* Semantic */
-  --success: #1EE733;
-  --success-hover: #14AE24;
+  --success: #1ee733;
+  --success-hover: #14ae24;
   --success-bg: #f4fbe4;
-  --warning: #FF914D;
+  --warning: #ff914d;
   --warning-bg: #fff9e0;
-  --error: #F70000;
-  --error-hover: #CA0000;
+  --error: #f70000;
+  --error-hover: #ca0000;
   --error-bg: #ffecec;
-  --info: #398DF1;
+  --info: #398df1;
   --info-bg: #e8f1ff;
   --neutral: #d4d9e2;
   --neutral-bg: #f5f6f9;
@@ -213,7 +213,11 @@ img.btn-icon-refresh {
     margin-top: 24px;
 
     .success-box {
-      background: linear-gradient(135deg, var(--success-bg) 0%, rgba(30, 231, 51, 0.15) 100%);
+      background: linear-gradient(
+        135deg,
+        var(--success-bg) 0%,
+        rgba(30, 231, 51, 0.15) 100%
+      );
       border: 2px solid var(--success);
       border-radius: 12px;
       padding: 24px;
@@ -420,7 +424,8 @@ img.btn-icon-refresh {
       width: 24px;
       height: 24px;
       object-fit: contain;
-      filter: invert(1) brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(198deg) brightness(97%) contrast(97%);
+      filter: invert(1) brightness(0) saturate(100%) invert(48%) sepia(79%)
+        saturate(2476%) hue-rotate(198deg) brightness(97%) contrast(97%);
     }
 
     &:hover {
@@ -1060,7 +1065,11 @@ img.btn-icon-refresh {
       justify-content: center;
       width: 30px;
       height: 30px;
-      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+      background: linear-gradient(
+        135deg,
+        var(--brand-primary) 0%,
+        var(--brand-secondary) 100%
+      );
       color: white;
       border-radius: 50%;
       font-weight: bold;
@@ -1121,7 +1130,11 @@ img.btn-icon-refresh {
 
 /* Estilos para sección de resumen */
 .summary-section {
-  background: linear-gradient(135deg, var(--success-bg) 0%, rgba(30, 231, 51, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--success-bg) 0%,
+    rgba(30, 231, 51, 0.08) 100%
+  );
   border: 2px solid var(--success);
   border-radius: 8px;
   padding: 20px;
@@ -1152,7 +1165,11 @@ img.btn-icon-refresh {
       }
 
       &.total {
-        background: linear-gradient(135deg, var(--success) 0%, var(--success-hover) 100%);
+        background: linear-gradient(
+          135deg,
+          var(--success) 0%,
+          var(--success-hover) 100%
+        );
         color: white;
         border: none;
 
@@ -1475,7 +1492,10 @@ img.btn-icon-refresh {
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.2s, background-color 0.2s;
+  transition:
+    transform 0.12s,
+    box-shadow 0.2s,
+    background-color 0.2s;
   font-size: 18px;
   line-height: 1;
 }
@@ -1585,6 +1605,16 @@ img.btn-icon-refresh {
           color: var(--brand-primary);
           font-weight: 600;
         }
+
+        .entry-badge.continue-remolque2 {
+          margin-left: 8px;
+          padding: 2px 8px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #0d6efd;
+          background: #e7f1ff;
+          border-radius: 4px;
+        }
       }
 
       .entry-details {
@@ -1599,17 +1629,17 @@ img.btn-icon-refresh {
           align-items: center;
 
           &.entry-client::before {
-            content: '👤';
+            content: "👤";
             margin-right: 4px;
           }
 
           &.entry-product::before {
-            content: '📦';
+            content: "📦";
             margin-right: 4px;
           }
 
           &.entry-weight::before {
-            content: '⚖️';
+            content: "⚖️";
             margin-right: 4px;
           }
         }
@@ -1801,6 +1831,87 @@ img.btn-icon-refresh {
       &:hover {
         background: var(--brand-dark);
       }
+    }
+  }
+}
+
+/* Salida parcial: botón guardar solo remolque 1 */
+.partial-save-section {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f0f9ff;
+  border: 2px dashed #0ea5e9;
+  border-radius: 8px;
+  text-align: center;
+
+  .btn-save-partial {
+    background-color: #0ea5e9;
+    color: white;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      background-color: #0284c7;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+
+    &:disabled {
+      background-color: #cbd5e1;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+
+  .help-text {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #64748b;
+  }
+}
+
+/* Resumen remolque 1 (modo continuar salida) */
+.remolque1-summary-section {
+  margin: 20px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid #10b981;
+  border-radius: 8px;
+
+  .summary-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+
+    .summary-icon {
+      font-size: 24px;
+    }
+
+    .summary-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #065f46;
+    }
+  }
+
+  .summary-details {
+    p {
+      margin: 6px 0;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .summary-note {
+      margin-top: 12px;
+      font-weight: 600;
+      color: #b45309;
     }
   }
 }

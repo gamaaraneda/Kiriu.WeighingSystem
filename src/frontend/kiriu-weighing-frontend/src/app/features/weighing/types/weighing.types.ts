@@ -130,3 +130,36 @@ export interface EntrySearchData {
     fotoCargaEntrada: string;
   };
 }
+
+// Tipos para doble remolque interrumpible
+export interface PartialDoubleTrailerEntryResponse {
+  id: string;
+  folio: string;
+  trailerPlaca: string;
+  remolque1: {
+    numero: number;
+    placa: string;
+    pesoBruto: number;
+    fotos: string[];
+  };
+  fechaHoraRegistroR1: Date;
+  usuarioRegistroR1: string;
+  status: string;
+  unitType: string;
+  product: string;
+  clientProviderName: string;
+}
+
+export interface PendingDoubleTrailerSearchResult {
+  id: string;
+  folio: string;
+  trailerPlaca: string;
+  placaRemolque1: string;
+  fechaRegistroR1: Date;
+  product: string;
+  clientProviderName: string;
+  pesoBrutoR1: number;
+  usuarioRegistroR1: string;
+  status: string;
+  unitType: string;
+}

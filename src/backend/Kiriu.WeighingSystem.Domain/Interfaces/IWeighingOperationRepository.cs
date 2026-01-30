@@ -39,4 +39,9 @@ public interface IWeighingOperationRepository
     Task<List<string>> SearchProductsAsync(string searchTerm, int limit = 10);
     Task<List<string>> SearchClientsAsync(string searchTerm, int limit = 10);
     Task<List<WeighingOperation>> SearchPendingExitsAsync(string searchTerm, int limit = 10, string? unitType = null);
+
+    // Métodos para doble remolque interrumpible
+    Task<List<WeighingOperation>> SearchPendingDoubleTrailersAsync(string searchTerm, int limit = 10, string? status = null);
+    Task<WeighingOperation?> GetPendingDoubleTrailerByFolioAsync(string folio);
+    Task<WeighingOperation?> GetPendingDoubleTrailerExitByFolioAsync(string folio);
 }

@@ -74,6 +74,26 @@ export interface CreateDoubleTrailerEntryRequest {
   usuarioEditor?: string;
 }
 
+export interface CreatePartialDoubleTrailerEntryRequest {
+  unitType: string;
+  tipoUnidad: string;
+  trailerPlaca: string;
+  trailerPlacaFoto?: string;
+  remolque1: RemolqueEntryData;
+  product: string;
+  clientProviderName: string;
+  clientProviderRfc?: string;
+  tieneEdicionesManuale?: boolean;
+  usuarioEditor?: string;
+}
+
+export interface ContinueDoubleTrailerEntryRequest {
+  folio: string;
+  remolque2: RemolqueEntryData;
+  tieneEdicionesManuale?: boolean;
+  usuarioEditor?: string;
+}
+
 export interface RemolqueEntryData {
   numero: number;
   placa: string;
@@ -169,6 +189,75 @@ export interface CreateDoubleTrailerExitRequest {
   fotos: DoubleTrailerExitPhotoDataDto;
 }
 
+/** Request para salida parcial (solo remolque 1) */
+export interface CreatePartialDoubleTrailerExitRequest {
+  folio: string;
+  placaTrailer: string;
+  remolque1: RemolqueExitDataDto;
+  fechaSalida: string;
+  fotos: PartialDoubleTrailerExitPhotoDataDto;
+}
+
+/** Fotos solo remolque 1 para salida parcial */
+export interface PartialDoubleTrailerExitPhotoDataDto {
+  trailerPlate: string;
+  remolque1Plate: string;
+  cargoRemolque1: string;
+}
+
+/** Request para continuar salida con remolque 2 */
+export interface ContinueDoubleTrailerExitRequest {
+  folio: string;
+  remolque2: RemolqueExitDataDto;
+  fechaSalida: string;
+  fotos: ContinueDoubleTrailerExitPhotoDataDto;
+}
+
+/** Fotos solo remolque 2 para continue exit */
+export interface ContinueDoubleTrailerExitPhotoDataDto {
+  remolque2Plate: string;
+  cargoRemolque2: string;
+}
+
+/** Response salida parcial */
+export interface PartialDoubleTrailerExitResponse {
+  id: string;
+  folio: string;
+  trailerPlaca: string;
+  remolque1: RemolqueExitResponseDto;
+  fechaSalidaR1: string;
+  usuarioRegistroSalidaR1: string;
+  status: string;
+  unitType: string;
+  product: string;
+  clientProviderName: string;
+  placaRemolque2?: string;
+}
+
+export interface RemolqueExitResponseDto {
+  numero: number;
+  placa: string;
+  pesoBrutoEntrada: number;
+  pesoTaraSalida: number;
+}
+
+/** Resultado de búsqueda de salidas parciales pendientes */
+export interface PendingDoubleTrailerExitSearchResult {
+  id: string;
+  folio: string;
+  trailerPlaca: string;
+  placaRemolque1: string;
+  placaRemolque2: string;
+  fechaSalidaR1: string;
+  usuarioRegistroSalidaR1: string;
+  pesoBrutoR1: number;
+  pesoTaraR1: number;
+  product: string;
+  clientProviderName: string;
+  status: string;
+  unitType: string;
+}
+
 export interface RemolqueExitDataDto {
   placa: string;
   pesoTara: number;
@@ -187,6 +276,7 @@ export interface ExitValidationDto {
   canExit: boolean;
   entryOperation?: {
     id: string;
+    folio: string;
     entryWeight: number;
     status: string;
   };
@@ -269,15 +359,73 @@ export class RealWeighingService {
   /**
    * Crear operación de entrada (remolque/contenedor simple)
    */
-  createEntryOperation(request: CreateEntryRequest): Observable<WeighingOperationDto> {
-    return this.http.post<WeighingOperationDto>(`${this.apiUrl}/entry`, request);
+  createEntryOperation(
+    request: CreateEntryRequest,
+  ): Observable<WeighingOperationDto> {
+    return this.http.post<WeighingOperationDto>(
+      `${this.apiUrl}/entry`,
+      request,
+    );
   }
 
   /**
    * Crear operación de entrada con doble remolque
    */
-  createDoubleTrailerEntry(request: CreateDoubleTrailerEntryRequest): Observable<DoubleTrailerEntryResponse> {
-    return this.http.post<DoubleTrailerEntryResponse>(`${this.apiUrl}/entry/double-trailer`, request);
+  createDoubleTrailerEntry(
+    request: CreateDoubleTrailerEntryRequest,
+  ): Observable<DoubleTrailerEntryResponse> {
+    return this.http.post<DoubleTrailerEntryResponse>(
+      `${this.apiUrl}/entry/double-trailer`,
+      request,
+    );
+  }
+
+  /**
+   * Crear entrada parcial de doble remolque (solo remolque 1)
+   */
+  createPartialDoubleTrailerEntry(
+    request: CreatePartialDoubleTrailerEntryRequest,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/entry/double-trailer/partial`,
+      request,
+    );
+  }
+
+  /**
+   * Continuar entrada de doble remolque con remolque 2
+   */
+  continueDoubleTrailerEntry(
+    request: ContinueDoubleTrailerEntryRequest,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/entry/double-trailer/continue`,
+      request,
+    );
+  }
+
+  /**
+   * Buscar operaciones parciales de doble remolque pendientes
+   */
+  searchPendingDoubleTrailers(
+    searchTerm: string,
+    limit: number = 10,
+  ): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/entry/double-trailer/pending/search`,
+      {
+        params: { searchTerm, limit: limit.toString() },
+      },
+    );
+  }
+
+  /**
+   * Obtener operación parcial de doble remolque por folio
+   */
+  getPendingDoubleTrailerByFolio(folio: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.apiUrl}/entry/double-trailer/pending/${folio}`,
+    );
   }
 
   /**
@@ -285,7 +433,7 @@ export class RealWeighingService {
    */
   searchEntryByPlate(placa: string): Observable<EntrySearchResponse> {
     return this.http.get<EntrySearchResponse>(`${this.apiUrl}/entry/search`, {
-      params: { placa }
+      params: { placa },
     });
   }
 
@@ -301,36 +449,114 @@ export class RealWeighingService {
   /**
    * Crear operación de salida con doble remolque
    */
-  createDoubleTrailerExit(request: CreateDoubleTrailerExitRequest): Observable<ExitResponseDto> {
-    return this.http.post<ExitResponseDto>(`${this.apiUrl}/exit/double-trailer`, request);
+  createDoubleTrailerExit(
+    request: CreateDoubleTrailerExitRequest,
+  ): Observable<ExitResponseDto> {
+    return this.http.post<ExitResponseDto>(
+      `${this.apiUrl}/exit/double-trailer`,
+      request,
+    );
+  }
+
+  /**
+   * Crear salida parcial de doble remolque (solo remolque 1)
+   */
+  createPartialDoubleTrailerExit(
+    request: CreatePartialDoubleTrailerExitRequest,
+  ): Observable<PartialDoubleTrailerExitResponse> {
+    return this.http.post<PartialDoubleTrailerExitResponse>(
+      `${this.apiUrl}/exit/double-trailer/partial`,
+      request,
+    );
+  }
+
+  /**
+   * Continuar salida de doble remolque con remolque 2
+   */
+  continueDoubleTrailerExit(
+    request: ContinueDoubleTrailerExitRequest,
+  ): Observable<ExitResponseDto> {
+    return this.http.post<ExitResponseDto>(
+      `${this.apiUrl}/exit/double-trailer/continue`,
+      request,
+    );
+  }
+
+  /**
+   * Buscar operaciones con salida parcial de doble remolque pendientes (remolque 2)
+   */
+  searchPendingDoubleTrailerExits(
+    searchTerm: string,
+    limit: number = 10,
+  ): Observable<PendingDoubleTrailerExitSearchResult[]> {
+    return this.http
+      .get<{ data: PendingDoubleTrailerExitSearchResult[] }>(
+        `${this.apiUrl}/exit/double-trailer/pending/search`,
+        {
+          params: { searchTerm, limit: limit.toString() },
+        },
+      )
+      .pipe(map((res) => res.data ?? []));
+  }
+
+  /**
+   * Obtener operación con salida parcial por folio
+   */
+  getPendingDoubleTrailerExitByFolio(
+    folio: string,
+  ): Observable<PartialDoubleTrailerExitResponse> {
+    return this.http
+      .get<
+        | { data?: PartialDoubleTrailerExitResponse }
+        | PartialDoubleTrailerExitResponse
+      >(`${this.apiUrl}/exit/double-trailer/pending/${encodeURIComponent(folio)}`)
+      .pipe(
+        map((res) =>
+          res && 'data' in res && res.data != null
+            ? res.data
+            : (res as PartialDoubleTrailerExitResponse),
+        ),
+      );
   }
 
   /**
    * Validar si se puede registrar salida para una placa
    */
   validateExit(placa: string): Observable<ExitValidationDto> {
-    return this.http.get<ExitValidationDto>(`${this.apiUrl}/exit/validate/${placa}`);
+    return this.http.get<ExitValidationDto>(
+      `${this.apiUrl}/exit/validate/${placa}`,
+    );
   }
 
   /**
    * Obtener operación por placa (último registro de entrada)
    */
   getOperationByPlate(placa: string): Observable<WeighingOperationDto> {
-    return this.http.get<WeighingOperationDto>(`${this.apiUrl}/operations/plate/${placa}`);
+    return this.http.get<WeighingOperationDto>(
+      `${this.apiUrl}/operations/plate/${placa}`,
+    );
   }
 
   /**
    * Obtener operación completa por ID
    */
   getOperationById(id: string): Observable<WeighingOperationDto> {
-    return this.http.get<WeighingOperationDto>(`${this.apiUrl}/operations/${id}`);
+    return this.http.get<WeighingOperationDto>(
+      `${this.apiUrl}/operations/${id}`,
+    );
   }
 
   /**
    * Actualizar operación de pesaje (para ediciones manuales)
    */
-  updateWeighingOperation(operationId: string, request: UpdateWeighingOperationRequest): Observable<WeighingOperationDto> {
-    return this.http.put<WeighingOperationDto>(`${this.apiUrl}/operations/${operationId}`, request);
+  updateWeighingOperation(
+    operationId: string,
+    request: UpdateWeighingOperationRequest,
+  ): Observable<WeighingOperationDto> {
+    return this.http.put<WeighingOperationDto>(
+      `${this.apiUrl}/operations/${operationId}`,
+      request,
+    );
   }
 
   // ============= FUNCIONES DE PESO (SIMULADAS) =============
@@ -351,7 +577,7 @@ export class RealWeighingService {
           isConnected: this.isConnected,
           timestamp: new Date(),
         };
-      })
+      }),
     );
   }
 
@@ -368,7 +594,7 @@ export class RealWeighingService {
    * Obtener estado del doble remolque
    */
   getDoubleTrailerState(): Observable<DoubleTrailerWeighingState> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       observer.next(this.doubleTrailerState);
       observer.complete();
     });
@@ -473,7 +699,7 @@ export class RealWeighingService {
    */
   canRegisterExit(trailerPlate: string): Observable<boolean> {
     return this.validateExit(trailerPlate).pipe(
-      map(response => response.canExit)
+      map((response) => response.canExit),
     );
   }
 
@@ -492,17 +718,16 @@ export class RealWeighingService {
    */
   searchProducts(searchTerm: string, limit: number = 10): Observable<string[]> {
     if (!searchTerm || searchTerm.length < 2) {
-      return new Observable(observer => {
+      return new Observable((observer) => {
         observer.next([]);
         observer.complete();
       });
     }
 
     // El interceptor ya extrae body.data, así que recibimos directamente el array
-    return this.http.get<string[]>(
-      `${this.apiUrl}/products/search`,
-      { params: { searchTerm, limit: limit.toString() } }
-    );
+    return this.http.get<string[]>(`${this.apiUrl}/products/search`, {
+      params: { searchTerm, limit: limit.toString() },
+    });
   }
 
   /**
@@ -510,25 +735,28 @@ export class RealWeighingService {
    */
   searchClients(searchTerm: string, limit: number = 10): Observable<string[]> {
     if (!searchTerm || searchTerm.length < 2) {
-      return new Observable(observer => {
+      return new Observable((observer) => {
         observer.next([]);
         observer.complete();
       });
     }
 
     // El interceptor ya extrae body.data, así que recibimos directamente el array
-    return this.http.get<string[]>(
-      `${this.apiUrl}/clients/search`,
-      { params: { searchTerm, limit: limit.toString() } }
-    );
+    return this.http.get<string[]>(`${this.apiUrl}/clients/search`, {
+      params: { searchTerm, limit: limit.toString() },
+    });
   }
 
   /**
    * Buscar entradas pendientes de salida por placa o folio (autocompletado)
    */
-  searchPendingExits(searchTerm: string, limit: number = 10, unitType?: string): Observable<PendingExitSearchResult[]> {
+  searchPendingExits(
+    searchTerm: string,
+    limit: number = 10,
+    unitType?: string,
+  ): Observable<PendingExitSearchResult[]> {
     if (!searchTerm || searchTerm.length < 2) {
-      return new Observable(observer => {
+      return new Observable((observer) => {
         observer.next([]);
         observer.complete();
       });
@@ -543,7 +771,7 @@ export class RealWeighingService {
     // El interceptor ya extrae body.data, así que recibimos directamente el array
     return this.http.get<PendingExitSearchResult[]>(
       `${this.apiUrl}/pending-exits/search`,
-      { params }
+      { params },
     );
   }
 }

@@ -301,7 +301,9 @@ public class WeighingApplicationService : IWeighingApplicationService
                 return ApiResponse<ExitResponseDto>.CreateError("Registro de entrada no encontrado");
             }
 
-            if (entry.Status != "ENTRADA_REGISTRADA")
+            // Aceptar entrada completa (ENTRADA_REGISTRADA o ENTRADA_COMPLETA para doble remolque)
+            var entryOk = entry.Status == "ENTRADA_REGISTRADA" || entry.Status == "ENTRADA_COMPLETA";
+            if (!entryOk)
             {
                 return ApiResponse<ExitResponseDto>.CreateError("El registro ya tiene una salida registrada");
             }
@@ -459,11 +461,14 @@ public class WeighingApplicationService : IWeighingApplicationService
                 EntryOperation = activeEntry != null ? new EntryOperationDto
                 {
                     Id = activeEntry.Id.ToString(),
+                    Folio = activeEntry.Folio,
                     EntryWeight = activeEntry.EntryWeight ?? 0,
                     Status = activeEntry.Status
                 } : null,
-                Message = activeEntry != null 
-                    ? "Vehículo puede registrar salida" 
+                Message = activeEntry != null
+                    ? (activeEntry.Status == "SALIDA_PARCIAL_R1"
+                        ? "Operación con salida parcial: puede continuar con remolque 2"
+                        : "Vehículo puede registrar salida")
                     : "No se encontró entrada activa para esta placa"
             };
 
@@ -953,5 +958,598 @@ public class WeighingApplicationService : IWeighingApplicationService
             _logger.LogError(ex, "Error al obtener histórico de ediciones para operación: {OperationId}", operationId);
             return ApiResponse<List<WeighingEditHistoryDto>>.CreateError("Error al obtener histórico de ediciones");
         }
+    }
+
+    public async Task<ApiResponse<PartialDoubleTrailerEntryResponseDto>> CreatePartialDoubleTrailerEntryAsync(CreatePartialDoubleTrailerEntryRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Creando entrada parcial de doble remolque (solo remolque 1) - Trailer: {TrailerPlaca}", request.TrailerPlaca);
+
+            // Validar placa del tráiler
+            if (!string.IsNullOrWhiteSpace(request.TrailerPlaca))
+            {
+                var canCreate = await _weighingService.ValidateUniqueEntryAsync(request.TrailerPlaca);
+                if (!canCreate)
+                {
+                    return ApiResponse<PartialDoubleTrailerEntryResponseDto>.CreateError($"Placa del tráiler {request.TrailerPlaca} ya registrada en entrada previa");
+                }
+            }
+
+            // Validar placa del remolque 1
+            var canCreateRemolque = await _weighingService.ValidateUniqueEntryAsync(request.Remolque1.Placa);
+            if (!canCreateRemolque)
+            {
+                return ApiResponse<PartialDoubleTrailerEntryResponseDto>.CreateError($"Placa del remolque 1 {request.Remolque1.Placa} ya registrada en entrada previa");
+            }
+
+            var operation = new WeighingOperation
+            {
+                Id = Guid.NewGuid(),
+                Folio = await _weighingService.GenerateFolioAsync(),
+                UnitType = request.UnitType,
+                OperationType = "entry",
+                TrailerPlate = request.TrailerPlaca,
+                PlacaRemolque1 = request.Remolque1.Placa,
+                Product = request.Product,
+                ClientProviderName = request.ClientProviderName,
+                ClientProviderRfc = request.ClientProviderRfc,
+                EntryWeight = request.Remolque1.PesoBruto, // Peso parcial del remolque 1
+                Status = "ENTRADA_PARCIAL_R1", // Estado parcial
+                TipoUnidad = "doble-remolque",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                EntryDate = DateTime.UtcNow,
+                FueEditado = request.TieneEdicionesManuale,
+                FechaUltimaEdicion = request.TieneEdicionesManuale ? DateTime.UtcNow : null,
+                UsuarioEditor = request.TieneEdicionesManuale ? request.UsuarioEditor : null
+            };
+
+            // Crear SOLO remolque 1
+            var remolque1 = new WeighingRemolque
+            {
+                Id = Guid.NewGuid(),
+                WeighingOperationId = operation.Id,
+                Numero = 1,
+                Placa = request.Remolque1.Placa,
+                PesoBruto = request.Remolque1.PesoBruto,
+                Estado = "REGISTRADO",
+                RegistradoPor = request.UsuarioEditor,
+                FechaRegistro = DateTime.UtcNow,
+                PesoCapturado = request.Remolque1.PesoCapturado,
+                FotosCapturadas = request.Remolque1.FotosCapturadas,
+                FotoCargaCapturada = request.Remolque1.FotoCargaCapturada,
+                FotoPlacaCapturada = request.Remolque1.FotoPlacaCapturada,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            operation.Remolques.Add(remolque1);
+
+            // Procesar fotos del tráiler y remolque 1
+            await ProcessPartialDoubleTrailerPhotosAsync(operation.Id, request);
+
+            var created = await _weighingRepository.CreateAsync(operation);
+
+            var response = new PartialDoubleTrailerEntryResponseDto
+            {
+                Id = created.Id.ToString(),
+                Folio = created.Folio,
+                TrailerPlaca = created.TrailerPlate!,
+                Remolque1 = new RemolqueResponseDto
+                {
+                    Numero = remolque1.Numero,
+                    Placa = remolque1.Placa,
+                    PesoBruto = remolque1.PesoBruto,
+                    Fotos = request.Remolque1.Fotos
+                },
+                FechaHoraRegistroR1 = remolque1.FechaRegistro!.Value,
+                UsuarioRegistroR1 = remolque1.RegistradoPor ?? "Sistema",
+                Status = created.Status,
+                UnitType = created.UnitType,
+                Product = created.Product,
+                ClientProviderName = created.ClientProviderName
+            };
+
+            _logger.LogInformation("Entrada parcial de doble remolque creada exitosamente - Folio: {Folio}", created.Folio);
+
+            return ApiResponse<PartialDoubleTrailerEntryResponseDto>.CreateSuccess(
+                response,
+                "Remolque 1 registrado exitosamente. Puede continuar con remolque 2 posteriormente."
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear entrada parcial de doble remolque");
+            return ApiResponse<PartialDoubleTrailerEntryResponseDto>.CreateError($"Error interno del servidor: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<DoubleTrailerEntryResponseDto>> ContinueDoubleTrailerEntryAsync(ContinueDoubleTrailerEntryRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Continuando entrada de doble remolque con remolque 2 - Folio: {Folio}", request.Folio);
+
+            var operation = await _weighingRepository.GetByFolioAsync(request.Folio);
+            if (operation == null)
+            {
+                return ApiResponse<DoubleTrailerEntryResponseDto>.CreateError("Operación no encontrada");
+            }
+
+            // Validar estado
+            if (operation.Status != "ENTRADA_PARCIAL_R1")
+            {
+                return ApiResponse<DoubleTrailerEntryResponseDto>.CreateError($"Estado inválido: {operation.Status}. Se esperaba ENTRADA_PARCIAL_R1");
+            }
+
+            // Validar que el remolque 1 ya esté registrado
+            var remolque1 = operation.Remolques.FirstOrDefault(r => r.Numero == 1);
+            if (remolque1 == null)
+            {
+                return ApiResponse<DoubleTrailerEntryResponseDto>.CreateError("No se encontró el registro del remolque 1");
+            }
+
+            // Validar placa única del remolque 2
+            var canCreate = await _weighingService.ValidateUniqueEntryAsync(request.Remolque2.Placa);
+            if (!canCreate)
+            {
+                return ApiResponse<DoubleTrailerEntryResponseDto>.CreateError($"Placa del remolque 2 {request.Remolque2.Placa} ya registrada en entrada previa");
+            }
+
+            // Crear remolque 2
+            var remolque2 = new WeighingRemolque
+            {
+                Id = Guid.NewGuid(),
+                WeighingOperationId = operation.Id,
+                Numero = 2,
+                Placa = request.Remolque2.Placa,
+                PesoBruto = request.Remolque2.PesoBruto,
+                Estado = "REGISTRADO",
+                RegistradoPor = request.UsuarioEditor,
+                FechaRegistro = DateTime.UtcNow,
+                PesoCapturado = request.Remolque2.PesoCapturado,
+                FotosCapturadas = request.Remolque2.FotosCapturadas,
+                FotoCargaCapturada = request.Remolque2.FotoCargaCapturada,
+                FotoPlacaCapturada = request.Remolque2.FotoPlacaCapturada,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            operation.Remolques.Add(remolque2);
+            operation.PlacaRemolque2 = request.Remolque2.Placa;
+            operation.EntryWeight = remolque1.PesoBruto + request.Remolque2.PesoBruto; // Suma total
+            operation.Status = "ENTRADA_REGISTRADA"; // Cambiar a COMPLETA (mantener compatibilidad con reportes)
+            operation.UpdatedAt = DateTime.UtcNow;
+
+            // Actualizar FueEditado si hubo ediciones en remolque 2
+            if (request.TieneEdicionesManuale)
+            {
+                operation.FueEditado = true;
+                operation.FechaUltimaEdicion = DateTime.UtcNow;
+                operation.UsuarioEditor = request.UsuarioEditor;
+            }
+
+            // Persistir operación y remolque 2 ANTES de vincular fotos para evitar
+            // "Collection was modified" al enumerar Remolques durante SaveChanges
+            var updated = await _weighingRepository.UpdateAsync(operation);
+
+            // Procesar fotos del remolque 2 (vinculación hace su propio SaveChanges)
+            await ProcessContinueDoubleTrailerPhotosAsync(operation.Id, request);
+
+            var response = new DoubleTrailerEntryResponseDto
+            {
+                Id = updated.Id.ToString(),
+                Folio = updated.Folio,
+                TrailerPlaca = updated.TrailerPlate!,
+                Remolques = updated.Remolques.OrderBy(r => r.Numero).Select(r => new RemolqueResponseDto
+                {
+                    Numero = r.Numero,
+                    Placa = r.Placa,
+                    PesoBruto = r.PesoBruto,
+                    Fotos = r.Numero == 2 ? request.Remolque2.Fotos : new List<string>()
+                }).ToList(),
+                PesoBrutoTotal = updated.EntryWeight!.Value,
+                FechaHoraEntrada = updated.EntryDate!.Value,
+                UnitType = updated.UnitType,
+                Product = updated.Product,
+                ClientProviderName = updated.ClientProviderName
+            };
+
+            _logger.LogInformation("Entrada de doble remolque completada exitosamente - Folio: {Folio}", updated.Folio);
+
+            return ApiResponse<DoubleTrailerEntryResponseDto>.CreateSuccess(
+                response,
+                "Entrada de doble remolque completada exitosamente"
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al continuar entrada de doble remolque - Folio: {Folio}", request.Folio);
+            return ApiResponse<DoubleTrailerEntryResponseDto>.CreateError($"Error interno del servidor: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<List<PendingDoubleTrailerSearchResultDto>>> SearchPendingDoubleTrailersAsync(string searchTerm, int limit = 10)
+    {
+        try
+        {
+            _logger.LogInformation("Buscando operaciones parciales de doble remolque con término: {SearchTerm}", searchTerm);
+
+            var results = await _weighingRepository.SearchPendingDoubleTrailersAsync(searchTerm, limit, "ENTRADA_PARCIAL_R1");
+
+            var dtos = results.Select(r =>
+            {
+                var remolque1 = r.Remolques.FirstOrDefault(rem => rem.Numero == 1);
+                return new PendingDoubleTrailerSearchResultDto
+                {
+                    Id = r.Id.ToString(),
+                    Folio = r.Folio,
+                    TrailerPlaca = r.TrailerPlate!,
+                    PlacaRemolque1 = r.PlacaRemolque1!,
+                    FechaRegistroR1 = remolque1?.FechaRegistro ?? r.CreatedAt,
+                    Product = r.Product,
+                    ClientProviderName = r.ClientProviderName,
+                    PesoBrutoR1 = remolque1?.PesoBruto ?? 0,
+                    UsuarioRegistroR1 = remolque1?.RegistradoPor ?? "Sistema",
+                    Status = r.Status,
+                    UnitType = r.UnitType
+                };
+            }).ToList();
+
+            return ApiResponse<List<PendingDoubleTrailerSearchResultDto>>.CreateSuccess(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar operaciones parciales de doble remolque con término: {SearchTerm}", searchTerm);
+            return ApiResponse<List<PendingDoubleTrailerSearchResultDto>>.CreateError("Error al buscar operaciones parciales");
+        }
+    }
+
+    public async Task<ApiResponse<PartialDoubleTrailerEntryResponseDto>> GetPendingDoubleTrailerByFolioAsync(string folio)
+    {
+        try
+        {
+            _logger.LogInformation("Obteniendo operación parcial de doble remolque por folio: {Folio}", folio);
+
+            var operation = await _weighingRepository.GetPendingDoubleTrailerByFolioAsync(folio);
+            if (operation == null)
+            {
+                return ApiResponse<PartialDoubleTrailerEntryResponseDto>.CreateError("Operación parcial no encontrada");
+            }
+
+            var remolque1 = operation.Remolques.FirstOrDefault(r => r.Numero == 1);
+            if (remolque1 == null)
+            {
+                return ApiResponse<PartialDoubleTrailerEntryResponseDto>.CreateError("No se encontró el registro del remolque 1");
+            }
+
+            var response = new PartialDoubleTrailerEntryResponseDto
+            {
+                Id = operation.Id.ToString(),
+                Folio = operation.Folio,
+                TrailerPlaca = operation.TrailerPlate!,
+                Remolque1 = new RemolqueResponseDto
+                {
+                    Numero = remolque1.Numero,
+                    Placa = remolque1.Placa,
+                    PesoBruto = remolque1.PesoBruto,
+                    Fotos = new List<string>() // Las fotos se cargan desde el repositorio de fotos
+                },
+                FechaHoraRegistroR1 = remolque1.FechaRegistro!.Value,
+                UsuarioRegistroR1 = remolque1.RegistradoPor ?? "Sistema",
+                Status = operation.Status,
+                UnitType = operation.UnitType,
+                Product = operation.Product,
+                ClientProviderName = operation.ClientProviderName
+            };
+
+            return ApiResponse<PartialDoubleTrailerEntryResponseDto>.CreateSuccess(response, "Operación parcial encontrada");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener operación parcial por folio: {Folio}", folio);
+            return ApiResponse<PartialDoubleTrailerEntryResponseDto>.CreateError("Error al obtener operación parcial");
+        }
+    }
+
+    // ---------- Salida en partes (doble remolque) ----------
+
+    public async Task<ApiResponse<PartialDoubleTrailerExitResponseDto>> CreatePartialDoubleTrailerExitAsync(CreatePartialDoubleTrailerExitRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Creando salida parcial de doble remolque (solo remolque 1) - Folio: {Folio}", request.Folio);
+
+            var entry = await _weighingRepository.GetByFolioAsync(request.Folio);
+            if (entry == null)
+                return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateError("Registro de entrada no encontrado");
+
+            if (entry.TipoUnidad != "doble-remolque")
+                return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateError("La operación no es de doble remolque");
+
+            // Aceptar entrada completa (ENTRADA_REGISTRADA o ENTRADA_COMPLETA)
+            if (entry.Status != "ENTRADA_REGISTRADA" && entry.Status != "ENTRADA_COMPLETA")
+                return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateError($"Estado inválido: {entry.Status}. Se esperaba entrada completa.");
+
+            var remolque1 = entry.Remolques.FirstOrDefault(r => r.Numero == 1);
+            if (remolque1 == null)
+                return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateError("No se encontró el remolque 1");
+
+            var fechaSalida = request.FechaSalida != default ? request.FechaSalida : DateTime.UtcNow;
+
+            remolque1.PesoTara = request.Remolque1.PesoTara;
+            remolque1.FotoCargaCapturada = request.Remolque1.FotoCargaCapturada;
+            remolque1.FechaSalida = fechaSalida;
+            remolque1.RegistradoPorSalida = request.UsuarioRegistroSalida ?? "Sistema";
+            remolque1.UpdatedAt = DateTime.UtcNow;
+
+            entry.Status = "SALIDA_PARCIAL_R1";
+            entry.UpdatedAt = DateTime.UtcNow;
+
+            await ProcessPartialDoubleTrailerExitPhotosAsync(entry.Id, request);
+
+            var updated = await _weighingRepository.UpdateAsync(entry);
+
+            var response = new PartialDoubleTrailerExitResponseDto
+            {
+                Id = updated.Id.ToString(),
+                Folio = updated.Folio,
+                TrailerPlaca = updated.TrailerPlate!,
+                Remolque1 = new RemolqueExitResponseDto
+                {
+                    Numero = 1,
+                    Placa = remolque1.Placa,
+                    PesoBrutoEntrada = remolque1.PesoBruto,
+                    PesoTaraSalida = remolque1.PesoTara ?? 0
+                },
+                FechaSalidaR1 = remolque1.FechaSalida!.Value,
+                UsuarioRegistroSalidaR1 = remolque1.RegistradoPorSalida ?? "Sistema",
+                Status = updated.Status,
+                UnitType = updated.UnitType,
+                Product = updated.Product,
+                ClientProviderName = updated.ClientProviderName
+            };
+
+            _logger.LogInformation("Salida parcial de doble remolque creada - Folio: {Folio}", updated.Folio);
+            return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateSuccess(
+                response,
+                "Remolque 1 salida registrada. Puede continuar con remolque 2 posteriormente.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear salida parcial de doble remolque - Folio: {Folio}", request.Folio);
+            return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateError($"Error interno del servidor: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<ExitResponseDto>> ContinueDoubleTrailerExitAsync(ContinueDoubleTrailerExitRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Continuando salida de doble remolque con remolque 2 - Folio: {Folio}", request.Folio);
+
+            var entry = await _weighingRepository.GetPendingDoubleTrailerExitByFolioAsync(request.Folio);
+            if (entry == null)
+                return ApiResponse<ExitResponseDto>.CreateError("Operación no encontrada");
+
+            if (entry.Status != "SALIDA_PARCIAL_R1")
+                return ApiResponse<ExitResponseDto>.CreateError($"Estado inválido: {entry.Status}. Se esperaba SALIDA_PARCIAL_R1.");
+
+            var remolque1 = entry.Remolques.FirstOrDefault(r => r.Numero == 1);
+            var remolque2 = entry.Remolques.FirstOrDefault(r => r.Numero == 2);
+            if (remolque1 == null || remolque2 == null)
+                return ApiResponse<ExitResponseDto>.CreateError("No se encontraron los remolques de la operación");
+
+            var fechaSalida = request.FechaSalida != default ? request.FechaSalida : DateTime.UtcNow;
+
+            remolque2.PesoTara = request.Remolque2.PesoTara;
+            remolque2.FotoCargaCapturada = request.Remolque2.FotoCargaCapturada;
+            remolque2.FechaSalida = fechaSalida;
+            remolque2.RegistradoPorSalida = request.UsuarioRegistroSalida ?? "Sistema";
+            remolque2.UpdatedAt = DateTime.UtcNow;
+
+            var pesoSalidaTotal = (remolque1.PesoTara ?? 0) + (remolque2.PesoTara ?? 0);
+            var pesoEntradaTotal = entry.EntryWeight ?? 0;
+            var pesoNeto = Math.Abs(pesoEntradaTotal - pesoSalidaTotal);
+
+            entry.ExitWeight = pesoSalidaTotal;
+            entry.NetWeight = pesoNeto;
+            entry.ExitDate = fechaSalida;
+            entry.Status = "SALIDA_REGISTRADA";
+            entry.ExitRegisteredBy = request.UsuarioRegistroSalida ?? "Sistema";
+            entry.UpdatedAt = DateTime.UtcNow;
+
+            await ProcessContinueDoubleTrailerExitPhotosAsync(entry.Id, request);
+
+            var updated = await _weighingRepository.UpdateAsync(entry);
+
+            var response = new ExitResponseDto
+            {
+                Folio = updated.Folio,
+                Estado = updated.Status,
+                FechaSalida = updated.ExitDate ?? DateTime.UtcNow,
+                PesoNeto = updated.NetWeight ?? 0,
+                Mensaje = "Salida con doble remolque registrada exitosamente",
+                ExitRegisteredBy = updated.ExitRegisteredBy
+            };
+
+            _logger.LogInformation("Salida de doble remolque completada - Folio: {Folio}", updated.Folio);
+            return ApiResponse<ExitResponseDto>.CreateSuccess(response, "Registro de salida completado");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al continuar salida de doble remolque - Folio: {Folio}", request.Folio);
+            return ApiResponse<ExitResponseDto>.CreateError($"Error interno del servidor: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<List<PendingDoubleTrailerExitSearchResultDto>>> SearchPendingDoubleTrailerExitsAsync(string searchTerm, int limit = 10)
+    {
+        try
+        {
+            _logger.LogInformation("Buscando operaciones con salida parcial de doble remolque - Término: {SearchTerm}", searchTerm);
+
+            var results = await _weighingRepository.SearchPendingDoubleTrailersAsync(searchTerm, limit, "SALIDA_PARCIAL_R1");
+
+            var dtos = results.Select(r =>
+            {
+                var remolque1 = r.Remolques.FirstOrDefault(rem => rem.Numero == 1);
+                var remolque2 = r.Remolques.FirstOrDefault(rem => rem.Numero == 2);
+                return new PendingDoubleTrailerExitSearchResultDto
+                {
+                    Id = r.Id.ToString(),
+                    Folio = r.Folio,
+                    TrailerPlaca = r.TrailerPlate!,
+                    PlacaRemolque1 = r.PlacaRemolque1 ?? "",
+                    PlacaRemolque2 = r.PlacaRemolque2 ?? "",
+                    FechaSalidaR1 = remolque1?.FechaSalida ?? r.UpdatedAt,
+                    UsuarioRegistroSalidaR1 = remolque1?.RegistradoPorSalida ?? "Sistema",
+                    PesoBrutoR1 = remolque1?.PesoBruto ?? 0,
+                    PesoTaraR1 = remolque1?.PesoTara ?? 0,
+                    Product = r.Product,
+                    ClientProviderName = r.ClientProviderName,
+                    Status = r.Status,
+                    UnitType = r.UnitType
+                };
+            }).ToList();
+
+            return ApiResponse<List<PendingDoubleTrailerExitSearchResultDto>>.CreateSuccess(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar operaciones con salida parcial - Término: {SearchTerm}", searchTerm);
+            return ApiResponse<List<PendingDoubleTrailerExitSearchResultDto>>.CreateError("Error al buscar operaciones con salida parcial");
+        }
+    }
+
+    public async Task<ApiResponse<PartialDoubleTrailerExitResponseDto>> GetPendingDoubleTrailerExitByFolioAsync(string folio)
+    {
+        try
+        {
+            _logger.LogInformation("Obteniendo operación con salida parcial por folio: {Folio}", folio);
+
+            var operation = await _weighingRepository.GetPendingDoubleTrailerExitByFolioAsync(folio);
+            if (operation == null)
+                return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateError("Operación con salida parcial no encontrada");
+
+            var remolque1 = operation.Remolques.FirstOrDefault(r => r.Numero == 1);
+            if (remolque1 == null)
+                return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateError("No se encontró el remolque 1");
+
+            var response = new PartialDoubleTrailerExitResponseDto
+            {
+                Id = operation.Id.ToString(),
+                Folio = operation.Folio,
+                TrailerPlaca = operation.TrailerPlate!,
+                Remolque1 = new RemolqueExitResponseDto
+                {
+                    Numero = 1,
+                    Placa = remolque1.Placa,
+                    PesoBrutoEntrada = remolque1.PesoBruto,
+                    PesoTaraSalida = remolque1.PesoTara ?? 0
+                },
+                FechaSalidaR1 = remolque1.FechaSalida ?? operation.UpdatedAt,
+                UsuarioRegistroSalidaR1 = remolque1.RegistradoPorSalida ?? "Sistema",
+                Status = operation.Status,
+                UnitType = operation.UnitType,
+                Product = operation.Product,
+                ClientProviderName = operation.ClientProviderName,
+                PlacaRemolque2 = operation.PlacaRemolque2 ?? string.Empty
+            };
+
+            return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateSuccess(response, "Operación con salida parcial encontrada");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener operación con salida parcial por folio: {Folio}", folio);
+            return ApiResponse<PartialDoubleTrailerExitResponseDto>.CreateError("Error al obtener operación con salida parcial");
+        }
+    }
+
+    private async Task ProcessPartialDoubleTrailerExitPhotosAsync(Guid operationId, CreatePartialDoubleTrailerExitRequest request)
+    {
+        var photos = new DoubleTrailerExitPhotoDataDto
+        {
+            TrailerPlate = request.Fotos.TrailerPlate ?? "",
+            Remolque1Plate = request.Fotos.Remolque1Plate ?? "",
+            Remolque2Plate = "",
+            CargoRemolque1 = request.Fotos.CargoRemolque1 ?? "",
+            CargoRemolque2 = ""
+        };
+        await ProcessDoubleTrailerExitPhotosFromRequestAsync(operationId, photos);
+    }
+
+    private async Task ProcessContinueDoubleTrailerExitPhotosAsync(Guid operationId, ContinueDoubleTrailerExitRequest request)
+    {
+        var photos = new DoubleTrailerExitPhotoDataDto
+        {
+            TrailerPlate = "",
+            Remolque1Plate = "",
+            Remolque2Plate = request.Fotos.Remolque2Plate ?? "",
+            CargoRemolque1 = "",
+            CargoRemolque2 = request.Fotos.CargoRemolque2 ?? ""
+        };
+        await ProcessDoubleTrailerExitPhotosFromRequestAsync(operationId, photos);
+    }
+
+    private async Task ProcessPartialDoubleTrailerPhotosAsync(Guid operationId, CreatePartialDoubleTrailerEntryRequest request)
+    {
+        _logger.LogInformation("Procesando fotos para entrada parcial de doble remolque - OperationId: {OperationId}", operationId);
+
+        // Procesar foto del tráiler (si existe)
+        if (!string.IsNullOrEmpty(request.TrailerPlacaFoto))
+        {
+            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate");
+        }
+
+        // Procesar fotos del remolque 1
+        foreach (var fotoUrl in request.Remolque1.Fotos)
+        {
+            // Determinar el tipo de foto según la URL
+            string photoType;
+            if (fotoUrl.StartsWith("/api/"))
+            {
+                // Es una foto ANPR de placa
+                photoType = "remolque1Plate";
+            }
+            else
+            {
+                // Es una foto de carga u otro tipo (ignorar por ahora)
+                _logger.LogInformation("Ignorando foto no-ANPR: {FotoUrl}", fotoUrl);
+                continue;
+            }
+
+            await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType);
+        }
+
+        _logger.LogInformation("Finalizado procesamiento de fotos para entrada parcial - OperationId: {OperationId}", operationId);
+    }
+
+    private async Task ProcessContinueDoubleTrailerPhotosAsync(Guid operationId, ContinueDoubleTrailerEntryRequest request)
+    {
+        _logger.LogInformation("Procesando fotos para continuar doble remolque - OperationId: {OperationId}", operationId);
+
+        // Procesar fotos del remolque 2
+        foreach (var fotoUrl in request.Remolque2.Fotos)
+        {
+            // Determinar el tipo de foto según la URL
+            string photoType;
+            if (fotoUrl.StartsWith("/api/"))
+            {
+                // Es una foto ANPR de placa
+                photoType = "remolque2Plate";
+            }
+            else
+            {
+                // Es una foto de carga u otro tipo (ignorar por ahora)
+                _logger.LogInformation("Ignorando foto no-ANPR: {FotoUrl}", fotoUrl);
+                continue;
+            }
+
+            await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType);
+        }
+
+        _logger.LogInformation("Finalizado procesamiento de fotos para continuar doble remolque - OperationId: {OperationId}", operationId);
     }
 }

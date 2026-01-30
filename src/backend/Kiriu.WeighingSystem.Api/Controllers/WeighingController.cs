@@ -675,4 +675,267 @@ public class WeighingController : ControllerBase
             });
         }
     }
+
+    /// <summary>
+    /// Crear Entrada Parcial de Doble Remolque (solo remolque 1)
+    /// </summary>
+    /// <param name="request">Datos del remolque 1</param>
+    /// <returns>Operación parcial creada</returns>
+    [HttpPost("entry/double-trailer/partial")]
+    public async Task<IActionResult> CreatePartialDoubleTrailerEntry([FromBody] CreatePartialDoubleTrailerEntryRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Creando entrada parcial de doble remolque para trailer: {TrailerPlaca}", request.TrailerPlaca);
+
+            // Obtener el usuario actual del token JWT
+            var currentUser = GetCurrentUser();
+
+            // Si tiene ediciones manuales, asignar el usuario actual
+            if (request.TieneEdicionesManuale && !string.IsNullOrEmpty(currentUser))
+            {
+                request.UsuarioEditor = currentUser;
+            }
+
+            var result = await _weighingService.CreatePartialDoubleTrailerEntryAsync(request);
+
+            if (!result.Success)
+            {
+                return result.Message?.Contains("ya registrada") == true ? Conflict(result) : BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear entrada parcial de doble remolque");
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Continuar Entrada de Doble Remolque con remolque 2
+    /// </summary>
+    /// <param name="request">Datos del remolque 2 y folio de la operación parcial</param>
+    /// <returns>Operación de doble remolque completada</returns>
+    [HttpPost("entry/double-trailer/continue")]
+    public async Task<IActionResult> ContinueDoubleTrailerEntry([FromBody] ContinueDoubleTrailerEntryRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Continuando entrada de doble remolque para folio: {Folio}", request.Folio);
+
+            // Obtener el usuario actual del token JWT
+            var currentUser = GetCurrentUser();
+
+            // Si tiene ediciones manuales, asignar el usuario actual
+            if (request.TieneEdicionesManuale && !string.IsNullOrEmpty(currentUser))
+            {
+                request.UsuarioEditor = currentUser;
+            }
+
+            var result = await _weighingService.ContinueDoubleTrailerEntryAsync(request);
+
+            if (!result.Success)
+            {
+                return result.Message?.Contains("no encontrada") == true || result.Message?.Contains("Estado inválido") == true
+                    ? NotFound(result)
+                    : BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al continuar entrada de doble remolque para folio: {Folio}", request.Folio);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Buscar operaciones parciales de doble remolque pendientes de completar
+    /// </summary>
+    /// <param name="searchTerm">Término de búsqueda (folio o placa)</param>
+    /// <param name="limit">Límite de resultados (default: 10)</param>
+    /// <returns>Lista de operaciones parciales pendientes</returns>
+    [HttpGet("entry/double-trailer/pending/search")]
+    public async Task<IActionResult> SearchPendingDoubleTrailers(
+        [FromQuery] string searchTerm,
+        [FromQuery] int limit = 10)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            {
+                return Ok(new { success = true, data = new List<object>() });
+            }
+
+            _logger.LogInformation("Buscando operaciones parciales de doble remolque con término: {SearchTerm}", searchTerm);
+
+            var result = await _weighingService.SearchPendingDoubleTrailersAsync(searchTerm, limit);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar operaciones parciales de doble remolque con término: {SearchTerm}", searchTerm);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtener operación parcial de doble remolque por folio
+    /// </summary>
+    /// <param name="folio">Folio de la operación parcial</param>
+    /// <returns>Operación parcial encontrada</returns>
+    [HttpGet("entry/double-trailer/pending/{folio}")]
+    public async Task<IActionResult> GetPendingDoubleTrailerByFolio(string folio)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(folio))
+            {
+                return BadRequest(new { success = false, message = "El folio es requerido" });
+            }
+
+            _logger.LogInformation("Obteniendo operación parcial de doble remolque por folio: {Folio}", folio);
+
+            var result = await _weighingService.GetPendingDoubleTrailerByFolioAsync(folio);
+
+            if (!result.Success)
+            {
+                return result.Message == "Operación parcial no encontrada" ? NotFound(result) : BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener operación parcial de doble remolque por folio: {Folio}", folio);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    // ---------- Salida en partes (doble remolque) ----------
+
+    /// <summary>
+    /// Registrar salida parcial de doble remolque (solo remolque 1).
+    /// </summary>
+    [HttpPost("exit/double-trailer/partial")]
+    public async Task<IActionResult> CreatePartialDoubleTrailerExit([FromBody] CreatePartialDoubleTrailerExitRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Creando salida parcial de doble remolque para folio: {Folio}", request.Folio);
+
+            var currentUser = GetCurrentUser();
+            if (!string.IsNullOrEmpty(currentUser))
+                request.UsuarioRegistroSalida = currentUser;
+
+            var result = await _weighingService.CreatePartialDoubleTrailerExitAsync(request);
+
+            if (!result.Success)
+            {
+                return result.Message?.Contains("no encontrado") == true ? NotFound(result) : BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al crear salida parcial de doble remolque para folio: {Folio}", request.Folio);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Continuar salida de doble remolque con remolque 2.
+    /// </summary>
+    [HttpPost("exit/double-trailer/continue")]
+    public async Task<IActionResult> ContinueDoubleTrailerExit([FromBody] ContinueDoubleTrailerExitRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Continuando salida de doble remolque para folio: {Folio}", request.Folio);
+
+            var currentUser = GetCurrentUser();
+            if (!string.IsNullOrEmpty(currentUser))
+                request.UsuarioRegistroSalida = currentUser;
+
+            var result = await _weighingService.ContinueDoubleTrailerExitAsync(request);
+
+            if (!result.Success)
+            {
+                return result.Message?.Contains("no encontrada") == true || result.Message?.Contains("Estado inválido") == true
+                    ? NotFound(result)
+                    : BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al continuar salida de doble remolque para folio: {Folio}", request.Folio);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Buscar operaciones con salida parcial de doble remolque pendientes de completar (remolque 2).
+    /// </summary>
+    [HttpGet("exit/double-trailer/pending/search")]
+    public async Task<IActionResult> SearchPendingDoubleTrailerExits(
+        [FromQuery] string searchTerm,
+        [FromQuery] int limit = 10)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
+            {
+                return Ok(new { success = true, data = new List<object>() });
+            }
+
+            _logger.LogInformation("Buscando operaciones con salida parcial de doble remolque - Término: {SearchTerm}", searchTerm);
+
+            var result = await _weighingService.SearchPendingDoubleTrailerExitsAsync(searchTerm, limit);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar operaciones con salida parcial - Término: {SearchTerm}", searchTerm);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtener operación con salida parcial de doble remolque por folio.
+    /// </summary>
+    [HttpGet("exit/double-trailer/pending/{folio}")]
+    public async Task<IActionResult> GetPendingDoubleTrailerExitByFolio(string folio)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(folio))
+            {
+                return BadRequest(new { success = false, message = "El folio es requerido" });
+            }
+
+            _logger.LogInformation("Obteniendo operación con salida parcial por folio: {Folio}", folio);
+
+            var result = await _weighingService.GetPendingDoubleTrailerExitByFolioAsync(folio);
+
+            if (!result.Success)
+            {
+                return result.Message == "Operación con salida parcial no encontrada" ? NotFound(result) : BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener operación con salida parcial por folio: {Folio}", folio);
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
 }
