@@ -890,6 +890,7 @@ public class WeighingController : ControllerBase
     {
         try
         {
+            searchTerm = searchTerm?.Trim() ?? "";
             if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2)
             {
                 return Ok(new { success = true, data = new List<object>() });

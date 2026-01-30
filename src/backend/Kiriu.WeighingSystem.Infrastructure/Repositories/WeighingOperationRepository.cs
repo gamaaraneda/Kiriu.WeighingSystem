@@ -433,17 +433,19 @@ public class WeighingOperationRepository : IWeighingOperationRepository
         return results;
     }
 
-    public async Task<List<WeighingOperation>> SearchPendingDoubleTrailersAsync(string searchTerm, int limit = 10, string? status = null)
+    public async Task<List<WeighingOperation>> SearchPendingDoubleTrailersAsync(string searchTerm, int limit = 10, params string[]? statuses)
     {
         // Búsqueda inteligente: detecta si es folio o placa
         var isFolioSearch = searchTerm.Contains("-ENT-") || searchTerm.Contains("-SAL-");
 
-        // Estado por defecto: operaciones parciales pendientes
-        var targetStatus = status ?? "ENTRADA_PARCIAL_R1";
+        // Estados a buscar: si no se pasan, por defecto entrada parcial R1
+        var statusList = (statuses != null && statuses.Length > 0)
+            ? statuses.ToList()
+            : new List<string> { "ENTRADA_PARCIAL_R1" };
 
         IQueryable<WeighingOperation> query = _context.WeighingOperations
             .Include(w => w.Remolques)
-            .Where(w => w.TipoUnidad == "doble-remolque" && w.Status == targetStatus);
+            .Where(w => w.TipoUnidad == "doble-remolque" && statusList.Contains(w.Status));
 
         if (isFolioSearch)
         {

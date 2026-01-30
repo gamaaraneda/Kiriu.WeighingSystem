@@ -490,13 +490,16 @@ export class RealWeighingService {
     limit: number = 10,
   ): Observable<PendingDoubleTrailerExitSearchResult[]> {
     return this.http
-      .get<{ data: PendingDoubleTrailerExitSearchResult[] }>(
-        `${this.apiUrl}/exit/double-trailer/pending/search`,
-        {
-          params: { searchTerm, limit: limit.toString() },
-        },
-      )
-      .pipe(map((res) => res.data ?? []));
+      .get<
+        | PendingDoubleTrailerExitSearchResult[]
+        | { data: PendingDoubleTrailerExitSearchResult[] }
+      >(`${this.apiUrl}/exit/double-trailer/pending/search`, {
+        params: { searchTerm, limit: limit.toString() },
+      })
+      .pipe(
+        // El interceptor api-response extrae body.data, así que res puede ser ya el array
+        map((res) => (Array.isArray(res) ? res : (res?.data ?? []))),
+      );
   }
 
   /**

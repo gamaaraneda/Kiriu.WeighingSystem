@@ -41,7 +41,8 @@ public interface IWeighingOperationRepository
     Task<List<WeighingOperation>> SearchPendingExitsAsync(string searchTerm, int limit = 10, string? unitType = null);
 
     // Métodos para doble remolque interrumpible
-    Task<List<WeighingOperation>> SearchPendingDoubleTrailersAsync(string searchTerm, int limit = 10, string? status = null);
+    /// <param name="statuses">Uno o más estados. Si null/vacío, se usa ENTRADA_PARCIAL_R1 por defecto.</param>
+    Task<List<WeighingOperation>> SearchPendingDoubleTrailersAsync(string searchTerm, int limit = 10, params string[]? statuses);
     Task<WeighingOperation?> GetPendingDoubleTrailerByFolioAsync(string folio);
     Task<WeighingOperation?> GetPendingDoubleTrailerExitByFolioAsync(string folio);
 }
