@@ -12,7 +12,7 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { HeaderComponent } from '../../../../layout/header/header.component';
@@ -42,7 +42,13 @@ import { AuthService } from '../../../../core/services/auth.service';
 @Component({
   selector: 'app-continue-double-trailer',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HeaderComponent, ToastModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    HeaderComponent,
+    ToastModule,
+    RouterLink,
+  ],
   templateUrl: './continue-double-trailer.component.html',
   styleUrls: ['./continue-double-trailer.component.scss'],
 })

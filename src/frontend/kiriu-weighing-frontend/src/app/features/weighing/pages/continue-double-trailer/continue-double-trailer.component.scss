@@ -1,6 +1,7 @@
-// Variables de la paleta Kiriu
+// Variables de la paleta Kiriu (consistencia con dashboard)
 :host {
   --brand-primary: #398df1;
+  --brand-primary-hover: #005bb5;
   --brand-secondary: #005bb5;
   --brand-dark: #000000;
   --brand-light: #ffffff;
@@ -12,6 +13,7 @@
   --error: #f70000;
   --warning: #ff914d;
   --info: #398df1;
+  --info-bg: #e8f1ff;
 }
 
 .continue-container {
@@ -34,17 +36,58 @@
   padding: 24px 16px;
 }
 
+// Crumb y títulos: mismo estilo que dashboard
+.crumb {
+  color: var(--info);
+  background-color: var(--info-bg);
+  border: 1px solid rgba(57, 141, 241, 0.2);
+}
+
 .page-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--brand-dark);
-  margin-bottom: 8px;
+  color: var(--brand-primary);
+  margin: 18px 0 8px;
+  font-size: 1.75rem;
+  letter-spacing: 0.2px;
+  text-align: center;
 }
 
 .page-subtitle {
-  font-size: 16px;
-  color: #64748b;
-  margin-bottom: 32px;
+  color: var(--muted, #64748b);
+  font-size: var(--fs-sm, 0.875rem);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+// Acción secundaria: mismo estilo que dashboard (link "Volver al inicio")
+.continue-row {
+  margin: 0 0 1.5rem 0;
+  text-align: right;
+}
+
+.continue-link {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--info);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: 4px;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+
+  &:hover {
+    color: var(--brand-primary-hover);
+    background-color: transparent;
+  }
+
+  &:focus {
+    outline: 1px solid var(--brand-primary);
+    outline-offset: 2px;
+  }
 }
 
 .tabs-row {

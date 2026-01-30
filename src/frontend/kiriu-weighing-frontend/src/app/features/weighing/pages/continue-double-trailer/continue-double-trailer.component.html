@@ -1,20 +1,23 @@
 <div class="continue-container">
   <app-header></app-header>
 
-  <div class="continue-content">
+  <main class="page-container">
+    <span class="crumb">Pesaje</span>
+    <h1 class="page-title">¿Tienes un doble remolque pendiente?</h1>
+    <p class="page-subtitle">
+      Busque una operación pendiente y complete el registro del remolque 2
+    </p>
+    <p class="continue-row">
+      <a
+        routerLink="/dashboard"
+        class="continue-link"
+        aria-label="Volver al inicio"
+      >
+        ← Volver al inicio
+      </a>
+    </p>
+
     <div class="container">
-      <!-- Breadcrumb -->
-      <div class="breadcrumb">
-        <span class="breadcrumb-item">Pesaje</span>
-        <span class="breadcrumb-separator">></span>
-        <span class="breadcrumb-item active">Continuar Doble Remolque</span>
-      </div>
-
-      <h1 class="page-title">🔄 Continuar Doble Remolque</h1>
-      <p class="page-subtitle">
-        Busque una operación pendiente y complete el registro del remolque 2
-      </p>
-
       <!-- Tabs Entrada / Salida pendiente -->
       <div class="tabs-row">
         <button
@@ -360,7 +363,7 @@
         </form>
       </div>
     </div>
-  </div>
+  </main>
 </div>
 
 <p-toast></p-toast>
