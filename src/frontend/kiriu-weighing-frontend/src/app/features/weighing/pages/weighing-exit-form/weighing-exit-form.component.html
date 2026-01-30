@@ -28,8 +28,8 @@
         <!-- Columna izquierda: Formulario -->
         <div class="form-column">
           <form [formGroup]="exitForm" class="weighing-exit-form">
-            <!-- Sección: Búsqueda de Entrada (oculta en modo continuar salida) -->
-            <div *ngIf="!currentOperationFolio" class="form-section">
+            <!-- Sección: Búsqueda de Entrada (siempre visible) -->
+            <div class="form-section">
               <h2 class="section-title">Búsqueda de Entrada</h2>
 
               <div class="form-group">
@@ -188,8 +188,11 @@
             >
               <h2 class="section-title">Datos del Vehículo (Tráiler)</h2>
 
-              <!-- Subsección: Captura de placas -->
-              <div class="plate-capture-subsection">
+              <!-- Subsección: Captura de placas (oculta al registrar Remolque 2; datos ya capturados) -->
+              <div
+                *ngIf="!currentOperationFolio"
+                class="plate-capture-subsection"
+              >
                 <h3 class="subsection-title">Captura de placas</h3>
 
                 <button
@@ -230,7 +233,8 @@
                 </div>
               </div>
 
-              <div class="form-group">
+              <!-- Placa del Tráiler: oculta al registrar solo Remolque 2 (dato corresponde a Remolque 1) -->
+              <div *ngIf="!currentOperationFolio" class="form-group">
                 <label for="trailerPlate" class="form-label"
                   >Placa del Tráiler *</label
                 >
@@ -575,25 +579,6 @@
                   {{ getFieldError("pesoTaraRemolque1") }}
                 </div>
               </div>
-
-              <!-- Botón guardar salida parcial (solo remolque 1) -->
-              <div
-                *ngIf="canSavePartialRemolque1()"
-                class="partial-save-section"
-              >
-                <button
-                  type="button"
-                  class="btn btn-secondary btn-save-partial"
-                  (click)="savePartialDoubleTrailerExit()"
-                  [disabled]="isLoading"
-                >
-                  💾 Guardar salida Remolque 1 y continuar después
-                </button>
-                <p class="help-text">
-                  Puede registrar solo el remolque 1 ahora y completar el
-                  remolque 2 posteriormente.
-                </p>
-              </div>
             </div>
 
             <!-- Resumen Remolque 1 (modo continuar salida) -->
@@ -635,7 +620,7 @@
               </div>
             </div>
 
-            <!-- Sección: Remolque 2 - Solo para Doble Remolque -->
+            <!-- Sección: Remolque 2 - Solo para Doble Remolque (oculta visualmente mientras se pesa remolque 1) -->
             <div
               *ngIf="
                 isEntryFound &&
@@ -643,6 +628,7 @@
                 entryData.tipoUnidad === 'doble-remolque'
               "
               class="form-section remolque-section"
+              [class.remolque2-hidden-while-remolque1]="!currentOperationFolio"
             >
               <h2 class="section-title">
                 <span class="remolque-number">2</span>
@@ -1437,13 +1423,39 @@
               </button>
               -->
               <div class="right-actions">
+                <!-- Guardar remolque 1: siempre visible en doble remolque (fase remolque 1), deshabilitado=negro, habilitado=azul -->
+                <button
+                  *ngIf="
+                    entryData?.tipoUnidad === 'doble-remolque' &&
+                    !currentOperationFolio
+                  "
+                  type="button"
+                  class="btn btn-save-partial-inline"
+                  [class.btn-save-partial-disabled]="
+                    !canSavePartialRemolque1() || isLoading
+                  "
+                  [disabled]="!canSavePartialRemolque1() || isLoading"
+                  (click)="savePartialDoubleTrailerExit()"
+                >
+                  Guardar remolque 1
+                </button>
                 <button
                   type="button"
                   class="btn btn-save"
                   [class.btn-save-disabled]="
-                    !isFormValid || isLoading || isExitRegistered
+                    !isFormValid ||
+                    isLoading ||
+                    isExitRegistered ||
+                    (entryData?.tipoUnidad === 'doble-remolque' &&
+                      !currentOperationFolio)
                   "
-                  [disabled]="!isFormValid || isLoading || isExitRegistered"
+                  [disabled]="
+                    !isFormValid ||
+                    isLoading ||
+                    isExitRegistered ||
+                    (entryData?.tipoUnidad === 'doble-remolque' &&
+                      !currentOperationFolio)
+                  "
                   (click)="onSave()"
                 >
                   <span *ngIf="!isLoading && !isExitRegistered"
