@@ -1225,13 +1225,13 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           `🔍 [WEIGHING-EXIT-FORM] Buscando foto en BD para photoType: ${fieldName}`,
         );
 
-        // Mapear fieldName a photoType para BD
+        // Mapear fieldName a photoType para BD (igual que entrada: varios orígenes)
         const photoTypeMap: Record<string, string> = {
           trailerPlate: 'trailerPlate',
           trailerPlate2: 'remolque1Plate', // Flujo remolque único - buscar en remolque1Plate
           containerPlate: 'trailerPlate', // Flujo solo contenedor - buscar en trailerPlate
           remolque1Plate: 'remolque1Plate', // Flujo doble remolque
-          remolque2Plate: 'remolque1Plate', // Flujo doble remolque - buscar en remolque1Plate porque backend guarda todo como remolque1Plate
+          remolque2Plate: 'remolque2Plate', // Primero buscar por remolque2Plate
         };
 
         let searchPhotoType = photoTypeMap[fieldName];
@@ -1240,13 +1240,28 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         if (fieldName === 'remolque2Plate' && this.remolque1PhotoId) {
           excludePhotoId = this.remolque1PhotoId; // Excluir la foto ya usada para remolque1
           console.log(
-            `🔄 [WEIGHING-EXIT-FORM] Buscando remolque2 en remolque1Plate, excluyendo foto de remolque1: ${excludePhotoId}`,
+            `🔄 [WEIGHING-EXIT-FORM] Buscando remolque2, excluyendo foto de remolque1: ${excludePhotoId}`,
           );
         }
 
         orphanPhoto = await this.anprService
           .getLatestOrphanPhoto(searchPhotoType, excludePhotoId)
           .toPromise();
+
+        // Fallback para remolque2Plate: también buscar en remolque1Plate (igual que en entrada)
+        if (!orphanPhoto && fieldName === 'remolque2Plate') {
+          console.log(
+            `🔄 [WEIGHING-EXIT-FORM] No encontrado en remolque2Plate, buscando en remolque1Plate (fallback)...`,
+          );
+          orphanPhoto = await this.anprService
+            .getLatestOrphanPhoto('remolque1Plate', excludePhotoId ?? undefined)
+            .toPromise();
+          if (orphanPhoto) {
+            console.log(
+              `✅ [WEIGHING-EXIT-FORM] Foto remolque 2 encontrada en remolque1Plate (fallback): ${orphanPhoto.photoUrl}`,
+            );
+          }
+        }
 
         if (orphanPhoto) {
           console.log(

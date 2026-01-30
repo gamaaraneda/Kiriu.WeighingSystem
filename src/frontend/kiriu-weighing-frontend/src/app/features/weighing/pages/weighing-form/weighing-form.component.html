@@ -201,11 +201,12 @@
             >
               <h2 class="section-title">Datos del Tráiler</h2>
 
-              <!-- Resumen de remolque 1 (cuando estamos en modo continue) -->
+              <!-- Resumen de remolque 1 (cuando estamos en modo continue); permanece visible al completar remolque 2 -->
               <div
                 *ngIf="
                   currentOperationFolio &&
-                  doubleTrailerState.currentStep === 'remolque2'
+                  (doubleTrailerState.currentStep === 'remolque2' ||
+                    doubleTrailerState.currentStep === 'complete')
                 "
                 class="remolque1-summary-section"
               >
@@ -579,11 +580,12 @@
               </div>
             </div>
 
-            <!-- Sección: Remolque 2 (oculta durante registro Remolque 1; visible solo cuando currentStep es remolque2, p. ej. modo continue) -->
+            <!-- Sección: Remolque 2 (visible cuando currentStep es remolque2 o complete; no se oculta al completar datos) -->
             <div
               *ngIf="
                 weighingForm.get('doubleTrailer')?.value &&
-                doubleTrailerState.currentStep === 'remolque2'
+                (doubleTrailerState.currentStep === 'remolque2' ||
+                  doubleTrailerState.currentStep === 'complete')
               "
               class="form-section remolque-section"
               [class.disabled]="!canProceedToRemolque2()"

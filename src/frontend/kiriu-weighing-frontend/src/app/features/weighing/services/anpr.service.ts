@@ -1,6 +1,13 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, firstValueFrom, catchError, of } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  Subject,
+  firstValueFrom,
+  catchError,
+  of,
+} from 'rxjs';
 import { filter, timeout, take, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
@@ -29,17 +36,17 @@ export interface AnprCaptureState {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AnprService implements OnDestroy {
   private http = inject(HttpClient);
   private connection: any = null;
   private anprEventSubject = new BehaviorSubject<AnprEvent | null>(null);
   private connectionStatusSubject = new BehaviorSubject<AnprConnectionStatus>({
-    isConnected: false
+    isConnected: false,
   });
   private captureStateSubject = new BehaviorSubject<AnprCaptureState>({
-    isCapturing: false
+    isCapturing: false,
   });
   private destroy$ = new Subject<void>();
 
@@ -57,8 +64,8 @@ export class AnprService implements OnDestroy {
           .withUrl(`${environment.hubUrl}/peso`, {
             withCredentials: true,
             headers: {
-              'Access-Control-Allow-Credentials': 'true'
-            }
+              'Access-Control-Allow-Credentials': 'true',
+            },
           })
           .withAutomaticReconnect([0, 2000, 10000, 30000])
           .configureLogging(LogLevel.Information)
@@ -83,7 +90,8 @@ export class AnprService implements OnDestroy {
   private async loadSignalRScript(): Promise<void> {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.min.js';
+      script.src =
+        'https://unpkg.com/@microsoft/signalr@latest/dist/browser/signalr.min.js';
       script.onload = () => resolve();
       script.onerror = () => reject(new Error('No se pudo cargar SignalR'));
       document.head.appendChild(script);
@@ -105,14 +113,17 @@ export class AnprService implements OnDestroy {
         vehicleBrand: data.vehicleBrand,
         vehicleColor: data.vehicleColor,
         vehicleType: data.vehicleType,
-        capturedAt: new Date(data.capturedAt)
+        capturedAt: new Date(data.capturedAt),
       };
 
       this.anprEventSubject.next(anprEvent);
 
       // Si hay una captura en proceso del tipo correcto, marcarla como completa
       const captureState = this.captureStateSubject.value;
-      if (captureState.isCapturing && captureState.cameraType === data.cameraType) {
+      if (
+        captureState.isCapturing &&
+        captureState.cameraType === data.cameraType
+      ) {
         this.captureStateSubject.next({ isCapturing: false });
       }
     });
@@ -150,10 +161,13 @@ export class AnprService implements OnDestroy {
     }
   }
 
-  private updateConnectionStatus(isConnected: boolean, lastError?: string): void {
+  private updateConnectionStatus(
+    isConnected: boolean,
+    lastError?: string,
+  ): void {
     this.connectionStatusSubject.next({
       isConnected,
-      lastError
+      lastError,
     });
   }
 
@@ -163,7 +177,7 @@ export class AnprService implements OnDestroy {
    */
   public async capturePlate(
     cameraType: 'trailer' | 'remolque' | 'cargo',
-    timeoutMs: number = 30000
+    timeoutMs: number = 30000,
   ): Promise<AnprEvent> {
     console.log(`🎯 Iniciando captura de placa para cameraType: ${cameraType}`);
 
@@ -174,11 +188,13 @@ export class AnprService implements OnDestroy {
     this.captureStateSubject.next({
       isCapturing: true,
       cameraType,
-      timeoutMs
+      timeoutMs,
     });
 
     try {
-      console.log(`⏳ Esperando evento ANPR de tipo: ${cameraType} (timeout: ${timeoutMs}ms)`);
+      console.log(
+        `⏳ Esperando evento ANPR de tipo: ${cameraType} (timeout: ${timeoutMs}ms)`,
+      );
 
       // Esperar el SIGUIENTE evento ANPR del tipo correcto que llegue DESPUÉS de iniciar la captura
       const anprEvent = await firstValueFrom(
@@ -192,16 +208,21 @@ export class AnprService implements OnDestroy {
             // Verificar que sea un evento nuevo (posterior a cuando iniciamos la captura)
             const isNewEvent = new Date(event.capturedAt) >= captureStartTime;
 
-            console.log(`📸 Evento recibido - Tipo: ${event.cameraType}, Placa: ${event.licensePlate}, Nuevo: ${isNewEvent}`);
+            console.log(
+              `📸 Evento recibido - Tipo: ${event.cameraType}, Placa: ${event.licensePlate}, Nuevo: ${isNewEvent}`,
+            );
 
             return isNewEvent;
           }),
           timeout(timeoutMs),
-          take(1)
-        )
+          take(1),
+        ),
       );
 
-      console.log(`✅ Evento ANPR recibido para ${cameraType}:`, anprEvent.licensePlate);
+      console.log(
+        `✅ Evento ANPR recibido para ${cameraType}:`,
+        anprEvent.licensePlate,
+      );
       return anprEvent;
     } catch (error) {
       // En caso de timeout u otro error
@@ -275,51 +296,68 @@ export class AnprService implements OnDestroy {
    * Obtiene la última foto huérfana disponible en BD por tipo de cámara
    * Retorna null si no hay fotos disponibles
    */
-  public getLatestOrphanPhoto(photoType: string, excludePhotoId?: string): Observable<{ photoUrl: string; photoId: string; createdAt: Date; licensePlate?: string } | null> {
+  public getLatestOrphanPhoto(
+    photoType: string,
+    excludePhotoId?: string,
+  ): Observable<{
+    photoUrl: string;
+    photoId: string;
+    createdAt: Date;
+    licensePlate?: string;
+  } | null> {
     if (excludePhotoId) {
-      console.log(`📦 Buscando última foto huérfana en BD para tipo: ${photoType}, excluyendo ID: ${excludePhotoId}`);
+      console.log(
+        `📦 Buscando última foto huérfana en BD para tipo: ${photoType}, excluyendo ID: ${excludePhotoId}`,
+      );
     } else {
-      console.log(`📦 Buscando última foto huérfana en BD para tipo: ${photoType}`);
+      console.log(
+        `📦 Buscando última foto huérfana en BD para tipo: ${photoType}`,
+      );
     }
 
     const url = excludePhotoId
       ? `${environment.apiUrl}/weighing/photos/orphan/latest/${photoType}?excludePhotoId=${excludePhotoId}`
       : `${environment.apiUrl}/weighing/photos/orphan/latest/${photoType}`;
 
-    return this.http.get<any>(url)
-      .pipe(
-        map(response => {
-          if (response.success && response.data) {
-            console.log(`✅ Foto huérfana encontrada en BD: ${response.data.photoUrl}`);
-
-            // Extraer placa del campo Description (formato: "Placa ANPR: YKD482KY - Cámara: trailer")
-            let licensePlate: string | undefined;
-            if (response.data.description) {
-              const plateMatch = response.data.description.match(/Placa ANPR:\s*([A-Z0-9]+)/i);
-              if (plateMatch && plateMatch[1]) {
-                licensePlate = plateMatch[1];
-                console.log(`🔍 Placa extraída del Description: ${licensePlate}`);
-              }
-            }
-
-            return {
-              photoUrl: response.data.photoUrl,
-              photoId: response.data.photoId,
-              createdAt: new Date(response.data.createdAt),
-              licensePlate
-            };
-          }
+    return this.http.get<any>(url).pipe(
+      map((response) => {
+        // El interceptor puede devolver body.data (objeto directo) o la respuesta completa; aceptar ambos
+        const data = response?.data != null ? response.data : response;
+        if (!data?.photoUrl) {
           return null;
-        }),
-        catchError(error => {
-          if (error.status === 404) {
-            console.log(`ℹ️ No hay fotos huérfanas disponibles para tipo: ${photoType}`);
-          } else {
-            console.error(`❌ Error al buscar foto huérfana:`, error);
+        }
+        console.log(`✅ Foto huérfana encontrada en BD: ${data.photoUrl}`);
+
+        // Extraer placa del campo Description (formato: "Placa ANPR: YKD482KY - Cámara: trailer")
+        let licensePlate: string | undefined;
+        if (data.description) {
+          const plateMatch = (data.description as string).match(
+            /Placa ANPR:\s*([A-Z0-9]+)/i,
+          );
+          if (plateMatch && plateMatch[1]) {
+            licensePlate = plateMatch[1];
+            console.log(`🔍 Placa extraída del Description: ${licensePlate}`);
           }
-          return of(null);
-        })
-      );
+        }
+
+        return {
+          photoUrl: data.photoUrl,
+          photoId: data.photoId != null ? String(data.photoId) : '',
+          createdAt: new Date(data.createdAt),
+          licensePlate,
+        };
+      }),
+      catchError((error) => {
+        if (error.status === 404) {
+          console.log(
+            `ℹ️ No hay fotos huérfanas disponibles para tipo: ${photoType}`,
+          );
+        } else {
+          console.error(`❌ Error al buscar foto huérfana:`, error);
+        }
+        return of(null);
+      }),
+    );
   }
 
   ngOnDestroy(): void {

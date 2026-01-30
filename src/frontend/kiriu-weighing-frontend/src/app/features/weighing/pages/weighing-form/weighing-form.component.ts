@@ -1279,6 +1279,23 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             }
           }
 
+          // Fallback para remolque2Plate: también buscar en remolque1Plate (igual que trailer 1 / trailerPlate2)
+          // Varios orígenes: remolque2Plate, remolque1Plate; en continue-double-trailer la de R1 suele estar vinculada
+          if (!orphanPhoto && photoType === 'remolque2Plate') {
+            console.log(
+              `🔄 [WEIGHING-FORM] No encontrado en remolque2Plate, buscando en remolque1Plate (fallback)...`,
+            );
+            orphanPhoto = await this.anprService
+              .getLatestOrphanPhoto('remolque1Plate')
+              .toPromise();
+
+            if (orphanPhoto) {
+              console.log(
+                `✅ [WEIGHING-FORM] Foto remolque 2 encontrada en remolque1Plate (fallback): ${orphanPhoto.photoUrl}`,
+              );
+            }
+          }
+
           if (orphanPhoto) {
             if (!orphanPhoto.photoUrl.includes('remolque1Plate')) {
               console.log(
