@@ -576,33 +576,14 @@
               </div>
             </div>
 
-            <!-- Botón para guardar parcialmente (solo mostrar cuando remolque 1 está completo) -->
+            <!-- Sección: Remolque 2 (oculta mientras se registra Remolque 1; visible al entrar a remolque 2 o en modo continue) -->
             <div
               *ngIf="
                 weighingForm.get('doubleTrailer')?.value &&
-                (doubleTrailerState.currentStep === 'remolque1' || doubleTrailerState.currentStep === 'remolque2') &&
-                canSavePartialRemolque1() &&
-                !currentOperationFolio
+                (canProceedToRemolque2() ||
+                  (currentOperationFolio &&
+                    doubleTrailerState.currentStep === 'remolque2'))
               "
-              class="partial-save-section"
-            >
-              <button
-                type="button"
-                class="btn btn-secondary btn-save-partial"
-                (click)="savePartialDoubleTrailerEntry()"
-                [disabled]="isLoading"
-              >
-                💾 Guardar Remolque 1 y Continuar Después
-              </button>
-              <p class="help-text">
-                Puede guardar el remolque 1 ahora y continuar con el remolque 2
-                posteriormente (sin límite de tiempo).
-              </p>
-            </div>
-
-            <!-- Sección: Remolque 2 (deshabilitada hasta completar Remolque 1) -->
-            <div
-              *ngIf="weighingForm.get('doubleTrailer')?.value"
               class="form-section remolque-section"
               [class.disabled]="!canProceedToRemolque2()"
             >
@@ -1331,6 +1312,19 @@
               </button>
               -->
               <div class="right-actions">
+                <button
+                  *ngIf="weighingForm.get('doubleTrailer')?.value"
+                  type="button"
+                  class="btn btn-secondary btn-save-partial-inline"
+                  [disabled]="
+                    !canSavePartialRemolque1() ||
+                    isLoading ||
+                    !!currentOperationFolio
+                  "
+                  (click)="savePartialDoubleTrailerEntry()"
+                >
+                  Guardar Remolque 1
+                </button>
                 <button
                   type="button"
                   class="btn btn-save"
