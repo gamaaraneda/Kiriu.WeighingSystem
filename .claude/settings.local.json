@@ -60,7 +60,8 @@
       "Bash(Select-String -Pattern \"error |warning \")",
       "Bash(Select-Object -First 20)",
       "Bash(Select-String -Pattern \"error \")",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(timeout 60 npx tsc --noEmit)"
     ],
     "deny": [],
     "ask": []

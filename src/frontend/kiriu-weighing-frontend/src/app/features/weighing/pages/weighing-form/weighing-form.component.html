@@ -63,6 +63,7 @@
             <div
               *ngIf="weighingForm.get('doubleTrailer')?.value"
               class="form-section"
+              [class.double-trailer-hidden-in-exit]="operationType === 'exit'"
             >
               <h2 class="section-title">Datos Generales del Viaje</h2>
 
@@ -196,6 +197,7 @@
             <div
               *ngIf="weighingForm.get('doubleTrailer')?.value"
               class="form-section"
+              [class.double-trailer-hidden-in-exit]="operationType === 'exit'"
             >
               <h2 class="section-title">Datos del Tráiler</h2>
 
@@ -377,6 +379,7 @@
                 !currentOperationFolio
               "
               class="form-section remolque-section"
+              [class.double-trailer-hidden-in-exit]="operationType === 'exit'"
             >
               <h2 class="section-title">
                 <span class="remolque-number">1</span>
@@ -584,6 +587,7 @@
               "
               class="form-section remolque-section"
               [class.disabled]="!canProceedToRemolque2()"
+              [class.double-trailer-hidden-in-exit]="operationType === 'exit'"
             >
               <h2 class="section-title">
                 <span class="remolque-number">2</span>
@@ -854,6 +858,7 @@
                 doubleTrailerState.isComplete
               "
               class="form-section summary-section"
+              [class.double-trailer-hidden-in-exit]="operationType === 'exit'"
             >
               <h2 class="section-title">Resumen del Pesaje</h2>
               <div class="summary-content">
@@ -1313,13 +1318,22 @@
                 <button
                   *ngIf="weighingForm.get('doubleTrailer')?.value"
                   type="button"
-                  class="btn btn-secondary btn-save-partial-inline"
+                  class="btn btn-save btn-save-partial-inline"
+                  [class.btn-save-disabled]="
+                    !canSavePartialRemolque1() ||
+                    isLoading ||
+                    !!currentOperationFolio
+                  "
                   [disabled]="
                     !canSavePartialRemolque1() ||
                     isLoading ||
                     !!currentOperationFolio
                   "
-                  (click)="savePartialDoubleTrailerEntry()"
+                  (click)="
+                    operationType === 'exit'
+                      ? savePartialDoubleTrailerExit()
+                      : savePartialDoubleTrailerEntry()
+                  "
                 >
                   Guardar Remolque 1
                 </button>

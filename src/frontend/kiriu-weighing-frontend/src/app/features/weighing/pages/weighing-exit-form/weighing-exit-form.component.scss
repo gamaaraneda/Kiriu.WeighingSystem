@@ -1045,6 +1045,17 @@ img.btn-icon-refresh {
   }
 }
 
+/* Ocultar visualmente la sección Remolque 2 mientras se pesa el remolque 1 (solo UI) */
+.remolque2-hidden-while-remolque1 {
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  min-height: 0 !important;
+}
+
 /* Estilos para secciones de remolque */
 .remolque-section {
   border: 2px solid #e0e0e0;
@@ -1770,6 +1781,40 @@ img.btn-icon-refresh {
 
   .right-actions {
     display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .btn-save,
+    .btn-save-partial-inline {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-save-partial-inline {
+      white-space: nowrap;
+      background: var(--brand-primary);
+      color: var(--brand-light);
+      border: none;
+      min-width: 140px;
+
+      &:hover:not(:disabled) {
+        background: var(--brand-secondary);
+      }
+
+      &.btn-save-partial-disabled,
+      &:disabled {
+        background: var(--brand-dark);
+        color: var(--brand-light);
+        opacity: 1;
+        cursor: not-allowed;
+
+        &:hover {
+          background: var(--brand-dark);
+        }
+      }
+    }
   }
 
   @media (max-width: 768px) {

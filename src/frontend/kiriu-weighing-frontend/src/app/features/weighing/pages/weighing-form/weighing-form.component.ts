@@ -26,6 +26,7 @@ import {
   ContinueDoubleTrailerEntryRequest,
   CreateExitRequest,
   CreateDoubleTrailerExitRequest,
+  CreatePartialDoubleTrailerExitRequest,
   ExitPhotoDataDto,
   WeightReading,
   UpdateWeighingOperationRequest,
@@ -2078,13 +2079,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.showToast(
           'success',
           'Remolque 1 guardado',
-          `Remolque 1 registrado exitosamente. Folio: ${response.data.folio}. Puede continuar con remolque 2 posteriormente.`,
+          `Remolque 1 registrado exitosamente. Folio: ${response?.folio ?? response?.data?.folio ?? 'N/A'}. Puede continuar con remolque 2 posteriormente.`,
         );
 
-        // Redirigir a selección de operación (igual que en el flujo normal)
+        // Redirigir igual que "Guardar entrada" (mismo flujo y destino)
         setTimeout(() => {
-          this.router.navigate(['/operation-selection', this.unitType]);
-        }, 1000);
+          this.onGoBack();
+        }, 1500);
       },
       error: (error) => {
         this.isLoading = false;
@@ -2098,6 +2099,79 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           errorMessage = error.error.message;
         }
 
+        this.showToast('error', 'Error al guardar', errorMessage);
+      },
+    });
+  }
+
+  /**
+   * Guardar salida parcial de doble remolque (solo remolque 1).
+   * Comportamiento equivalente al de entrada: validar, enviar y redirigir.
+   */
+  savePartialDoubleTrailerExit(): void {
+    if (!this.canSavePartialRemolque1()) {
+      this.showToast(
+        'error',
+        'Datos incompletos',
+        'Complete todos los campos obligatorios del remolque 1 antes de guardar',
+      );
+      return;
+    }
+
+    const entryFolio = this.weightData.entryFolio;
+    if (!entryFolio) {
+      this.showToast(
+        'error',
+        'Entrada no encontrada',
+        'No se encontró el folio de entrada. Capture la placa para cargar la operación previa.',
+      );
+      return;
+    }
+
+    this.isLoading = true;
+
+    const request: CreatePartialDoubleTrailerExitRequest = {
+      folio: entryFolio,
+      placaTrailer: this.doubleTrailerState.trailerPlaca,
+      remolque1: {
+        placa: this.doubleTrailerState.remolque1.placa || '',
+        pesoTara: this.doubleTrailerState.remolque1.pesoBruto || 0,
+        fotoCargaCapturada:
+          this.doubleTrailerState.remolque1.fotoCargaCapturada ?? false,
+      },
+      fechaSalida: new Date().toISOString(),
+      fotos: {
+        trailerPlate: this.photoData.trailerPlate || '',
+        remolque1Plate: this.photoData.remolque1Plate || '',
+        cargoRemolque1: this.photoData.cargoRemolque1 || '',
+      },
+    };
+
+    this.weighingService.createPartialDoubleTrailerExit(request).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        const folio =
+          (response as { folio?: string })?.folio ??
+          (response as { data?: { folio?: string } })?.data?.folio ??
+          'N/A';
+        this.showToast(
+          'success',
+          'Remolque 1 guardado',
+          `Salida parcial (remolque 1) registrada. Folio: ${folio}. Puede continuar con remolque 2 posteriormente.`,
+        );
+        setTimeout(() => {
+          this.onGoBack();
+        }, 1500);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        console.error('Error al guardar salida parcial:', error);
+        let errorMessage = 'No se pudo guardar la salida parcial.';
+        if (error.status === 409) {
+          errorMessage = 'La operación ya tiene salida registrada.';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
         this.showToast('error', 'Error al guardar', errorMessage);
       },
     });

@@ -2137,7 +2137,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           this.onClear();
           this.router.navigate(['/dashboard']);
-        }, 2000);
+        }, 3000);
       },
       error: (error) => {
         this.isLoading = false;

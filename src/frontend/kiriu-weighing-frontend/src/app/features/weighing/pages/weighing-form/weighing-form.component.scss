@@ -618,6 +618,17 @@
   }
 }
 
+// Ocultar visualmente la sección de doble remolque durante registro de SALIDA (solo UI)
+.double-trailer-hidden-in-exit {
+  visibility: hidden !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  min-height: 0 !important;
+}
+
 // Botones de acción
 .form-actions {
   display: flex;
@@ -639,6 +650,15 @@
 
     .btn-save-partial-inline {
       white-space: nowrap;
+    }
+
+    // Alineación y estilos consistentes entre "Guardar remolque 1" y "Registrar salida/entrada"
+    .btn-save,
+    .btn-save-partial-inline {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
   }
 
