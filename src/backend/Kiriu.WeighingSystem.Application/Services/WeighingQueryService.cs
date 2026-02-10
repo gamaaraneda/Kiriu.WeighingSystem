@@ -126,28 +126,54 @@ public class WeighingQueryService : IWeighingQueryService
                 int.MaxValue // Para exportar todos los resultados
             );
 
-            var exportData = operations.Select(op => new WeighingExportDto
+            var exportData = operations.Select(op =>
             {
-                Folio = op.Folio,
-                Fecha = op.CreatedAt,
-                Placas = BuildPlacasString(op),
-                PlacaT = GetPlacaTrailer(op),
-                PlacaR = GetPlacaRemolque(op),
-                PlacaR2 = GetPlacaRemolque2(op),
-                ClienteProveedor = op.ClientProviderName,
-                Producto = op.Product,
-                Tipo = op.UnitType,
-                TipoUnidad = op.TipoUnidad,
-                PesoBruto = op.EntryWeight,
-                PesoSalida = op.ExitWeight,
-                PesoNeto = op.NetWeight,
-                Estado = op.Status,
-                PesadoEntradaPor = FormatUsername(op.CreatedBy),
-                PesadoSalidaPor = FormatUsername(op.ExitRegisteredBy),
-                FechaEntrada = op.EntryDate,
-                FechaSalida = op.ExitDate,
-                EditadoPor = op.UsuarioEditor ?? "",
-                FechaEdicion = op.FechaUltimaEdicion
+                var dto = new WeighingExportDto
+                {
+                    Folio = op.Folio,
+                    Fecha = op.CreatedAt,
+                    Placas = BuildPlacasString(op),
+                    PlacaT = GetPlacaTrailer(op),
+                    PlacaR = GetPlacaRemolque(op),
+                    PlacaR2 = GetPlacaRemolque2(op),
+                    ClienteProveedor = op.ClientProviderName,
+                    Producto = op.Product,
+                    Tipo = op.UnitType,
+                    TipoUnidad = op.TipoUnidad,
+                    PesoBruto = op.EntryWeight,
+                    PesoSalida = op.ExitWeight,
+                    PesoNeto = op.NetWeight,
+                    Estado = op.Status,
+                    PesadoEntradaPor = GetPesadoEntradaPor(op),
+                    PesadoSalidaPor = GetPesadoSalidaPor(op),
+                    FechaEntrada = op.EntryDate,
+                    FechaSalida = op.ExitDate,
+                    EditadoPor = op.UsuarioEditor ?? "",
+                    FechaEdicion = op.FechaUltimaEdicion
+                };
+
+                // Para doble remolque, agregar fechas y pesos individuales de cada remolque
+                if (op.TipoUnidad == "doble-remolque" && op.Remolques?.Count == 2)
+                {
+                    var remolque1 = op.Remolques.FirstOrDefault(r => r.Numero == 1);
+                    var remolque2 = op.Remolques.FirstOrDefault(r => r.Numero == 2);
+
+                    if (remolque1 != null && remolque2 != null)
+                    {
+                        dto.FechaEntradaRemolque1 = remolque1.FechaRegistro;
+                        dto.FechaEntradaRemolque2 = remolque2.FechaRegistro;
+                        dto.FechaSalidaRemolque1 = remolque1.FechaSalida;
+                        dto.FechaSalidaRemolque2 = remolque2.FechaSalida;
+
+                        // Pesos individuales de cada remolque
+                        dto.PesoBrutoRemolque1 = remolque1.PesoBruto;
+                        dto.PesoBrutoRemolque2 = remolque2.PesoBruto;
+                        dto.PesoTaraRemolque1 = remolque1.PesoTara;
+                        dto.PesoTaraRemolque2 = remolque2.PesoTara;
+                    }
+                }
+
+                return dto;
             }).ToList();
 
             return ApiResponse<List<WeighingExportDto>>.CreateSuccess(exportData, "Datos de exportación obtenidos exitosamente");
@@ -222,4 +248,45 @@ public class WeighingQueryService : IWeighingQueryService
         var atIndex = email.IndexOf('@');
         return atIndex > 0 ? email.Substring(0, atIndex) : email;
     }
+
+    private static string GetPesadoEntradaPor(Domain.Entities.WeighingOperation operation)
+    {
+        // Para doble remolque, concatenar usuarios de ambos remolques
+        if (operation.TipoUnidad == "doble-remolque" && operation.Remolques?.Count == 2)
+        {
+            var remolque1 = operation.Remolques.FirstOrDefault(r => r.Numero == 1);
+            var remolque2 = operation.Remolques.FirstOrDefault(r => r.Numero == 2);
+
+            if (remolque1 != null && remolque2 != null)
+            {
+                var user1 = FormatUsername(remolque1.RegistradoPor);
+                var user2 = FormatUsername(remolque2.RegistradoPor);
+                return $"{user1} - {user2}";
+            }
+        }
+
+        // Para otros flujos, usar CreatedBy
+        return FormatUsername(operation.CreatedBy);
+    }
+
+    private static string GetPesadoSalidaPor(Domain.Entities.WeighingOperation operation)
+    {
+        // Para doble remolque, concatenar usuarios de salida de ambos remolques
+        if (operation.TipoUnidad == "doble-remolque" && operation.Remolques?.Count == 2)
+        {
+            var remolque1 = operation.Remolques.FirstOrDefault(r => r.Numero == 1);
+            var remolque2 = operation.Remolques.FirstOrDefault(r => r.Numero == 2);
+
+            if (remolque1 != null && remolque2 != null)
+            {
+                var user1 = FormatUsername(remolque1.RegistradoPorSalida);
+                var user2 = FormatUsername(remolque2.RegistradoPorSalida);
+                return $"{user1} - {user2}";
+            }
+        }
+
+        // Para otros flujos, usar ExitRegisteredBy
+        return FormatUsername(operation.ExitRegisteredBy);
+    }
+
 }

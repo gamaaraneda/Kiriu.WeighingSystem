@@ -62,14 +62,60 @@ public class ExcelExportService : IExcelExportService
             worksheet.Cells[excelRow, 6].Value = item.Producto;
             worksheet.Cells[excelRow, 7].Value = item.Tipo == "client" ? "Cliente" : item.Tipo == "provider" ? "Proveedor" : item.Tipo;
             worksheet.Cells[excelRow, 8].Value = item.TipoUnidad;
-            worksheet.Cells[excelRow, 9].Value = item.PesoBruto;
-            worksheet.Cells[excelRow, 10].Value = item.PesoSalida;
+
+            // Para doble remolque, mostrar pesos concatenados con formato: peso1 + peso2 = total
+            if (item.TipoUnidad == "doble-remolque" && item.PesoBrutoRemolque1.HasValue && item.PesoBrutoRemolque2.HasValue)
+            {
+                var pesoR1 = item.PesoBrutoRemolque1.Value;
+                var pesoR2 = item.PesoBrutoRemolque2.Value;
+                var totalEntrada = pesoR1 + pesoR2;
+                worksheet.Cells[excelRow, 9].Value = $"{pesoR1:N2} + {pesoR2:N2} = {totalEntrada:N2}";
+            }
+            else
+            {
+                worksheet.Cells[excelRow, 9].Value = item.PesoBruto;
+            }
+
+            if (item.TipoUnidad == "doble-remolque" && item.PesoTaraRemolque1.HasValue && item.PesoTaraRemolque2.HasValue)
+            {
+                var taraR1 = item.PesoTaraRemolque1.Value;
+                var taraR2 = item.PesoTaraRemolque2.Value;
+                var totalSalida = taraR1 + taraR2;
+                worksheet.Cells[excelRow, 10].Value = $"{taraR1:N2} + {taraR2:N2} = {totalSalida:N2}";
+            }
+            else
+            {
+                worksheet.Cells[excelRow, 10].Value = item.PesoSalida;
+            }
+
             worksheet.Cells[excelRow, 11].Value = item.PesoNeto;
             worksheet.Cells[excelRow, 12].Value = item.Estado;
             worksheet.Cells[excelRow, 13].Value = item.PesadoEntradaPor;
             worksheet.Cells[excelRow, 14].Value = item.PesadoSalidaPor;
-            worksheet.Cells[excelRow, 15].Value = item.FechaEntrada?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
-            worksheet.Cells[excelRow, 16].Value = item.FechaSalida?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
+
+            // Para doble remolque, concatenar fechas de ambos remolques
+            if (item.TipoUnidad == "doble-remolque" && item.FechaEntradaRemolque1.HasValue && item.FechaEntradaRemolque2.HasValue)
+            {
+                var fechaEntrada1 = item.FechaEntradaRemolque1.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+                var fechaEntrada2 = item.FechaEntradaRemolque2.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+                worksheet.Cells[excelRow, 15].Value = $"{fechaEntrada1} - {fechaEntrada2}";
+            }
+            else
+            {
+                worksheet.Cells[excelRow, 15].Value = item.FechaEntrada?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
+            }
+
+            if (item.TipoUnidad == "doble-remolque" && item.FechaSalidaRemolque1.HasValue && item.FechaSalidaRemolque2.HasValue)
+            {
+                var fechaSalida1 = item.FechaSalidaRemolque1.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+                var fechaSalida2 = item.FechaSalidaRemolque2.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+                worksheet.Cells[excelRow, 16].Value = $"{fechaSalida1} - {fechaSalida2}";
+            }
+            else
+            {
+                worksheet.Cells[excelRow, 16].Value = item.FechaSalida?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
+            }
+
             worksheet.Cells[excelRow, 17].Value = item.EditadoPor;
             worksheet.Cells[excelRow, 18].Value = item.FechaEdicion?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
 
