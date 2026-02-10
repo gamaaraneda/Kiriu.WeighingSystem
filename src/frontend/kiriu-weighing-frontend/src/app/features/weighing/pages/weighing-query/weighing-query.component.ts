@@ -794,6 +794,40 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     return labels[estado] || estado;
   }
 
+  getEntryUserLabel(operation: WeighingQueryResult | null): string {
+    if (!operation) return '--';
+
+    // Para doble remolque, concatenar usuarios de los dos remolques
+    if (operation.tipoUnidad === 'doble-remolque' && operation.remolques && operation.remolques.length === 2) {
+      const user1 = this.extractUsername(operation.remolques[0].registradoPor);
+      const user2 = this.extractUsername(operation.remolques[1].registradoPor);
+      return `${user1} - ${user2}`;
+    }
+
+    // Para otros flujos, usar createdBy
+    return this.extractUsername(operation.createdBy);
+  }
+
+  getExitUserLabel(operation: WeighingQueryResult | null): string {
+    if (!operation) return '--';
+
+    // Para doble remolque, concatenar usuarios de salida de los dos remolques
+    if (operation.tipoUnidad === 'doble-remolque' && operation.remolques && operation.remolques.length === 2) {
+      const user1 = this.extractUsername(operation.remolques[0].registradoPorSalida);
+      const user2 = this.extractUsername(operation.remolques[1].registradoPorSalida);
+      return `${user1} - ${user2}`;
+    }
+
+    // Para otros flujos, usar exitRegisteredBy
+    return this.extractUsername(operation.exitRegisteredBy);
+  }
+
+  private extractUsername(email: string | null | undefined): string {
+    if (!email) return '--';
+    const atIndex = email.indexOf('@');
+    return atIndex > 0 ? email.substring(0, atIndex) : email;
+  }
+
   onPlacasInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const value = input.value;

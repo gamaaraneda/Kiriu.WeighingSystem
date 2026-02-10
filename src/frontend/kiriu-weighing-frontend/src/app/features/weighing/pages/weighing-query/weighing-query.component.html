@@ -675,13 +675,13 @@
           <div class="edit-info-row">
             <span class="edit-info-label">Pesado a la entrada por:</span>
             <span class="edit-info-value">{{
-              selectedOperation.createdBy | username
+              getEntryUserLabel(selectedOperation)
             }}</span>
           </div>
           <div class="edit-info-row">
             <span class="edit-info-label">Pesado a la salida por:</span>
             <span class="edit-info-value">{{
-              selectedOperation.exitRegisteredBy | username
+              getExitUserLabel(selectedOperation)
             }}</span>
           </div>
           <div class="edit-info-row">
