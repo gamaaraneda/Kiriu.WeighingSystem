@@ -22,6 +22,17 @@ export interface WeighingPhotoDto {
   createdAt: Date;
 }
 
+export interface RemolqueInfo {
+  numero: number;
+  placa: string;
+  pesoBruto: number;
+  pesoTara?: number;
+  fechaRegistro?: Date;
+  registradoPor?: string;
+  fechaSalida?: Date;
+  registradoPorSalida?: string;
+}
+
 export interface WeighingQueryResult {
   id: string;
   folio: string;
@@ -39,6 +50,7 @@ export interface WeighingQueryResult {
   fechaEdicion?: Date;
   puedeReimprimir: boolean;
   photos: WeighingPhotoDto[];
+  remolques?: RemolqueInfo[];
   createdBy?: string | null; // Email del usuario que creó el pesaje (entrada)
   exitRegisteredBy?: string | null; // Email del usuario que registró la salida
   updatedAt?: Date | null; // Fecha de última actualización

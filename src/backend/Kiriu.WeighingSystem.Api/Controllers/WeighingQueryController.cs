@@ -194,13 +194,13 @@ public class WeighingQueryController : ControllerBase
         var ticket = new System.Text.StringBuilder();
         var separator = new string('=', 45);
         var lineSeparator = new string('-', 45);
-        
+
         ticket.AppendLine(separator);
         ticket.AppendLine("        SISTEMA DE PESAJE KIRIU");
         ticket.AppendLine("          TICKET DE PESAJE");
         ticket.AppendLine(separator);
         ticket.AppendLine();
-        
+
         // Información básica
         ticket.AppendLine("INFORMACIÓN GENERAL:");
         ticket.AppendLine(lineSeparator);
@@ -208,14 +208,14 @@ public class WeighingQueryController : ControllerBase
         ticket.AppendLine($"Fecha:        {operation.Fecha:dd/MM/yyyy HH:mm}");
         ticket.AppendLine($"Estado:       {GetEstadoDisplayName(operation.Estado)}");
         ticket.AppendLine();
-        
+
         // Cliente/Proveedor
         ticket.AppendLine("CLIENTE/PROVEEDOR:");
         ticket.AppendLine(lineSeparator);
         ticket.AppendLine($"Nombre:       {operation.ClienteProveedor}");
         ticket.AppendLine($"Tipo:         {(operation.Tipo == "client" ? "Cliente" : "Proveedor")}");
         ticket.AppendLine();
-        
+
         // Producto y unidad
         ticket.AppendLine("PRODUCTO Y UNIDAD:");
         ticket.AppendLine(lineSeparator);
@@ -223,19 +223,74 @@ public class WeighingQueryController : ControllerBase
         ticket.AppendLine($"Tipo Unidad:  {GetTipoUnidadDisplayName(operation.TipoUnidad)}");
         ticket.AppendLine($"Placas:       {operation.Placas}");
         ticket.AppendLine();
-        
-        // Información de pesaje
-        ticket.AppendLine("PESAJE:");
-        ticket.AppendLine(lineSeparator);
-        ticket.AppendLine($"Peso Bruto:   {operation.PesoBruto:N2} kg");
-        ticket.AppendLine($"Peso Neto:    {operation.PesoNeto:N2} kg");
-        
-        var diferencia = (operation.PesoBruto ?? 0) - (operation.PesoNeto ?? 0);
-        if (diferencia > 0)
+
+        // Información de pesaje - Para doble remolque, concatenar datos de ambos remolques
+        if (operation.TipoUnidad == "doble-remolque" && operation.Remolques != null && operation.Remolques.Count == 2)
         {
-            ticket.AppendLine($"Tara:         {diferencia:N2} kg");
+            var remolque1 = operation.Remolques.FirstOrDefault(r => r.Numero == 1);
+            var remolque2 = operation.Remolques.FirstOrDefault(r => r.Numero == 2);
+
+            if (remolque1 != null && remolque2 != null)
+            {
+                ticket.AppendLine("PESAJE (DOBLE REMOLQUE):");
+                ticket.AppendLine(lineSeparator);
+
+                // Hora de entrada
+                var horaEntrada = remolque1.FechaRegistro.HasValue && remolque2.FechaRegistro.HasValue
+                    ? $"{remolque1.FechaRegistro:dd/MM/yyyy HH:mm} - {remolque2.FechaRegistro:dd/MM/yyyy HH:mm}"
+                    : "N/A";
+                ticket.AppendLine($"Hora Entrada: {horaEntrada}");
+
+                // Peso de entrada
+                var pesoEntrada = $"{remolque1.PesoBruto:N2} kg - {remolque2.PesoBruto:N2} kg";
+                ticket.AppendLine($"Peso Entrada: {pesoEntrada}");
+
+                // Usuario entrada
+                var usuarioEntrada = !string.IsNullOrEmpty(remolque1.RegistradoPor) && !string.IsNullOrEmpty(remolque2.RegistradoPor)
+                    ? $"{remolque1.RegistradoPor} - {remolque2.RegistradoPor}"
+                    : "N/A";
+                ticket.AppendLine($"Usuario Entrada: {usuarioEntrada}");
+
+                // Hora de salida
+                if (remolque1.FechaSalida.HasValue && remolque2.FechaSalida.HasValue)
+                {
+                    var horaSalida = $"{remolque1.FechaSalida:dd/MM/yyyy HH:mm} - {remolque2.FechaSalida:dd/MM/yyyy HH:mm}";
+                    ticket.AppendLine($"Hora Salida:  {horaSalida}");
+                }
+
+                // Peso de salida
+                if (remolque1.PesoTara.HasValue && remolque2.PesoTara.HasValue)
+                {
+                    var pesoSalida = $"{remolque1.PesoTara:N2} kg - {remolque2.PesoTara:N2} kg";
+                    ticket.AppendLine($"Peso Salida:  {pesoSalida}");
+                }
+
+                // Usuario salida
+                if (!string.IsNullOrEmpty(remolque1.RegistradoPorSalida) && !string.IsNullOrEmpty(remolque2.RegistradoPorSalida))
+                {
+                    var usuarioSalida = $"{remolque1.RegistradoPorSalida} - {remolque2.RegistradoPorSalida}";
+                    ticket.AppendLine($"Usuario Salida: {usuarioSalida}");
+                }
+
+                // Peso neto total
+                ticket.AppendLine($"Peso Neto Total: {operation.PesoNeto:N2} kg");
+            }
         }
-        
+        else
+        {
+            // Información de pesaje normal (otros flujos)
+            ticket.AppendLine("PESAJE:");
+            ticket.AppendLine(lineSeparator);
+            ticket.AppendLine($"Peso Bruto:   {operation.PesoBruto:N2} kg");
+            ticket.AppendLine($"Peso Neto:    {operation.PesoNeto:N2} kg");
+
+            var diferencia = (operation.PesoBruto ?? 0) - (operation.PesoNeto ?? 0);
+            if (diferencia > 0)
+            {
+                ticket.AppendLine($"Tara:         {diferencia:N2} kg");
+            }
+        }
+
         // Información de edición si aplica
         if (operation.FueEditado && operation.FechaEdicion.HasValue)
         {
@@ -245,7 +300,7 @@ public class WeighingQueryController : ControllerBase
             ticket.AppendLine($"Registro editado");
             ticket.AppendLine($"Fecha Edición: {operation.FechaEdicion:dd/MM/yyyy HH:mm}");
         }
-        
+
         // Footer
         ticket.AppendLine();
         ticket.AppendLine(separator);
@@ -254,7 +309,7 @@ public class WeighingQueryController : ControllerBase
         ticket.AppendLine("       Gracias por usar nuestro servicio");
         ticket.AppendLine("         Sistema Kiriu - Versión 1.0");
         ticket.AppendLine(separator);
-        
+
         return ticket.ToString();
     }
 

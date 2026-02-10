@@ -2202,23 +2202,28 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
 
       // Si es doble remolque, agregar datos de los remolques
       if (this.entryData.tipoUnidad === 'doble-remolque') {
-        // En modo continue usamos partialExitData para remolque 1 (ya registrado)
-        const pesoBrutoR1 =
-          this.partialExitData?.remolque1?.pesoBrutoEntrada ??
-          this.entryData.entryWeight ??
-          0;
-        const pesoTaraR1 =
-          this.exitForm.get('pesoTaraRemolque1')?.value ??
-          this.partialExitData?.remolque1?.pesoTaraSalida ??
-          0;
-        const pesoBrutoR2 = this.entryData.entryWeight || 0; // Peso bruto entrada (compartido)
-        const pesoTaraR2 = this.exitForm.get('pesoTaraRemolque2')?.value || 0;
+        // Obtener datos de los remolques desde response.remolques
+        const remolque1Data = response.remolques?.find((r: any) => r.numero === 1);
+        const remolque2Data = response.remolques?.find((r: any) => r.numero === 2);
+
+        // Usar los pesos reales de cada remolque desde el backend
+        const pesoBrutoR1 = remolque1Data?.pesoBruto ?? 0;
+        const pesoTaraR1 = remolque1Data?.pesoTara ?? 0;
+        const pesoBrutoR2 = remolque2Data?.pesoBruto ?? 0;
+        const pesoTaraR2 = remolque2Data?.pesoTara ?? 0;
+
+        // Actualizar el peso bruto de entrada total con la suma de ambos remolques
+        receiptData.pesoBrutoEntrada = pesoBrutoR1 + pesoBrutoR2;
 
         receiptData.remolque1 = {
           placa: this.entryData.placaRemolque1 || '',
           pesoBruto: pesoBrutoR1,
           pesoTara: pesoTaraR1,
           pesoNeto: Math.abs(Number(pesoBrutoR1) - Number(pesoTaraR1)),
+          fechaEntrada: remolque1Data?.fechaRegistro || this.entryData.createdAt,
+          usuarioEntrada: remolque1Data?.registradoPor || this.entryData.createdBy,
+          fechaSalida: remolque1Data?.fechaSalida || response.fechaSalida,
+          usuarioSalida: remolque1Data?.registradoPorSalida || response.exitRegisteredBy,
         };
 
         receiptData.remolque2 = {
@@ -2226,6 +2231,10 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           pesoBruto: pesoBrutoR2,
           pesoTara: pesoTaraR2,
           pesoNeto: Math.abs(Number(pesoBrutoR2) - Number(pesoTaraR2)),
+          fechaEntrada: remolque2Data?.fechaRegistro || this.entryData.createdAt,
+          usuarioEntrada: remolque2Data?.registradoPor || this.entryData.createdBy,
+          fechaSalida: remolque2Data?.fechaSalida || response.fechaSalida,
+          usuarioSalida: remolque2Data?.registradoPorSalida || response.exitRegisteredBy,
         };
       }
 

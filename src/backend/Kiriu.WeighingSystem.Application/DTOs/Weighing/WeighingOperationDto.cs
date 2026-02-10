@@ -82,6 +82,7 @@ public class ExitResponseDto
     public decimal PesoNeto { get; set; }
     public string Mensaje { get; set; } = string.Empty;
     public string? ExitRegisteredBy { get; set; }
+    public List<RemolqueResponseDto>? Remolques { get; set; }
 }
 
 public class DoubleTrailerEntryResponseDto
@@ -102,6 +103,11 @@ public class RemolqueResponseDto
     public int Numero { get; set; }
     public string Placa { get; set; } = string.Empty;
     public decimal PesoBruto { get; set; }
+    public decimal? PesoTara { get; set; }
+    public DateTime? FechaRegistro { get; set; }
+    public string? RegistradoPor { get; set; }
+    public DateTime? FechaSalida { get; set; }
+    public string? RegistradoPorSalida { get; set; }
     public List<string> Fotos { get; set; } = new();
 }
 

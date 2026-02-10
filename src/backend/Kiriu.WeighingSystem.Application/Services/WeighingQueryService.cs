@@ -74,7 +74,18 @@ public class WeighingQueryService : IWeighingQueryService
                     PhotoType = p.PhotoType,
                     Description = p.Description,
                     CreatedAt = p.CreatedAt
-                }).ToList() ?? new List<WeighingPhotoDto>()
+                }).ToList() ?? new List<WeighingPhotoDto>(),
+                Remolques = op.Remolques?.Select(r => new RemolqueInfoDto
+                {
+                    Numero = r.Numero,
+                    Placa = r.Placa,
+                    PesoBruto = r.PesoBruto,
+                    PesoTara = r.PesoTara,
+                    FechaRegistro = r.FechaRegistro,
+                    RegistradoPor = r.RegistradoPor,
+                    FechaSalida = r.FechaSalida,
+                    RegistradoPorSalida = r.RegistradoPorSalida
+                }).ToList() ?? new List<RemolqueInfoDto>()
             }).ToList();
 
             var response = new WeighingQueryResponseDto

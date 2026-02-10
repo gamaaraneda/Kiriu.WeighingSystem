@@ -30,12 +30,20 @@ export interface WeighingReceiptData {
     pesoBruto: number;
     pesoTara: number;
     pesoNeto: number;
+    fechaEntrada?: Date | string;
+    usuarioEntrada?: string;
+    fechaSalida?: Date | string;
+    usuarioSalida?: string;
   };
   remolque2?: {
     placa: string;
     pesoBruto: number;
     pesoTara: number;
     pesoNeto: number;
+    fechaEntrada?: Date | string;
+    usuarioEntrada?: string;
+    fechaSalida?: Date | string;
+    usuarioSalida?: string;
   };
 }
 
@@ -60,7 +68,7 @@ export class PdfGeneratorService {
 
     // Guardar el PDF
     const fileName = `Ticket_${data.folio}_${this.formatDateForFilename(
-      new Date()
+      new Date(),
     )}.pdf`;
     doc.save(fileName);
   }
@@ -71,7 +79,7 @@ export class PdfGeneratorService {
   private async generateHalfPageTicket(
     doc: jsPDF,
     data: WeighingReceiptData,
-    startY: number
+    startY: number,
   ): Promise<void> {
     const pageWidth = doc.internal.pageSize.getWidth();
     const halfPageHeight = doc.internal.pageSize.getHeight() / 2;
@@ -89,7 +97,7 @@ export class PdfGeneratorService {
       y: number,
       width: number,
       height: number,
-      fillColor?: number[]
+      fillColor?: number[],
     ) => {
       if (fillColor) {
         doc.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
@@ -106,7 +114,7 @@ export class PdfGeneratorService {
       x: number,
       y: number,
       width: number,
-      height: number
+      height: number,
     ) => {
       doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
       doc.roundedRect(x, y, width, height, 2, 2, 'F');
@@ -173,7 +181,7 @@ export class PdfGeneratorService {
     doc.text(
       data.tipo === 'client' ? 'Cliente' : 'Proveedor',
       margin + 15,
-      leftColumnY
+      leftColumnY,
     );
     leftColumnY += 8;
 
@@ -217,9 +225,10 @@ export class PdfGeneratorService {
     doc.text(data.producto, margin + 37, leftColumnY);
     leftColumnY += 8;
 
-    const createdByText = (data.createdBy && data.createdBy.trim() !== '')
-      ? this.extractUsername(data.createdBy)
-      : '--';
+    const createdByText =
+      data.createdBy && data.createdBy.trim() !== ''
+        ? this.extractUsername(data.createdBy)
+        : '--';
 
     // SEGUNDA COLUMNA (DERECHA)
 
@@ -230,7 +239,7 @@ export class PdfGeneratorService {
     doc.text(
       this.getTipoUnidadDisplayName(data.tipoUnidad),
       midPoint + 35,
-      rightColumnY
+      rightColumnY,
     );
     rightColumnY += 8;
 
@@ -244,69 +253,225 @@ export class PdfGeneratorService {
     const tableWidth = pageWidth - margin * 2;
     const rowHeight = 5;
 
+    // Determinar si es doble remolque con datos concatenados
+    const isDoubleTrailerWithData =
+      data.tipoUnidad === 'doble-remolque' &&
+      data.remolque1 &&
+      data.remolque2 &&
+      data.remolque1.fechaEntrada &&
+      data.remolque2.fechaEntrada;
+
     // TABLA COMPACTA DE PESAJE - Nueva estructura con 3 columnas y 3 filas
-    const colWidths = [
-      tableWidth / 3,
-      tableWidth / 4,
-      tableWidth / 2.5,
-    ];
+    // Ajustar anchos de columnas según el tipo de unidad
+    const colWidths = isDoubleTrailerWithData
+      ? [
+          tableWidth * 0.29, // 42% para hora (más ancho para fechas concatenadas)
+          tableWidth * 0.35, // 28% para peso
+          tableWidth * 0.36, // 30% para usuario
+        ]
+      : [tableWidth / 3, tableWidth / 4, tableWidth / 2.5];
+
     const pesoBrutoSalida =
       data.tipoUnidad === 'doble-remolque'
         ? this.getDoubleTrailerExitWeight(data)
         : data.pesoBrutoSalida;
-        
-        yPosition-=5;
+
+    yPosition -= 5;
     // Encabezado de la tabla
     drawBox(tableX, yPosition, colWidths[0], rowHeight, lightGray);
-    drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight, lightGray);
-    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, lightGray);
+    drawBox(
+      tableX + colWidths[0],
+      yPosition,
+      colWidths[1],
+      rowHeight,
+      lightGray,
+    );
+    drawBox(
+      tableX + colWidths[0] + colWidths[1],
+      yPosition,
+      colWidths[2],
+      rowHeight,
+      lightGray,
+    );
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
     doc.text('Hora de entrada', tableX + 1, yPosition + 3.5);
     doc.text('Peso a la entrada', tableX + colWidths[0] + 1, yPosition + 3.5);
-    doc.text('Almacenista que realiza el pesaje', tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
+    doc.text(
+      'Almacenista que realiza el pesaje',
+      tableX + colWidths[0] + colWidths[1] + 1,
+      yPosition + 3.5,
+    );
     yPosition += rowHeight;
 
     // Fila 1: Datos de entrada
     drawBox(tableX, yPosition, colWidths[0], rowHeight);
     drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight);
-    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
+    drawBox(
+      tableX + colWidths[0] + colWidths[1],
+      yPosition,
+      colWidths[2],
+      rowHeight,
+    );
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    doc.text(this.formatDate(data.fechaEntrada), tableX + 1, yPosition + 3.5);
-    doc.text(`${this.formatWeight(data.pesoBrutoEntrada)} kg`, tableX + colWidths[0] + 1, yPosition + 3.5);
-    const entryUserText = (data.createdBy && data.createdBy.trim() !== '')
-      ? this.extractUsername(data.createdBy)
-      : '--';
-    doc.text(entryUserText, tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
+
+    // Para doble remolque, concatenar datos de entrada de ambos remolques
+    if (
+      data.tipoUnidad === 'doble-remolque' &&
+      data.remolque1 &&
+      data.remolque2 &&
+      data.remolque1.fechaEntrada &&
+      data.remolque2.fechaEntrada
+    ) {
+      // Reducir tamaño de fuente para doble remolque
+      doc.setFontSize(9);
+
+      // Hora de entrada concatenada
+      const horaEntrada = `${this.formatDate(data.remolque1.fechaEntrada)} - ${this.formatDate(data.remolque2.fechaEntrada)}`;
+      doc.text(horaEntrada, tableX + 0.5, yPosition + 3.5, {
+        maxWidth: colWidths[0] - 1,
+      });
+
+      // Peso de entrada concatenado
+      const pesoEntrada = `${this.formatWeight(data.remolque1.pesoBruto)} + ${this.formatWeight(data.remolque2.pesoBruto)} =${this.formatWeight(data.pesoBrutoEntrada)} kg`;
+      doc.text(pesoEntrada, tableX + colWidths[0] + 0.5, yPosition + 3.5, {
+        maxWidth: colWidths[1] - 1,
+      });
+
+      // Usuario entrada concatenado
+      const usuario1 = data.remolque1.usuarioEntrada
+        ? this.extractUsername(data.remolque1.usuarioEntrada)
+        : '--';
+      const usuario2 = data.remolque2.usuarioEntrada
+        ? this.extractUsername(data.remolque2.usuarioEntrada)
+        : '--';
+      const usuarioEntrada = `${usuario1} - ${usuario2}`;
+      doc.text(
+        usuarioEntrada,
+        tableX + colWidths[0] + colWidths[1] + 0.5,
+        yPosition + 3.5,
+        { maxWidth: colWidths[2] - 1 },
+      );
+    } else {
+      // Flujo normal para otros tipos de unidad
+      doc.setFontSize(12);
+      doc.text(this.formatDate(data.fechaEntrada), tableX + 1, yPosition + 3.5);
+      doc.text(
+        `${this.formatWeight(data.pesoBrutoEntrada)} kg`,
+        tableX + colWidths[0] + 1,
+        yPosition + 3.5,
+      );
+      const entryUserText =
+        data.createdBy && data.createdBy.trim() !== ''
+          ? this.extractUsername(data.createdBy)
+          : '--';
+      doc.text(
+        entryUserText,
+        tableX + colWidths[0] + colWidths[1] + 1,
+        yPosition + 3.5,
+      );
+    }
     yPosition += rowHeight;
 
     // Encabezado fila 2 (salida)
     drawBox(tableX, yPosition, colWidths[0], rowHeight, lightGray);
-    drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight, lightGray);
-    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight, lightGray);
+    drawBox(
+      tableX + colWidths[0],
+      yPosition,
+      colWidths[1],
+      rowHeight,
+      lightGray,
+    );
+    drawBox(
+      tableX + colWidths[0] + colWidths[1],
+      yPosition,
+      colWidths[2],
+      rowHeight,
+      lightGray,
+    );
 
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
     doc.text('Hora de salida', tableX + 1, yPosition + 3.5);
     doc.text('Peso a la salida', tableX + colWidths[0] + 1, yPosition + 3.5);
-    doc.text('Almacenista que realiza el pesaje', tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
+    doc.text(
+      'Almacenista que realiza el pesaje',
+      tableX + colWidths[0] + colWidths[1] + 1,
+      yPosition + 3.5,
+    );
     yPosition += rowHeight;
 
     // Fila 2: Datos de salida
     drawBox(tableX, yPosition, colWidths[0], rowHeight);
     drawBox(tableX + colWidths[0], yPosition, colWidths[1], rowHeight);
-    drawBox(tableX + colWidths[0] + colWidths[1], yPosition, colWidths[2], rowHeight);
+    drawBox(
+      tableX + colWidths[0] + colWidths[1],
+      yPosition,
+      colWidths[2],
+      rowHeight,
+    );
 
     doc.setFont('helvetica', 'normal');
-    doc.text(this.formatDate(data.fechaSalida), tableX + 1, yPosition + 3.5);
-    doc.text(`${this.formatWeight(pesoBrutoSalida)} kg`, tableX + colWidths[0] + 1, yPosition + 3.5);
-    const exitUserText = (data.exitRegisteredBy && data.exitRegisteredBy.trim() !== '')
-      ? this.extractUsername(data.exitRegisteredBy)
-      : '--';
-    doc.text(exitUserText, tableX + colWidths[0] + colWidths[1] + 1, yPosition + 3.5);
+
+    // Para doble remolque, concatenar datos de salida de ambos remolques
+    if (
+      data.tipoUnidad === 'doble-remolque' &&
+      data.remolque1 &&
+      data.remolque2 &&
+      data.remolque1.fechaSalida &&
+      data.remolque2.fechaSalida
+    ) {
+      // Reducir tamaño de fuente para doble remolque
+      doc.setFontSize(9);
+
+      // Hora de salida concatenada
+      const horaSalida = `${this.formatDate(data.remolque1.fechaSalida)} - ${this.formatDate(data.remolque2.fechaSalida)}`;
+      doc.text(horaSalida, tableX + 0.5, yPosition + 3.5, {
+        maxWidth: colWidths[0] - 1,
+      });
+
+      // Peso de salida concatenado
+      const pesoSalida = `${this.formatWeight(data.remolque1.pesoTara)} + ${this.formatWeight(data.remolque2.pesoTara)} = ${this.formatWeight(data.pesoBrutoSalida)} kg`;
+      doc.text(pesoSalida, tableX + colWidths[0] + 0.5, yPosition + 3.5, {
+        maxWidth: colWidths[1] - 1,
+      });
+
+      // Usuario salida concatenado
+      const usuarioSalida1 = data.remolque1.usuarioSalida
+        ? this.extractUsername(data.remolque1.usuarioSalida)
+        : '--';
+      const usuarioSalida2 = data.remolque2.usuarioSalida
+        ? this.extractUsername(data.remolque2.usuarioSalida)
+        : '--';
+      const usuarioSalida = `${usuarioSalida1} - ${usuarioSalida2}`;
+      doc.text(
+        usuarioSalida,
+        tableX + colWidths[0] + colWidths[1] + 0.5,
+        yPosition + 3.5,
+        { maxWidth: colWidths[2] - 1 },
+      );
+    } else {
+      // Flujo normal para otros tipos de unidad
+      doc.setFontSize(12);
+      doc.text(this.formatDate(data.fechaSalida), tableX + 1, yPosition + 3.5);
+      doc.text(
+        `${this.formatWeight(pesoBrutoSalida)} kg`,
+        tableX + colWidths[0] + 1,
+        yPosition + 3.5,
+      );
+      const exitUserText =
+        data.exitRegisteredBy && data.exitRegisteredBy.trim() !== ''
+          ? this.extractUsername(data.exitRegisteredBy)
+          : '--';
+      doc.text(
+        exitUserText,
+        tableX + colWidths[0] + colWidths[1] + 1,
+        yPosition + 3.5,
+      );
+    }
     yPosition += rowHeight;
 
     // Fila 3: Peso Neto
@@ -314,7 +479,13 @@ export class PdfGeneratorService {
     drawBox(tableX, yPosition, colWidths[0], netRowHeight, lightGray);
     // Combinar columnas 2 y 3
     const combinedWidth = colWidths[1] + colWidths[2];
-    drawBox(tableX + colWidths[0], yPosition, combinedWidth, netRowHeight,lightGray);
+    drawBox(
+      tableX + colWidths[0],
+      yPosition,
+      combinedWidth,
+      netRowHeight,
+      lightGray,
+    );
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
@@ -351,21 +522,21 @@ export class PdfGeneratorService {
         yPosition,
         colWidthsRem[1],
         rowHeight,
-        lightGray
+        lightGray,
       );
       drawBox(
         tableX + colWidthsRem[0] + colWidthsRem[1],
         yPosition,
         colWidthsRem[2],
         rowHeight,
-        lightGray
+        lightGray,
       );
       drawBox(
         tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2],
         yPosition,
         colWidthsRem[3],
         rowHeight,
-        lightGray
+        lightGray,
       );
 
       doc.setFont('helvetica', 'bold');
@@ -375,12 +546,12 @@ export class PdfGeneratorService {
       doc.text(
         'Tara',
         tableX + colWidthsRem[0] + colWidthsRem[1] + 1,
-        yPosition + 3.5
+        yPosition + 3.5,
       );
       doc.text(
         'Neto',
         tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1,
-        yPosition + 3.5
+        yPosition + 3.5,
       );
       yPosition += rowHeight;
 
@@ -391,19 +562,19 @@ export class PdfGeneratorService {
           tableX + colWidthsRem[0],
           yPosition,
           colWidthsRem[1],
-          rowHeight
+          rowHeight,
         );
         drawBox(
           tableX + colWidthsRem[0] + colWidthsRem[1],
           yPosition,
           colWidthsRem[2],
-          rowHeight
+          rowHeight,
         );
         drawBox(
           tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2],
           yPosition,
           colWidthsRem[3],
-          rowHeight
+          rowHeight,
         );
 
         doc.setFont('helvetica', 'normal');
@@ -412,17 +583,17 @@ export class PdfGeneratorService {
         doc.text(
           this.formatWeight(data.remolque1.pesoBruto),
           tableX + colWidthsRem[0] + 1,
-          yPosition + 3.5
+          yPosition + 3.5,
         );
         doc.text(
           this.formatWeight(data.remolque1.pesoTara),
           tableX + colWidthsRem[0] + colWidthsRem[1] + 1,
-          yPosition + 3.5
+          yPosition + 3.5,
         );
         doc.text(
           this.formatWeight(data.remolque1.pesoNeto),
           tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1,
-          yPosition + 3.5
+          yPosition + 3.5,
         );
         yPosition += rowHeight;
       }
@@ -434,19 +605,19 @@ export class PdfGeneratorService {
           tableX + colWidthsRem[0],
           yPosition,
           colWidthsRem[1],
-          rowHeight
+          rowHeight,
         );
         drawBox(
           tableX + colWidthsRem[0] + colWidthsRem[1],
           yPosition,
           colWidthsRem[2],
-          rowHeight
+          rowHeight,
         );
         drawBox(
           tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2],
           yPosition,
           colWidthsRem[3],
-          rowHeight
+          rowHeight,
         );
 
         doc.setFont('helvetica', 'normal');
@@ -455,17 +626,17 @@ export class PdfGeneratorService {
         doc.text(
           this.formatWeight(data.remolque2.pesoBruto),
           tableX + colWidthsRem[0] + 1,
-          yPosition + 3.5
+          yPosition + 3.5,
         );
         doc.text(
           this.formatWeight(data.remolque2.pesoTara),
           tableX + colWidthsRem[0] + colWidthsRem[1] + 1,
-          yPosition + 3.5
+          yPosition + 3.5,
         );
         doc.text(
           this.formatWeight(data.remolque2.pesoNeto),
           tableX + colWidthsRem[0] + colWidthsRem[1] + colWidthsRem[2] + 1,
-          yPosition + 3.5
+          yPosition + 3.5,
         );
         yPosition += rowHeight;
       }
@@ -480,15 +651,17 @@ export class PdfGeneratorService {
     const fechaSalidaFormateada = this.formatDateForQR(data.fechaSalida);
 
     // Extraer nombres de usuario de los almacenistas
-    const almacenistaEntrada = (data.createdBy && data.createdBy.trim() !== '')
-      ? this.extractUsername(data.createdBy)
-      : '';
-    const almacenistaSalida = (data.exitRegisteredBy && data.exitRegisteredBy.trim() !== '')
-      ? this.extractUsername(data.exitRegisteredBy)
-      : '';
+    const almacenistaEntrada =
+      data.createdBy && data.createdBy.trim() !== ''
+        ? this.extractUsername(data.createdBy)
+        : '';
+    const almacenistaSalida =
+      data.exitRegisteredBy && data.exitRegisteredBy.trim() !== ''
+        ? this.extractUsername(data.exitRegisteredBy)
+        : '';
 
     // Mapear tipo: "client" -> "cliente", "proveedor" -> "proveedor"
-    const tipoQR = data.tipo === 'client' ? 'cliente' : (data.tipo || 'cliente');
+    const tipoQR = data.tipo === 'client' ? 'cliente' : data.tipo || 'cliente';
 
     // Construir datos del QR según estructura requerida
     const qrData = JSON.stringify({
@@ -500,7 +673,9 @@ export class PdfGeneratorService {
       materialChofer: data.producto || '',
       placaTrailer: data.placaTrailer || '',
       placaRemolque: data.placaRemolque || '',
-      pesoEntrada: data.pesoBrutoEntrada ? data.pesoBrutoEntrada.toString() : '',
+      pesoEntrada: data.pesoBrutoEntrada
+        ? data.pesoBrutoEntrada.toString()
+        : '',
       pesoSalida: data.pesoBrutoSalida ? data.pesoBrutoSalida.toString() : '',
       pesoNeto: data.pesoNeto || 0,
       almacenistaEntrada: almacenistaEntrada,
@@ -654,12 +829,12 @@ export class PdfGeneratorService {
     });
 
     const parts = formatter.formatToParts(dateObj);
-    const year = parts.find(p => p.type === 'year')?.value || '';
-    const month = parts.find(p => p.type === 'month')?.value || '';
-    const day = parts.find(p => p.type === 'day')?.value || '';
-    const hours = parts.find(p => p.type === 'hour')?.value || '';
-    const minutes = parts.find(p => p.type === 'minute')?.value || '';
-    const seconds = parts.find(p => p.type === 'second')?.value || '';
+    const year = parts.find((p) => p.type === 'year')?.value || '';
+    const month = parts.find((p) => p.type === 'month')?.value || '';
+    const day = parts.find((p) => p.type === 'day')?.value || '';
+    const hours = parts.find((p) => p.type === 'hour')?.value || '';
+    const minutes = parts.find((p) => p.type === 'minute')?.value || '';
+    const seconds = parts.find((p) => p.type === 'second')?.value || '';
 
     // Obtener milisegundos de la fecha original (no cambian con zona horaria)
     const milliseconds = dateObj.getMilliseconds().toString().padStart(3, '0');
@@ -702,11 +877,11 @@ export class PdfGeneratorService {
     });
 
     const parts = formatter.formatToParts(dateObj);
-    const year = parts.find(p => p.type === 'year')?.value || '';
-    const month = parts.find(p => p.type === 'month')?.value || '';
-    const day = parts.find(p => p.type === 'day')?.value || '';
-    const hours = parts.find(p => p.type === 'hour')?.value || '';
-    const minutes = parts.find(p => p.type === 'minute')?.value || '';
+    const year = parts.find((p) => p.type === 'year')?.value || '';
+    const month = parts.find((p) => p.type === 'month')?.value || '';
+    const day = parts.find((p) => p.type === 'day')?.value || '';
+    const hours = parts.find((p) => p.type === 'hour')?.value || '';
+    const minutes = parts.find((p) => p.type === 'minute')?.value || '';
 
     // Formato: DD/MM/YYYY HH:mm
     return `${day}/${month}/${year} ${hours}:${minutes}`;

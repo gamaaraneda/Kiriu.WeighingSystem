@@ -36,6 +36,7 @@ public class WeighingQueryResultDto
     public DateTime? EntryDate { get; set; }
     public DateTime? ExitDate { get; set; }
     public List<WeighingPhotoDto> Photos { get; set; } = new();
+    public List<RemolqueInfoDto> Remolques { get; set; } = new();
 }
 
 public class WeighingPhotoDto
@@ -44,6 +45,18 @@ public class WeighingPhotoDto
     public string PhotoType { get; set; } = string.Empty;
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+public class RemolqueInfoDto
+{
+    public int Numero { get; set; }
+    public string Placa { get; set; } = string.Empty;
+    public decimal PesoBruto { get; set; }
+    public decimal? PesoTara { get; set; }
+    public DateTime? FechaRegistro { get; set; }
+    public string? RegistradoPor { get; set; }
+    public DateTime? FechaSalida { get; set; }
+    public string? RegistradoPorSalida { get; set; }
 }
 
 public class WeighingQueryResponseDto

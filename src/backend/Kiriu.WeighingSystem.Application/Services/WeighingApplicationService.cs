@@ -1371,7 +1371,18 @@ public class WeighingApplicationService : IWeighingApplicationService
                 FechaSalida = updated.ExitDate ?? DateTime.UtcNow,
                 PesoNeto = updated.NetWeight ?? 0,
                 Mensaje = "Salida con doble remolque registrada exitosamente",
-                ExitRegisteredBy = updated.ExitRegisteredBy
+                ExitRegisteredBy = updated.ExitRegisteredBy,
+                Remolques = updated.Remolques.Select(r => new RemolqueResponseDto
+                {
+                    Numero = r.Numero,
+                    Placa = r.Placa,
+                    PesoBruto = r.PesoBruto,
+                    PesoTara = r.PesoTara,
+                    FechaRegistro = r.FechaRegistro,
+                    RegistradoPor = r.RegistradoPor,
+                    FechaSalida = r.FechaSalida,
+                    RegistradoPorSalida = r.RegistradoPorSalida
+                }).ToList()
             };
 
             _logger.LogInformation("Salida de doble remolque completada - Folio: {Folio}", updated.Folio);

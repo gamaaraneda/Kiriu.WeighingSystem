@@ -664,12 +664,10 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         );
       }
 
-      // DEBUG: Verificar valores de fechas
-      
       // Determinar fechas finales a usar
       const fechaEntradaFinal = operation.entryDate || fullOperation.createdAt;
       const fechaSalidaFinal = operation.exitDate || fullOperation.updatedAt || fullOperation.createdAt;
-     
+
       // Construir los datos para el PDF usando la misma lógica que en weighing-exit-form
       const receiptData: WeighingReceiptData = {
         folio: fullOperation.folio,
@@ -697,27 +695,34 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         pesoNeto: fullOperation.netWeight || 0,
       };
 
-      // Si es doble remolque, agregar datos de los remolques
-      if (fullOperation.tipoUnidad === 'doble-remolque') {
-        const placaRemolque1 =
-          fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || '';
-        const placaRemolque2 = fullOperation.placaRemolque2 || '';
-        const pesoBrutoBase = fullOperation.entryWeight || 0;
-        const pesoTaraBase = (fullOperation.exitWeight || 0) / 2;
+      // Si es doble remolque, agregar datos de los remolques desde el query result
+      if (fullOperation.tipoUnidad === 'doble-remolque' && operation.remolques && operation.remolques.length === 2) {
+        const remolque1 = operation.remolques.find(r => r.numero === 1);
+        const remolque2 = operation.remolques.find(r => r.numero === 2);
 
-        receiptData.remolque1 = {
-          placa: placaRemolque1,
-          pesoBruto: pesoBrutoBase,
-          pesoTara: pesoTaraBase,
-          pesoNeto: Math.abs(pesoBrutoBase - pesoTaraBase),
-        };
+        if (remolque1 && remolque2) {
+          receiptData.remolque1 = {
+            placa: remolque1.placa,
+            pesoBruto: remolque1.pesoBruto,
+            pesoTara: remolque1.pesoTara || 0,
+            pesoNeto: Math.abs(remolque1.pesoBruto - (remolque1.pesoTara || 0)),
+            fechaEntrada: remolque1.fechaRegistro,
+            usuarioEntrada: remolque1.registradoPor,
+            fechaSalida: remolque1.fechaSalida,
+            usuarioSalida: remolque1.registradoPorSalida,
+          };
 
-        receiptData.remolque2 = {
-          placa: placaRemolque2,
-          pesoBruto: pesoBrutoBase,
-          pesoTara: pesoTaraBase,
-          pesoNeto: Math.abs(pesoBrutoBase - pesoTaraBase),
-        };
+          receiptData.remolque2 = {
+            placa: remolque2.placa,
+            pesoBruto: remolque2.pesoBruto,
+            pesoTara: remolque2.pesoTara || 0,
+            pesoNeto: Math.abs(remolque2.pesoBruto - (remolque2.pesoTara || 0)),
+            fechaEntrada: remolque2.fechaRegistro,
+            usuarioEntrada: remolque2.registradoPor,
+            fechaSalida: remolque2.fechaSalida,
+            usuarioSalida: remolque2.registradoPorSalida,
+          };
+        }
       }
 
       await this.pdfGeneratorService.generateWeighingReceipt(receiptData);
