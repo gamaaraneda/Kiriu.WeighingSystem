@@ -691,8 +691,8 @@ public class WeighingController : ControllerBase
             // Obtener el usuario actual del token JWT
             var currentUser = GetCurrentUser();
 
-            // Si tiene ediciones manuales, asignar el usuario actual
-            if (request.TieneEdicionesManuale && !string.IsNullOrEmpty(currentUser))
+            // Asignar el usuario actual como creador del registro
+            if (!string.IsNullOrEmpty(currentUser))
             {
                 request.UsuarioEditor = currentUser;
             }
@@ -728,8 +728,8 @@ public class WeighingController : ControllerBase
             // Obtener el usuario actual del token JWT
             var currentUser = GetCurrentUser();
 
-            // Si tiene ediciones manuales, asignar el usuario actual
-            if (request.TieneEdicionesManuale && !string.IsNullOrEmpty(currentUser))
+            // Asignar el usuario actual como creador del registro
+            if (!string.IsNullOrEmpty(currentUser))
             {
                 request.UsuarioEditor = currentUser;
             }
