@@ -35,7 +35,9 @@ public class ExcelExportService : IExcelExportService
             "Fecha Entrada",
             "Fecha Salida",
             "Editado Por",
-            "Fecha Edición"
+            "Fecha Edición",
+            "Justificación",
+            "Valores Originales"
         };
 
         // Escribir encabezados
@@ -118,6 +120,8 @@ public class ExcelExportService : IExcelExportService
 
             worksheet.Cells[excelRow, 17].Value = item.EditadoPor;
             worksheet.Cells[excelRow, 18].Value = item.FechaEdicion?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
+            worksheet.Cells[excelRow, 19].Value = item.Justificacion;
+            worksheet.Cells[excelRow, 20].Value = item.ValoresOriginales;
 
             // Aplicar bordes a todas las celdas de datos
             for (int col = 1; col <= headers.Length; col++)

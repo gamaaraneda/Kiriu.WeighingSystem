@@ -257,6 +257,7 @@ public class WeighingOperationRepository : IWeighingOperationRepository
         var query = _context.WeighingOperations
             .Include(w => w.Photos)
             .Include(w => w.Remolques)
+            .Include(w => w.EditHistory)
             .AsQueryable();
 
         if (fechaDesde.HasValue)

@@ -173,6 +173,17 @@ public class WeighingQueryService : IWeighingQueryService
                     }
                 }
 
+                // Mapear el último historial de ediciones si existe
+                if (op.EditHistory != null && op.EditHistory.Any())
+                {
+                    var ultimaEdicion = op.EditHistory.OrderByDescending(h => h.FechaEdicion).FirstOrDefault();
+                    if (ultimaEdicion != null)
+                    {
+                        dto.Justificacion = ultimaEdicion.Justificacion ?? "";
+                        dto.ValoresOriginales = FormatValoresOriginales(ultimaEdicion.ValoresOriginales);
+                    }
+                }
+
                 return dto;
             }).ToList();
 
@@ -287,6 +298,102 @@ public class WeighingQueryService : IWeighingQueryService
 
         // Para otros flujos, usar ExitRegisteredBy
         return FormatUsername(operation.ExitRegisteredBy);
+    }
+
+    private static string FormatValoresOriginales(string? valoresOriginalesJson)
+    {
+        if (string.IsNullOrWhiteSpace(valoresOriginalesJson))
+            return string.Empty;
+
+        try
+        {
+            // Parsear el JSON de valores originales
+            var valoresOriginales = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(
+                valoresOriginalesJson,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+
+            if (valoresOriginales == null || valoresOriginales.Count == 0)
+                return string.Empty;
+
+            var partes = new List<string>();
+
+            // Mapear campos con etiquetas legibles, en el mismo orden que el modal
+            if (valoresOriginales.TryGetValue("Tipo", out var tipo) && tipo != null)
+            {
+                var tipoStr = tipo.ToString() ?? "";
+                var tipoLabel = tipoStr.ToLower() switch
+                {
+                    "provider" => "Proveedor",
+                    "client" => "Cliente",
+                    _ => tipoStr
+                };
+                partes.Add($"Tipo: {tipoLabel}");
+            }
+
+            if (valoresOriginales.TryGetValue("TipoUnidad", out var tipoUnidad) && tipoUnidad != null)
+            {
+                var tipoUnidadStr = tipoUnidad.ToString() ?? "";
+                var tipoUnidadLabel = tipoUnidadStr.ToLower() switch
+                {
+                    "remolque" => "Remolque",
+                    "contenedor" => "Contenedor",
+                    "doble-remolque" => "2 Remolques",
+                    _ => tipoUnidadStr
+                };
+                partes.Add($"Tipo Unidad: {tipoUnidadLabel}");
+            }
+
+            if (valoresOriginales.TryGetValue("ClienteProveedor", out var clienteProveedor) && clienteProveedor != null)
+            {
+                var valor = clienteProveedor.ToString();
+                if (!string.IsNullOrWhiteSpace(valor))
+                    partes.Add($"Empresa: {valor}");
+            }
+
+            if (valoresOriginales.TryGetValue("Producto", out var producto) && producto != null)
+            {
+                var valor = producto.ToString();
+                if (!string.IsNullOrWhiteSpace(valor))
+                    partes.Add($"Material-Chofer: {valor}");
+            }
+
+            if (valoresOriginales.TryGetValue("TrailerPlate", out var trailerPlate) && trailerPlate != null)
+            {
+                var valor = trailerPlate.ToString();
+                if (!string.IsNullOrWhiteSpace(valor))
+                    partes.Add($"Tráiler: {valor}");
+            }
+
+            if (valoresOriginales.TryGetValue("TrailerPlate2", out var trailerPlate2) && trailerPlate2 != null)
+            {
+                var valor = trailerPlate2.ToString();
+                if (!string.IsNullOrWhiteSpace(valor))
+                    partes.Add($"Remolque: {valor}");
+            }
+
+            if (valoresOriginales.TryGetValue("PlacaRemolque1", out var placaRemolque1) && placaRemolque1 != null)
+            {
+                var valor = placaRemolque1.ToString();
+                if (!string.IsNullOrWhiteSpace(valor))
+                    partes.Add($"Remolque 1: {valor}");
+            }
+
+            if (valoresOriginales.TryGetValue("PlacaRemolque2", out var placaRemolque2) && placaRemolque2 != null)
+            {
+                var valor = placaRemolque2.ToString();
+                if (!string.IsNullOrWhiteSpace(valor))
+                    partes.Add($"Remolque 2: {valor}");
+            }
+
+            // Retornar valores separados por " | " para mejor legibilidad en Excel
+            return string.Join(" | ", partes);
+        }
+        catch
+        {
+            // Si falla el parseo, retornar el JSON original
+            return valoresOriginalesJson;
+        }
     }
 
 }

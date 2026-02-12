@@ -99,4 +99,8 @@ public class WeighingExportDto
     public decimal? PesoBrutoRemolque2 { get; set; }
     public decimal? PesoTaraRemolque1 { get; set; }
     public decimal? PesoTaraRemolque2 { get; set; }
+
+    // Campos de historial de ediciones (solo la última modificación)
+    public string Justificacion { get; set; } = string.Empty;
+    public string ValoresOriginales { get; set; } = string.Empty;
 }
