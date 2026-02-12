@@ -334,6 +334,14 @@
   cursor: not-allowed;
 }
 
+.weighing-query-container .input.input--readonly {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+}
+
 .weighing-query-container .input.ng-invalid.ng-touched {
   border-color: var(--error);
   box-shadow: 0 0 0 2px rgba(229, 72, 72, 0.15);

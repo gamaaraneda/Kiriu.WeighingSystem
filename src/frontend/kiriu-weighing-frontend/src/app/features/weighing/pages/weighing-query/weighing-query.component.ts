@@ -185,7 +185,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         if (!this.showEditModal || this.isLoadingEditData) return;
 
         // Obtener valores actuales de todos los campos de placas
-        const cv = this.editForm.value;
+        const cv = this.editForm.getRawValue();
 
         // Identificar placas disponibles (placa del tráiler siempre es la primera)
         const placaTractorActual =
@@ -928,7 +928,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const currentValues = this.editForm.value;
+    const currentValues = this.editForm.getRawValue();
     const tipoUnidad = currentValues.tipoUnidad;
 
     // Campos comunes que siempre se comparan
@@ -1057,14 +1057,14 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           remolquePlateContenedor: remolquePlateContenedor,
         });
 
-        // Guardar valores iniciales para detectar cambios
-        this.initialFormValues = { ...this.editForm.value };
+        // Guardar valores iniciales para detectar cambios (getRawValue incluye controles disabled como tipoUnidad)
+        this.initialFormValues = { ...this.editForm.getRawValue() };
         this.hasEditableChanges = false;
 
         // Log del estado del formulario después de patchValue (TEMPORAL)
         console.log(
           '📝 Estado del formulario después de patchValue:',
-          this.editForm.value
+          this.editForm.getRawValue()
         );
 
         this.isLoadingEditData = false; // Desactivar flag después de cargar
@@ -1121,7 +1121,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const formValue = this.editForm.value;
+    const formValue = this.editForm.getRawValue();
     const tipoUnidad = formValue.tipoUnidad;
 
     // LOG DIAGNÓSTICO (TEMPORAL)

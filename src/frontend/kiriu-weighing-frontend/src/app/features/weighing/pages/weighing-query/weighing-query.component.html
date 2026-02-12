@@ -955,15 +955,17 @@
 
               <div class="form-field">
                 <label class="label" for="tipoUnidad">Tipo de Unidad</label>
-                <select
-                  id="tipoUnidad"
+                <input
+                  type="hidden"
                   formControlName="tipoUnidad"
-                  class="input"
+                />
+                <div
+                  class="input input--readonly"
+                  id="tipoUnidad"
+                  aria-readonly="true"
                 >
-                  <option value="remolque">Remolque</option>
-                  <option value="doble-remolque">Doble-remolque</option>
-                  <option value="contenedor">Contenedor</option>
-                </select>
+                  {{ getUnidadLabel(editForm.get('tipoUnidad')?.value) }}
+                </div>
               </div>
 
               <div class="form-field">
