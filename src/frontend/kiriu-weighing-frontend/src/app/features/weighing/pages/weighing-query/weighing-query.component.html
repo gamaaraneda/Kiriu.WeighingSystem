@@ -60,7 +60,7 @@
                 id="fechaDesde"
                 formControlName="fechaDesde"
                 class="input date-input"
-                [max]="today | date : 'yyyy-MM-dd'"
+                [max]="today | date: 'yyyy-MM-dd'"
               />
             </div>
             <div>
@@ -70,7 +70,7 @@
                 id="fechaHasta"
                 formControlName="fechaHasta"
                 class="input date-input"
-                [max]="today | date : 'yyyy-MM-dd'"
+                [max]="today | date: 'yyyy-MM-dd'"
               />
             </div>
             <div>
@@ -216,7 +216,7 @@
                   </td>
                   <td class="col-fecha">
                     <span class="text-secondary">{{
-                      operation.fecha | date : "dd/MM/yyyy"
+                      operation.fecha | date: "dd/MM/yyyy"
                     }}</span>
                   </td>
                   <td class="col-placas">
@@ -251,7 +251,7 @@
                       *ngIf="operation.pesoBruto != null"
                       class="peso-value peso-bruto"
                     >
-                      {{ operation.pesoBruto | number : "1.2-2" }}
+                      {{ operation.pesoBruto | number: "1.2-2" }}
                       <span class="peso-unit">kg</span>
                     </span>
                     <span *ngIf="operation.pesoBruto == null" class="peso-empty"
@@ -263,10 +263,12 @@
                       *ngIf="operation.pesoSalida != null"
                       class="peso-value peso-salida"
                     >
-                      {{ operation.pesoSalida | number : "1.2-2" }}
+                      {{ operation.pesoSalida | number: "1.2-2" }}
                       <span class="peso-unit">kg</span>
                     </span>
-                    <span *ngIf="operation.pesoSalida == null" class="peso-empty"
+                    <span
+                      *ngIf="operation.pesoSalida == null"
+                      class="peso-empty"
                       >—</span
                     >
                   </td>
@@ -275,7 +277,7 @@
                       *ngIf="operation.pesoNeto != null"
                       class="peso-value peso-neto"
                     >
-                      {{ operation.pesoNeto | number : "1.2-2" }}
+                      {{ operation.pesoNeto | number: "1.2-2" }}
                       <span class="peso-unit">kg</span>
                     </span>
                     <span *ngIf="operation.pesoNeto == null" class="peso-empty"
@@ -488,8 +490,6 @@
               </span>
             </div>
 
-          
-
             <div class="info-row">
               <span class="info-label">Empresa</span>
               <span class="info-value">{{
@@ -515,22 +515,94 @@
             <div class="pesaje-card entrada-card">
               <div class="pesaje-row">
                 <span class="pesaje-label">Fecha</span>
-                <span class="pesaje-value">{{
-                  selectedOperation.entryDate | date : "dd/MM/yyyy HH:mm"
-                }}</span>
+                <span class="pesaje-value">
+                  <ng-container
+                    *ngIf="
+                      selectedOperation.tipoUnidad === 'doble-remolque' &&
+                      selectedOperation.remolques &&
+                      selectedOperation.remolques.length === 2
+                    "
+                  >
+                    {{
+                      getRemolqueByNumero(selectedOperation, 1).fechaRegistro
+                        | date: "dd/MM/yyyy HH:mm"
+                    }}
+                    -
+                    {{
+                      getRemolqueByNumero(selectedOperation, 2).fechaRegistro
+                        | date: "dd/MM/yyyy HH:mm"
+                    }}
+                  </ng-container>
+                  <ng-container
+                    *ngIf="
+                      selectedOperation.tipoUnidad !== 'doble-remolque' ||
+                      !selectedOperation.remolques ||
+                      selectedOperation.remolques.length !== 2
+                    "
+                  >
+                    {{ selectedOperation.entryDate | date: "dd/MM/yyyy HH:mm" }}
+                  </ng-container>
+                </span>
               </div>
               <div class="pesaje-row">
                 <span class="pesaje-label">Peso Bruto</span>
                 <span class="pesaje-value peso-highlight">
-                  <span *ngIf="selectedOperation.pesoBruto != null"
-                    >{{
-                      selectedOperation.pesoBruto | number : "1.2-2"
-                    }}
-                    kg</span
+                  <ng-container
+                    *ngIf="
+                      selectedOperation.tipoUnidad === 'doble-remolque' &&
+                      selectedOperation.remolques &&
+                      selectedOperation.remolques.length === 2
+                    "
                   >
-                  <span *ngIf="selectedOperation.pesoBruto == null" class="peso-empty"
-                    >—</span
+                    <span
+                      *ngIf="
+                        getRemolqueByNumero(selectedOperation, 1).pesoBruto !=
+                          null &&
+                        getRemolqueByNumero(selectedOperation, 2).pesoBruto !=
+                          null
+                      "
+                    >
+                      {{
+                        getRemolqueByNumero(selectedOperation, 1).pesoBruto
+                          | number: "1.2-2"
+                      }}
+                      +
+                      {{
+                        getRemolqueByNumero(selectedOperation, 2).pesoBruto
+                          | number: "1.2-2"
+                      }}
+                      = {{ selectedOperation.pesoBruto | number: "1.2-2" }} kg
+                    </span>
+                    <span
+                      *ngIf="
+                        getRemolqueByNumero(selectedOperation, 1).pesoBruto ==
+                          null ||
+                        getRemolqueByNumero(selectedOperation, 2).pesoBruto ==
+                          null
+                      "
+                      class="peso-empty"
+                      >—</span
+                    >
+                  </ng-container>
+                  <ng-container
+                    *ngIf="
+                      selectedOperation.tipoUnidad !== 'doble-remolque' ||
+                      !selectedOperation.remolques ||
+                      selectedOperation.remolques.length !== 2
+                    "
                   >
+                    <span *ngIf="selectedOperation.pesoBruto != null"
+                      >{{
+                        selectedOperation.pesoBruto | number: "1.2-2"
+                      }}
+                      kg</span
+                    >
+                    <span
+                      *ngIf="selectedOperation.pesoBruto == null"
+                      class="peso-empty"
+                      >—</span
+                    >
+                  </ng-container>
                 </span>
               </div>
             </div>
@@ -572,26 +644,114 @@
               <div class="pesaje-row">
                 <span class="pesaje-label">Fecha</span>
                 <span class="pesaje-value">
-                  <span *ngIf="selectedOperation.exitDate">{{
-                    selectedOperation.exitDate | date : "dd/MM/yyyy HH:mm"
-                  }}</span>
-                  <span *ngIf="!selectedOperation.exitDate" class="peso-empty"
-                    >—</span
+                  <ng-container
+                    *ngIf="
+                      selectedOperation.tipoUnidad === 'doble-remolque' &&
+                      selectedOperation.remolques &&
+                      selectedOperation.remolques.length === 2
+                    "
                   >
+                    <span
+                      *ngIf="
+                        getRemolqueByNumero(selectedOperation, 1).fechaSalida &&
+                        getRemolqueByNumero(selectedOperation, 2).fechaSalida
+                      "
+                    >
+                      {{
+                        getRemolqueByNumero(selectedOperation, 1).fechaSalida
+                          | date: "dd/MM/yyyy HH:mm"
+                      }}
+                      -
+                      {{
+                        getRemolqueByNumero(selectedOperation, 2).fechaSalida
+                          | date: "dd/MM/yyyy HH:mm"
+                      }}
+                    </span>
+                    <span
+                      *ngIf="
+                        !getRemolqueByNumero(selectedOperation, 1)
+                          .fechaSalida ||
+                        !getRemolqueByNumero(selectedOperation, 2).fechaSalida
+                      "
+                      class="peso-empty"
+                      >—</span
+                    >
+                  </ng-container>
+                  <ng-container
+                    *ngIf="
+                      selectedOperation.tipoUnidad !== 'doble-remolque' ||
+                      !selectedOperation.remolques ||
+                      selectedOperation.remolques.length !== 2
+                    "
+                  >
+                    <span *ngIf="selectedOperation.exitDate">{{
+                      selectedOperation.exitDate | date: "dd/MM/yyyy HH:mm"
+                    }}</span>
+                    <span *ngIf="!selectedOperation.exitDate" class="peso-empty"
+                      >—</span
+                    >
+                  </ng-container>
                 </span>
               </div>
               <div class="pesaje-row">
                 <span class="pesaje-label">Peso Bruto</span>
                 <span class="pesaje-value peso-highlight">
-                  <span *ngIf="selectedOperation.pesoSalida != null"
-                    >{{
-                      selectedOperation.pesoSalida | number : "1.2-2"
-                    }}
-                    kg</span
+                  <ng-container
+                    *ngIf="
+                      selectedOperation.tipoUnidad === 'doble-remolque' &&
+                      selectedOperation.remolques &&
+                      selectedOperation.remolques.length === 2
+                    "
                   >
-                  <span *ngIf="selectedOperation.pesoSalida == null" class="peso-empty"
-                    >—</span
+                    <span
+                      *ngIf="
+                        getRemolqueByNumero(selectedOperation, 1).pesoTara !=
+                          null &&
+                        getRemolqueByNumero(selectedOperation, 2).pesoTara !=
+                          null
+                      "
+                    >
+                      {{
+                        getRemolqueByNumero(selectedOperation, 1).pesoTara
+                          | number: "1.2-2"
+                      }}
+                      +
+                      {{
+                        getRemolqueByNumero(selectedOperation, 2).pesoTara
+                          | number: "1.2-2"
+                      }}
+                      = {{ selectedOperation.pesoSalida | number: "1.2-2" }} kg
+                    </span>
+                    <span
+                      *ngIf="
+                        getRemolqueByNumero(selectedOperation, 1).pesoTara ==
+                          null ||
+                        getRemolqueByNumero(selectedOperation, 2).pesoTara ==
+                          null
+                      "
+                      class="peso-empty"
+                      >—</span
+                    >
+                  </ng-container>
+                  <ng-container
+                    *ngIf="
+                      selectedOperation.tipoUnidad !== 'doble-remolque' ||
+                      !selectedOperation.remolques ||
+                      selectedOperation.remolques.length !== 2
+                    "
                   >
+                    <span *ngIf="selectedOperation.pesoSalida != null"
+                      >{{
+                        selectedOperation.pesoSalida | number: "1.2-2"
+                      }}
+                      kg</span
+                    >
+                    <span
+                      *ngIf="selectedOperation.pesoSalida == null"
+                      class="peso-empty"
+                      >—</span
+                    >
+                  </ng-container>
                 </span>
               </div>
             </div>
@@ -601,9 +761,11 @@
               <span class="total-label">Total Neto</span>
               <span class="total-value">
                 <span *ngIf="selectedOperation.pesoNeto != null"
-                  >{{ selectedOperation.pesoNeto | number : "1.2-2" }} kg</span
+                  >{{ selectedOperation.pesoNeto | number: "1.2-2" }} kg</span
                 >
-                <span *ngIf="selectedOperation.pesoNeto == null" class="peso-empty"
+                <span
+                  *ngIf="selectedOperation.pesoNeto == null"
+                  class="peso-empty"
                   >—</span
                 >
               </span>
@@ -638,10 +800,7 @@
               "
             >
               <!-- Iterar sobre todas las fotos ordenadas (entrada primero, luego salida) -->
-              <div
-                class="photo-item"
-                *ngFor="let photo of getSortedPhotos()"
-              >
+              <div class="photo-item" *ngFor="let photo of getSortedPhotos()">
                 <div class="photo-label">
                   {{ getPhotoLabel(photo) }}
                 </div>
@@ -694,7 +853,7 @@
             <span class="edit-info-label">Última edición:</span>
             <span class="edit-info-value">{{
               selectedOperation.updatedAt
-                ? (selectedOperation.updatedAt | date : "dd/MM/yyyy HH:mm")
+                ? (selectedOperation.updatedAt | date: "dd/MM/yyyy HH:mm")
                 : "--"
             }}</span>
           </div>
@@ -738,16 +897,18 @@
               <div class="readonly-field">
                 <span class="readonly-label">Fecha:</span>
                 <span class="readonly-value">{{
-                  operationToEdit.fecha | date : "dd/MM/yyyy HH:mm"
+                  operationToEdit.fecha | date: "dd/MM/yyyy HH:mm"
                 }}</span>
               </div>
               <div class="readonly-field">
                 <span class="readonly-label">Peso de entrada:</span>
                 <span class="readonly-value">
                   <span *ngIf="operationToEdit.pesoBruto != null"
-                    >{{ operationToEdit.pesoBruto | number : "1.2-2" }} kg</span
+                    >{{ operationToEdit.pesoBruto | number: "1.2-2" }} kg</span
                   >
-                  <span *ngIf="operationToEdit.pesoBruto == null" class="peso-empty"
+                  <span
+                    *ngIf="operationToEdit.pesoBruto == null"
+                    class="peso-empty"
                     >—</span
                   >
                 </span>
@@ -762,12 +923,11 @@
                 <span class="readonly-label">Peso de salida:</span>
                 <span class="readonly-value">
                   <span *ngIf="operationToEdit.pesoSalida != null"
-                    >{{
-                      operationToEdit.pesoSalida | number : "1.2-2"
-                    }}
-                    kg</span
+                    >{{ operationToEdit.pesoSalida | number: "1.2-2" }} kg</span
                   >
-                  <span *ngIf="operationToEdit.pesoSalida == null" class="peso-empty"
+                  <span
+                    *ngIf="operationToEdit.pesoSalida == null"
+                    class="peso-empty"
                     >—</span
                   >
                 </span>
@@ -807,9 +967,7 @@
               </div>
 
               <div class="form-field">
-                <label class="label" for="clienteProveedor"
-                  >Empresa</label
-                >
+                <label class="label" for="clienteProveedor">Empresa</label>
                 <input
                   type="text"
                   id="clienteProveedor"
@@ -972,8 +1130,15 @@
                 <label class="label" for="justificacion">
                   Explique brevemente el motivo de la edición:
                   <span class="required-asterisk">*</span>
-                  <span *ngIf="!hasEditableChanges" class="field-hint" style="color: #94a3b8; font-weight: normal; margin-left: 8px;">
-                    
+                  <span
+                    *ngIf="!hasEditableChanges"
+                    class="field-hint"
+                    style="
+                      color: #94a3b8;
+                      font-weight: normal;
+                      margin-left: 8px;
+                    "
+                  >
                   </span>
                 </label>
                 <textarea
@@ -987,19 +1152,28 @@
                   [disabled]="!hasEditableChanges"
                 ></textarea>
                 <div class="char-counter">
-                  {{ editForm.get('justificacion')?.value?.length || 0 }}/70
+                  {{ editForm.get("justificacion")?.value?.length || 0 }}/70
                 </div>
                 <div
-                  *ngIf="editForm.get('justificacion')?.invalid && editForm.get('justificacion')?.touched"
+                  *ngIf="
+                    editForm.get('justificacion')?.invalid &&
+                    editForm.get('justificacion')?.touched
+                  "
                   class="validation-error"
                 >
-                  <span *ngIf="editForm.get('justificacion')?.errors?.['required']">
+                  <span
+                    *ngIf="editForm.get('justificacion')?.errors?.['required']"
+                  >
                     La justificación es obligatoria
                   </span>
-                  <span *ngIf="editForm.get('justificacion')?.errors?.['pattern']">
+                  <span
+                    *ngIf="editForm.get('justificacion')?.errors?.['pattern']"
+                  >
                     Solo se permiten letras, números y los caracteres: - / # .
                   </span>
-                  <span *ngIf="editForm.get('justificacion')?.errors?.['maxlength']">
+                  <span
+                    *ngIf="editForm.get('justificacion')?.errors?.['maxlength']"
+                  >
                     Máximo 70 caracteres
                   </span>
                 </div>
@@ -1008,11 +1182,22 @@
           </div>
 
           <!-- Sección de histórico de ediciones (solo se muestra si hay historial) -->
-          <div class="history-section" *ngIf="editHistory && editHistory.length > 0">
+          <div
+            class="history-section"
+            *ngIf="editHistory && editHistory.length > 0"
+          >
             <h4 class="section-title">
               Histórico de Ediciones
-              <span style="font-size: 12px; color: #999; font-weight: normal; margin-left: 8px;">
-                ({{ editHistory.length }} {{ editHistory.length === 1 ? 'edición' : 'ediciones' }})
+              <span
+                style="
+                  font-size: 12px;
+                  color: #999;
+                  font-weight: normal;
+                  margin-left: 8px;
+                "
+              >
+                ({{ editHistory.length }}
+                {{ editHistory.length === 1 ? "edición" : "ediciones" }})
               </span>
             </h4>
 
@@ -1020,8 +1205,12 @@
             <div class="history-list">
               <div class="history-item" *ngFor="let item of editHistory">
                 <div class="history-header">
-                  <span class="history-date">{{ item.fechaEdicion | date: 'dd/MM/yyyy HH:mm' }}</span>
-                  <span class="history-user">{{ item.usuarioEditor | username }}</span>
+                  <span class="history-date">{{
+                    item.fechaEdicion | date: "dd/MM/yyyy HH:mm"
+                  }}</span>
+                  <span class="history-user">{{
+                    item.usuarioEditor | username
+                  }}</span>
                 </div>
                 <div class="history-justification">
                   <strong>Justificación:</strong> {{ item.justificacion }}
@@ -1029,14 +1218,55 @@
                 <div class="history-changes" *ngIf="item.valoresOriginales">
                   <strong>Valores originales:</strong>
                   <div class="history-values">
-                    <span *ngIf="item.valoresOriginales.tipo" class="history-value">Tipo: {{ getTipoLabel(item.valoresOriginales.tipo) }}</span>
-                    <span *ngIf="item.valoresOriginales.tipoUnidad" class="history-value">Tipo Unidad: {{ getUnidadLabel(item.valoresOriginales.tipoUnidad) }}</span>
-                    <span *ngIf="item.valoresOriginales.clienteProveedor" class="history-value">Empresa: {{ item.valoresOriginales.clienteProveedor }}</span>
-                    <span *ngIf="item.valoresOriginales.producto" class="history-value">Material-Chofer: {{ item.valoresOriginales.producto }}</span>
-                    <span *ngIf="item.valoresOriginales.trailerPlate" class="history-value">Tráiler: {{ item.valoresOriginales.trailerPlate }}</span>
-                    <span *ngIf="item.valoresOriginales.trailerPlate2" class="history-value">Remolque: {{ item.valoresOriginales.trailerPlate2 }}</span>
-                    <span *ngIf="item.valoresOriginales.placaRemolque1" class="history-value">Remolque 1: {{ item.valoresOriginales.placaRemolque1 }}</span>
-                    <span *ngIf="item.valoresOriginales.placaRemolque2" class="history-value">Remolque 2: {{ item.valoresOriginales.placaRemolque2 }}</span>
+                    <span
+                      *ngIf="item.valoresOriginales.tipo"
+                      class="history-value"
+                      >Tipo:
+                      {{ getTipoLabel(item.valoresOriginales.tipo) }}</span
+                    >
+                    <span
+                      *ngIf="item.valoresOriginales.tipoUnidad"
+                      class="history-value"
+                      >Tipo Unidad:
+                      {{
+                        getUnidadLabel(item.valoresOriginales.tipoUnidad)
+                      }}</span
+                    >
+                    <span
+                      *ngIf="item.valoresOriginales.clienteProveedor"
+                      class="history-value"
+                      >Empresa:
+                      {{ item.valoresOriginales.clienteProveedor }}</span
+                    >
+                    <span
+                      *ngIf="item.valoresOriginales.producto"
+                      class="history-value"
+                      >Material-Chofer:
+                      {{ item.valoresOriginales.producto }}</span
+                    >
+                    <span
+                      *ngIf="item.valoresOriginales.trailerPlate"
+                      class="history-value"
+                      >Tráiler: {{ item.valoresOriginales.trailerPlate }}</span
+                    >
+                    <span
+                      *ngIf="item.valoresOriginales.trailerPlate2"
+                      class="history-value"
+                      >Remolque:
+                      {{ item.valoresOriginales.trailerPlate2 }}</span
+                    >
+                    <span
+                      *ngIf="item.valoresOriginales.placaRemolque1"
+                      class="history-value"
+                      >Remolque 1:
+                      {{ item.valoresOriginales.placaRemolque1 }}</span
+                    >
+                    <span
+                      *ngIf="item.valoresOriginales.placaRemolque2"
+                      class="history-value"
+                      >Remolque 2:
+                      {{ item.valoresOriginales.placaRemolque2 }}</span
+                    >
                   </div>
                 </div>
               </div>
@@ -1057,8 +1287,17 @@
           type="button"
           class="btn btn-primary"
           (click)="onSaveWeights()"
-          [disabled]="isLoading || !hasEditableChanges || !editForm.valid || !editForm.get('justificacion')?.value?.trim()"
-          [title]="!hasEditableChanges ? 'Debe modificar al menos un campo para guardar' : ''"
+          [disabled]="
+            isLoading ||
+            !hasEditableChanges ||
+            !editForm.valid ||
+            !editForm.get('justificacion')?.value?.trim()
+          "
+          [title]="
+            !hasEditableChanges
+              ? 'Debe modificar al menos un campo para guardar'
+              : ''
+          "
         >
           <span *ngIf="isLoading" class="spinner"></span>
           {{ isLoading ? "Guardando..." : "Guardar Cambios" }}

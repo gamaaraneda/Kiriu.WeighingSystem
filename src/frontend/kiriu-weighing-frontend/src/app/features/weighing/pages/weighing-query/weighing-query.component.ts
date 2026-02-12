@@ -828,6 +828,13 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     return atIndex > 0 ? email.substring(0, atIndex) : email;
   }
 
+  getRemolqueByNumero(operation: WeighingQueryResult, numero: number): any {
+    if (!operation.remolques || operation.remolques.length === 0) {
+      return {};
+    }
+    return operation.remolques.find(r => r.numero === numero) || {};
+  }
+
   onPlacasInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const value = input.value;
