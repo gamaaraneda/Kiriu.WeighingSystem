@@ -2271,15 +2271,44 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    */
   get isFormValid(): boolean {
     if (!this.exitForm.valid) return false;
-    // Modo continuar salida doble remolque: requiere peso tara remolque 2 capturado
+
+    // Doble remolque en modo continuar (solo remolque 2)
     if (
       this.currentOperationFolio &&
       this.entryData?.tipoUnidad === 'doble-remolque'
     ) {
-      const pesoTaraR2 =
-        Number(this.exitForm.get('pesoTaraRemolque2')?.value) || 0;
-      return pesoTaraR2 > 0;
+      const pesoTaraR2 = Number(this.exitForm.get('pesoTaraRemolque2')?.value) || 0;
+      const hasRemolque2Plate = !!this.exitForm.get('remolque2Plate')?.value?.trim();
+      const hasCargoRemolque2Photo = !!this.photoData.cargoRemolque2;
+
+      return pesoTaraR2 > 0 && hasRemolque2Plate && hasCargoRemolque2Photo;
     }
+
+    // Doble remolque en fase normal (ambos remolques, pero el botón está deshabilitado)
+    if (
+      !this.currentOperationFolio &&
+      this.entryData?.tipoUnidad === 'doble-remolque'
+    ) {
+      // En este caso, el botón "Registrar Salida" debe estar deshabilitado
+      // porque se usa "Guardar remolque 1" para la primera fase
+      return false;
+    }
+
+    // Flujos normales (no doble remolque)
+    if (this.entryData && this.entryData.tipoUnidad !== 'doble-remolque') {
+      const hasExitWeight = Number(this.exitForm.get('exitWeight')?.value) || 0;
+      const hasCargoPhoto = !!this.photoData.cargoState;
+
+      // Validar placas según shouldShowTrailerFields
+      if (this.shouldShowTrailerFields()) {
+        const hasTrailerPlate = !!this.exitForm.get('trailerPlate')?.value?.trim();
+        const hasRemolquePlate = !!this.exitForm.get('trailerPlate2')?.value?.trim();
+        return hasExitWeight > 0 && hasCargoPhoto && hasTrailerPlate && hasRemolquePlate;
+      }
+
+      return hasExitWeight > 0 && hasCargoPhoto;
+    }
+
     return true;
   }
 
