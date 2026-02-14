@@ -2116,7 +2116,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       return false;
     const pesoTaraR1 =
       Number(this.exitForm.get('pesoTaraRemolque1')?.value) || 0;
-    return pesoTaraR1 > 0 && !!this.photoData.cargoRemolque1;
+    return pesoTaraR1 > 0;
   }
 
   /**
@@ -2279,9 +2279,8 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     ) {
       const pesoTaraR2 = Number(this.exitForm.get('pesoTaraRemolque2')?.value) || 0;
       const hasRemolque2Plate = !!this.exitForm.get('remolque2Plate')?.value?.trim();
-      const hasCargoRemolque2Photo = !!this.photoData.cargoRemolque2;
 
-      return pesoTaraR2 > 0 && hasRemolque2Plate && hasCargoRemolque2Photo;
+      return pesoTaraR2 > 0 && hasRemolque2Plate;
     }
 
     // Doble remolque en fase normal (ambos remolques, pero el botón está deshabilitado)
