@@ -2297,16 +2297,15 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     // Flujos normales (no doble remolque)
     if (this.entryData && this.entryData.tipoUnidad !== 'doble-remolque') {
       const hasExitWeight = Number(this.exitForm.get('exitWeight')?.value) || 0;
-      const hasCargoPhoto = !!this.photoData.cargoState;
 
       // Validar placas según shouldShowTrailerFields
       if (this.shouldShowTrailerFields()) {
         const hasTrailerPlate = !!this.exitForm.get('trailerPlate')?.value?.trim();
         const hasRemolquePlate = !!this.exitForm.get('trailerPlate2')?.value?.trim();
-        return hasExitWeight > 0 && hasCargoPhoto && hasTrailerPlate && hasRemolquePlate;
+        return hasExitWeight > 0 && hasTrailerPlate && hasRemolquePlate;
       }
 
-      return hasExitWeight > 0 && hasCargoPhoto;
+      return hasExitWeight > 0;
     }
 
     return true;
