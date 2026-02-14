@@ -447,23 +447,28 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       }
       // Tipos que pueden ser entrada o salida (placas)
       else {
-        const photosOfSameType = photosByType.get(photo.photoType)!;
-
-        if (photosOfSameType.length === 1) {
-          // Si solo hay una foto de este tipo, clasificar por posición global
-          const allPhotos = this.selectedOperation?.photos || [];
-          const sortedAllPhotos = [...allPhotos].sort((a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-          const middleIndex = Math.floor(sortedAllPhotos.length / 2);
-          const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
-          isEntry = photoIndex < middleIndex;
+        // Si la operación está en estado de ENTRADA, todas las fotos son de entrada
+        if (this.selectedOperation?.estado === 'ENTRADA_REGISTRADA') {
+          isEntry = true;
         } else {
-          // Si hay múltiples fotos del mismo tipo, la más antigua es entrada
-          const sortedByTime = [...photosOfSameType].sort((a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-          isEntry = photo.id === sortedByTime[0].id;
+          const photosOfSameType = photosByType.get(photo.photoType)!;
+
+          if (photosOfSameType.length === 1) {
+            // Si solo hay una foto de este tipo, clasificar por posición global
+            const allPhotos = this.selectedOperation?.photos || [];
+            const sortedAllPhotos = [...allPhotos].sort((a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+            const middleIndex = Math.floor(sortedAllPhotos.length / 2);
+            const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
+            isEntry = photoIndex < middleIndex;
+          } else {
+            // Si hay múltiples fotos del mismo tipo, la más antigua es entrada
+            const sortedByTime = [...photosOfSameType].sort((a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+            isEntry = photo.id === sortedByTime[0].id;
+          }
         }
       }
 
@@ -576,46 +581,51 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     } else if (exitOnlyTypes.includes(photo.photoType)) {
       suffix = ' – Salida';
     } else if (this.selectedOperation && photo.createdAt) {
-      // Para tipos que pueden estar en entrada o salida (placas)
-      // Buscar todas las fotos con el mismo identificador (tipo + placa en caso de remolques)
-      const photosOfSameType = this.selectedOperation.photos.filter(p => {
-        if (p.photoType !== photo.photoType) return false;
-
-        // Para remolques, agrupar por placa específica
-        if (photo.photoType === 'remolque1Plate') {
-          const pPlateMatch = p.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
-          const currentPlateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
-          if (pPlateMatch && currentPlateMatch) {
-            return pPlateMatch[1] === currentPlateMatch[1];
-          }
-        }
-
-        return true;
-      });
-
-      // Si solo hay una foto con este identificador, clasificar por timestamp global
-      if (photosOfSameType.length === 1) {
-        const allPhotos = this.selectedOperation.photos;
-        const photoTime = new Date(photo.createdAt).getTime();
-        const sortedAllPhotos = [...allPhotos].sort((a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-
-        const middleIndex = Math.floor(sortedAllPhotos.length / 2);
-        const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
-
-        suffix = photoIndex < middleIndex ? ' – Entrada' : ' – Salida';
+      // Si la operación está en estado de ENTRADA, todas las fotos son de entrada
+      if (this.selectedOperation.estado === 'ENTRADA_REGISTRADA') {
+        suffix = ' – Entrada';
       } else {
-        // Ordenar fotos del mismo identificador por timestamp
-        const sortedByTime = [...photosOfSameType].sort((a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
+        // Para tipos que pueden estar en entrada o salida (placas)
+        // Buscar todas las fotos con el mismo identificador (tipo + placa en caso de remolques)
+        const photosOfSameType = this.selectedOperation.photos.filter(p => {
+          if (p.photoType !== photo.photoType) return false;
 
-        // La primera (más antigua) es entrada, la última (más reciente) es salida
-        if (photo.id === sortedByTime[0].id) {
-          suffix = ' – Entrada';
-        } else if (photo.id === sortedByTime[sortedByTime.length - 1].id) {
-          suffix = ' – Salida';
+          // Para remolques, agrupar por placa específica
+          if (photo.photoType === 'remolque1Plate') {
+            const pPlateMatch = p.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+            const currentPlateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+            if (pPlateMatch && currentPlateMatch) {
+              return pPlateMatch[1] === currentPlateMatch[1];
+            }
+          }
+
+          return true;
+        });
+
+        // Si solo hay una foto con este identificador, clasificar por timestamp global
+        if (photosOfSameType.length === 1) {
+          const allPhotos = this.selectedOperation.photos;
+          const photoTime = new Date(photo.createdAt).getTime();
+          const sortedAllPhotos = [...allPhotos].sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+
+          const middleIndex = Math.floor(sortedAllPhotos.length / 2);
+          const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
+
+          suffix = photoIndex < middleIndex ? ' – Entrada' : ' – Salida';
+        } else {
+          // Ordenar fotos del mismo identificador por timestamp
+          const sortedByTime = [...photosOfSameType].sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+
+          // La primera (más antigua) es entrada, la última (más reciente) es salida
+          if (photo.id === sortedByTime[0].id) {
+            suffix = ' – Entrada';
+          } else if (photo.id === sortedByTime[sortedByTime.length - 1].id) {
+            suffix = ' – Salida';
+          }
         }
       }
     }
