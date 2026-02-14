@@ -1452,7 +1452,16 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
               this.weighingForm.patchValue({ remolque1Plate: 'unknown' });
               if (this.weighingForm.get('doubleTrailer')?.value) {
                 this.doubleTrailerState.remolque1.placa = 'unknown';
-                this.doubleTrailerState.remolque1.fotos = [fallbackPhotoUrl];
+                // Agregar foto sin sobrescribir las existentes (ej: foto de carga ya capturada)
+                if (!this.doubleTrailerState.remolque1.fotos) {
+                  this.doubleTrailerState.remolque1.fotos = [];
+                }
+                if (!this.doubleTrailerState.remolque1.fotos.includes(fallbackPhotoUrl)) {
+                  this.doubleTrailerState.remolque1.fotos = [
+                    ...this.doubleTrailerState.remolque1.fotos,
+                    fallbackPhotoUrl
+                  ];
+                }
                 this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
               }
             } else if (photoType === 'remolque2Plate') {
@@ -1460,7 +1469,16 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
               this.weighingForm.patchValue({ remolque2Plate: 'unknown' });
               if (this.weighingForm.get('doubleTrailer')?.value) {
                 this.doubleTrailerState.remolque2.placa = 'unknown';
-                this.doubleTrailerState.remolque2.fotos = [fallbackPhotoUrl];
+                // Agregar foto sin sobrescribir las existentes (ej: foto de carga ya capturada)
+                if (!this.doubleTrailerState.remolque2.fotos) {
+                  this.doubleTrailerState.remolque2.fotos = [];
+                }
+                if (!this.doubleTrailerState.remolque2.fotos.includes(fallbackPhotoUrl)) {
+                  this.doubleTrailerState.remolque2.fotos = [
+                    ...this.doubleTrailerState.remolque2.fotos,
+                    fallbackPhotoUrl
+                  ];
+                }
                 this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
               }
             }
@@ -1535,7 +1553,24 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
               if (this.weighingForm.get('doubleTrailer')?.value) {
                 this.doubleTrailerState.remolque1.placa =
                   anprEvent.licensePlate;
-                this.doubleTrailerState.remolque1.fotos = [anprEvent.imageUrl];
+
+                console.log('📸 [ANPR R1] Foto ANPR recibida:', anprEvent.imageUrl);
+                console.log('📸 [ANPR R1] Fotos ANTES de agregar:', JSON.stringify(this.doubleTrailerState.remolque1.fotos));
+
+                // Agregar foto sin sobrescribir las existentes (ej: foto de carga ya capturada)
+                if (!this.doubleTrailerState.remolque1.fotos) {
+                  this.doubleTrailerState.remolque1.fotos = [];
+                }
+                // Solo agregar si no existe ya en el array
+                if (!this.doubleTrailerState.remolque1.fotos.includes(anprEvent.imageUrl)) {
+                  this.doubleTrailerState.remolque1.fotos = [
+                    ...this.doubleTrailerState.remolque1.fotos,
+                    anprEvent.imageUrl
+                  ];
+                  console.log('📸 [ANPR R1] Foto ANPR agregada. Fotos DESPUÉS:', JSON.stringify(this.doubleTrailerState.remolque1.fotos));
+                } else {
+                  console.log('📸 [ANPR R1] Foto ANPR ya existe, NO se agrega');
+                }
                 this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
               }
             } else if (photoType === 'remolque2Plate') {
@@ -1548,7 +1583,17 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
               if (this.weighingForm.get('doubleTrailer')?.value) {
                 this.doubleTrailerState.remolque2.placa =
                   anprEvent.licensePlate;
-                this.doubleTrailerState.remolque2.fotos = [anprEvent.imageUrl];
+                // Agregar foto sin sobrescribir las existentes (ej: foto de carga ya capturada)
+                if (!this.doubleTrailerState.remolque2.fotos) {
+                  this.doubleTrailerState.remolque2.fotos = [];
+                }
+                // Solo agregar si no existe ya en el array
+                if (!this.doubleTrailerState.remolque2.fotos.includes(anprEvent.imageUrl)) {
+                  this.doubleTrailerState.remolque2.fotos = [
+                    ...this.doubleTrailerState.remolque2.fotos,
+                    anprEvent.imageUrl
+                  ];
+                }
                 this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
               }
             }
@@ -1622,7 +1667,16 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Si es doble remolque, actualizar el estado del remolque 1
       if (this.weighingForm.get('doubleTrailer')?.value) {
         this.doubleTrailerState.remolque1.placa = randomPlate;
-        this.doubleTrailerState.remolque1.fotos = ['foto_remolque1.jpg'];
+        // Agregar foto sin sobrescribir las existentes (ej: foto de carga ya capturada)
+        if (!this.doubleTrailerState.remolque1.fotos) {
+          this.doubleTrailerState.remolque1.fotos = [];
+        }
+        if (!this.doubleTrailerState.remolque1.fotos.includes('foto_remolque1.jpg')) {
+          this.doubleTrailerState.remolque1.fotos = [
+            ...this.doubleTrailerState.remolque1.fotos,
+            'foto_remolque1.jpg'
+          ];
+        }
         // Marcar que se capturó la foto de la placa del remolque 1
         this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
         // NO marcar fotosCapturadas aquí, solo se marca cuando se captura la foto de carga
@@ -1646,7 +1700,16 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // Si es doble remolque, actualizar el estado del remolque 2
       if (this.weighingForm.get('doubleTrailer')?.value) {
         this.doubleTrailerState.remolque2.placa = randomPlate;
-        this.doubleTrailerState.remolque2.fotos = ['foto_remolque2.jpg'];
+        // Agregar foto sin sobrescribir las existentes (ej: foto de carga ya capturada)
+        if (!this.doubleTrailerState.remolque2.fotos) {
+          this.doubleTrailerState.remolque2.fotos = [];
+        }
+        if (!this.doubleTrailerState.remolque2.fotos.includes('foto_remolque2.jpg')) {
+          this.doubleTrailerState.remolque2.fotos = [
+            ...this.doubleTrailerState.remolque2.fotos,
+            'foto_remolque2.jpg'
+          ];
+        }
         // Marcar que se capturó la foto de la placa del remolque 2
         this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
         // NO marcar fotosCapturadas aquí, solo se marca cuando se captura la foto de carga
@@ -1719,6 +1782,9 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           );
         this.photoData.cargoRemolque1 = photoUrl;
 
+        console.log('📸 [CARGO R1] Foto de carga capturada:', photoUrl);
+        console.log('📸 [CARGO R1] Fotos ANTES de agregar:', JSON.stringify(this.doubleTrailerState.remolque1.fotos));
+
         // Actualizar el estado del remolque 1
         if (this.weighingForm.get('doubleTrailer')?.value) {
           if (!this.doubleTrailerState.remolque1.fotos) {
@@ -1729,6 +1795,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             photoUrl,
           ];
           this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
+
+          console.log('📸 [CARGO R1] Fotos DESPUÉS de agregar:', JSON.stringify(this.doubleTrailerState.remolque1.fotos));
+        } else {
+          console.warn('⚠️ [CARGO R1] NO es doble remolque o checkbox no marcado');
         }
 
         this.showToast(
@@ -2086,7 +2156,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       tieneEdicionesManuale: this.hasManualEdits,
     };
 
-    console.log('🔄 Guardando entrada parcial de doble remolque:', request);
+    console.log('🔄 [SAVE R1] Guardando entrada parcial de doble remolque');
+    console.log('📸 [SAVE R1] Fotos en request.remolque1.fotos:', JSON.stringify(request.remolque1.fotos));
+    console.log('📸 [SAVE R1] fotoCargaCapturada:', request.remolque1.fotoCargaCapturada);
+    console.log('📸 [SAVE R1] fotoPlacaCapturada:', request.remolque1.fotoPlacaCapturada);
+    console.log('🔄 [SAVE R1] Request completo:', JSON.stringify(request, null, 2));
 
     this.weighingService.createPartialDoubleTrailerEntry(request).subscribe({
       next: (response) => {
