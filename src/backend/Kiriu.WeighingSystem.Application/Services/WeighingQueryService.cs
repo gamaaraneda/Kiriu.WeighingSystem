@@ -147,8 +147,7 @@ public class WeighingQueryService : IWeighingQueryService
                     PesadoEntradaPor = GetPesadoEntradaPor(op),
                     PesadoSalidaPor = GetPesadoSalidaPor(op),
                     FechaEntrada = op.EntryDate,
-                    FechaSalida = op.ExitDate,
-                    EditadoPor = op.UsuarioEditor ?? ""
+                    FechaSalida = op.ExitDate
                 };
 
                 // Para doble remolque, agregar fechas y pesos individuales de cada remolque
@@ -173,6 +172,7 @@ public class WeighingQueryService : IWeighingQueryService
                 }
 
                 // Construir bloques de edición: primero valores actuales, luego historial
+                dto.EditadoPor = BuildEditadoPorColumn(op);
                 dto.FechaEdicion = BuildFechasEdicionColumn(op);
                 dto.Justificacion = BuildJustificacionColumn(op);
                 dto.ValoresOriginales = BuildValoresOriginalesColumn(op);
@@ -461,6 +461,39 @@ public class WeighingQueryService : IWeighingQueryService
                 if (!string.IsNullOrWhiteSpace(valoresEditados))
                 {
                     bloques.Add(valoresEditados);
+                }
+            }
+        }
+
+        // Separar cada bloque con salto de línea
+        return string.Join("\n", bloques);
+    }
+
+    /// <summary>
+    /// Construye la columna "Editado Por" con formato:
+    /// Todos los usuarios que han editado el registro ordenados de más reciente a más antigua (separadas por salto de línea)
+    /// </summary>
+    private static string BuildEditadoPorColumn(Domain.Entities.WeighingOperation operation)
+    {
+        var bloques = new List<string>();
+
+        // Mostrar solo los usuarios del historial de ediciones ordenados de más reciente a más antigua
+        if (operation.EditHistory != null && operation.EditHistory.Any())
+        {
+            var edicionesOrdenadas = operation.EditHistory
+                .OrderByDescending(h => h.FechaEdicion)
+                .ToList();
+
+            foreach (var edicion in edicionesOrdenadas)
+            {
+                var usuario = FormatUsername(edicion.UsuarioEditor);
+                if (!string.IsNullOrWhiteSpace(usuario))
+                {
+                    bloques.Add(usuario);
+                }
+                else
+                {
+                    bloques.Add("(Sin usuario)");
                 }
             }
         }

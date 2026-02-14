@@ -124,6 +124,7 @@ public class ExcelExportService : IExcelExportService
             worksheet.Cells[excelRow, 20].Value = item.ValoresOriginales;
 
             // Habilitar ajuste de texto (text wrap) para las columnas de edición para mostrar saltos de línea
+            worksheet.Cells[excelRow, 17].Style.WrapText = true;
             worksheet.Cells[excelRow, 18].Style.WrapText = true;
             worksheet.Cells[excelRow, 19].Style.WrapText = true;
             worksheet.Cells[excelRow, 20].Style.WrapText = true;
@@ -150,6 +151,7 @@ public class ExcelExportService : IExcelExportService
         worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
         // Configurar ancho personalizado para las columnas de edición
+        worksheet.Column(17).Width = 20; // Editado Por
         worksheet.Column(18).Width = 20; // Fecha Edición
         worksheet.Column(19).Width = 180; // Justificación
         worksheet.Column(20).Width = 180; // Valores Originales (la más ancha)
