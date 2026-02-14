@@ -119,9 +119,14 @@ public class ExcelExportService : IExcelExportService
             }
 
             worksheet.Cells[excelRow, 17].Value = item.EditadoPor;
-            worksheet.Cells[excelRow, 18].Value = item.FechaEdicion?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "";
+            worksheet.Cells[excelRow, 18].Value = item.FechaEdicion;
             worksheet.Cells[excelRow, 19].Value = item.Justificacion;
             worksheet.Cells[excelRow, 20].Value = item.ValoresOriginales;
+
+            // Habilitar ajuste de texto (text wrap) para las columnas de edición para mostrar saltos de línea
+            worksheet.Cells[excelRow, 18].Style.WrapText = true;
+            worksheet.Cells[excelRow, 19].Style.WrapText = true;
+            worksheet.Cells[excelRow, 20].Style.WrapText = true;
 
             // Aplicar bordes a todas las celdas de datos
             for (int col = 1; col <= headers.Length; col++)
@@ -129,8 +134,9 @@ public class ExcelExportService : IExcelExportService
                 worksheet.Cells[excelRow, col].Style.Border.BorderAround(ExcelBorderStyle.Thin);
             }
 
-            // Resaltar registros editados
-            if (item.FechaEdicion.HasValue)
+            // Resaltar registros editados en amarillo
+            // Un registro está editado si la columna "Justificación" contiene más de una línea (valores actuales + ediciones)
+            if (!string.IsNullOrWhiteSpace(item.Justificacion) && item.Justificacion.Contains("\n"))
             {
                 for (int col = 1; col <= headers.Length; col++)
                 {
@@ -143,8 +149,13 @@ public class ExcelExportService : IExcelExportService
         // Autoajustar columnas
         worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
 
+        // Configurar ancho personalizado para las columnas de edición
+        worksheet.Column(18).Width = 20; // Fecha Edición
+        worksheet.Column(19).Width = 180; // Justificación
+        worksheet.Column(20).Width = 180; // Valores Originales (la más ancha)
+
         // Configurar formato de números para peso
-        var weightColumns = new[] { 10, 11, 12 }; // Columnas de peso bruto, salida y neto
+        var weightColumns = new[] { 9, 10, 11 }; // Columnas de peso bruto, salida y neto
         foreach (var col in weightColumns)
         {
             worksheet.Column(col).Style.Numberformat.Format = "#,##0.00";

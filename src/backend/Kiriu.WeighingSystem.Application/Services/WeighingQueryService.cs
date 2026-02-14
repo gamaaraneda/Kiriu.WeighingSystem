@@ -148,8 +148,7 @@ public class WeighingQueryService : IWeighingQueryService
                     PesadoSalidaPor = GetPesadoSalidaPor(op),
                     FechaEntrada = op.EntryDate,
                     FechaSalida = op.ExitDate,
-                    EditadoPor = op.UsuarioEditor ?? "",
-                    FechaEdicion = op.FechaUltimaEdicion
+                    EditadoPor = op.UsuarioEditor ?? ""
                 };
 
                 // Para doble remolque, agregar fechas y pesos individuales de cada remolque
@@ -173,16 +172,10 @@ public class WeighingQueryService : IWeighingQueryService
                     }
                 }
 
-                // Mapear el último historial de ediciones si existe
-                if (op.EditHistory != null && op.EditHistory.Any())
-                {
-                    var ultimaEdicion = op.EditHistory.OrderByDescending(h => h.FechaEdicion).FirstOrDefault();
-                    if (ultimaEdicion != null)
-                    {
-                        dto.Justificacion = ultimaEdicion.Justificacion ?? "";
-                        dto.ValoresOriginales = FormatValoresOriginales(ultimaEdicion.ValoresOriginales);
-                    }
-                }
+                // Construir bloques de edición: primero valores actuales, luego historial
+                dto.FechaEdicion = BuildFechasEdicionColumn(op);
+                dto.Justificacion = BuildJustificacionColumn(op);
+                dto.ValoresOriginales = BuildValoresOriginalesColumn(op);
 
                 return dto;
             }).ToList();
@@ -394,6 +387,86 @@ public class WeighingQueryService : IWeighingQueryService
             // Si falla el parseo, retornar el JSON original
             return valoresOriginalesJson;
         }
+    }
+
+    /// <summary>
+    /// Construye la columna "Fecha de Edición" con formato:
+    /// Todas las ediciones ordenadas de más reciente a más antigua (separadas por salto de línea)
+    /// </summary>
+    private static string BuildFechasEdicionColumn(Domain.Entities.WeighingOperation operation)
+    {
+        var bloques = new List<string>();
+
+        // Mostrar solo las ediciones históricas ordenadas de más reciente a más antigua
+        if (operation.EditHistory != null && operation.EditHistory.Any())
+        {
+            var edicionesOrdenadas = operation.EditHistory
+                .OrderByDescending(h => h.FechaEdicion)
+                .ToList();
+
+            foreach (var edicion in edicionesOrdenadas)
+            {
+                bloques.Add(edicion.FechaEdicion.ToLocalTime().ToString("dd/MM/yyyy HH:mm"));
+            }
+        }
+
+        // Separar cada bloque con salto de línea
+        return string.Join("\n", bloques);
+    }
+
+    /// <summary>
+    /// Construye la columna "Justificación" con formato:
+    /// Todas las justificaciones de ediciones ordenadas de más reciente a más antigua (separadas por salto de línea)
+    /// </summary>
+    private static string BuildJustificacionColumn(Domain.Entities.WeighingOperation operation)
+    {
+        var bloques = new List<string>();
+
+        // Mostrar solo las justificaciones históricas ordenadas de más reciente a más antigua
+        if (operation.EditHistory != null && operation.EditHistory.Any())
+        {
+            var edicionesOrdenadas = operation.EditHistory
+                .OrderByDescending(h => h.FechaEdicion)
+                .ToList();
+
+            foreach (var edicion in edicionesOrdenadas)
+            {
+                var justificacion = edicion.Justificacion ?? "(Sin justificación)";
+                bloques.Add(justificacion);
+            }
+        }
+
+        // Separar cada bloque con salto de línea
+        return string.Join("\n", bloques);
+    }
+
+    /// <summary>
+    /// Construye la columna "Valores Originales" con formato:
+    /// Todas las ediciones históricas ordenadas de más reciente a más antigua (separadas por salto de línea)
+    /// </summary>
+    private static string BuildValoresOriginalesColumn(Domain.Entities.WeighingOperation operation)
+    {
+        var bloques = new List<string>();
+
+        // Mostrar solo las ediciones históricas ordenadas de más reciente a más antigua
+        if (operation.EditHistory != null && operation.EditHistory.Any())
+        {
+            var edicionesOrdenadas = operation.EditHistory
+                .OrderByDescending(h => h.FechaEdicion)
+                .ToList();
+
+            foreach (var edicion in edicionesOrdenadas)
+            {
+                var valoresEditados = FormatValoresOriginales(edicion.ValoresOriginales);
+                if (!string.IsNullOrWhiteSpace(valoresEditados))
+                {
+                    bloques.Add(valoresEditados);
+                }
+            }
+        }
+
+        // Separar cada bloque con salto de línea
+        return string.Join("\n", bloques);
     }
 
 }

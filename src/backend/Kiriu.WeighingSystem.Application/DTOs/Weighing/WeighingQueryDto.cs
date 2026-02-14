@@ -86,7 +86,6 @@ public class WeighingExportDto
     public DateTime? FechaEntrada { get; set; }
     public DateTime? FechaSalida { get; set; }
     public string EditadoPor { get; set; } = string.Empty;
-    public DateTime? FechaEdicion { get; set; }
 
     // Campos adicionales para doble remolque (fechas individuales de cada remolque)
     public DateTime? FechaEntradaRemolque1 { get; set; }
@@ -100,7 +99,8 @@ public class WeighingExportDto
     public decimal? PesoTaraRemolque1 { get; set; }
     public decimal? PesoTaraRemolque2 { get; set; }
 
-    // Campos de historial de ediciones (solo la última modificación)
+    // Campos de historial de ediciones (concatenados: todas las ediciones de más reciente a más antigua)
+    public string FechaEdicion { get; set; } = string.Empty;
     public string Justificacion { get; set; } = string.Empty;
     public string ValoresOriginales { get; set; } = string.Empty;
 }
