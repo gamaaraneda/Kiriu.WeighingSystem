@@ -348,6 +348,26 @@ export class ContinueDoubleTrailerComponent implements OnInit, OnDestroy {
     });
   }
 
+  onQueries(): void {
+    this.router.navigate(['/weighing-query']);
+  }
+
+  onAdmin(): void {
+    this.router.navigate(['/admin']);
+  }
+
+  onLogout(): void {
+    this.authService.logout().subscribe({
+      next: () => {
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('Error en logout:', error);
+        this.router.navigate(['/login']);
+      },
+    });
+  }
+
   cancel(): void {
     this.selectedOperation = null;
     this.remolque2Form.reset();

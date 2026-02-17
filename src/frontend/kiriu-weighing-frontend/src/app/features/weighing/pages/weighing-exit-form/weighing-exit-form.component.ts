@@ -741,6 +741,13 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Maneja clic en administración
+   */
+  onAdmin(): void {
+    this.router.navigate(['/admin']);
+  }
+
+  /**
    * Maneja clic en logout
    */
   onLogout(): void {

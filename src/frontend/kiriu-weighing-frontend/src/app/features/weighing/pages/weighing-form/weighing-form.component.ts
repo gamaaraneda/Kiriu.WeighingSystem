@@ -2689,6 +2689,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     this.router.navigate(['/weighing-query']);
   }
 
+  onAdmin(): void {
+    this.router.navigate(['/admin']);
+  }
+
   onLogout(): void {
     this.authService.logout().subscribe({
       next: () => {

@@ -1,5 +1,9 @@
 <div class="continue-container">
-  <app-header></app-header>
+  <app-header
+    (queriesClick)="onQueries()"
+    (adminClick)="onAdmin()"
+    (logoutClick)="onLogout()"
+  ></app-header>
 
   <main class="page-container">
     <span class="crumb">Pesaje</span>
