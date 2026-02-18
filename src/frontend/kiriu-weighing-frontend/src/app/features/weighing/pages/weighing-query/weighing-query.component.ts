@@ -422,14 +422,25 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     const entryOnlyTypes = ['cargoEntry'];
     const exitOnlyTypes = ['cargoState', 'cargoExit'];
 
-    // Agrupar fotos por tipo
-    const photosByType = new Map<string, WeighingPhotoDto[]>();
-
-    this.selectedOperation.photos.forEach(photo => {
-      if (!photosByType.has(photo.photoType)) {
-        photosByType.set(photo.photoType, []);
+    // Helper: obtener clave de agrupación para una foto.
+    // Para remolque1Plate se agrupa por tipo+placa porque en doble remolque
+    // ese photoType contiene fotos de dos remolques distintos (R1 y R2 de entrada).
+    const getGroupKey = (photo: WeighingPhotoDto): string => {
+      if (photo.photoType === 'remolque1Plate') {
+        const plateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+        if (plateMatch) return `remolque1Plate|${plateMatch[1]}`;
       }
-      photosByType.get(photo.photoType)!.push(photo);
+      return photo.photoType;
+    };
+
+    // Agrupar fotos por clave de grupo
+    const photosByType = new Map<string, WeighingPhotoDto[]>();
+    this.selectedOperation.photos.forEach(photo => {
+      const key = getGroupKey(photo);
+      if (!photosByType.has(key)) {
+        photosByType.set(key, []);
+      }
+      photosByType.get(key)!.push(photo);
     });
 
     // Clasificar cada foto
@@ -445,26 +456,51 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       else if (exitOnlyTypes.includes(photo.photoType)) {
         isEntry = false;
       }
-      // Tipos que pueden ser entrada o salida (placas)
+      // Tipos que pueden ser entrada o salida (placas y cargas)
       else {
-        // Si la operación está en estado de ENTRADA, todas las fotos son de entrada
-        if (this.selectedOperation?.estado === 'ENTRADA_REGISTRADA') {
+        // Si la operación está en estado de ENTRADA (completa o parcial R1), todas las fotos son de entrada
+        const entradaStates = ['ENTRADA_REGISTRADA', 'ENTRADA_PARCIAL_R1'];
+        if (entradaStates.includes(this.selectedOperation?.estado ?? '')) {
           isEntry = true;
         } else {
-          const photosOfSameType = photosByType.get(photo.photoType)!;
+          // Para SALIDA_PARCIAL_R1 y SALIDA_REGISTRADA: clasificar por timestamp dentro del grupo
+          const groupKey = getGroupKey(photo);
+          const photosOfSameGroup = photosByType.get(groupKey)!;
 
-          if (photosOfSameType.length === 1) {
-            // Si solo hay una foto de este tipo, clasificar por posición global
-            const allPhotos = this.selectedOperation?.photos || [];
-            const sortedAllPhotos = [...allPhotos].sort((a, b) =>
-              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-            );
-            const middleIndex = Math.floor(sortedAllPhotos.length / 2);
-            const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
-            isEntry = photoIndex < middleIndex;
+          if (photosOfSameGroup.length === 1) {
+            // Una sola foto en el grupo:
+            // En SALIDA_PARCIAL_R1, la foto solitaria de un grupo es de entrada
+            // salvo que sea trailerPlate o cargoRemolque1 (que sí se persisten en salida R1).
+            // Para remolque1Plate se necesita distinguir por placa: si la placa coincide
+            // con el remolque que ya tiene fechaSalida, es de salida; si no, es entrada.
+            if (this.selectedOperation?.estado === 'SALIDA_PARCIAL_R1') {
+              if (photo.photoType === 'remolque1Plate') {
+                // Verificar si la placa de esta foto pertenece al remolque con fechaSalida
+                const plateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+                const plateAnpr = plateMatch?.[1]?.toUpperCase();
+                const exitedRemolque = this.selectedOperation.remolques?.find(
+                  r => r.fechaSalida != null
+                );
+                const exitedPlate = exitedRemolque?.placa?.toUpperCase();
+                // Solo es salida si la placa coincide con la del remolque que salió
+                isEntry = !(plateAnpr && exitedPlate && plateAnpr === exitedPlate);
+              } else {
+                const exitR1Types = ['trailerPlate', 'cargoRemolque1'];
+                isEntry = !exitR1Types.includes(photo.photoType);
+              }
+            } else {
+              // Para SALIDA_REGISTRADA: clasificar por posición global
+              const allPhotos = this.selectedOperation?.photos || [];
+              const sortedAllPhotos = [...allPhotos].sort((a, b) =>
+                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              );
+              const middleIndex = Math.floor(sortedAllPhotos.length / 2);
+              const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
+              isEntry = photoIndex < middleIndex;
+            }
           } else {
-            // Si hay múltiples fotos del mismo tipo, la más antigua es entrada
-            const sortedByTime = [...photosOfSameType].sort((a, b) =>
+            // Múltiples fotos en el mismo grupo: la más antigua es entrada, el resto salida
+            const sortedByTime = [...photosOfSameGroup].sort((a, b) =>
               new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
             );
             isEntry = photo.id === sortedByTime[0].id;
@@ -479,9 +515,36 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
       };
     });
 
+    // Deduplicar para doble remolque en estados de solo-entrada:
+    // En ENTRADA_REGISTRADA y ENTRADA_PARCIAL_R1 no deben existir fotos de salida,
+    // por lo que si hay duplicados del mismo tipo se conserva solo la más reciente.
+    // En SALIDA_PARCIAL_R1 y SALIDA_REGISTRADA NO se deduplica: las fotos duplicadas
+    // por tipo son legítimas (una de entrada, otra de salida) y se clasifican por timestamp.
+    let photosToRender = photosWithClassification;
+    const entradaStatesDedup = ['ENTRADA_REGISTRADA', 'ENTRADA_PARCIAL_R1'];
+    if (
+      this.selectedOperation.tipoUnidad === 'doble-remolque' &&
+      entradaStatesDedup.includes(this.selectedOperation.estado)
+    ) {
+      const dedupMap = new Map<string, typeof photosWithClassification[0]>();
+      for (const item of photosWithClassification) {
+        // Clave única: tipo. Para remolque1Plate también incluir la placa.
+        let key = item.photo.photoType;
+        if (item.photo.photoType === 'remolque1Plate') {
+          const plateMatch = item.photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+          if (plateMatch) key += `|${plateMatch[1]}`;
+        }
+        const existing = dedupMap.get(key);
+        if (!existing || item.timestamp > existing.timestamp) {
+          dedupMap.set(key, item);
+        }
+      }
+      photosToRender = Array.from(dedupMap.values());
+    }
+
     // Ordenar: primero las de entrada, luego las de salida
     // Dentro de cada grupo, ordenar por timestamp ascendente
-    return photosWithClassification
+    return photosToRender
       .sort((a, b) => {
         // Primero ordenar por grupo (entrada primero)
         if (a.isEntry && !b.isEntry) return -1;
@@ -581,8 +644,9 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     } else if (exitOnlyTypes.includes(photo.photoType)) {
       suffix = ' – Salida';
     } else if (this.selectedOperation && photo.createdAt) {
-      // Si la operación está en estado de ENTRADA, todas las fotos son de entrada
-      if (this.selectedOperation.estado === 'ENTRADA_REGISTRADA') {
+      // Si la operación está en estado de ENTRADA (completa o parcial R1), todas las fotos son de entrada
+      const entradaStates = ['ENTRADA_REGISTRADA', 'ENTRADA_PARCIAL_R1'];
+      if (entradaStates.includes(this.selectedOperation.estado)) {
         suffix = ' – Entrada';
       } else {
         // Para tipos que pueden estar en entrada o salida (placas)
@@ -602,18 +666,33 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           return true;
         });
 
-        // Si solo hay una foto con este identificador, clasificar por timestamp global
+        // Si solo hay una foto con este identificador
         if (photosOfSameType.length === 1) {
-          const allPhotos = this.selectedOperation.photos;
-          const photoTime = new Date(photo.createdAt).getTime();
-          const sortedAllPhotos = [...allPhotos].sort((a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-
-          const middleIndex = Math.floor(sortedAllPhotos.length / 2);
-          const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
-
-          suffix = photoIndex < middleIndex ? ' – Entrada' : ' – Salida';
+          // En SALIDA_PARCIAL_R1: foto solitaria es entrada salvo casos específicos.
+          // Para remolque1Plate se verifica la placa contra el remolque con fechaSalida.
+          if (this.selectedOperation.estado === 'SALIDA_PARCIAL_R1') {
+            if (photo.photoType === 'remolque1Plate') {
+              const plateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
+              const plateAnpr = plateMatch?.[1]?.toUpperCase();
+              const exitedRemolque = this.selectedOperation.remolques?.find(
+                r => r.fechaSalida != null
+              );
+              const exitedPlate = exitedRemolque?.placa?.toUpperCase();
+              suffix = (plateAnpr && exitedPlate && plateAnpr === exitedPlate)
+                ? ' – Salida' : ' – Entrada';
+            } else {
+              const exitR1Types = ['trailerPlate', 'cargoRemolque1'];
+              suffix = exitR1Types.includes(photo.photoType) ? ' – Salida' : ' – Entrada';
+            }
+          } else {
+            const allPhotos = this.selectedOperation.photos;
+            const sortedAllPhotos = [...allPhotos].sort((a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            );
+            const middleIndex = Math.floor(sortedAllPhotos.length / 2);
+            const photoIndex = sortedAllPhotos.findIndex(p => p.id === photo.id);
+            suffix = photoIndex < middleIndex ? ' – Entrada' : ' – Salida';
+          }
         } else {
           // Ordenar fotos del mismo identificador por timestamp
           const sortedByTime = [...photosOfSameType].sort((a, b) =>
