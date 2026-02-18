@@ -1352,12 +1352,25 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 );
               }
               // Actualizar estado de doble remolque
-              if (
-                this.weighingForm.get('doubleTrailer')?.value &&
-                orphanPhoto.licensePlate
-              ) {
-                this.doubleTrailerState.remolque1.placa =
-                  orphanPhoto.licensePlate;
+              if (this.weighingForm.get('doubleTrailer')?.value) {
+                if (orphanPhoto.licensePlate) {
+                  this.doubleTrailerState.remolque1.placa =
+                    orphanPhoto.licensePlate;
+                }
+                // FIX: agregar foto al array para que se persista en backend
+                if (!this.doubleTrailerState.remolque1.fotos) {
+                  this.doubleTrailerState.remolque1.fotos = [];
+                }
+                if (!this.doubleTrailerState.remolque1.fotos.includes(orphanPhoto.photoUrl)) {
+                  this.doubleTrailerState.remolque1.fotos = [
+                    ...this.doubleTrailerState.remolque1.fotos,
+                    orphanPhoto.photoUrl,
+                  ];
+                  console.log(
+                    `📸 [DB R1] Foto placa R1 agregada al array. Fotos: ${JSON.stringify(this.doubleTrailerState.remolque1.fotos)}`,
+                  );
+                }
+                this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
               }
             } else if (photoType === 'remolque2Plate') {
               // DOBLE REMOLQUE: Guardar foto de remolque 2
@@ -1372,12 +1385,25 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 );
               }
               // Actualizar estado de doble remolque
-              if (
-                this.weighingForm.get('doubleTrailer')?.value &&
-                orphanPhoto.licensePlate
-              ) {
-                this.doubleTrailerState.remolque2.placa =
-                  orphanPhoto.licensePlate;
+              if (this.weighingForm.get('doubleTrailer')?.value) {
+                if (orphanPhoto.licensePlate) {
+                  this.doubleTrailerState.remolque2.placa =
+                    orphanPhoto.licensePlate;
+                }
+                // FIX: agregar foto al array para que se persista en backend
+                if (!this.doubleTrailerState.remolque2.fotos) {
+                  this.doubleTrailerState.remolque2.fotos = [];
+                }
+                if (!this.doubleTrailerState.remolque2.fotos.includes(orphanPhoto.photoUrl)) {
+                  this.doubleTrailerState.remolque2.fotos = [
+                    ...this.doubleTrailerState.remolque2.fotos,
+                    orphanPhoto.photoUrl,
+                  ];
+                  console.log(
+                    `📸 [DB R2] Foto placa R2 agregada al array. Fotos: ${JSON.stringify(this.doubleTrailerState.remolque2.fotos)}`,
+                  );
+                }
+                this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
               }
             }
 
