@@ -569,7 +569,9 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
 
   getPhotosCount(): number {
     if (!this.selectedOperation || !this.selectedOperation.photos) return 0;
-    return this.selectedOperation.photos.length;
+    // Retornar la cantidad de fotos que realmente se van a renderizar
+    // (después de clasificación, deduplicación y filtrado)
+    return this.getSortedPhotos().length;
   }
 
   getPhotosByType(photoType: string): any[] {
