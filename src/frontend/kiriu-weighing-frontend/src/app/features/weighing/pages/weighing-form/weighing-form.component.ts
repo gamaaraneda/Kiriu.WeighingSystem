@@ -3482,6 +3482,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       // asigne el peso al Remolque 1 en el primer clic (evitar que currentStep siga en 'trailer').
       if (isDoubleTrailer) {
         this.doubleTrailerState.currentStep = 'remolque1';
+
+        // Limpiar fotos del remolque 1 antes de nueva captura para obtener siempre la última
+        this.doubleTrailerState.remolque1.fotos = [];
+        this.doubleTrailerState.remolque1.fotoCargaCapturada = false;
+        this.doubleTrailerState.remolque1.fotoPlacaCapturada = false;
+        console.log('🧹 [CLEANUP] Array de fotos R1 limpiado antes de captura');
       }
 
       // Solicitar peso antes de capturar fotos
@@ -3625,6 +3631,12 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     console.log('🎯 [WEIGHING-FORM] Iniciando captura de fotos Remolque 2');
 
     try {
+      // Limpiar fotos del remolque 2 antes de nueva captura para obtener siempre la última
+      this.doubleTrailerState.remolque2.fotos = [];
+      this.doubleTrailerState.remolque2.fotoCargaCapturada = false;
+      this.doubleTrailerState.remolque2.fotoPlacaCapturada = false;
+      console.log('🧹 [CLEANUP] Array de fotos R2 limpiado antes de captura');
+
       // Solicitar peso antes de capturar fotos
       this.requestCurrentWeight();
 
