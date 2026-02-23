@@ -84,12 +84,19 @@ public class WeighingPhotoRepository : IWeighingPhotoRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task LinkOrphanPhotoToOperationAsync(Guid photoId, Guid operationId)
+    public async Task LinkOrphanPhotoToOperationAsync(Guid photoId, Guid operationId, string? finalPhotoType = null)
     {
         var photo = await _context.WeighingPhotos.FindAsync(photoId);
         if (photo != null && photo.WeighingOperationId == null)
         {
             photo.WeighingOperationId = operationId;
+
+            // Asignar FinalPhotoType si se proporciona
+            if (!string.IsNullOrEmpty(finalPhotoType))
+            {
+                photo.FinalPhotoType = finalPhotoType;
+            }
+
             await _context.SaveChangesAsync();
         }
     }

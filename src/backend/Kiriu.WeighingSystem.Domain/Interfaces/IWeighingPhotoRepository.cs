@@ -25,5 +25,6 @@ public interface IWeighingPhotoRepository
     /// <summary>
     /// Vincula una foto huérfana con una operación de pesaje
     /// </summary>
-    Task LinkOrphanPhotoToOperationAsync(Guid photoId, Guid operationId);
+    /// <param name="finalPhotoType">Tipo final de la foto según el request (opcional)</param>
+    Task LinkOrphanPhotoToOperationAsync(Guid photoId, Guid operationId, string? finalPhotoType = null);
 }

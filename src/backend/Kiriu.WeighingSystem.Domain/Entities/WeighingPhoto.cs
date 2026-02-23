@@ -11,7 +11,14 @@ public class WeighingPhoto
     [Required]
     [MaxLength(50)]
     public string PhotoType { get; set; } = string.Empty; // trailerPlate, trailerPlate2, cargo, remolque1Plate, etc.
-    
+
+    /// <summary>
+    /// Tipo FINAL de la foto según el request (trailerPlate, trailerPlate2, cargo, etc.)
+    /// Este campo almacena el tipo real de la foto después de inversiones u otras transformaciones.
+    /// </summary>
+    [MaxLength(50)]
+    public string? FinalPhotoType { get; set; }
+
     [Required]
     [MaxLength(500)]
     public string PhotoUrl { get; set; } = string.Empty;

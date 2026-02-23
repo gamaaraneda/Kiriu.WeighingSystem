@@ -483,12 +483,13 @@ public class WeighingApplicationService : IWeighingApplicationService
     private async Task ProcessPhotosFromRequestAsync(Guid operationId, PhotoDataDto photos)
     {
         // Procesar todas las fotos de forma asíncrona
-        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate");
-        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate2, "trailerPlate2");
-        await ProcessPhotoFieldAsync(operationId, photos.Cargo, "cargoEntry");
-        await ProcessPhotoFieldAsync(operationId, photos.Remolque1Plate, "remolque1Plate");
-        await ProcessPhotoFieldAsync(operationId, photos.Remolque2Plate, "remolque2Plate");
-        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque2, "cargoRemolque2");
+        // FinalPhotoType = nombre de la propiedad del request (ej. "trailerPlate" en lugar de "trailerPlate")
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate", "trailerPlate_entry");
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate2, "trailerPlate2", "remolquePlate_entry");
+        await ProcessPhotoFieldAsync(operationId, photos.Cargo, "cargoEntry", "cargo_entry");
+        await ProcessPhotoFieldAsync(operationId, photos.Remolque1Plate, "remolque1Plate", "remolque1Plate_entry");
+        await ProcessPhotoFieldAsync(operationId, photos.Remolque2Plate, "remolque2Plate", "remolque2Plate_entry");
+        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque2, "cargoRemolque2", "cargoRemolque2_entry");
     }
 
     private async Task ProcessDoubleTrailerPhotosAsync(Guid operationId, CreateDoubleTrailerEntryRequest request)
@@ -499,7 +500,7 @@ public class WeighingApplicationService : IWeighingApplicationService
         if (!string.IsNullOrEmpty(request.TrailerPlacaFoto))
         {
             _logger.LogInformation("Procesando foto del tráiler: {TrailerPlacaFoto}", request.TrailerPlacaFoto);
-            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate");
+            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate", "trailerPlate");
         }
         else
         {
@@ -527,7 +528,8 @@ public class WeighingApplicationService : IWeighingApplicationService
                     continue;
                 }
 
-                await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType);
+                // FinalPhotoType = mismo valor que photoType para doble remolque
+                await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType, photoType);
             }
         }
 
@@ -537,23 +539,25 @@ public class WeighingApplicationService : IWeighingApplicationService
     private async Task ProcessExitPhotosFromRequestAsync(Guid operationId, ExitPhotoDataDto photos)
     {
         // Usar el mismo motor que entrada para vincular fotos
-        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate");
-        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate2, "trailerPlate2");
-        await ProcessPhotoFieldAsync(operationId, photos.CargoState, "cargoExit");
-        await ProcessPhotoFieldAsync(operationId, photos.ContainerPlate, "containerPlate");
+        // FinalPhotoType = nombre de la propiedad del request
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate", "trailerPlate_exit");
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate2, "trailerPlate2", "remolquePlate_exit");
+        await ProcessPhotoFieldAsync(operationId, photos.CargoState, "cargoExit", "cargo_exit");
+        await ProcessPhotoFieldAsync(operationId, photos.ContainerPlate, "containerPlate", "containerPlate_exit");
     }
 
     private async Task ProcessDoubleTrailerExitPhotosFromRequestAsync(Guid operationId, DoubleTrailerExitPhotoDataDto photos)
     {
         // Usar el mismo motor que entrada para vincular fotos
-        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate");
-        await ProcessPhotoFieldAsync(operationId, photos.Remolque1Plate, "remolque1Plate");
-        await ProcessPhotoFieldAsync(operationId, photos.Remolque2Plate, "remolque2Plate");
-        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque1, "cargoRemolque1");
-        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque2, "cargoRemolque2");
+        // FinalPhotoType = nombre de la propiedad del request
+        await ProcessPhotoFieldAsync(operationId, photos.TrailerPlate, "trailerPlate", "trailerPlate_exit");
+        await ProcessPhotoFieldAsync(operationId, photos.Remolque1Plate, "remolque1Plate", "remolque1Plate_exit");
+        await ProcessPhotoFieldAsync(operationId, photos.Remolque2Plate, "remolque2Plate", "remolque2Plate_exit");
+        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque1, "cargoRemolque1", "cargoRemolque1_exit");
+        await ProcessPhotoFieldAsync(operationId, photos.CargoRemolque2, "cargoRemolque2", "cargoRemolque2_exit");
     }
 
-    private async Task ProcessPhotoFieldAsync(Guid operationId, string? photoUrl, string photoType)
+    private async Task ProcessPhotoFieldAsync(Guid operationId, string? photoUrl, string photoType, string? finalPhotoType = null)
     {
         // Solo procesar si es una URL de API (foto ANPR guardada en BD)
         // Ignorar marcadores de texto como "Foto capturada"
@@ -588,9 +592,9 @@ public class WeighingApplicationService : IWeighingApplicationService
             // Vincular la foto si se encontró (ya sea por URL o por tipo)
             if (orphanPhoto != null)
             {
-                await _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId);
-                _logger.LogInformation("✅ Foto huérfana {PhotoType} vinculada exitosamente: {PhotoId} -> {OperationId}",
-                    photoType, orphanPhoto.Id, operationId);
+                await _photoRepository.LinkOrphanPhotoToOperationAsync(orphanPhoto.Id, operationId, finalPhotoType);
+                _logger.LogInformation("✅ Foto huérfana {PhotoType} vinculada exitosamente: {PhotoId} -> {OperationId}, FinalPhotoType: {FinalPhotoType}",
+                    photoType, orphanPhoto.Id, operationId, finalPhotoType ?? "null");
             }
             else
             {
@@ -1512,7 +1516,7 @@ public class WeighingApplicationService : IWeighingApplicationService
         // Procesar foto del tráiler (si existe)
         if (!string.IsNullOrEmpty(request.TrailerPlacaFoto))
         {
-            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate");
+            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate", "trailerPlate");
         }
 
         // Procesar fotos del remolque 1
@@ -1542,7 +1546,8 @@ public class WeighingApplicationService : IWeighingApplicationService
                 photoType = "cargoRemolque1";
             }
 
-            await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType);
+            // FinalPhotoType = mismo valor que photoType
+            await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType, photoType);
         }
 
         _logger.LogInformation("Finalizado procesamiento de fotos para entrada parcial - OperationId: {OperationId}", operationId);
@@ -1579,7 +1584,8 @@ public class WeighingApplicationService : IWeighingApplicationService
                 photoType = "cargoRemolque2";
             }
 
-            await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType);
+            // FinalPhotoType = mismo valor que photoType
+            await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType, photoType);
         }
 
         _logger.LogInformation("Finalizado procesamiento de fotos para continuar doble remolque - OperationId: {OperationId}", operationId);

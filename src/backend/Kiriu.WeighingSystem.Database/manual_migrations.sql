@@ -16,7 +16,7 @@ GO
 -- =====================================================
 -- VARIABLES DE CONTROL
 -- =====================================================
-DECLARE @CurrentVersion INT = 9; -- Versión actual del script
+DECLARE @CurrentVersion INT = 10; -- Versión actual del script
 DECLARE @SchemaVersion INT;
 
 -- Crear tabla de versiones si no existe
@@ -737,6 +737,57 @@ END
 ELSE
 BEGIN
     PRINT 'Versión 9 ya aplicada, saltando...';
+END
+
+-- =====================================================
+-- MIGRACIÓN VERSIÓN 10: TIPO FINAL DE FOTO (FinalPhotoType)
+-- =====================================================
+IF @SchemaVersion < 10
+BEGIN
+    PRINT '==========================================';
+    PRINT 'APLICANDO MIGRACIÓN VERSIÓN 10: TIPO FINAL DE FOTO';
+    PRINT '==========================================';
+
+    -- Agregar columna FinalPhotoType a WeighingPhotos
+    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+                   WHERE TABLE_SCHEMA = 'weighing'
+                   AND TABLE_NAME = 'WeighingPhotos'
+                   AND COLUMN_NAME = 'FinalPhotoType')
+    BEGIN
+        ALTER TABLE [weighing].[WeighingPhotos]
+        ADD [FinalPhotoType] NVARCHAR(50) NULL;
+
+        PRINT '✓ Columna FinalPhotoType agregada a WeighingPhotos.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Columna FinalPhotoType ya existe en WeighingPhotos.';
+    END
+
+    -- Crear índice para búsquedas por FinalPhotoType
+    IF NOT EXISTS (SELECT * FROM sys.indexes
+                   WHERE name = 'IX_WeighingPhotos_FinalPhotoType'
+                   AND object_id = OBJECT_ID('weighing.WeighingPhotos'))
+    BEGIN
+        CREATE INDEX [IX_WeighingPhotos_FinalPhotoType]
+            ON [weighing].[WeighingPhotos] ([FinalPhotoType]);
+        PRINT '✓ Índice IX_WeighingPhotos_FinalPhotoType creado exitosamente.';
+    END
+    ELSE
+    BEGIN
+        PRINT '⚠ Índice IX_WeighingPhotos_FinalPhotoType ya existe.';
+    END
+
+    -- Registrar migración
+    INSERT INTO [dbo].[DatabaseVersions] ([Version], [Description], [ScriptName])
+    VALUES (10, 'Agregar columna FinalPhotoType para almacenar tipo final de foto según request', 'manual_migrations.sql');
+
+    PRINT '✓ Versión 10 aplicada exitosamente.';
+    PRINT '';
+END
+ELSE
+BEGIN
+    PRINT 'Versión 10 ya aplicada, saltando...';
 END
 
 -- Mostrar historial de migraciones
