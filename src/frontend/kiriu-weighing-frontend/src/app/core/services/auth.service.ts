@@ -38,10 +38,11 @@ export class AuthService {
   private refreshTokenTimer?: Subscription;
 
   constructor() {
-    // Configurar auto-refresh del token solo en el navegador
+    // IMPORTANTE: Limpiar sesión al inicializar la aplicación
+    // El cliente requiere que SIEMPRE se pida login (sin persistencia de sesión)
     if (this.isBrowser) {
-      this.setupTokenRefresh();
-      this.checkTokenExpiration();
+      console.log('🧹 AuthService: Limpiando sesión al inicializar (política de no persistencia)');
+      this.clearSessionOnInit();
     }
   }
 
@@ -271,6 +272,22 @@ export class AuthService {
 
     this.currentUserSubject.next(null);
     this.clearTokenRefresh();
+  }
+
+  /**
+   * Limpia la sesión al inicializar la aplicación (en el constructor).
+   * Implementa la política de "no persistencia de sesión" requerida por el cliente.
+   * No redirige porque el router aún no está disponible en el constructor.
+   */
+  private clearSessionOnInit(): void {
+    if (!this.isBrowser) return;
+
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.refreshTokenKey);
+    localStorage.removeItem(this.userKey);
+    localStorage.removeItem('token-expires-at');
+
+    this.currentUserSubject.next(null);
   }
 
   private getUserFromStorage(): UserInfo | null {
