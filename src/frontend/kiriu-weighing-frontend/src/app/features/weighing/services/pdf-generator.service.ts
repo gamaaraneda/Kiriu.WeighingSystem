@@ -650,20 +650,75 @@ export class PdfGeneratorService {
     const fechaEntradaFormateada = this.formatDateForQR(data.fechaEntrada);
     const fechaSalidaFormateada = this.formatDateForQR(data.fechaSalida);
 
-    // Extraer nombres de usuario de los almacenistas
-    const almacenistaEntrada =
-      data.createdBy && data.createdBy.trim() !== ''
-        ? this.extractUsername(data.createdBy)
+    // Construir datos del QR según estructura requerida
+    // Para doble remolque, concatenar información de ambos remolques (igual que en la tabla)
+    let almacenistaEntrada = '';
+    let almacenistaSalida = '';
+    let fechaEntradaQR = fechaEntradaFormateada;
+    let fechaSalidaQR = fechaSalidaFormateada;
+    let placaRemolqueQR = data.placaRemolque || '';
+    let placaRemolque2QR = '';
+
+    if (
+      data.tipoUnidad === 'doble-remolque' &&
+      data.remolque1 &&
+      data.remolque2 &&
+      data.remolque1.fechaEntrada &&
+      data.remolque2.fechaEntrada
+    ) {
+      // DOBLE REMOLQUE: Separar placas en campos distintos
+      placaRemolqueQR = data.remolque1.placa || data.placaRemolque || '';
+      placaRemolque2QR = data.remolque2.placa || '';
+
+      // Almacenista entrada: concatenar usuarios de ambos remolques
+      const usuario1Entrada = data.remolque1.usuarioEntrada
+        ? this.extractUsername(data.remolque1.usuarioEntrada)
         : '';
-    const almacenistaSalida =
-      data.exitRegisteredBy && data.exitRegisteredBy.trim() !== ''
-        ? this.extractUsername(data.exitRegisteredBy)
+      const usuario2Entrada = data.remolque2.usuarioEntrada
+        ? this.extractUsername(data.remolque2.usuarioEntrada)
         : '';
+      almacenistaEntrada = usuario1Entrada && usuario2Entrada
+        ? `${usuario1Entrada} - ${usuario2Entrada}`
+        : usuario1Entrada || usuario2Entrada;
+
+      // Almacenista salida: concatenar usuarios de ambos remolques
+      if (data.remolque1.fechaSalida && data.remolque2.fechaSalida) {
+        const usuario1Salida = data.remolque1.usuarioSalida
+          ? this.extractUsername(data.remolque1.usuarioSalida)
+          : '';
+        const usuario2Salida = data.remolque2.usuarioSalida
+          ? this.extractUsername(data.remolque2.usuarioSalida)
+          : '';
+        almacenistaSalida = usuario1Salida && usuario2Salida
+          ? `${usuario1Salida} - ${usuario2Salida}`
+          : usuario1Salida || usuario2Salida;
+      }
+
+      // Fechas: concatenar fechas de ambos remolques
+      const fecha1Entrada = this.formatDateForQR(data.remolque1.fechaEntrada);
+      const fecha2Entrada = this.formatDateForQR(data.remolque2.fechaEntrada);
+      fechaEntradaQR = `${fecha1Entrada} - ${fecha2Entrada}`;
+
+      if (data.remolque1.fechaSalida && data.remolque2.fechaSalida) {
+        const fecha1Salida = this.formatDateForQR(data.remolque1.fechaSalida);
+        const fecha2Salida = this.formatDateForQR(data.remolque2.fechaSalida);
+        fechaSalidaQR = `${fecha1Salida} - ${fecha2Salida}`;
+      }
+    } else {
+      // FLUJO NORMAL (remolque simple o contenedor): usar datos originales
+      almacenistaEntrada =
+        data.createdBy && data.createdBy.trim() !== ''
+          ? this.extractUsername(data.createdBy)
+          : '';
+      almacenistaSalida =
+        data.exitRegisteredBy && data.exitRegisteredBy.trim() !== ''
+          ? this.extractUsername(data.exitRegisteredBy)
+          : '';
+    }
 
     // Mapear tipo: "client" -> "cliente", "proveedor" -> "proveedor"
     const tipoQR = data.tipo === 'client' ? 'cliente' : data.tipo || 'cliente';
 
-    // Construir datos del QR según estructura requerida
     const qrData = JSON.stringify({
       folio: data.folio,
       fecha: fechaFormateada,
@@ -672,7 +727,8 @@ export class PdfGeneratorService {
       empresa: data.clienteProveedor || '',
       materialChofer: data.producto || '',
       placaTrailer: data.placaTrailer || '',
-      placaRemolque: data.placaRemolque || '',
+      placaRemolque: placaRemolqueQR,
+      ...(data.tipoUnidad === 'doble-remolque' && placaRemolque2QR && { placaRemolque2: placaRemolque2QR }),
       pesoEntrada: data.pesoBrutoEntrada
         ? data.pesoBrutoEntrada.toString()
         : '',
@@ -680,8 +736,8 @@ export class PdfGeneratorService {
       pesoNeto: data.pesoNeto || 0,
       almacenistaEntrada: almacenistaEntrada,
       almacenistaSalida: almacenistaSalida,
-      fechaEntrada: fechaEntradaFormateada,
-      fechaSalida: fechaSalidaFormateada,
+      fechaEntrada: fechaEntradaQR,
+      fechaSalida: fechaSalidaQR,
     });
 
     try {
