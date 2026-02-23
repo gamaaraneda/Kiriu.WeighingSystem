@@ -38,6 +38,10 @@ export interface WeighingQueryResult {
   folio: string;
   fecha: Date;
   placas: string;
+  trailerPlate?: string | null;
+  trailerPlate2?: string | null;
+  placaRemolque1?: string | null;
+  placaRemolque2?: string | null;
   clienteProveedor: string;
   producto: string;
   tipo: string;

@@ -414,6 +414,55 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     document.body.classList.add('km-scroll-lock');
   }
 
+  /**
+   * Normaliza una placa para comparación (uppercase, trim, sin espacios ni guiones)
+   */
+  private normalizePlate(plate: string | null | undefined): string {
+    if (!plate) return '';
+    return plate.toUpperCase().trim().replace(/[\s\-]/g, '');
+  }
+
+  /**
+   * Extrae la placa desde la descripción de una foto
+   * Ejemplo: "Placa ANPR: LTL077 - Cámara: remolque" => "LTL077"
+   */
+  private extractPlateFromDescription(description: string | null | undefined): string | null {
+    if (!description) return null;
+    const match = description.match(/Placa\s+ANPR:\s*([A-Z0-9\-]+)/i);
+    return match ? match[1].trim() : null;
+  }
+
+  /**
+   * Construye un diccionario de placas normalizadas a slot key
+   * Solo incluye campos no nulos del query result
+   */
+  private buildPlateSlotMap(operation: WeighingQueryResult): Map<string, string> {
+    const map = new Map<string, string>();
+
+    if (operation.tipoUnidad === 'doble-remolque') {
+      // Doble remolque: trailerPlate, placaRemolque1, placaRemolque2
+      if (operation.trailerPlate) {
+        map.set(this.normalizePlate(operation.trailerPlate), 'trailer');
+      }
+      if (operation.placaRemolque1) {
+        map.set(this.normalizePlate(operation.placaRemolque1), 'remolque1');
+      }
+      if (operation.placaRemolque2) {
+        map.set(this.normalizePlate(operation.placaRemolque2), 'remolque2');
+      }
+    } else {
+      // Flujo simple/contenedor: trailerPlate (trailer), trailerPlate2 (remolque/contenedor)
+      if (operation.trailerPlate) {
+        map.set(this.normalizePlate(operation.trailerPlate), 'trailer');
+      }
+      if (operation.trailerPlate2) {
+        map.set(this.normalizePlate(operation.trailerPlate2), 'remolqueSimple');
+      }
+    }
+
+    return map;
+  }
+
   getSortedPhotos(): WeighingPhotoDto[] {
     if (!this.selectedOperation || !this.selectedOperation.photos) {
       return [];
@@ -422,14 +471,27 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
     const entryOnlyTypes = ['cargoEntry'];
     const exitOnlyTypes = ['cargoState', 'cargoExit'];
 
-    // Helper: obtener clave de agrupación para una foto.
-    // Para remolque1Plate se agrupa por tipo+placa porque en doble remolque
-    // ese photoType contiene fotos de dos remolques distintos (R1 y R2 de entrada).
+    // Construir mapa de placas del query (fuente de verdad)
+    const plateSlotMap = this.buildPlateSlotMap(this.selectedOperation);
+
+    // Helper: obtener clave de agrupación para una foto usando clasificación por placas
     const getGroupKey = (photo: WeighingPhotoDto): string => {
-      if (photo.photoType === 'remolque1Plate') {
-        const plateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
-        if (plateMatch) return `remolque1Plate|${plateMatch[1]}`;
+      // Para fotos de placas, clasificar por placa extraída del description
+      const plateTypes = ['trailerPlate', 'trailerPlate2', 'remolque1Plate', 'remolque2Plate', 'containerPlate'];
+      if (plateTypes.includes(photo.photoType)) {
+        const extractedPlate = this.extractPlateFromDescription(photo.description);
+        if (extractedPlate) {
+          const normalizedPlate = this.normalizePlate(extractedPlate);
+          const slot = plateSlotMap.get(normalizedPlate);
+          if (slot) {
+            // Agrupar por slot clasificado (trailer, remolque1, remolque2, remolqueSimple)
+            return `plate_${slot}`;
+          }
+        }
+        // Fallback: si no se puede clasificar por placa, usar photoType
+        return `plate_unclassified_${photo.photoType}`;
       }
+      // Para fotos de carga, usar photoType
       return photo.photoType;
     };
 
@@ -592,22 +654,51 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
   }
 
   getPhotoLabel(photo: WeighingPhotoDto): string {
-    // Etiquetas base por tipo de fotografía
-    const baseLabels: { [key: string]: string } = {
-      trailerPlate: 'Placa del Tráiler',
-      trailerPlate2: 'Placa del Remolque',
-      cargo: 'Estado de la Carga',
-      cargoEntry: 'Estado de la Carga',
-      cargoExit: 'Estado de la Carga',
-      cargoState: 'Estado de la Carga',
-      containerPlate: 'Placa del Contenedor',
-      remolque1Plate: 'Placa Remolque',
-      remolque2Plate: 'Placa Remolque 2',
-      cargoRemolque1: 'Carga Remolque 1',
-      cargoRemolque2: 'Carga Remolque 2',
-    };
+    if (!this.selectedOperation) return photo.photoType;
 
-    const baseLabel = baseLabels[photo.photoType] || photo.photoType;
+    // Construir mapa de placas del query
+    const plateSlotMap = this.buildPlateSlotMap(this.selectedOperation);
+
+    // Para fotos de placas, determinar el label según el slot clasificado
+    const plateTypes = ['trailerPlate', 'trailerPlate2', 'remolque1Plate', 'remolque2Plate', 'containerPlate'];
+    let baseLabel = '';
+
+    if (plateTypes.includes(photo.photoType)) {
+      const extractedPlate = this.extractPlateFromDescription(photo.description);
+      if (extractedPlate) {
+        const normalizedPlate = this.normalizePlate(extractedPlate);
+        const slot = plateSlotMap.get(normalizedPlate);
+
+        if (slot === 'trailer') {
+          baseLabel = 'Placa del Tráiler';
+        } else if (slot === 'remolqueSimple') {
+          baseLabel = this.selectedOperation.tipoUnidad === 'contenedor'
+            ? 'Placa del Contenedor'
+            : 'Placa del Remolque';
+        } else if (slot === 'remolque1') {
+          baseLabel = 'Placa Remolque 1';
+        } else if (slot === 'remolque2') {
+          baseLabel = 'Placa Remolque 2';
+        } else {
+          // Fallback: usar etiquetas por defecto
+          baseLabel = photo.photoType === 'containerPlate' ? 'Placa del Contenedor' : 'Placa';
+        }
+      } else {
+        // Si no se pudo extraer placa, usar etiqueta por defecto
+        baseLabel = photo.photoType === 'containerPlate' ? 'Placa del Contenedor' : 'Placa';
+      }
+    } else {
+      // Para fotos de carga, usar etiquetas estándar
+      const cargoLabels: { [key: string]: string } = {
+        cargo: 'Estado de la Carga',
+        cargoEntry: 'Estado de la Carga',
+        cargoExit: 'Estado de la Carga',
+        cargoState: 'Estado de la Carga',
+        cargoRemolque1: 'Carga Remolque 1',
+        cargoRemolque2: 'Carga Remolque 2',
+      };
+      baseLabel = cargoLabels[photo.photoType] || photo.photoType;
+    }
 
     // Tipos que SIEMPRE son de entrada
     const entryOnlyTypes = ['cargoEntry'];
@@ -652,37 +743,50 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         suffix = ' – Entrada';
       } else {
         // Para tipos que pueden estar en entrada o salida (placas)
-        // Buscar todas las fotos con el mismo identificador (tipo + placa en caso de remolques)
-        const photosOfSameType = this.selectedOperation.photos.filter(p => {
-          if (p.photoType !== photo.photoType) return false;
+        // Buscar todas las fotos con el mismo SLOT de placa clasificado
+        let photosOfSameSlot: WeighingPhotoDto[] = [];
 
-          // Para remolques, agrupar por placa específica
-          if (photo.photoType === 'remolque1Plate') {
-            const pPlateMatch = p.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
-            const currentPlateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
-            if (pPlateMatch && currentPlateMatch) {
-              return pPlateMatch[1] === currentPlateMatch[1];
-            }
+        if (plateTypes.includes(photo.photoType)) {
+          const extractedPlate = this.extractPlateFromDescription(photo.description);
+          if (extractedPlate) {
+            const normalizedPlate = this.normalizePlate(extractedPlate);
+            const slot = plateSlotMap.get(normalizedPlate);
+
+            // Buscar todas las fotos que pertenecen al mismo slot
+            photosOfSameSlot = this.selectedOperation.photos.filter(p => {
+              if (!plateTypes.includes(p.photoType)) return false;
+              const pExtracted = this.extractPlateFromDescription(p.description);
+              if (!pExtracted) return false;
+              const pNormalized = this.normalizePlate(pExtracted);
+              const pSlot = plateSlotMap.get(pNormalized);
+              return pSlot === slot;
+            });
           }
+        } else {
+          // Para fotos de carga, buscar por photoType (comportamiento original)
+          photosOfSameSlot = this.selectedOperation.photos.filter(p => p.photoType === photo.photoType);
+        }
 
-          return true;
-        });
+        const photosOfSameType = photosOfSameSlot;
 
-        // Si solo hay una foto con este identificador
+        // Si solo hay una foto con este identificador/slot
         if (photosOfSameType.length === 1) {
           // En SALIDA_PARCIAL_R1: foto solitaria es entrada salvo casos específicos.
-          // Para remolque1Plate se verifica la placa contra el remolque con fechaSalida.
           if (this.selectedOperation.estado === 'SALIDA_PARCIAL_R1') {
-            if (photo.photoType === 'remolque1Plate') {
-              const plateMatch = photo.description?.match(/Placa ANPR: ([A-Z0-9]+)/);
-              const plateAnpr = plateMatch?.[1]?.toUpperCase();
-              const exitedRemolque = this.selectedOperation.remolques?.find(
-                r => r.fechaSalida != null
-              );
-              const exitedPlate = exitedRemolque?.placa?.toUpperCase();
-              suffix = (plateAnpr && exitedPlate && plateAnpr === exitedPlate)
-                ? ' – Salida' : ' – Entrada';
+            if (plateTypes.includes(photo.photoType)) {
+              // Para fotos de placas, verificar si pertenece al remolque que ya salió
+              const extractedPlate = this.extractPlateFromDescription(photo.description);
+              if (extractedPlate) {
+                const normalizedPhotoPlate = this.normalizePlate(extractedPlate);
+                const exitedRemolque = this.selectedOperation.remolques?.find(r => r.fechaSalida != null);
+                const normalizedExitedPlate = this.normalizePlate(exitedRemolque?.placa);
+                suffix = (normalizedPhotoPlate && normalizedExitedPlate && normalizedPhotoPlate === normalizedExitedPlate)
+                  ? ' – Salida' : ' – Entrada';
+              } else {
+                suffix = ' – Entrada'; // Fallback si no se puede extraer placa
+              }
             } else {
+              // Para fotos de carga, usar lógica por tipo
               const exitR1Types = ['trailerPlate', 'cargoRemolque1'];
               suffix = exitR1Types.includes(photo.photoType) ? ' – Salida' : ' – Entrada';
             }

@@ -18,6 +18,10 @@ public class WeighingQueryResultDto
     public string Folio { get; set; } = string.Empty;
     public DateTime Fecha { get; set; }
     public string Placas { get; set; } = string.Empty;
+    public string? TrailerPlate { get; set; }
+    public string? TrailerPlate2 { get; set; }
+    public string? PlacaRemolque1 { get; set; }
+    public string? PlacaRemolque2 { get; set; }
     public string ClienteProveedor { get; set; } = string.Empty;
     public string Producto { get; set; } = string.Empty;
     public string Tipo { get; set; } = string.Empty; // client/provider
