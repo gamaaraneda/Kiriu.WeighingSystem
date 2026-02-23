@@ -108,7 +108,7 @@ public class RemolqueResponseDto
     public string? RegistradoPor { get; set; }
     public DateTime? FechaSalida { get; set; }
     public string? RegistradoPorSalida { get; set; }
-    public List<string> Fotos { get; set; } = new();
+    public List<PhotoWithTypeDto> Fotos { get; set; } = new();
 }
 
 public class PaginatedWeighingOperationsDto

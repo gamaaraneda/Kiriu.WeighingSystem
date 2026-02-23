@@ -306,7 +306,10 @@ export class ContinueDoubleTrailerComponent implements OnInit, OnDestroy {
       numero: 2,
       placa: this.remolque2Form.get('remolque2Plate')?.value,
       pesoBruto: this.capturedWeight,
-      fotos: [this.photoData.remolque2Plate, this.photoData.cargoRemolque2],
+      fotos: [
+        { url: this.photoData.remolque2Plate, type: 'plate' },
+        { url: this.photoData.cargoRemolque2, type: 'cargo' }
+      ],
       pesoCapturado: true,
       fotosCapturadas: true,
       fotoCargaCapturada: true,

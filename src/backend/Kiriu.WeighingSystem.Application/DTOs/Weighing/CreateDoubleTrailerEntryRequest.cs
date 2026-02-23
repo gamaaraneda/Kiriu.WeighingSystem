@@ -21,7 +21,7 @@ public class RemolqueDataDto
     public int Numero { get; set; }
     public string Placa { get; set; } = string.Empty;
     public decimal PesoBruto { get; set; }
-    public List<string> Fotos { get; set; } = new();
+    public List<PhotoWithTypeDto> Fotos { get; set; } = new();
     public bool PesoCapturado { get; set; }
     public bool FotosCapturadas { get; set; }
     public bool FotoCargaCapturada { get; set; }

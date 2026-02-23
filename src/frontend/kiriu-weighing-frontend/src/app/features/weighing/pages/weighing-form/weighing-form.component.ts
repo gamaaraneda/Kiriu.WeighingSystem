@@ -20,6 +20,7 @@ import {
   RealWeighingService,
   DoubleTrailerWeighingState,
   RemolqueData,
+  PhotoWithType,
   CreateEntryRequest,
   CreateDoubleTrailerEntryRequest,
   CreatePartialDoubleTrailerEntryRequest,
@@ -969,11 +970,10 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     if (isDoubleTrailer) {
       // FIX: Guardar valores ANTES de intercambiar
       const fotoTrailerOriginal = this.photoData.trailerPlate;
-      const fotoRemolque1Original =
-        this.doubleTrailerState.remolque1.fotos?.[0] || '';
+      const fotoRemolque1PlateOriginal = this.photoData.remolque1Plate;
 
       console.log('🔄 [SWAP BEFORE] trailerPlate:', fotoTrailerOriginal);
-      console.log('🔄 [SWAP BEFORE] remolque1.fotos[0]:', fotoRemolque1Original);
+      console.log('🔄 [SWAP BEFORE] remolque1Plate:', fotoRemolque1PlateOriginal);
       console.log(
         '🔄 [SWAP BEFORE] remolque1.fotos array:',
         this.doubleTrailerState.remolque1.fotos,
@@ -989,23 +989,38 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         this.doubleTrailerState.remolque1.placa || '';
       this.doubleTrailerState.remolque1.placa = tempPlaca;
 
-      // FIX: Intercambiar fotos en el array de remolque1
-      // La primera foto del array remolque1.fotos es la foto ANPR de la placa
-      // Debe intercambiarse con la foto ORIGINAL del tráiler (antes del swap)
+      // FIX: Intercambiar foto de placa ANPR en el array de remolque1
+      // Buscar por TYPE='plate' en lugar de comparar URLs
       if (
         this.doubleTrailerState.remolque1.fotos &&
         this.doubleTrailerState.remolque1.fotos.length > 0 &&
         fotoTrailerOriginal
       ) {
-        // Reemplazar la primera foto del array (foto ANPR del remolque) con la foto ORIGINAL del tráiler
-        this.doubleTrailerState.remolque1.fotos[0] = fotoTrailerOriginal;
+        // Buscar el índice de la foto de TIPO 'plate' en el array
+        const indexFotoPlacaRemolque1 =
+          this.doubleTrailerState.remolque1.fotos.findIndex(
+            (foto) => foto.type === 'plate',
+          );
 
-        console.log(
-          `🔄 [SWAP AFTER] Foto tráiler original (${fotoTrailerOriginal}) → remolque1.fotos[0]`,
-        );
-        console.log(
-          `🔄 [SWAP AFTER] Foto remolque1 original (${fotoRemolque1Original}) → photoData.trailerPlate (${this.photoData.trailerPlate})`,
-        );
+        if (indexFotoPlacaRemolque1 !== -1) {
+          // Reemplazar SOLO la URL de la foto de placa, mantener el type='plate'
+          this.doubleTrailerState.remolque1.fotos[indexFotoPlacaRemolque1] = {
+            url: fotoTrailerOriginal,
+            type: 'plate',
+          };
+
+          console.log(
+            `🔄 [SWAP AFTER] Foto de tipo 'plate' encontrada en índice ${indexFotoPlacaRemolque1}`,
+          );
+          console.log(
+            `🔄 [SWAP AFTER] URL reemplazada con foto del tráiler: ${fotoTrailerOriginal}`,
+          );
+        } else {
+          console.warn(
+            `⚠️ [SWAP] No se encontró foto de tipo 'plate' en remolque1.fotos. No se intercambiará.`,
+          );
+        }
+
         console.log(
           `🔄 [SWAP AFTER] Array final remolque1.fotos:`,
           this.doubleTrailerState.remolque1.fotos,
@@ -1396,10 +1411,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 if (!this.doubleTrailerState.remolque1.fotos) {
                   this.doubleTrailerState.remolque1.fotos = [];
                 }
-                if (!this.doubleTrailerState.remolque1.fotos.includes(orphanPhoto.photoUrl)) {
+                const fotoExiste = this.doubleTrailerState.remolque1.fotos.some(
+                  (f) => f.url === orphanPhoto.photoUrl,
+                );
+                if (!fotoExiste) {
                   this.doubleTrailerState.remolque1.fotos = [
                     ...this.doubleTrailerState.remolque1.fotos,
-                    orphanPhoto.photoUrl,
+                    { url: orphanPhoto.photoUrl, type: 'plate' }, // Con metadatos de tipo
                   ];
                   console.log(
                     `📸 [DB R1] Foto placa R1 agregada al array. Fotos: ${JSON.stringify(this.doubleTrailerState.remolque1.fotos)}`,
@@ -1429,10 +1447,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 if (!this.doubleTrailerState.remolque2.fotos) {
                   this.doubleTrailerState.remolque2.fotos = [];
                 }
-                if (!this.doubleTrailerState.remolque2.fotos.includes(orphanPhoto.photoUrl)) {
+                const orphanPhotoExists = this.doubleTrailerState.remolque2.fotos.some(
+                  (foto) => foto.url === orphanPhoto.photoUrl
+                );
+                if (!orphanPhotoExists) {
                   this.doubleTrailerState.remolque2.fotos = [
                     ...this.doubleTrailerState.remolque2.fotos,
-                    orphanPhoto.photoUrl,
+                    { url: orphanPhoto.photoUrl, type: 'plate' },
                   ];
                   console.log(
                     `📸 [DB R2] Foto placa R2 agregada al array. Fotos: ${JSON.stringify(this.doubleTrailerState.remolque2.fotos)}`,
@@ -1517,10 +1538,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 if (!this.doubleTrailerState.remolque1.fotos) {
                   this.doubleTrailerState.remolque1.fotos = [];
                 }
-                if (!this.doubleTrailerState.remolque1.fotos.includes(fallbackPhotoUrl)) {
+                const fotoExiste = this.doubleTrailerState.remolque1.fotos.some(
+                  (f) => f.url === fallbackPhotoUrl,
+                );
+                if (!fotoExiste) {
                   this.doubleTrailerState.remolque1.fotos = [
                     ...this.doubleTrailerState.remolque1.fotos,
-                    fallbackPhotoUrl
+                    { url: fallbackPhotoUrl, type: 'plate' }, // Con metadatos de tipo
                   ];
                 }
                 this.doubleTrailerState.remolque1.fotoPlacaCapturada = true;
@@ -1534,10 +1558,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                 if (!this.doubleTrailerState.remolque2.fotos) {
                   this.doubleTrailerState.remolque2.fotos = [];
                 }
-                if (!this.doubleTrailerState.remolque2.fotos.includes(fallbackPhotoUrl)) {
+                const fallbackPhotoExists = this.doubleTrailerState.remolque2.fotos.some(
+                  (foto) => foto.url === fallbackPhotoUrl
+                );
+                if (!fallbackPhotoExists) {
                   this.doubleTrailerState.remolque2.fotos = [
                     ...this.doubleTrailerState.remolque2.fotos,
-                    fallbackPhotoUrl
+                    { url: fallbackPhotoUrl, type: 'plate' }
                   ];
                 }
                 this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
@@ -1623,10 +1650,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                   this.doubleTrailerState.remolque1.fotos = [];
                 }
                 // Solo agregar si no existe ya en el array
-                if (!this.doubleTrailerState.remolque1.fotos.includes(anprEvent.imageUrl)) {
+                const fotoExiste = this.doubleTrailerState.remolque1.fotos.some(
+                  (f) => f.url === anprEvent.imageUrl,
+                );
+                if (!fotoExiste) {
                   this.doubleTrailerState.remolque1.fotos = [
                     ...this.doubleTrailerState.remolque1.fotos,
-                    anprEvent.imageUrl
+                    { url: anprEvent.imageUrl, type: 'plate' }, // Con metadatos de tipo
                   ];
                   console.log('📸 [ANPR R1] Foto ANPR agregada. Fotos DESPUÉS:', JSON.stringify(this.doubleTrailerState.remolque1.fotos));
                 } else {
@@ -1649,10 +1679,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
                   this.doubleTrailerState.remolque2.fotos = [];
                 }
                 // Solo agregar si no existe ya en el array
-                if (!this.doubleTrailerState.remolque2.fotos.includes(anprEvent.imageUrl)) {
+                const anprPhotoExists = this.doubleTrailerState.remolque2.fotos.some(
+                  (foto) => foto.url === anprEvent.imageUrl
+                );
+                if (!anprPhotoExists) {
                   this.doubleTrailerState.remolque2.fotos = [
                     ...this.doubleTrailerState.remolque2.fotos,
-                    anprEvent.imageUrl
+                    { url: anprEvent.imageUrl, type: 'plate' }
                   ];
                 }
                 this.doubleTrailerState.remolque2.fotoPlacaCapturada = true;
@@ -1732,10 +1765,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         if (!this.doubleTrailerState.remolque1.fotos) {
           this.doubleTrailerState.remolque1.fotos = [];
         }
-        if (!this.doubleTrailerState.remolque1.fotos.includes('foto_remolque1.jpg')) {
+        const fotoExiste = this.doubleTrailerState.remolque1.fotos.some(
+          (f) => f.url === 'foto_remolque1.jpg',
+        );
+        if (!fotoExiste) {
           this.doubleTrailerState.remolque1.fotos = [
             ...this.doubleTrailerState.remolque1.fotos,
-            'foto_remolque1.jpg'
+            { url: 'foto_remolque1.jpg', type: 'plate' }, // Con metadatos de tipo
           ];
         }
         // Marcar que se capturó la foto de la placa del remolque 1
@@ -1765,10 +1801,13 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
         if (!this.doubleTrailerState.remolque2.fotos) {
           this.doubleTrailerState.remolque2.fotos = [];
         }
-        if (!this.doubleTrailerState.remolque2.fotos.includes('foto_remolque2.jpg')) {
+        const testPhotoExists = this.doubleTrailerState.remolque2.fotos.some(
+          (foto) => foto.url === 'foto_remolque2.jpg'
+        );
+        if (!testPhotoExists) {
           this.doubleTrailerState.remolque2.fotos = [
             ...this.doubleTrailerState.remolque2.fotos,
-            'foto_remolque2.jpg'
+            { url: 'foto_remolque2.jpg', type: 'plate' }
           ];
         }
         // Marcar que se capturó la foto de la placa del remolque 2
@@ -1804,10 +1843,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           if (!this.doubleTrailerState.remolque1.fotos) {
             this.doubleTrailerState.remolque1.fotos = [];
           }
-          this.doubleTrailerState.remolque1.fotos = [
-            ...this.doubleTrailerState.remolque1.fotos,
-            photoUrl,
-          ];
+          const fotoCargoExiste = this.doubleTrailerState.remolque1.fotos.some(
+            (f) => f.url === photoUrl,
+          );
+          if (!fotoCargoExiste) {
+            this.doubleTrailerState.remolque1.fotos = [
+              ...this.doubleTrailerState.remolque1.fotos,
+              { url: photoUrl, type: 'cargo' }, // Con metadatos de tipo
+            ];
+          }
           // También marcar que se capturó la foto de carga del remolque 1
           this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
         }
@@ -1851,10 +1895,15 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           if (!this.doubleTrailerState.remolque1.fotos) {
             this.doubleTrailerState.remolque1.fotos = [];
           }
-          this.doubleTrailerState.remolque1.fotos = [
-            ...this.doubleTrailerState.remolque1.fotos,
-            photoUrl,
-          ];
+          const fotoCargoExiste = this.doubleTrailerState.remolque1.fotos.some(
+            (f) => f.url === photoUrl,
+          );
+          if (!fotoCargoExiste) {
+            this.doubleTrailerState.remolque1.fotos = [
+              ...this.doubleTrailerState.remolque1.fotos,
+              { url: photoUrl, type: 'cargo' }, // Con metadatos de tipo
+            ];
+          }
           this.doubleTrailerState.remolque1.fotoCargaCapturada = true;
 
           console.log('📸 [CARGO R1] Fotos DESPUÉS de agregar:', JSON.stringify(this.doubleTrailerState.remolque1.fotos));
@@ -1900,7 +1949,7 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
           }
           this.doubleTrailerState.remolque2.fotos = [
             ...this.doubleTrailerState.remolque2.fotos,
-            photoUrl,
+            { url: photoUrl, type: 'cargo' },
           ];
           this.doubleTrailerState.remolque2.fotoCargaCapturada = true;
         }
@@ -2691,7 +2740,11 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
             numero: 1,
             placa: operation.remolque1.placa,
             pesoBruto: operation.remolque1.pesoBruto,
-            fotos: operation.remolque1.fotos || [],
+            // Convertir strings a PhotoWithType (asumir 'plate' para retrocompat)
+            fotos: (operation.remolque1.fotos || []).map((url: string) => ({
+              url,
+              type: 'plate' as const,
+            })),
             pesoCapturado: true,
             fotoCargaCapturada: true,
             fotoPlacaCapturada: true,

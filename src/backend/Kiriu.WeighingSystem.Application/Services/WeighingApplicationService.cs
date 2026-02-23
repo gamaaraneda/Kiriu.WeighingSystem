@@ -500,7 +500,7 @@ public class WeighingApplicationService : IWeighingApplicationService
         if (!string.IsNullOrEmpty(request.TrailerPlacaFoto))
         {
             _logger.LogInformation("Procesando foto del tráiler: {TrailerPlacaFoto}", request.TrailerPlacaFoto);
-            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate", "trailerPlate");
+            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate", "trailerPlate_entry");
         }
         else
         {
@@ -512,24 +512,34 @@ public class WeighingApplicationService : IWeighingApplicationService
         {
             _logger.LogInformation("Procesando {Count} fotos del remolque {Numero}", remolque.Fotos.Count, remolque.Numero);
 
-            foreach (var fotoUrl in remolque.Fotos)
+            foreach (var foto in remolque.Fotos)
             {
-                // Determinar el tipo de foto según la URL
+                // Determinar el tipo de foto según el tipo especificado en el objeto
                 string photoType;
-                if (fotoUrl.StartsWith("/api/"))
+                string finalPhotoType;
+
+                if (foto.Type == "plate")
                 {
-                    // Es una foto ANPR de placa
+                    // Es una foto de placa
                     photoType = $"remolque{remolque.Numero}Plate";
+                    finalPhotoType = photoType; // FinalPhotoType = photoType para fotos de placa
+                }
+                else if (foto.Type == "cargo")
+                {
+                    // Es una foto de carga
+                    photoType = $"cargoRemolque{remolque.Numero}";
+                    finalPhotoType = photoType; // FinalPhotoType = photoType para fotos de carga
                 }
                 else
                 {
-                    // Es una foto de carga u otro tipo (ignorar por ahora)
-                    _logger.LogInformation("Ignorando foto no-ANPR: {FotoUrl}", fotoUrl);
+                    _logger.LogWarning("Tipo de foto desconocido: {Type} para remolque {Numero}", foto.Type, remolque.Numero);
                     continue;
                 }
 
-                // FinalPhotoType = mismo valor que photoType para doble remolque
-                await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType, photoType);
+                _logger.LogInformation("Procesando foto: URL={Url}, Type={Type}, PhotoType={PhotoType}, FinalPhotoType={FinalPhotoType}",
+                    foto.Url, foto.Type, photoType, finalPhotoType);
+
+                await ProcessPhotoFieldAsync(operationId, foto.Url, photoType, finalPhotoType);
             }
         }
 
@@ -1152,7 +1162,7 @@ public class WeighingApplicationService : IWeighingApplicationService
                     Numero = r.Numero,
                     Placa = r.Placa,
                     PesoBruto = r.PesoBruto,
-                    Fotos = r.Numero == 2 ? request.Remolque2.Fotos : new List<string>()
+                    Fotos = r.Numero == 2 ? request.Remolque2.Fotos : new List<PhotoWithTypeDto>()
                 }).ToList(),
                 PesoBrutoTotal = updated.EntryWeight!.Value,
                 FechaHoraEntrada = updated.EntryDate!.Value,
@@ -1239,7 +1249,7 @@ public class WeighingApplicationService : IWeighingApplicationService
                     Numero = remolque1.Numero,
                     Placa = remolque1.Placa,
                     PesoBruto = remolque1.PesoBruto,
-                    Fotos = new List<string>() // Las fotos se cargan desde el repositorio de fotos
+                    Fotos = new List<PhotoWithTypeDto>() // Las fotos se cargan desde el repositorio de fotos
                 },
                 FechaHoraRegistroR1 = remolque1.FechaRegistro!.Value,
                 UsuarioRegistroR1 = remolque1.RegistradoPor ?? "Sistema",
@@ -1516,38 +1526,38 @@ public class WeighingApplicationService : IWeighingApplicationService
         // Procesar foto del tráiler (si existe)
         if (!string.IsNullOrEmpty(request.TrailerPlacaFoto))
         {
-            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate", "trailerPlate");
+            await ProcessPhotoFieldAsync(operationId, request.TrailerPlacaFoto, "trailerPlate", "trailerPlate_entry");
         }
 
         // Procesar fotos del remolque 1
-        foreach (var fotoUrl in request.Remolque1.Fotos)
+        foreach (var foto in request.Remolque1.Fotos)
         {
-            // Determinar el tipo de foto según la URL
+            // Determinar el tipo de foto según el tipo especificado en el objeto
             string photoType;
-            if (fotoUrl.Contains("/trailerPlate/") || fotoUrl.Contains("trailer") || fotoUrl.Contains("Plate"))
+            string finalPhotoType;
+
+            if (foto.Type == "plate")
             {
-                // Es una foto ANPR de placa de tráiler o remolque
-                photoType = "remolque1Plate";
+                // Es una foto de placa
+                photoType = "remolque1Plate_entry";
+                finalPhotoType = photoType;
             }
-            else if (fotoUrl.Contains("/cargoRemolque1/") || fotoUrl.Contains("cargo"))
+            else if (foto.Type == "cargo")
             {
-                // Es una foto de carga del remolque 1
-                photoType = "cargoRemolque1";
-            }
-            else if (fotoUrl.StartsWith("/api/"))
-            {
-                // Es una foto de API genérica, asumir que es de placa
-                photoType = "remolque1Plate";
+                // Es una foto de carga
+                photoType = "cargoRemolque1_entry";
+                finalPhotoType = photoType;
             }
             else
             {
-                // Foto desconocida, registrar advertencia pero intentar procesar como carga
-                _logger.LogWarning("Tipo de foto no identificado claramente: {FotoUrl}, procesando como cargoRemolque1", fotoUrl);
-                photoType = "cargoRemolque1";
+                _logger.LogWarning("Tipo de foto desconocido: {Type} para remolque 1", foto.Type);
+                continue;
             }
 
-            // FinalPhotoType = mismo valor que photoType
-            await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType, photoType);
+            _logger.LogInformation("Procesando foto remolque1: URL={Url}, Type={Type}, PhotoType={PhotoType}, FinalPhotoType={FinalPhotoType}",
+                foto.Url, foto.Type, photoType, finalPhotoType);
+
+            await ProcessPhotoFieldAsync(operationId, foto.Url, photoType, finalPhotoType);
         }
 
         _logger.LogInformation("Finalizado procesamiento de fotos para entrada parcial - OperationId: {OperationId}", operationId);
@@ -1558,34 +1568,34 @@ public class WeighingApplicationService : IWeighingApplicationService
         _logger.LogInformation("Procesando fotos para continuar doble remolque - OperationId: {OperationId}", operationId);
 
         // Procesar fotos del remolque 2
-        foreach (var fotoUrl in request.Remolque2.Fotos)
+        foreach (var foto in request.Remolque2.Fotos)
         {
-            // Determinar el tipo de foto según la URL
+            // Determinar el tipo de foto según el tipo especificado en el objeto
             string photoType;
-            if (fotoUrl.Contains("/trailerPlate/") || fotoUrl.Contains("trailer") || fotoUrl.Contains("Plate"))
+            string finalPhotoType;
+
+            if (foto.Type == "plate")
             {
-                // Es una foto ANPR de placa de tráiler o remolque
-                photoType = "remolque2Plate";
+                // Es una foto de placa
+                photoType = "remolque2Plate_entry";
+                finalPhotoType = photoType;
             }
-            else if (fotoUrl.Contains("/cargoRemolque2/") || fotoUrl.Contains("cargo"))
+            else if (foto.Type == "cargo")
             {
-                // Es una foto de carga del remolque 2
-                photoType = "cargoRemolque2";
-            }
-            else if (fotoUrl.StartsWith("/api/"))
-            {
-                // Es una foto de API genérica, asumir que es de placa
-                photoType = "remolque2Plate";
+                // Es una foto de carga
+                photoType = "cargoRemolque2_entry";
+                finalPhotoType = photoType;
             }
             else
             {
-                // Foto desconocida, registrar advertencia pero intentar procesar como carga
-                _logger.LogWarning("Tipo de foto no identificado claramente: {FotoUrl}, procesando como cargoRemolque2", fotoUrl);
-                photoType = "cargoRemolque2";
+                _logger.LogWarning("Tipo de foto desconocido: {Type} para remolque 2", foto.Type);
+                continue;
             }
 
-            // FinalPhotoType = mismo valor que photoType
-            await ProcessPhotoFieldAsync(operationId, fotoUrl, photoType, photoType);
+            _logger.LogInformation("Procesando foto remolque2: URL={Url}, Type={Type}, PhotoType={PhotoType}, FinalPhotoType={FinalPhotoType}",
+                foto.Url, foto.Type, photoType, finalPhotoType);
+
+            await ProcessPhotoFieldAsync(operationId, foto.Url, photoType, finalPhotoType);
         }
 
         _logger.LogInformation("Finalizado procesamiento de fotos para continuar doble remolque - OperationId: {OperationId}", operationId);

@@ -98,7 +98,7 @@ export interface RemolqueEntryData {
   numero: number;
   placa: string;
   pesoBruto: number;
-  fotos: string[];
+  fotos: PhotoWithType[];
   pesoCapturado: boolean;
   fotosCapturadas: boolean;
   fotoCargaCapturada: boolean;
@@ -121,7 +121,7 @@ export interface RemolqueResponseData {
   numero: number;
   placa: string;
   pesoBruto: number;
-  fotos: string[];
+  fotos: PhotoWithType[];
 }
 
 export interface ApiResponse<T> {
@@ -309,11 +309,20 @@ export interface DoubleTrailerWeighingState {
   isComplete: boolean;
 }
 
+/**
+ * Representa una foto con metadatos de tipo
+ * Usado internamente en frontend para identificar fotos sin ambigüedad
+ */
+export interface PhotoWithType {
+  url: string;
+  type: 'plate' | 'cargo';
+}
+
 export interface RemolqueData {
   numero: number;
   placa: string;
   pesoBruto: number;
-  fotos: string[];
+  fotos: PhotoWithType[]; // Cambio: de string[] a PhotoWithType[]
   pesoCapturado?: boolean;
   fotosCapturadas?: boolean;
   fotoCargaCapturada?: boolean;
@@ -622,11 +631,14 @@ export class RealWeighingService {
    * Capturar datos del remolque 1
    */
   captureRemolque1Data(placa: string, peso: number, fotos: string[]): void {
+    // Convertir string[] a PhotoWithType[] asumiendo que son fotos de carga por defecto
+    const photosWithType: PhotoWithType[] = fotos.map(url => ({ url, type: 'cargo' }));
+
     this.doubleTrailerState.remolque1 = {
       numero: 1,
       placa,
       pesoBruto: peso,
-      fotos,
+      fotos: photosWithType,
       pesoCapturado: true,
       fotosCapturadas: true,
       fotoCargaCapturada: true,
@@ -639,11 +651,14 @@ export class RealWeighingService {
    * Capturar datos del remolque 2
    */
   captureRemolque2Data(placa: string, peso: number, fotos: string[]): void {
+    // Convertir string[] a PhotoWithType[] asumiendo que son fotos de carga por defecto
+    const photosWithType: PhotoWithType[] = fotos.map(url => ({ url, type: 'cargo' }));
+
     this.doubleTrailerState.remolque2 = {
       numero: 2,
       placa,
       pesoBruto: peso,
-      fotos,
+      fotos: photosWithType,
       pesoCapturado: true,
       fotosCapturadas: true,
       fotoCargaCapturada: true,
