@@ -47,6 +47,8 @@ public class WeighingPhotoDto
 {
     public string Id { get; set; } = string.Empty;
     public string PhotoType { get; set; } = string.Empty;
+    /// <summary>Tipo final de la foto según el request (p. ej. trailerPlate, cargo). Puede ser null en datos históricos.</summary>
+    public string? PhotoTypeFinal { get; set; }
     public string? Description { get; set; }
     public DateTime CreatedAt { get; set; }
 }
