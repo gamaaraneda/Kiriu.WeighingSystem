@@ -967,6 +967,18 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
     const isDoubleTrailer = this.weighingForm.get('doubleTrailer')?.value;
 
     if (isDoubleTrailer) {
+      // FIX: Guardar valores ANTES de intercambiar
+      const fotoTrailerOriginal = this.photoData.trailerPlate;
+      const fotoRemolque1Original =
+        this.doubleTrailerState.remolque1.fotos?.[0] || '';
+
+      console.log('🔄 [SWAP BEFORE] trailerPlate:', fotoTrailerOriginal);
+      console.log('🔄 [SWAP BEFORE] remolque1.fotos[0]:', fotoRemolque1Original);
+      console.log(
+        '🔄 [SWAP BEFORE] remolque1.fotos array:',
+        this.doubleTrailerState.remolque1.fotos,
+      );
+
       // Intercambiar trailer ↔ remolque1 (NO tocar remolque2)
       this.swapPhotoData('trailerPlate', 'remolque1Plate');
       this.swapFormValues('trailerPlate', 'remolque1Plate');
@@ -976,6 +988,29 @@ export class WeighingFormComponent implements OnInit, OnDestroy {
       this.doubleTrailerState.trailerPlaca =
         this.doubleTrailerState.remolque1.placa || '';
       this.doubleTrailerState.remolque1.placa = tempPlaca;
+
+      // FIX: Intercambiar fotos en el array de remolque1
+      // La primera foto del array remolque1.fotos es la foto ANPR de la placa
+      // Debe intercambiarse con la foto ORIGINAL del tráiler (antes del swap)
+      if (
+        this.doubleTrailerState.remolque1.fotos &&
+        this.doubleTrailerState.remolque1.fotos.length > 0 &&
+        fotoTrailerOriginal
+      ) {
+        // Reemplazar la primera foto del array (foto ANPR del remolque) con la foto ORIGINAL del tráiler
+        this.doubleTrailerState.remolque1.fotos[0] = fotoTrailerOriginal;
+
+        console.log(
+          `🔄 [SWAP AFTER] Foto tráiler original (${fotoTrailerOriginal}) → remolque1.fotos[0]`,
+        );
+        console.log(
+          `🔄 [SWAP AFTER] Foto remolque1 original (${fotoRemolque1Original}) → photoData.trailerPlate (${this.photoData.trailerPlate})`,
+        );
+        console.log(
+          `🔄 [SWAP AFTER] Array final remolque1.fotos:`,
+          this.doubleTrailerState.remolque1.fotos,
+        );
+      }
 
       this.showToast(
         'success',
