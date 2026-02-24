@@ -20,6 +20,7 @@ export interface WeighingPhotoDto {
   photoType: string;
   description?: string;
   createdAt: Date;
+  photoTypeFinal?: string | null;
 }
 
 export interface RemolqueInfo {
