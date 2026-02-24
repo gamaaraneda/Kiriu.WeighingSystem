@@ -202,7 +202,7 @@ export class PdfGeneratorService {
       if (remolque2Plate) placas.push(`R2:${remolque2Plate}`);
     } else {
       if (data.placaTrailer) placas.push(`T:${data.placaTrailer}`);
-      if (data.tipoUnidad === 'remolque' && data.placaRemolque) {
+      if ((data.tipoUnidad === 'remolque' || data.tipoUnidad === 'contenedor') && data.placaRemolque) {
         placas.push(`R:${data.placaRemolque}`);
       }
     }
@@ -716,8 +716,8 @@ export class PdfGeneratorService {
           : '';
     }
 
-    // Mapear tipo: "client" -> "cliente", "proveedor" -> "proveedor"
-    const tipoQR = data.tipo === 'client' ? 'cliente' : data.tipo || 'cliente';
+    // Mapear tipo: "client" -> "cliente", "provider" -> "proveedor"
+    const tipoQR = data.tipo === 'client' ? 'cliente' : data.tipo === 'provider' ? 'proveedor' : data.tipo || 'cliente';
 
     const qrData = JSON.stringify({
       folio: data.folio,
