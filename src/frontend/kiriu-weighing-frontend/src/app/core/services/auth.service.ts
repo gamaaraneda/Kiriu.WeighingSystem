@@ -30,19 +30,29 @@ export class AuthService {
   private readonly refreshTokenKey = 'kiriu-refresh-token';
   private readonly userKey = 'kiriu-user';
 
-  private currentUserSubject = new BehaviorSubject<UserInfo | null>(
-    this.getUserFromStorage()
-  );
+  private currentUserSubject = new BehaviorSubject<UserInfo | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   private refreshTokenTimer?: Subscription;
 
   constructor() {
-    // IMPORTANTE: Limpiar sesión al inicializar la aplicación
-    // El cliente requiere que SIEMPRE se pida login (sin persistencia de sesión)
+    // Validar si hay un token expirado al inicializar
+    // Solo limpia la sesión si el token está realmente expirado
     if (this.isBrowser) {
-      console.log('🧹 AuthService: Limpiando sesión al inicializar (política de no persistencia)');
-      this.clearSessionOnInit();
+      const token = this.getToken();
+      if (token && this.isTokenExpired()) {
+        console.log('🧹 AuthService: Token expirado detectado al iniciar, limpiando sesión');
+        this.clearSessionOnInit();
+      } else if (token) {
+        console.log('✅ AuthService: Sesión válida detectada al iniciar');
+        // Restaurar el usuario en el subject si hay una sesión válida
+        const user = this.getUserFromStorage();
+        if (user) {
+          this.currentUserSubject.next(user);
+          // Configurar el refresh automático para la sesión existente
+          this.setupTokenRefresh();
+        }
+      }
     }
   }
 
@@ -301,9 +311,23 @@ export class AuthService {
     if (!this.isBrowser) return true;
 
     const expiresAt = localStorage.getItem('token-expires-at');
-    if (!expiresAt) return true;
+    if (!expiresAt) {
+      return true;
+    }
 
-    return new Date(expiresAt).getTime() <= new Date().getTime();
+    const expirationTime = new Date(expiresAt).getTime();
+    const currentTime = new Date().getTime();
+    const isExpired = expirationTime <= currentTime;
+
+    // Solo loguear cuando el token esté expirado o cerca de expirar
+    if (isExpired) {
+      console.log('⏰ AuthService: Token expirado', {
+        expiresAt: new Date(expiresAt).toLocaleString(),
+        currentTime: new Date(currentTime).toLocaleString()
+      });
+    }
+
+    return isExpired;
   }
 
   private checkTokenExpiration(): void {
