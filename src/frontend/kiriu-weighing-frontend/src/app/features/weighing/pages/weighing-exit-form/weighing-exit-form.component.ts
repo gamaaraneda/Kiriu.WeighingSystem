@@ -245,6 +245,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           id: op.id,
           createdAt: new Date(op.fechaSalidaR1),
           tipoUnidad: 'doble-remolque',
+          unitType: op.unitType,
           clientProviderName: op.clientProviderName,
           product: op.product,
           entryWeight: op.remolque1.pesoBrutoEntrada,
@@ -371,7 +372,10 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
 
         if (editEvent.isManualEdit) {
           this.hasManualEdits = true;
-          console.log('✏️ Edición manual detectada en campo:', editEvent.fieldName);
+          console.log(
+            '✏️ Edición manual detectada en campo:',
+            editEvent.fieldName,
+          );
         }
       },
     );
@@ -1002,6 +1006,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         operation.placaRemolque1,
         operation.placaRemolque2,
       ),
+      unitType: operation.unitType,
       clientProviderName: operation.clientProviderName,
       product: operation.product,
       entryWeight: operation.entryWeight || 0,
@@ -2238,12 +2243,13 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     if (!this.entryData) return;
 
     try {
+      console.log('datos PDF generado exitosamente,', this.entryData);
       const receiptData: WeighingReceiptData = {
         folio: response.folio || this.entryFolio,
         fecha: response.fechaSalida || new Date().toISOString(),
         tipoUnidad: this.entryData.tipoUnidad,
         clienteProveedor: this.entryData.clientProviderName || '',
-        tipo: 'client', // Por defecto, ya que EntrySearchData no tiene este campo
+        tipo: this.entryData.unitType || 'client',
         producto: this.entryData.product || '',
         createdBy: this.entryData.createdBy,
         exitRegisteredBy:
@@ -2268,8 +2274,12 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       // Si es doble remolque, agregar datos de los remolques
       if (this.entryData.tipoUnidad === 'doble-remolque') {
         // Obtener datos de los remolques desde response.remolques
-        const remolque1Data = response.remolques?.find((r: any) => r.numero === 1);
-        const remolque2Data = response.remolques?.find((r: any) => r.numero === 2);
+        const remolque1Data = response.remolques?.find(
+          (r: any) => r.numero === 1,
+        );
+        const remolque2Data = response.remolques?.find(
+          (r: any) => r.numero === 2,
+        );
 
         // Usar los pesos reales de cada remolque desde el backend
         const pesoBrutoR1 = remolque1Data?.pesoBruto ?? 0;
@@ -2285,10 +2295,13 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           pesoBruto: pesoBrutoR1,
           pesoTara: pesoTaraR1,
           pesoNeto: Math.abs(Number(pesoBrutoR1) - Number(pesoTaraR1)),
-          fechaEntrada: remolque1Data?.fechaRegistro || this.entryData.createdAt,
-          usuarioEntrada: remolque1Data?.registradoPor || this.entryData.createdBy,
+          fechaEntrada:
+            remolque1Data?.fechaRegistro || this.entryData.createdAt,
+          usuarioEntrada:
+            remolque1Data?.registradoPor || this.entryData.createdBy,
           fechaSalida: remolque1Data?.fechaSalida || response.fechaSalida,
-          usuarioSalida: remolque1Data?.registradoPorSalida || response.exitRegisteredBy,
+          usuarioSalida:
+            remolque1Data?.registradoPorSalida || response.exitRegisteredBy,
         };
 
         receiptData.remolque2 = {
@@ -2296,15 +2309,18 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
           pesoBruto: pesoBrutoR2,
           pesoTara: pesoTaraR2,
           pesoNeto: Math.abs(Number(pesoBrutoR2) - Number(pesoTaraR2)),
-          fechaEntrada: remolque2Data?.fechaRegistro || this.entryData.createdAt,
-          usuarioEntrada: remolque2Data?.registradoPor || this.entryData.createdBy,
+          fechaEntrada:
+            remolque2Data?.fechaRegistro || this.entryData.createdAt,
+          usuarioEntrada:
+            remolque2Data?.registradoPor || this.entryData.createdBy,
           fechaSalida: remolque2Data?.fechaSalida || response.fechaSalida,
-          usuarioSalida: remolque2Data?.registradoPorSalida || response.exitRegisteredBy,
+          usuarioSalida:
+            remolque2Data?.registradoPorSalida || response.exitRegisteredBy,
         };
       }
 
       await this.pdfGeneratorService.generateWeighingReceipt(receiptData);
-      console.log('✅ PDF generado exitosamente');
+      console.log('✅ PDF generado exitosamente aqui');
     } catch (error) {
       console.error('❌ Error generando PDF:', error);
       this.showToast(
@@ -2342,8 +2358,11 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       this.currentOperationFolio &&
       this.entryData?.tipoUnidad === 'doble-remolque'
     ) {
-      const pesoTaraR2 = Number(this.exitForm.get('pesoTaraRemolque2')?.value) || 0;
-      const hasRemolque2Plate = !!this.exitForm.get('remolque2Plate')?.value?.trim();
+      const pesoTaraR2 =
+        Number(this.exitForm.get('pesoTaraRemolque2')?.value) || 0;
+      const hasRemolque2Plate = !!this.exitForm
+        .get('remolque2Plate')
+        ?.value?.trim();
 
       return pesoTaraR2 > 0 && hasRemolque2Plate;
     }
@@ -2364,8 +2383,12 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
 
       // Validar placas según shouldShowTrailerFields
       if (this.shouldShowTrailerFields()) {
-        const hasTrailerPlate = !!this.exitForm.get('trailerPlate')?.value?.trim();
-        const hasRemolquePlate = !!this.exitForm.get('trailerPlate2')?.value?.trim();
+        const hasTrailerPlate = !!this.exitForm
+          .get('trailerPlate')
+          ?.value?.trim();
+        const hasRemolquePlate = !!this.exitForm
+          .get('trailerPlate2')
+          ?.value?.trim();
         return hasExitWeight > 0 && hasTrailerPlate && hasRemolquePlate;
       }
 

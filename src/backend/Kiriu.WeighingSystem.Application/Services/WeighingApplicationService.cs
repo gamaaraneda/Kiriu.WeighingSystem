@@ -190,6 +190,7 @@ public class WeighingApplicationService : IWeighingApplicationService
                 Id = entry.Id.ToString(),
                 CreatedAt = entry.CreatedAt,
                 TipoUnidad = entry.TipoUnidad,
+                UnitType = entry.UnitType,
                 ClientProviderName = entry.ClientProviderName,
                 Product = entry.Product,
                 EntryWeight = entry.EntryWeight ?? 0,

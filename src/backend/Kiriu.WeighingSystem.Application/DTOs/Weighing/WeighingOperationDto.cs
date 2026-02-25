@@ -33,6 +33,7 @@ public class EntrySearchDataDto
     public string Id { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public string TipoUnidad { get; set; } = string.Empty;
+    public string UnitType { get; set; } = string.Empty; // client, provider
     public string ClientProviderName { get; set; } = string.Empty;
     public string Product { get; set; } = string.Empty;
     public decimal EntryWeight { get; set; }

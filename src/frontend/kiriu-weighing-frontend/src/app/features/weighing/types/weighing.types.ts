@@ -107,6 +107,7 @@ export interface EntrySearchData {
   id: string;
   createdAt: Date;
   tipoUnidad: 'remolque' | 'contenedor' | 'doble-remolque';
+  unitType: string; // 'client' | 'provider'
   clientProviderName: string;
   product: string;
   entryWeight: number;
