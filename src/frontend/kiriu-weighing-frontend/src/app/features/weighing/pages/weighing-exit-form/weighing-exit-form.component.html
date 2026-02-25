@@ -236,7 +236,7 @@
 
               <!-- Placa del Tráiler: oculta al registrar solo Remolque 2 (dato corresponde a Remolque 1) -->
               <div *ngIf="!currentOperationFolio" class="form-group">
-                <label for="trailerPlate" class="form-label"
+                <label for="trailerPlateDoubleTrailer" class="form-label"
                   >Placa del Tráiler *</label
                 >
                 <div class="plate-input-group">
@@ -253,14 +253,14 @@
                   <button
                     type="button"
                     class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('trailerPlate')"
+                    (click)="onEnableManualEdit('trailerPlate', 'trailerPlateDoubleTrailer')"
                     title="Habilitar edición manual de la placa del tráiler"
                   >
                     <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
-                    id="trailerPlate"
+                    id="trailerPlateDoubleTrailer"
                     formControlName="trailerPlate"
                     class="form-input plate-input"
                     [class.error]="
@@ -353,7 +353,7 @@
               </h2>
 
               <div class="form-group">
-                <label for="remolque1Plate" class="form-label"
+                <label for="remolque1PlateInput" class="form-label"
                   >Placa del Remolque 1 *</label
                 >
                 <div class="plate-input-group">
@@ -370,14 +370,14 @@
                   <button
                     type="button"
                     class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('remolque1Plate')"
+                    (click)="onEnableManualEdit('remolque1Plate', 'remolque1PlateInput')"
                     title="Habilitar edición manual de la placa del remolque 1"
                   >
                     <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
-                    id="remolque1Plate"
+                    id="remolque1PlateInput"
                     formControlName="remolque1Plate"
                     class="form-input plate-input"
                     [class.error]="
@@ -656,7 +656,7 @@
               </div>
 
               <div class="form-group">
-                <label for="remolque2Plate" class="form-label"
+                <label for="remolque2PlateInput" class="form-label"
                   >Placa del Remolque 2 *</label
                 >
                 <div class="plate-input-group">
@@ -673,14 +673,14 @@
                   <button
                     type="button"
                     class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('remolque2Plate')"
+                    (click)="onEnableManualEdit('remolque2Plate', 'remolque2PlateInput')"
                     title="Habilitar edición manual de la placa del remolque 2"
                   >
                     <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
-                    id="remolque2Plate"
+                    id="remolque2PlateInput"
                     formControlName="remolque2Plate"
                     class="form-input plate-input"
                     [class.error]="
@@ -1008,7 +1008,7 @@
 
               <!-- Placa del tráiler (para todos los tipos) -->
               <div class="form-group">
-                <label for="trailerPlate" class="form-label"
+                <label for="trailerPlateNormal" class="form-label"
                   >Placa del Tráiler<span
                     *ngIf="shouldShowTrailerFields()"
                     class="required-asterisk"
@@ -1030,14 +1030,14 @@
                   <button
                     type="button"
                     class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('trailerPlate')"
+                    (click)="onEnableManualEdit('trailerPlate', 'trailerPlateNormal')"
                     title="Habilitar edición manual de la placa del tráiler"
                   >
                     <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
-                    id="trailerPlate"
+                    id="trailerPlateNormal"
                     formControlName="trailerPlate"
                     class="form-input plate-input"
                     [class.error]="
@@ -1115,7 +1115,7 @@
 
               <!-- Placa del remolque (para todos los tipos) -->
               <div class="form-group">
-                <label for="trailerPlate2" class="form-label"
+                <label for="trailerPlate2Normal" class="form-label"
                   >Placa del Remolque<span
                     *ngIf="shouldShowTrailerFields()"
                     class="required-asterisk"
@@ -1137,14 +1137,14 @@
                   <button
                     type="button"
                     class="btn btn-outline edit-plate-btn"
-                    (click)="onEnableManualEdit('trailerPlate2')"
+                    (click)="onEnableManualEdit('trailerPlate2', 'trailerPlate2Normal')"
                     title="Habilitar edición manual de la placa del remolque"
                   >
                     <img src="ico/editar.png" alt="Editar" class="btn-icon" />
                   </button>
                   <input
                     type="text"
-                    id="trailerPlate2"
+                    id="trailerPlate2Normal"
                     formControlName="trailerPlate2"
                     class="form-input plate-input"
                     [class.error]="

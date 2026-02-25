@@ -504,7 +504,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
    * Habilita la edición manual de una placa
    * Al habilitar edición manual, se deshabilita la validación de error
    */
-  onEnableManualEdit(fieldName: string): void {
+  onEnableManualEdit(fieldName: string, elementId?: string): void {
     this.manualEditEnabled[fieldName] = true;
 
     // Marcar los siguientes cambios en este campo como manuales
@@ -526,9 +526,11 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     );
 
     // Enfocar el campo para que el usuario pueda editarlo inmediatamente
+    // Usar elementId si se proporciona, de lo contrario usar fieldName (para compatibilidad hacia atrás)
     setTimeout(() => {
+      const targetId = elementId || fieldName;
       const inputElement = document.getElementById(
-        fieldName,
+        targetId,
       ) as HTMLInputElement;
       if (inputElement) {
         inputElement.focus();
