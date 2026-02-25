@@ -11,6 +11,10 @@ public class ContinueDoubleTrailerExitRequest
     public ContinueDoubleTrailerExitPhotoDataDto Fotos { get; set; } = new();
     /// <summary>Usuario que registra la salida del remolque 2 (email). Se asigna desde el controller desde JWT.</summary>
     public string? UsuarioRegistroSalida { get; set; }
+
+    // Campos para rastrear edición manual
+    public bool TieneEdicionesManuale { get; set; } = false;
+    public string? UsuarioEditor { get; set; }
 }
 
 /// <summary>

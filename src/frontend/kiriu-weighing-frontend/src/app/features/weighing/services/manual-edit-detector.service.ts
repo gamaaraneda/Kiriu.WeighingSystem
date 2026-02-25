@@ -22,11 +22,13 @@ export class ManualEditDetectorService {
   // Campos de placa que se deben monitorear
   private plateFields = [
     'trailerPlate',
-    'trailerPlate2', 
+    'trailerPlate2',
     'trailerPlateContenedor',
     'remolquePlateContenedor',
     'placaRemolque1',
-    'placaRemolque2'
+    'placaRemolque2',
+    'remolque1Plate',
+    'remolque2Plate'
   ];
 
   public manualEdit$ = this.manualEditSubject.asObservable();

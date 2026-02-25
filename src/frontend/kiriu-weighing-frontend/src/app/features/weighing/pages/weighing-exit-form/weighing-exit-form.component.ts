@@ -53,6 +53,10 @@ import {
 } from '../../services/pdf-generator.service';
 import { CargoCameraService } from '../../services/cargo-camera.service';
 import { TrailerCameraService } from '../../services/trailer-camera.service';
+import {
+  ManualEditDetectorService,
+  ManualEditEvent,
+} from '../../services/manual-edit-detector.service';
 import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/services/auth.service';
 
@@ -81,6 +85,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   private pdfGeneratorService = inject(PdfGeneratorService);
   private cargoCameraService = inject(CargoCameraService);
   private trailerCameraService = inject(TrailerCameraService);
+  private manualEditDetector = inject(ManualEditDetectorService);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
 
@@ -200,12 +205,17 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   currentOperationFolio: string | null = null;
   partialExitData: PartialDoubleTrailerExitResponse | null = null;
 
+  // Control de ediciones manuales
+  hasManualEdits = false;
+  manualEditSubscription: Subscription | undefined;
+
   private subscriptions = new Subscription();
 
   ngOnInit(): void {
     this.initializeForm();
     this.startRealtimeWeightUpdates();
     this.getUnitTypeFromRoute();
+    this.setupManualEditDetection();
 
     this.route.queryParams.subscribe((params) => {
       const mode = params['mode'];
@@ -299,6 +309,10 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
     if (this.entrySearchSubscription) {
       this.entrySearchSubscription.unsubscribe();
     }
+
+    if (this.manualEditSubscription) {
+      this.manualEditSubscription.unsubscribe();
+    }
   }
 
   private getDoubleTrailerExitWeight(): number {
@@ -337,6 +351,29 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       this.exitForm.get('pesoTaraRemolque2')?.valueChanges.subscribe(() => {
         this.calculateNetWeight();
       }),
+    );
+  }
+
+  /**
+   * Configura la detección de edición manual para campos de placa
+   */
+  private setupManualEditDetection(): void {
+    // Configurar el detector para este formulario
+    this.manualEditDetector.setupFormMonitoring(
+      this.exitForm,
+      'weighing-exit-form',
+    );
+
+    // Suscribirse a eventos de edición manual
+    this.manualEditSubscription = this.manualEditDetector.manualEdit$.subscribe(
+      (editEvent: ManualEditEvent) => {
+        console.log('🔍 Edición detectada en salida:', editEvent);
+
+        if (editEvent.isManualEdit) {
+          this.hasManualEdits = true;
+          console.log('✏️ Edición manual detectada en campo:', editEvent.fieldName);
+        }
+      },
     );
   }
 
@@ -470,6 +507,9 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
   onEnableManualEdit(fieldName: string): void {
     this.manualEditEnabled[fieldName] = true;
 
+    // Marcar los siguientes cambios en este campo como manuales
+    this.manualEditDetector.markNextChangeAsManual();
+
     // Al habilitar edición manual, consideramos que el usuario está corrigiendo
     // Por lo tanto, deshabilitamos la validación de error
     this.plateValidations[fieldName] = {
@@ -477,11 +517,24 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       errorMessage: '',
     };
 
+    console.log(`Edición manual habilitada para: ${fieldName}`);
+
     this.showToast(
       'info',
       'Edición manual habilitada',
       `Puede editar manualmente la placa. La validación automática ha sido deshabilitada.`,
     );
+
+    // Enfocar el campo para que el usuario pueda editarlo inmediatamente
+    setTimeout(() => {
+      const inputElement = document.getElementById(
+        fieldName,
+      ) as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select();
+      }
+    }, 0);
   }
 
   /**
@@ -1946,6 +1999,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
       estado: 'SALIDA_REGISTRADA',
       fechaSalida: new Date().toISOString(),
       tipoUnidad: this.entryData.tipoUnidad,
+      tieneEdicionesManuale: this.hasManualEdits,
     };
 
     this.weighingService.createExitOperation(exitRequest).subscribe({
@@ -2086,6 +2140,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         remolque2Plate: this.photoData.remolque2Plate || '',
         cargoRemolque2: this.photoData.cargoRemolque2 || '',
       },
+      tieneEdicionesManuale: this.hasManualEdits,
     };
 
     this.weighingService.continueDoubleTrailerExit(request).subscribe({
@@ -2147,6 +2202,7 @@ export class WeighingExitFormComponent implements OnInit, OnDestroy {
         remolque1Plate: this.photoData.remolque1Plate || '',
         cargoRemolque1: this.photoData.cargoRemolque1 || '',
       },
+      tieneEdicionesManuale: this.hasManualEdits,
     };
 
     this.weighingService.createPartialDoubleTrailerExit(request).subscribe({

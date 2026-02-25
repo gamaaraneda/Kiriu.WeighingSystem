@@ -169,6 +169,7 @@ export interface CreateExitRequest {
   estado: string;
   fechaSalida: string;
   tipoUnidad: string;
+  tieneEdicionesManuale?: boolean;
 }
 
 export interface ExitPhotoDataDto {
@@ -196,6 +197,7 @@ export interface CreatePartialDoubleTrailerExitRequest {
   remolque1: RemolqueExitDataDto;
   fechaSalida: string;
   fotos: PartialDoubleTrailerExitPhotoDataDto;
+  tieneEdicionesManuale?: boolean;
 }
 
 /** Fotos solo remolque 1 para salida parcial */
@@ -211,6 +213,7 @@ export interface ContinueDoubleTrailerExitRequest {
   remolque2: RemolqueExitDataDto;
   fechaSalida: string;
   fotos: ContinueDoubleTrailerExitPhotoDataDto;
+  tieneEdicionesManuale?: boolean;
 }
 
 /** Fotos solo remolque 2 para continue exit */

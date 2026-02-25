@@ -264,6 +264,16 @@ public class WeighingApplicationService : IWeighingApplicationService
             entry.ExitDate = request.FechaSalida;
             entry.UpdatedAt = DateTime.UtcNow;
 
+            // Actualizar FueEditado si hubo ediciones manuales en la salida
+            Console.WriteLine($"[CreateExitAsync] TieneEdicionesManuale={request.TieneEdicionesManuale}, UsuarioEditor={request.UsuarioEditor}");
+            if (request.TieneEdicionesManuale)
+            {
+                entry.FueEditado = true;
+                entry.FechaUltimaEdicion = DateTime.UtcNow;
+                entry.UsuarioEditor = request.UsuarioEditor;
+                Console.WriteLine($"[CreateExitAsync] Marked as edited - FueEditado={entry.FueEditado}, UsuarioEditor={entry.UsuarioEditor}");
+            }
+
             // Add exit photos - usar el mismo motor que entrada
             await ProcessExitPhotosFromRequestAsync(entry.Id, request.Fotos);
 
@@ -1302,6 +1312,14 @@ public class WeighingApplicationService : IWeighingApplicationService
             entry.Status = "SALIDA_PARCIAL_R1";
             entry.UpdatedAt = DateTime.UtcNow;
 
+            // Actualizar FueEditado si hubo ediciones manuales en la salida
+            if (request.TieneEdicionesManuale)
+            {
+                entry.FueEditado = true;
+                entry.FechaUltimaEdicion = DateTime.UtcNow;
+                entry.UsuarioEditor = request.UsuarioEditor;
+            }
+
             await ProcessPartialDoubleTrailerExitPhotosAsync(entry.Id, request);
 
             var updated = await _weighingRepository.UpdateAsync(entry);
@@ -1374,6 +1392,14 @@ public class WeighingApplicationService : IWeighingApplicationService
             entry.Status = "SALIDA_REGISTRADA";
             entry.ExitRegisteredBy = request.UsuarioRegistroSalida ?? "Sistema";
             entry.UpdatedAt = DateTime.UtcNow;
+
+            // Actualizar FueEditado si hubo ediciones manuales en remolque 2
+            if (request.TieneEdicionesManuale)
+            {
+                entry.FueEditado = true;
+                entry.FechaUltimaEdicion = DateTime.UtcNow;
+                entry.UsuarioEditor = request.UsuarioEditor;
+            }
 
             await ProcessContinueDoubleTrailerExitPhotosAsync(entry.Id, request);
 

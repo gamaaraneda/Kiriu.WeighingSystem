@@ -12,6 +12,10 @@ public class CreatePartialDoubleTrailerExitRequest
     public PartialDoubleTrailerExitPhotoDataDto Fotos { get; set; } = new();
     /// <summary>Usuario que registra la salida (email). Se asigna desde el controller desde JWT.</summary>
     public string? UsuarioRegistroSalida { get; set; }
+
+    // Campos para rastrear edición manual durante el registro
+    public bool TieneEdicionesManuale { get; set; } = false;
+    public string? UsuarioEditor { get; set; }
 }
 
 /// <summary>

@@ -149,6 +149,10 @@ public class WeighingController : ControllerBase
         {
             _logger.LogInformation("Registrando salida para folio: {Folio}", request.Folio);
 
+            var currentUser = GetCurrentUser();
+            if (!string.IsNullOrEmpty(currentUser))
+                request.UsuarioEditor = currentUser;
+
             var result = await _weighingService.CreateExitAsync(request);
 
             if (!result.Success)

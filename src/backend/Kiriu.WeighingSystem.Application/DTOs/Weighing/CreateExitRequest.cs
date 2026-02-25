@@ -15,6 +15,10 @@ public class CreateExitRequest
     public string Estado { get; set; } = string.Empty;
     public DateTime FechaSalida { get; set; }
     public string TipoUnidad { get; set; } = string.Empty;
+
+    // Campos para rastrear edición manual durante el registro
+    public bool TieneEdicionesManuale { get; set; } = false;
+    public string? UsuarioEditor { get; set; }
 }
 
 public class ExitPhotoDataDto
