@@ -735,9 +735,11 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         fechaEntrada: fechaEntradaFinal,
         pesoBrutoEntrada: fullOperation.entryWeight || 0,
         placaTrailer: fullOperation.trailerPlate || '',
+        // Para doble-remolque: usar placaRemolque1 como placa del "remolque" en datos base
+        // Para flujos normales (remolque/contenedor): usar trailerPlate2
         placaRemolque:
           fullOperation.tipoUnidad === 'doble-remolque'
-            ? fullOperation.placaRemolque1 || fullOperation.trailerPlate2 || ''
+            ? fullOperation.placaRemolque1 || ''
             : fullOperation.trailerPlate2 || '',
 
         // Datos de salida - usar exitDate del query result
@@ -747,14 +749,16 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
         pesoNeto: fullOperation.netWeight || 0,
       };
 
-      // Si es doble remolque, agregar datos de los remolques desde el query result
+      // Si es doble remolque, agregar datos de los remolques
+      // IMPORTANTE: Usar datos de operation.remolques para pesos, fechas y usuarios (no disponibles en fullOperation)
+      // pero mantener coherencia con las placas editables de fullOperation
       if (fullOperation.tipoUnidad === 'doble-remolque' && operation.remolques && operation.remolques.length === 2) {
         const remolque1 = operation.remolques.find(r => r.numero === 1);
         const remolque2 = operation.remolques.find(r => r.numero === 2);
 
         if (remolque1 && remolque2) {
           receiptData.remolque1 = {
-            placa: remolque1.placa,
+            placa: fullOperation.placaRemolque1 || remolque1.placa,  // Priorizar placa editada de fullOperation
             pesoBruto: remolque1.pesoBruto,
             pesoTara: remolque1.pesoTara || 0,
             pesoNeto: Math.abs(remolque1.pesoBruto - (remolque1.pesoTara || 0)),
@@ -765,7 +769,7 @@ export class WeighingQueryComponent implements OnInit, OnDestroy {
           };
 
           receiptData.remolque2 = {
-            placa: remolque2.placa,
+            placa: fullOperation.placaRemolque2 || remolque2.placa,  // Priorizar placa editada de fullOperation
             pesoBruto: remolque2.pesoBruto,
             pesoTara: remolque2.pesoTara || 0,
             pesoNeto: Math.abs(remolque2.pesoBruto - (remolque2.pesoTara || 0)),
