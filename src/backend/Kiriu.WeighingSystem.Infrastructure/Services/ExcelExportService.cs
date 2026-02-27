@@ -26,8 +26,8 @@ public class ExcelExportService : IExcelExportService
             "Producto",
             "Tipo",
             "Tipo de Unidad",
-            "Peso Bruto (kg)",
-            "Peso Salida (kg)",
+            "Peso de Entrada (kg)",
+            "Peso de Salida (kg)",
             "Peso Neto (kg)",
             "Estado",
             "Pesado a la entrada por",
@@ -63,7 +63,9 @@ public class ExcelExportService : IExcelExportService
             worksheet.Cells[excelRow, 5].Value = item.ClienteProveedor;
             worksheet.Cells[excelRow, 6].Value = item.Producto;
             worksheet.Cells[excelRow, 7].Value = item.Tipo == "client" ? "Cliente" : item.Tipo == "provider" ? "Proveedor" : item.Tipo;
-            worksheet.Cells[excelRow, 8].Value = item.TipoUnidad;
+            worksheet.Cells[excelRow, 8].Value = !string.IsNullOrEmpty(item.TipoUnidad)
+                ? char.ToUpper(item.TipoUnidad[0]) + item.TipoUnidad.Substring(1)
+                : item.TipoUnidad;
 
             // Para doble remolque, mostrar pesos concatenados con formato: peso1 + peso2 = total
             if (item.TipoUnidad == "doble-remolque" && item.PesoBrutoRemolque1.HasValue && item.PesoBrutoRemolque2.HasValue)
