@@ -9,7 +9,9 @@
       "Bash(git restore:*)",
       "Bash(npm install:*)",
       "Bash(npm run build)",
-      "Bash(git checkout -- Kiriu.WeighingSystem.Application/DTOs/Weighing/CreateDoubleTrailerEntryRequest.cs Kiriu.WeighingSystem.Application/Services/WeighingApplicationService.cs)"
+      "Bash(git checkout -- Kiriu.WeighingSystem.Application/DTOs/Weighing/CreateDoubleTrailerEntryRequest.cs Kiriu.WeighingSystem.Application/Services/WeighingApplicationService.cs)",
+      "Bash(git log -1 --format=\"%h - %s\")",
+      "Bash(git log -1 --format='%an %ae')"
     ],
     "deny": [],
     "ask": []

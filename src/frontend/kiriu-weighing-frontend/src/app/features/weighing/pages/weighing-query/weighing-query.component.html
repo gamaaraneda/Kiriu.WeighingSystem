@@ -192,8 +192,8 @@
                   <th class="col-cliente">Cliente/Proveedor</th>
                   <th class="col-producto">Producto</th>
                   <th class="col-tipo">Tipo</th>
-                  <th class="col-peso">Peso Bruto</th>
-                  <th class="col-peso">Peso Salida</th>
+                  <th class="col-peso">Peso de Entrada</th>
+                  <th class="col-peso">Peso de Salida</th>
                   <th class="col-peso">Peso Neto</th>
                   <th class="col-estado">Estado</th>
                   <th class="col-usuario">Registrado Por</th>
@@ -955,16 +955,13 @@
 
               <div class="form-field">
                 <label class="label" for="tipoUnidad">Tipo de Unidad</label>
-                <input
-                  type="hidden"
-                  formControlName="tipoUnidad"
-                />
+                <input type="hidden" formControlName="tipoUnidad" />
                 <div
                   class="input input--readonly"
                   id="tipoUnidad"
                   aria-readonly="true"
                 >
-                  {{ getUnidadLabel(editForm.get('tipoUnidad')?.value) }}
+                  {{ getUnidadLabel(editForm.get("tipoUnidad")?.value) }}
                 </div>
               </div>
 
