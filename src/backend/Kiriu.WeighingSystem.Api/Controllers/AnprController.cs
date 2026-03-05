@@ -20,6 +20,7 @@ public class AnprController : ControllerBase
     private readonly AnprApplicationService _applicationService;
     private readonly IHubContext<PesoHub> _hubContext;
     private readonly IWeighingPhotoRepository _photoRepository;
+    private readonly ImageCompressionService _compressionService;
     private readonly ILogger<AnprController> _logger;
 
     public AnprController(
@@ -27,12 +28,14 @@ public class AnprController : ControllerBase
         AnprApplicationService applicationService,
         IHubContext<PesoHub> hubContext,
         IWeighingPhotoRepository photoRepository,
+        ImageCompressionService compressionService,
         ILogger<AnprController> logger)
     {
         _parserService = parserService;
         _applicationService = applicationService;
         _hubContext = hubContext;
         _photoRepository = photoRepository;
+        _compressionService = compressionService;
         _logger = logger;
     }
 
@@ -193,6 +196,11 @@ public class AnprController : ControllerBase
                 });
             }
 
+            Console.WriteLine($"🔄 Comprimiendo imagen antes de guardar en BD...");
+
+            // Comprimir imagen para reducir tamaño en BD (70-85% de reducción)
+            var compressedImageData = _compressionService.CompressImage(imageData);
+
             Console.WriteLine($"🔄 Guardando imagen en base de datos como huérfana...");
 
             // Guardar imagen en BD como "huérfana" (sin WeighingOperationId)
@@ -206,7 +214,7 @@ public class AnprController : ControllerBase
                 WeighingOperationId = null, // Huérfana - se vinculará después
                 PhotoType = photoType,
                 PhotoUrl = $"/api/weighing/photos/{photoId}", // URL para acceder a la imagen
-                ImageData = imageData,
+                ImageData = compressedImageData, // Imagen comprimida
                 ContentType = "image/jpeg",
                 Description = $"Placa ANPR: {anprEvent.LicensePlate} - Cámara: {cameraType}",
                 CreatedAt = DateTime.UtcNow
@@ -221,7 +229,9 @@ public class AnprController : ControllerBase
             Console.WriteLine($"   - ID: {photoId}");
             Console.WriteLine($"   - PhotoType: {photoType}");
             Console.WriteLine($"   - PhotoUrl: {orphanPhoto.PhotoUrl}");
-            Console.WriteLine($"   - ImageData size: {imageData?.Length ?? 0} bytes");
+            Console.WriteLine($"   - ImageData size original: {imageData?.Length ?? 0} bytes");
+            Console.WriteLine($"   - ImageData size comprimido: {compressedImageData?.Length ?? 0} bytes");
+            Console.WriteLine($"   - Reducción: {(imageData != null && compressedImageData != null ? ((1 - (double)compressedImageData.Length / imageData.Length) * 100).ToString("F2") : "N/A")}%");
             Console.WriteLine($"   - WeighingOperationId: {savedPhoto.WeighingOperationId?.ToString() ?? "NULL (huérfana)"}");
             Console.WriteLine($"🔄 Notificando al frontend vía SignalR...");
 

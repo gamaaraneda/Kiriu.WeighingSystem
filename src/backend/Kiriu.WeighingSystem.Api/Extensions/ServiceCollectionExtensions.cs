@@ -33,6 +33,10 @@ public static class ServiceCollectionExtensions
                 imageStoragePath));
         services.AddScoped<AnprParserService>();
 
+        // Image Compression Service
+        services.Configure<ImageCompressionSettings>(configuration.GetSection("ImageCompression"));
+        services.AddScoped<ImageCompressionService>();
+
         // Peso Real-time Service
         services.AddHostedService<PesoRealtimeService>();
 

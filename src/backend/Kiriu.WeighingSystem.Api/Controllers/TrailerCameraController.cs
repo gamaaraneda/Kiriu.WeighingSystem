@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using Kiriu.WeighingSystem.Domain.Entities;
 using Kiriu.WeighingSystem.Domain.Interfaces;
+using Kiriu.WeighingSystem.Infrastructure.Services;
 
 namespace Kiriu.WeighingSystem.Api.Controllers;
 
@@ -15,19 +16,22 @@ public class TrailerCameraController : ControllerBase
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IWeighingPhotoRepository _photoRepository;
     private readonly IWebHostEnvironment _environment;
+    private readonly ImageCompressionService _compressionService;
 
     public TrailerCameraController(
         ILogger<TrailerCameraController> logger,
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
         IWeighingPhotoRepository photoRepository,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        ImageCompressionService compressionService)
     {
         _logger = logger;
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
         _photoRepository = photoRepository;
         _environment = environment;
+        _compressionService = compressionService;
     }
 
     /// <summary>
@@ -117,6 +121,9 @@ public class TrailerCameraController : ControllerBase
 
             var imageBytes = await response.Content.ReadAsByteArrayAsync();
 
+            // Comprimir imagen antes de guardar
+            var compressedImageData = _compressionService.CompressImage(imageBytes);
+
             // Crear registro de foto huérfana en la base de datos (patrón ANPR)
             var photoId = Guid.NewGuid();
             var photoUrl = $"/api/weighing/photos/{photoId}";
@@ -127,7 +134,7 @@ public class TrailerCameraController : ControllerBase
                 WeighingOperationId = null, // Huérfana - se vinculará después en entrada/salida
                 PhotoType = request.PhotoType,
                 PhotoUrl = photoUrl,
-                ImageData = imageBytes, // Guardar la imagen en la BD como blob
+                ImageData = compressedImageData, // Imagen comprimida
                 ContentType = "image/jpeg",
                 Description = "Placa ANPR: unknown - Cámara: trailer", // Formato igual que ANPR
                 CreatedAt = DateTime.UtcNow
