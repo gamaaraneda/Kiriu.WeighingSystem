@@ -84,7 +84,7 @@ Agregada nueva sección `ImageCompression`:
 
 ### 5. Script SQL para Compresión en BD
 
-**Archivo creado:** `src/backend/Kiriu.WeighingSystem.Database/migrations/enable_page_compression_on_weighingphotos.sql`
+**Archivo creado:** `src/backend/Kiriu.WeighingSystem.Database/enable_page_compression_on_weighingphotos.sql`
 
 - Aplica compresión PAGE a la tabla `WeighingPhotos`
 - Muestra estadísticas antes/después
@@ -129,7 +129,7 @@ USE WeighingSystem;
 GO
 
 -- Ejecutar el script completo
--- Archivo: src/backend/Kiriu.WeighingSystem.Database/migrations/enable_page_compression_on_weighingphotos.sql
+-- Archivo: src/backend/Kiriu.WeighingSystem.Database/enable_page_compression_on_weighingphotos.sql
 ```
 
 **Recomendaciones:**
